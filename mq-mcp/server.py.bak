@@ -1,7 +1,6 @@
 import random
 import requests
 import os
-from pathlib import Path
 import psutil
 import shutil
 import subprocess
@@ -12,19 +11,6 @@ from mcp.server.fastmcp import FastMCP
 
 # Initiera servern
 mcp = FastMCP("mq-mcp")
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-def resolve_repo_file(relative_path: str) -> Path:
-    """Resolve a path safely inside the repository root."""
-    target = (REPO_ROOT / relative_path).resolve()
-
-    try:
-        target.relative_to(REPO_ROOT.resolve())
-    except ValueError:
-        raise ValueError(f"Blocked path outside repo: {relative_path}")
-
-    return target
 
 # Definiera tillåten bas-katalog (Repo-roten)
 REPO_ROOT = "/Users/mansys/mq-mcp/mq-mcp"
@@ -44,18 +30,14 @@ def get_system_resources() -> str:
 def read_repo_file(relative_path: str) -> str:
     """Läser innehållet i en fil inom repo-katalogen."""
     try:
-        target = resolve_repo_file(relative_path)
+        safe_path = os.path.normpath(os.path.join(REPO_ROOT, relative_path))
+        if not safe_path.startswith(REPO_ROOT): return "Åtkomst nekad."
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            return f.read(10000)
+    except Exception as e: return f"Fel: {str(e)}"
 
-        if not target.exists():
-            return f"File not found: {relative_path}"
+# --- NYTT VERKTYG: SCRIPT KONTROLL ---
 
-        if not target.is_file():
-            return f"Not a file: {relative_path}"
-
-        return target.read_text(encoding="utf-8", errors="replace")
-
-    except Exception as exc:
-        return str(exc)
 @mcp.tool()
 def run_mqlaunch() -> str:
     """Startar och kör skriptet mqlaunch.sh i projektmappen."""
