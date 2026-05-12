@@ -6,7 +6,7 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-Early prototype.
+Early prototype with local MCP tools, validation, and repo-aware helpers.
 
 This repository is currently useful as:
 
