@@ -2,52 +2,164 @@
 
 Local MCP server experiments and tooling for macOS.
 
+`mq-mcp` is a small local-first lab for building, testing, and documenting MCP-related workflows on macOS. The goal is to make local MCP setup easier to understand, repeat, validate, and publish safely.
+
 ## Status
 
 Early prototype.
 
-## Goal
+This repository is currently useful as:
 
-`mq-mcp` is a local experiment space for building, testing, and documenting MCP-related workflows on macOS.
+- a local MCP server experiment
+- a documentation baseline for MCP setup on macOS
+- a place to collect repeatable setup, validation, and troubleshooting flows
+- a publishable project shell with README, roadmap, changelog, license, release, and GitHub Pages docs
 
-The purpose is to make MCP setup and local tooling easier to understand, repeat, and publish safely.
+It is **not yet** a polished package or production-ready MCP distribution.
+
+## What is inside
+
+| Path | Purpose |
+|---|---|
+| `mq-mcp/server.py` | Local FastMCP server experiment |
+| `mq-mcp/bridge.py` | Bridge between OpenAI and the local MCP server |
+| `mq-mcp/main.py` | Minimal Python entry point |
+| `mq-mcp/pyproject.toml` | Python project metadata and dependencies |
+| `mq-mcp/.env.example` | Example environment file |
+| `docs/index.html` | GitHub Pages landing page |
+| `docs/screenshots/` | Place for screenshots and visual docs |
+| `CHANGELOG.md` | Release history |
+| `ROADMAP.md` | Planned work |
+| `VERSION` | Current project version |
+| `release.sh` | Local release helper |
+| `Installationsguide_ MCP-server (mq-mcp) på macOS.pdf` | Existing macOS MCP installation guide |
 
 ## Quick Start
 
-Clone the repo:
+Clone the repository:
 
 ```bash
 git clone https://github.com/MCamner/mq-mcp.git
 cd mq-mcp
+```
 
-## Live docs
+Enter the Python project folder:
 
-GitHub Pages:
+```bash
+cd mq-mcp
+```
+
+Install dependencies with `uv`:
+
+```bash
+uv sync
+```
+
+Run the minimal Python entry point:
+
+```bash
+uv run python main.py
+```
+
+Run the local MCP server experiment:
+
+```bash
+uv run mcp run server.py
+```
+
+Run the bridge with a prompt:
+
+```bash
+uv run python bridge.py "List the available MCP tools."
+```
+
+## Requirements
+
+The Python project currently declares:
+
+- Python `>=3.14`
+- `mcp[cli]`
+- `openai`
+- `psutil`
+- `pandas`
+- `pillow`
+- `pyguitarpro`
+- `requests`
+
+If your local Python version does not match the project requirement, use `uv` to manage the environment.
+
+## Environment
+
+Copy the example environment file before running anything that needs API credentials:
+
+```bash
+cp .env.example .env
+```
+
+Do **not** commit real API keys, tokens, private paths, or secrets.
+
+## GitHub Pages
+
+Live docs:
 
 https://mcamner.github.io/mq-mcp/
 
-## Demo / Example output
+Current docs include:
+
+- a GitHub Pages landing page
+- screenshot folder structure
+- public readiness baseline
+- existing macOS MCP installation guide
+
+## Demo material
 
 Current demo material:
 
 - MCP installation guide for macOS
 - GitHub Pages landing page in `docs/index.html`
-- Public readiness structure for future MCP setup examples
+- local MCP server experiment in `mq-mcp/server.py`
+- OpenAI/MCP bridge experiment in `mq-mcp/bridge.py`
 
-Future demo examples may include:
+Planned demo material:
 
-- local MCP server startup
+- local MCP server startup output
 - example MCP configuration
 - validation command output
 - troubleshooting flow
+- screenshots of setup and usage
 
-## Screenshots / Gallery
+## Safety notes
 
-Screenshots will be stored in:
+This project is local-first and experimental.
 
-```text
-docs/screenshots/
+Before using or extending it:
+
+- review what each MCP tool can access
+- avoid committing `.env` files
+- keep filesystem access scoped and explicit
+- avoid hardcoded machine-specific paths where possible
+- prefer read-only tools until validation is solid
+- document every command that touches local files or credentials
+
+## Development checks
+
+Useful local checks:
+
+```bash
+git status
+python -m compileall .
+```
+
+If tests are added later, this should become the normal verification flow:
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for planned MCP setup, validation, troubleshooting, and documentation work.
+See [ROADMAP.md](ROADMAP.md) for planned MCP setup, validation, troubleshooting, documentation, and release work.
+
+## License
+
+See [LICENSE](LICENSE).
