@@ -115,5 +115,136 @@ def edit_image(relative_path: str, action: str, value: int | None = None) -> str
             return f"Bilden har uppdaterats ({action})."
     except Exception as e: return f"Fel: {str(e)}"
 
+
+# --- REPO INTELLIGENCE TOOLS ---
+
+def run_repo_command(args: list[str], timeout: int = 20) -> str:
+    """Run a safe read-only command inside the repository root."""
+    try:
+        process = subprocess.run(
+            args,
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        output = ""
+        if process.stdout:
+            output += process.stdout
+        if process.stderr:
+            output += ("\n" if output else "") + process.stderr
+        if not output.strip():
+            output = f"Command exited with code {process.returncode} and produced no output."
+        return output.strip()
+    except Exception as exc:
+        return f"Command failed: {exc}"
+
+
+@mcp.tool()
+def list_repo_files(max_depth: int = 3) -> str:
+    """List files in the repository, excluding common cache/build folders."""
+    ignored_dirs = {
+        ".git",
+        ".venv",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "node_modules",
+        "dist",
+        "build",
+    }
+
+    root = REPO_ROOT.resolve()
+    results: list[str] = []
+
+    for path in sorted(root.rglob("*")):
+        rel = path.relative_to(root)
+
+        if any(part in ignored_dirs for part in rel.parts):
+            continue
+
+        if len(rel.parts) > max_depth:
+            continue
+
+        if path.is_file():
+            results.append(str(rel))
+
+    if not results:
+        return "No repository files found."
+
+    return "\n".join(results)
+
+
+@mcp.tool()
+def search_repo(query: str, glob: str | None = None) -> str:
+    """Search repository text using git grep. Read-only."""
+    if not query.strip():
+        return "Search query is empty."
+
+    args = ["git", "grep", "-n", "--", query]
+
+    if glob:
+        args.extend(["--", glob])
+
+    result = run_repo_command(args)
+
+    if "Command exited with code 1" in result:
+        return f"No matches found for: {query}"
+
+    return result
+
+
+@mcp.tool()
+def git_status() -> str:
+    """Show current git branch, status, and latest commit. Read-only."""
+    status = run_repo_command(["git", "status", "--short", "--branch"])
+    latest = run_repo_command(["git", "log", "--oneline", "-5"])
+
+    return f"""Git status:
+
+{status}
+
+Latest commits:
+
+{latest}
+"""
+
+
+@mcp.tool()
+def git_diff(relative_path: str | None = None) -> str:
+    """Show git diff for the repo or a specific relative path. Read-only."""
+    args = ["git", "diff", "--"]
+
+    if relative_path:
+        try:
+            target = resolve_repo_file(relative_path)
+            rel = str(target.relative_to(REPO_ROOT.resolve()))
+            args.append(rel)
+        except Exception as exc:
+            return f"Invalid path: {exc}"
+
+    result = run_repo_command(args)
+
+    if "produced no output" in result:
+        return "No diff."
+
+    return result
+
+
+@mcp.tool()
+def validate_project() -> str:
+    """Run the local project validation script if it exists."""
+    script = REPO_ROOT / "scripts" / "validate.sh"
+
+    if not script.exists():
+        return "Validation script not found: scripts/validate.sh"
+
+    if not script.is_file():
+        return "Validation path exists but is not a file: scripts/validate.sh"
+
+    return run_repo_command(["bash", str(script)], timeout=60)
+
 if __name__ == "__main__":
     mcp.run()
