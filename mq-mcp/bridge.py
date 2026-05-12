@@ -9,41 +9,24 @@ from mcp.client.stdio import stdio_client
 # API-nyckeln hämtas automatiskt från miljövariabeln OPENAI_API_KEY
 client = OpenAI()
 
+import sys
+
 async def run_bridge():
+    # 1. Kontrollera om en prompt skickades med som argument från terminalen
+    if len(sys.argv) > 1:
+        prompt = sys.argv[1]
+    else:
+        prompt = "Vad blir 18 + 2? Berätta sen ett kort skämt om programmering."
+
     # 2. Parametrar för att starta din lokala MCP-server
-    # Vi använder 'uv run mcp run server.py' för att köra servern i rätt miljö
     server_params = StdioServerParameters(
         command="uv",
         args=["run", "mcp", "run", "server.py"],
         env=os.environ.copy()
     )
 
-    print("--- Startar brygga mellan MCP och OpenAI ---")
-
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            # Initiera sessionen
-            await session.initialize()
-
-            # 3. Hämta lokala verktyg från MCP-servern
-            mcp_tools = await session.list_tools()
-            print(f"Hittade {len(mcp_tools.tools)} verktyg på MCP-servern.")
-            
-            # 4. Översätt MCP-schema till OpenAI Tool format
-            openai_tools = []
-            for tool in mcp_tools.tools:
-                openai_tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": tool.inputSchema
-                    }
-                })
-
-            # 5. Skicka fråga till OpenAI
-            prompt = "Vad blir 18 + 2? Berätta sen ett kort skämt om programmering."
-            print(f"\nAnvändare: {prompt}")
+    print(f"--- Startar bridget (MCP <-> OpenAI) ---")
+    print(f"Fråga: {prompt}\n")
             
             messages = [{"role": "user", "content": prompt}]
             
