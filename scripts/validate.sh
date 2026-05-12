@@ -4,42 +4,63 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/mq-mcp"
 
-echo "== Repo =="
+section() {
+  printf '\n== %s ==\n' "$1"
+}
+
+ok() {
+  printf 'OK: %s\n' "$1"
+}
+
+fail() {
+  printf 'FAIL: %s\n' "$1"
+  exit 1
+}
+
+section "Repo"
 cd "$ROOT"
 git status --short --branch
+ok "Git status checked"
 
-echo
-echo "== Required files =="
+section "Required files"
 for file in README.md ROADMAP.md CHANGELOG.md VERSION LICENSE mq-mcp/server.py mq-mcp/bridge.py mq-mcp/pyproject.toml; do
-  test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
-  echo "OK: $file"
+  [[ -f "$ROOT/$file" ]] || fail "Missing $file"
+  ok "$file exists"
 done
 
-echo
-echo "== No debug or backup files =="
+section "No debug or backup files"
 bad_files="$(find "$ROOT" \( -name '*.bak' -o -name 'debug_tools.py' \) -print)"
-if [ -n "$bad_files" ]; then
-  echo "$bad_files"
-  echo "FAIL: debug/backup files found"
-  exit 1
+if [[ -n "$bad_files" ]]; then
+  printf '%s\n' "$bad_files"
+  fail "Debug/backup files found"
 fi
-echo "OK: no debug/backup files"
+ok "No debug/backup files found"
 
-echo
-echo "== Python compile =="
+section "Python compile"
 cd "$APP"
 python -m compileall bridge.py server.py main.py >/dev/null
-echo "OK: Python files compile"
+ok "Python files compile"
 
-echo
-echo "== MCP tools =="
-uv run python bridge.py --tools | tee /tmp/mq-mcp-tools.txt
-grep -q "read_repo_file" /tmp/mq-mcp-tools.txt
-grep -q "list_repo_files" /tmp/mq-mcp-tools.txt
-grep -q "search_repo" /tmp/mq-mcp-tools.txt
-grep -q "git_status" /tmp/mq-mcp-tools.txt
-echo "OK: core MCP tools found"
+section "MCP tool listing"
+tools_output="$(uv run python bridge.py --tools)"
+printf '%s\n' "$tools_output"
 
-echo
-echo "== Done =="
-echo "OK: mq-mcp validation completed"
+printf '%s\n' "$tools_output" | grep -q "read_repo_file" || fail "read_repo_file tool missing"
+printf '%s\n' "$tools_output" | grep -q "get_system_resources" || fail "get_system_resources tool missing"
+printf '%s\n' "$tools_output" | grep -q "list_repo_files" || fail "list_repo_files tool missing"
+printf '%s\n' "$tools_output" | grep -q "search_repo" || fail "search_repo tool missing"
+printf '%s\n' "$tools_output" | grep -q "git_status" || fail "git_status tool missing"
+printf '%s\n' "$tools_output" | grep -q "git_diff" || fail "git_diff tool missing"
+printf '%s\n' "$tools_output" | grep -q "validate_project" || fail "validate_project tool missing"
+ok "Core MCP tools found"
+
+section "README bridge smoke test"
+if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+  uv run python bridge.py "Read README.md and summarize it briefly."
+  ok "Bridge can read root README.md"
+else
+  echo "SKIP: OPENAI_API_KEY is not set, skipping OpenAI bridge prompt"
+fi
+
+section "Done"
+ok "mq-mcp validation completed"
