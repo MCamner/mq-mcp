@@ -26,9 +26,8 @@ def resolve_repo_file(relative_path: str) -> Path:
 
     return target
 
-# Definiera tillåten bas-katalog (Repo-roten)
-REPO_ROOT = "/Users/mansys/mq-mcp/mq-mcp"
-
+# Definiera tillåten bas-katalog: repo-roten
+# server.py ligger i ~/mq-mcp/mq-mcp, därför är parent.parent repo-roten.
 # --- SYSTEM & FILER ---
 
 @mcp.tool()
