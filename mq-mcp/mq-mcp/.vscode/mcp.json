@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mq-mcp": {
+      "command": "/opt/homebrew/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/mansys/mq-mcp/mq-mcp",
+        "run",
+        "mcp",
+        "run",
+        "server.py"
+      ]
+    }
+  }
+}
