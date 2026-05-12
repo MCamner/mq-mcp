@@ -233,6 +233,81 @@ def git_diff(relative_path: str | None = None) -> str:
     return result
 
 
+
+@mcp.tool()
+def update_repo_file(relative_path: str, old_text: str, new_text: str) -> str:
+    """Safely update a text file inside the repo by replacing exact text. Does not commit."""
+    try:
+        target = resolve_repo_file(relative_path)
+        root = REPO_ROOT.resolve()
+        rel = target.relative_to(root)
+
+        blocked_names = {".env", ".env.local", ".envrc", "uv.lock"}
+        blocked_parts = {".git", ".venv", "__pycache__", "node_modules"}
+        allowed_suffixes = {
+            ".md",
+            ".txt",
+            ".py",
+            ".sh",
+            ".toml",
+            ".yaml",
+            ".yml",
+            ".json",
+            ".html",
+            ".css",
+            ".js",
+        }
+
+        if any(part in blocked_parts for part in rel.parts):
+            return f"Blocked path: {relative_path}"
+
+        if target.name in blocked_names:
+            return f"Blocked file: {relative_path}"
+
+        if target.suffix and target.suffix not in allowed_suffixes:
+            return f"Blocked file type: {target.suffix}"
+
+        if not target.exists():
+            return f"File not found: {relative_path}"
+
+        if not target.is_file():
+            return f"Not a file: {relative_path}"
+
+        if not old_text:
+            return "old_text must not be empty."
+
+        content = target.read_text(encoding="utf-8", errors="replace")
+
+        count = content.count(old_text)
+        if count == 0:
+            return "No exact match found. File was not changed."
+
+        if count > 1:
+            return f"Refusing to update: old_text matched {count} times. Make old_text more specific."
+
+        updated = content.replace(old_text, new_text, 1)
+
+        if updated == content:
+            return "No change produced. File was not changed."
+
+        target.write_text(updated, encoding="utf-8")
+
+        diff = run_repo_command(["git", "diff", "--", str(rel)])
+
+        return f"""Updated {relative_path}
+
+Changed:
+- replaced 1 exact text block
+- did not commit
+
+Diff:
+
+{diff}
+"""
+
+    except Exception as exc:
+        return f"update_repo_file failed: {exc}"
+
 @mcp.tool()
 def validate_project() -> str:
     """Run the local project validation script if it exists."""
