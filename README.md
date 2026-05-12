@@ -47,3 +47,7 @@ Screenshots will be stored in:
 
 ```text
 docs/screenshots/
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned MCP setup, validation, troubleshooting, and documentation work.
