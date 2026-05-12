@@ -1,15 +1,13 @@
 import asyncio
 import os
 import json
+import sys
 from openai import OpenAI
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 # 1. Konfigurera OpenAI
-# API-nyckeln hämtas automatiskt från miljövariabeln OPENAI_API_KEY
 client = OpenAI()
-
-import sys
 
 async def run_bridge():
     # 1. Kontrollera om en prompt skickades med som argument från terminalen
@@ -27,7 +25,28 @@ async def run_bridge():
 
     print(f"--- Startar bridget (MCP <-> OpenAI) ---")
     print(f"Fråga: {prompt}\n")
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            # Initiera sessionen
+            await session.initialize()
+
+            # 3. Hämta lokala verktyg från MCP-servern
+            mcp_tools = await session.list_tools()
             
+            # 4. Översätt MCP-schema till OpenAI Tool format
+            openai_tools = []
+            for tool in mcp_tools.tools:
+                openai_tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema
+                    }
+                })
+
+            # 5. Skicka fråga till OpenAI
             messages = [{"role": "user", "content": prompt}]
             
             response = client.chat.completions.create(

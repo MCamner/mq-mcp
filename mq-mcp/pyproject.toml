@@ -7,6 +7,9 @@ requires-python = ">=3.14"
 dependencies = [
     "mcp[cli]>=1.27.1",
     "openai>=2.36.0",
+    "pandas>=3.0.3",
+    "pillow>=12.2.0",
     "psutil>=7.2.2",
+    "pyguitarpro>=0.11",
     "requests>=2.34.0",
 ]
