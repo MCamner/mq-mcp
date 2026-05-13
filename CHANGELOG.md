@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2 - 2026-05-13
+
+### Added
+- Added local validation flow via `scripts/validate.sh`.
+- Added documented MCP tool inventory in README.
+- Added bridge-driven project validation path.
+- Added repo-aware MCP tools and safe file update support.
+
+### Changed
+- Improved README with validation instructions.
+- Updated roadmap to reflect completed documentation and validation work.
+
 ## [0.1.0] - 2026-05-12
 
 ### Added
