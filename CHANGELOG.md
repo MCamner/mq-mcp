@@ -1,23 +1,14 @@
+# Changelog
+
 ## 0.2.0 - 2026-05-13
 
-### Added
 - Added documented MCP safety policy in `docs/security.md`.
 - Added safety tests for repo-scoped file access and blocked paths.
 - Added CI validation for shell syntax, Python compilation, project validation, and tests.
-
-### Changed
-- Restricted CSV analysis to repository-root-safe paths.
+- Restricted `analyze_csv` to repository-root-safe paths.
 - Clarified MCP tool scope in documentation.
 - Cleaned up install guide references and replaced PDF install guide with Markdown documentation.
 - Improved README with security policy and validation guidance.
-
-### Security
-- Documented read-only, repo-scoped, broad-access, and controlled-action tool categories.
-- Verified blocked file names and blocked directories through tests.
-- Reinforced `update_repo_file` as exact-match, no-commit file editing.
-
-
-# Changelog
 
 ## 0.1.3 - 2026-05-13
 
