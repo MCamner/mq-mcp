@@ -67,6 +67,11 @@ def test_update_repo_file_refuses_ambiguous_match(server):
     assert "matched" in result and "times" in result
 
 
+def test_analyze_csv_blocks_parent_escape(server):
+    result = server.analyze_csv("../../../etc/passwd")
+    assert "Blocked path outside repo" in result
+
+
 def test_read_repo_file_reads_readme(server):
     result = server.read_repo_file("README.md")
     assert "mq-mcp" in result

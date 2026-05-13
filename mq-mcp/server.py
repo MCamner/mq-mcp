@@ -96,12 +96,13 @@ def open_in_app(relative_path: str) -> str:
 
 @mcp.tool()
 def analyze_csv(relative_path: str) -> str:
-    """Analyserar en CSV-fil."""
+    """Analyserar en CSV-fil inom repo-katalogen."""
     try:
-        safe_path = os.path.normpath(os.path.join(REPO_ROOT, relative_path))
-        df = pd.read_csv(safe_path)
+        target = resolve_repo_file(relative_path)
+        df = pd.read_csv(target)
         return f"Rader: {len(df)}, Kolumner: {list(df.columns)}\n{df.describe().to_string()}"
-    except Exception as e: return f"Fel: {str(e)}"
+    except Exception as e:
+        return f"Fel: {str(e)}"
 
 @mcp.tool()
 def edit_image(relative_path: str, action: str, value: int | None = None) -> str:

@@ -4,9 +4,9 @@
 
 ## Tool categories
 
-### Read-only tools
+### Read-only tools (repo-scoped)
 
-These tools do not modify files:
+These tools do not modify files and are restricted to the repository root:
 
 - `get_system_resources`
 - `read_repo_file`
@@ -15,16 +15,26 @@ These tools do not modify files:
 - `git_status`
 - `git_diff`
 - `analyze_csv`
-- `analyze_guitar_pro`
 
-### Controlled action tools
+### Read-only tools (broad access)
 
-These tools can perform local actions:
+These tools do not modify files but may access paths outside the repository root by design:
+
+- `analyze_guitar_pro` — reads Guitar Pro files from the Guitar Pro 8 application
+
+### Controlled action tools (broad access)
+
+These tools can perform local actions and may access paths outside the repository root by design:
+
+- `open_in_app` — opens a file in its default application (e.g. Photoshop)
+- `edit_image` — applies in-place image transforms; may access files in external application folders
+
+### Controlled action tools (repo-scoped)
+
+These tools can modify files but are restricted to the repository root:
 
 - `validate_project` — runs the local validation script
 - `run_mqlaunch` — runs `mqlaunch.sh`
-- `open_in_app` — opens a file in its default application
-- `edit_image` — applies in-place image transforms
 - `update_repo_file` — replaces exact text in allowed repo files
 
 ## File update policy
