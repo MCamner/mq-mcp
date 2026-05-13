@@ -30,13 +30,20 @@ def test_resolve_repo_file_blocks_absolute_path(server):
         server.resolve_repo_file("/etc/passwd")
 
 
-def test_update_repo_file_blocks_env_file(server):
-    result = server.update_repo_file(".env", "x", "y")
+@pytest.mark.parametrize("path", [".env", ".env.local", ".envrc", "uv.lock"])
+def test_update_repo_file_blocks_secret_files(server, path):
+    result = server.update_repo_file(path, "x", "y")
     assert "Blocked file" in result
 
 
-def test_update_repo_file_blocks_git_dir(server):
-    result = server.update_repo_file(".git/config", "x", "y")
+@pytest.mark.parametrize("path", [
+    ".git/config",
+    ".venv/lib/something.py",
+    "__pycache__/module.cpython-314.pyc",
+    "node_modules/pkg/index.js",
+])
+def test_update_repo_file_blocks_system_dirs(server, path):
+    result = server.update_repo_file(path, "x", "y")
     assert "Blocked" in result
 
 
