@@ -8,7 +8,7 @@ import time
 from typing import Any, Optional, cast
 
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -104,20 +104,23 @@ def tool_catalog_text(mcp_tools: Any) -> str:
     return "\n".join(lines)
 
 
-def to_openai_tools(mcp_tools: Any) -> list[dict[str, Any]]:
-    openai_tools: list[dict[str, Any]] = []
+def to_openai_tools(mcp_tools: Any) -> list[ChatCompletionToolParam]:
+    openai_tools: list[ChatCompletionToolParam] = []
 
     for tool in mcp_tools.tools:
         parameters = tool.inputSchema or {"type": "object", "properties": {}}
         openai_tools.append(
-            {
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description or "",
-                    "parameters": parameters,
+            cast(
+                ChatCompletionToolParam,
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description or "",
+                        "parameters": parameters,
+                    },
                 },
-            }
+            )
         )
 
     return openai_tools
@@ -202,7 +205,7 @@ async def run_bridge() -> None:
             assistant_message = first_response.choices[0].message
 
             if not assistant_message.tool_calls:
-                sys.stdout.write("ChatGPT: ")
+                sys.stdout.write("Bridget: ")
                 sys.stdout.flush()
                 scramble_print(assistant_message.content or "")
                 return
@@ -229,11 +232,14 @@ async def run_bridge() -> None:
                 )
 
                 messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": tool_result,
-                    }
+                    cast(
+                        ChatCompletionMessageParam,
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": tool_result,
+                        },
+                    )
                 )
 
             final_response = client.chat.completions.create(
@@ -241,16 +247,13 @@ async def run_bridge() -> None:
                 messages=messages,
             )
 
-            sys.stdout.write("\nChatGPT: ")
+            sys.stdout.write("\nBridget: ")
             sys.stdout.flush()
             scramble_print(final_response.choices[0].message.content or "")
 
 
 if __name__ == "__main__":
-    import io
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, line_buffering=True, write_through=True
-    )
+    sys.stdout.reconfigure(line_buffering=True)  # type: ignore[union-attr]
     try:
         asyncio.run(run_bridge())
     except KeyboardInterrupt:
