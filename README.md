@@ -141,6 +141,24 @@ Before using or extending it:
 - prefer read-only tools until validation is solid
 - document every command that touches local files or credentials
 
+## Available MCP tools
+
+The local MCP server currently exposes these tools:
+
+- `get_system_resources` — shows CPU, memory, and disk information
+- `read_repo_file` — reads a file inside the repository root
+- `list_repo_files` — lists repository files up to a chosen depth
+- `search_repo` — searches repository text
+- `git_status` — shows branch, working tree status, and recent commits
+- `git_diff` — shows current git diff, optionally for one path
+- `validate_project` — runs `scripts/validate.sh` when available
+- `update_repo_file` — safely replaces exact text in allowed repo files without committing
+- `run_mqlaunch` — runs `mqlaunch.sh`
+- `analyze_csv` — analyzes CSV files
+- `analyze_guitar_pro` — analyzes Guitar Pro files
+- `open_in_app` — opens a repo file in the default app
+- `edit_image` — edits an image with supported actions
+
 ## Development checks
 
 Useful local checks:
