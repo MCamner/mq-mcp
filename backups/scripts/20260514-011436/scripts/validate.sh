@@ -4,17 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/mq-mcp"
 
-# Handles section.
 section() {
   printf '\n== %s ==\n' "$1"
 }
 
-# Handles ok.
 ok() {
   printf 'OK: %s\n' "$1"
 }
 
-# Handles fail.
 fail() {
   printf 'FAIL: %s\n' "$1"
   exit 1
