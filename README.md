@@ -22,7 +22,7 @@ It is **not yet** a polished package or production-ready MCP distribution.
 ## What is inside
 
 | Path | Purpose |
-|---|---|
+| --- | --- |
 | `mq-mcp/server.py` | Local FastMCP server experiment |
 | `mq-mcp/bridge.py` | Bridge between OpenAI and the local MCP server |
 | `mq-mcp/main.py` | Minimal Python entry point |
@@ -38,17 +38,11 @@ It is **not yet** a polished package or production-ready MCP distribution.
 
 ## Quick Start
 
-Clone the repository:
+Clone the repository and enter the Python project folder:
 
 ```bash
 git clone https://github.com/MCamner/mq-mcp.git
-cd mq-mcp
-```
-
-Enter the Python project folder:
-
-```bash
-cd mq-mcp
+cd mq-mcp/mq-mcp
 ```
 
 Install dependencies with `uv`:
@@ -92,7 +86,7 @@ If your local Python version does not match the project requirement, use `uv` to
 
 ## Environment
 
-Copy the example environment file before running anything that needs API credentials:
+Copy the example environment file before running anything that needs API credentials (run from inside `mq-mcp/mq-mcp/`):
 
 ```bash
 cp .env.example .env
@@ -104,7 +98,7 @@ Do **not** commit real API keys, tokens, private paths, or secrets.
 
 Live docs:
 
-https://mcamner.github.io/mq-mcp/
+[https://mcamner.github.io/mq-mcp/](https://mcamner.github.io/mq-mcp/)
 
 Current docs include:
 
@@ -190,7 +184,7 @@ Useful local checks:
 
 ```bash
 git status
-python -m compileall .
+python -m compileall mq-mcp/
 ```
 
 If tests are added later, this should become the normal verification flow:
