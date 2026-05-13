@@ -34,7 +34,7 @@ It is **not yet** a polished package or production-ready MCP distribution.
 | `ROADMAP.md` | Planned work |
 | `VERSION` | Current project version |
 | `release.sh` | Local release helper |
-| `Installationsguide_ MCP-server (mq-mcp) på macOS.pdf` | Existing macOS MCP installation guide |
+| `docs/install.md` | macOS installation guide |
 
 ## Quick Start
 
