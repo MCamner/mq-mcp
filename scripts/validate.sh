@@ -52,6 +52,8 @@ printf '%s\n' "$tools_output" | grep -q "search_repo" || fail "search_repo tool 
 printf '%s\n' "$tools_output" | grep -q "git_status" || fail "git_status tool missing"
 printf '%s\n' "$tools_output" | grep -q "git_diff" || fail "git_diff tool missing"
 printf '%s\n' "$tools_output" | grep -q "validate_project" || fail "validate_project tool missing"
+printf '%s\n' "$tools_output" | grep -q "update_repo_file" || fail "update_repo_file tool missing"
+
 ok "Core MCP tools found"
 
 section "README bridge smoke test"
