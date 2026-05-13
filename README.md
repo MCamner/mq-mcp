@@ -187,10 +187,10 @@ git status
 python -m compileall mq-mcp/
 ```
 
-If tests are added later, this should become the normal verification flow:
+Run the safety tests:
 
 ```bash
-python -m unittest discover -s tests -v
+uv --directory mq-mcp run pytest tests/ -v
 ```
 
 ## Roadmap
