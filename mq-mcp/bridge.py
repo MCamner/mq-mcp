@@ -1,8 +1,13 @@
 import asyncio
 import json
+import logging
 import os
+import random
 import sys
+import time
 from typing import Any
+
+logging.getLogger("mcp").setLevel(logging.WARNING)
 
 from openai import OpenAI
 from mcp import ClientSession, StdioServerParameters
@@ -26,6 +31,25 @@ Important rules:
 - If no listed tool can do the task, say that clearly.
 - Keep answers concise and practical.
 """
+
+
+_SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
+
+
+def scramble_print(text: str) -> None:
+    for ch in text:
+        if ch in (" ", "\n", "\t"):
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+            continue
+        for _ in range(3):
+            sys.stdout.write(random.choice(_SCRAMBLE_CHARS) + "\b")
+            sys.stdout.flush()
+            time.sleep(0.008)
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+    sys.stdout.write("\n")
+    sys.stdout.flush()
 
 
 def usage() -> None:
@@ -141,8 +165,6 @@ async def run_bridge() -> None:
 
             print(f"Model: {MODEL}")
             print(f"Prompt: {prompt}\n")
-            print(catalog)
-            print("")
 
             messages: list[dict[str, Any]] = [
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -169,7 +191,9 @@ async def run_bridge() -> None:
             assistant_message = first_response.choices[0].message
 
             if not assistant_message.tool_calls:
-                print(f"ChatGPT: {assistant_message.content}")
+                sys.stdout.write("ChatGPT: ")
+                sys.stdout.flush()
+                scramble_print(assistant_message.content or "")
                 return
 
             messages.append(
@@ -203,10 +227,13 @@ async def run_bridge() -> None:
                 messages=messages,
             )
 
-            print(f"\nChatGPT: {final_response.choices[0].message.content}")
+            sys.stdout.write("\nChatGPT: ")
+            sys.stdout.flush()
+            scramble_print(final_response.choices[0].message.content or "")
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(line_buffering=True)
     try:
         asyncio.run(run_bridge())
     except KeyboardInterrupt:
