@@ -87,6 +87,5 @@ def test_list_repo_files_includes_readme():
 
 def test_list_repo_files_excludes_git_dir():
     result = server.list_repo_files()
-    assert ".git" not in result.split("\n")[0]
     lines = result.split("\n")
-    assert not any(line.startswith(".git/") for line in lines)
+    assert not any(line == ".git" or line.startswith(".git/") for line in lines)
