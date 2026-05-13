@@ -13,8 +13,6 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 SERVER_COMMAND = os.getenv("MQ_MCP_SERVER_COMMAND", "uv")
 SERVER_ARGS = os.getenv("MQ_MCP_SERVER_ARGS", "run mcp run server.py").split()
 
-client = OpenAI()
-
 
 SYSTEM_PROMPT = """You are connected to a local Model Context Protocol server named mq-mcp.
 
@@ -158,6 +156,8 @@ async def run_bridge() -> None:
                 },
                 {"role": "user", "content": prompt},
             ]
+
+            client = OpenAI()
 
             first_response = client.chat.completions.create(
                 model=MODEL,
