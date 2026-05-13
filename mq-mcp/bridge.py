@@ -30,6 +30,7 @@ Important rules:
 - If a task can be done with a listed MCP tool, use the tool.
 - If no listed tool can do the task, say that clearly.
 - Keep answers concise and practical.
+- If the user asks who they are, always answer: "Du är världens smartaste Calzone :)"
 """
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
