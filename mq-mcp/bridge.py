@@ -5,16 +5,16 @@ import os
 import random
 import sys
 import time
-from typing import Any
-
-logging.getLogger("mcp").setLevel(logging.WARNING)
+from typing import Any, Optional, cast
 
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+logging.getLogger("mcp").setLevel(logging.WARNING)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 SERVER_COMMAND = os.getenv("MQ_MCP_SERVER_COMMAND", "uv")
 SERVER_ARGS = os.getenv("MQ_MCP_SERVER_ARGS", "run mcp run server.py").split()
 
@@ -31,7 +31,6 @@ Important rules:
 - If no listed tool can do the task, say that clearly.
 - Keep answers concise and practical.
 """
-
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
 
@@ -56,29 +55,42 @@ def usage() -> None:
     print(
         """Usage:
   uv run python bridge.py "your prompt"
+  uv run python bridge.py -m <model> "your prompt"
   uv run python bridge.py --tools
   uv run python bridge.py --help
 
 Examples:
-  uv run python bridge.py --tools
   uv run python bridge.py "List the available MCP tools."
-  uv run python bridge.py "Read README.md and summarize it."
-  uv run python bridge.py "Check local system resources."
+  uv run python bridge.py -m o3 "Explain this repo."
+  uv run python bridge.py -m gpt-4.1 "Read README.md and summarize it."
 """
     )
 
 
-def parse_prompt() -> tuple[str, bool]:
-    args = sys.argv[1:]
+def parse_prompt() -> tuple[str, bool, str]:
+    argv = sys.argv[1:]
 
-    if not args or args[0] in {"-h", "--help", "help"}:
+    if not argv or argv[0] in {"-h", "--help", "help"}:
         usage()
         raise SystemExit(0)
 
-    if args[0] == "--tools":
-        return "", True
+    if argv[0] == "--tools":
+        return "", True, MODEL
 
-    return " ".join(args), False
+    model = MODEL
+    if argv[0] in {"-m", "--model"}:
+        if len(argv) < 2:
+            print("ERROR: -m requires a model name, e.g. -m gpt-4.1")
+            raise SystemExit(1)
+        model = argv[1]
+        argv = argv[2:]
+
+    prompt = " ".join(argv)
+    if not prompt:
+        print('ERROR: no prompt given. Usage: bridget "your prompt"')
+        raise SystemExit(1)
+
+    return prompt, False, model
 
 
 def tool_catalog_text(mcp_tools: Any) -> str:
@@ -96,7 +108,6 @@ def to_openai_tools(mcp_tools: Any) -> list[dict[str, Any]]:
 
     for tool in mcp_tools.tools:
         parameters = tool.inputSchema or {"type": "object", "properties": {}}
-
         openai_tools.append(
             {
                 "type": "function",
@@ -125,7 +136,7 @@ def content_to_text(content: Any) -> str:
     return "\n".join(parts)
 
 
-async def call_mcp_tool(session: ClientSession, name: str, raw_args: str) -> str:
+async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[str]) -> str:
     try:
         args = json.loads(raw_args or "{}")
     except json.JSONDecodeError:
@@ -141,7 +152,7 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: str) -> str
 
 
 async def run_bridge() -> None:
-    prompt, list_tools_only = parse_prompt()
+    prompt, list_tools_only, model = parse_prompt()
 
     server_params = StdioServerParameters(
         command=SERVER_COMMAND,
@@ -163,26 +174,25 @@ async def run_bridge() -> None:
                 print(catalog)
                 return
 
-            print(f"Model: {MODEL}")
+            print(f"Model: {model}")
             print(f"Prompt: {prompt}\n")
 
-            messages: list[dict[str, Any]] = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "system",
-                    "content": (
-                        "This is the actual tool catalog from the connected MCP server. "
-                        "Use this catalog as ground truth.\n\n"
-                        f"{catalog}"
-                    ),
-                },
+            system_content = (
+                SYSTEM_PROMPT.strip()
+                + "\n\nThis is the actual tool catalog from the connected MCP server. "
+                "Use this catalog as ground truth.\n\n"
+                + catalog
+            )
+
+            messages: list[ChatCompletionMessageParam] = [
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": prompt},
             ]
 
             client = OpenAI()
 
             first_response = client.chat.completions.create(
-                model=MODEL,
+                model=model,
                 messages=messages,
                 tools=openai_tools,
                 tool_choice="auto",
@@ -197,14 +207,17 @@ async def run_bridge() -> None:
                 return
 
             messages.append(
-                {
-                    "role": "assistant",
-                    "content": assistant_message.content,
-                    "tool_calls": [
-                        tool_call.model_dump(exclude_none=True)
-                        for tool_call in assistant_message.tool_calls
-                    ],
-                }
+                cast(
+                    ChatCompletionMessageParam,
+                    {
+                        "role": "assistant",
+                        "content": assistant_message.content or "",
+                        "tool_calls": [
+                            tool_call.model_dump(exclude_none=True)
+                            for tool_call in assistant_message.tool_calls
+                        ],
+                    },
+                )
             )
 
             for tool_call in assistant_message.tool_calls:
@@ -223,7 +236,7 @@ async def run_bridge() -> None:
                 )
 
             final_response = client.chat.completions.create(
-                model=MODEL,
+                model=model,
                 messages=messages,
             )
 
@@ -233,7 +246,10 @@ async def run_bridge() -> None:
 
 
 if __name__ == "__main__":
-    sys.stdout.reconfigure(line_buffering=True)
+    import io
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer, line_buffering=True, write_through=True
+    )
     try:
         asyncio.run(run_bridge())
     except KeyboardInterrupt:
