@@ -51,12 +51,12 @@ Goal: make it easy to verify that the local MCP setup works.
 Goal: make the local MCP server safer and easier to extend.
 
 - [ ] Replace hardcoded local paths with config or environment variables
-- [ ] Add an explicit filesystem allowlist
+- [x] Add an explicit filesystem allowlist
 - [x] Document every exposed MCP tool
 - [ ] Separate system tools from repo/file tools
 - [x] Add safer error handling
-- [ ] Add tests for path safety
-- [ ] Add tests for tool output shape
+- [x] Add tests for path safety
+- [x] Add tests for tool output shape
 - [ ] Add a minimal example config file
 
 ## v0.2.1 — GitHub Actions and quality checks

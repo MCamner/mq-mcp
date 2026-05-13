@@ -126,6 +126,8 @@ Planned demo material:
 
 ## Safety notes
 
+See [`docs/security.md`](docs/security.md) for the MCP safety policy.
+
 This project is local-first and experimental.
 
 Before using or extending it:
