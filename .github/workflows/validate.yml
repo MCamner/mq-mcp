@@ -36,4 +36,4 @@ jobs:
         run: ./scripts/validate.sh
 
       - name: Run tests
-        run: uv --directory mq-mcp run pytest tests/ -v
+        run: uv --directory mq-mcp run pytest ../tests/ -v

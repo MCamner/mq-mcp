@@ -105,13 +105,13 @@ Current docs include:
 - a GitHub Pages landing page
 - screenshot folder structure
 - public readiness baseline
-- existing macOS MCP installation guide
+- macOS installation guide in [`docs/install.md`](docs/install.md)
 
 ## Demo material
 
 Current demo material:
 
-- MCP installation guide for macOS
+- macOS installation guide in [`docs/install.md`](docs/install.md)
 - GitHub Pages landing page in `docs/index.html`
 - local MCP server experiment in `mq-mcp/server.py`
 - OpenAI/MCP bridge experiment in `mq-mcp/bridge.py`
