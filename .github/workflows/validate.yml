@@ -1,0 +1,36 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: mq-mcp/.python-version
+
+      - name: Install dependencies
+        working-directory: mq-mcp
+        run: uv sync
+
+      - name: Validate shell script syntax
+        run: bash -n scripts/validate.sh
+
+      - name: Compile Python files
+        run: python -m compileall mq-mcp/bridge.py mq-mcp/server.py mq-mcp/main.py
+
+      - name: Run local validation
+        run: ./scripts/validate.sh
