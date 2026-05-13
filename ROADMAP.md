@@ -37,13 +37,13 @@ Goal: make the project understandable from the GitHub front page.
 
 Goal: make it easy to verify that the local MCP setup works.
 
-- [ ] Add a simple validation command
-- [ ] Add expected output examples
+- [x] Add a simple validation command
+- [x] Add expected output examples
 - [ ] Add troubleshooting notes for missing `uv`
 - [ ] Add troubleshooting notes for Python version mismatch
 - [ ] Add troubleshooting notes for missing OpenAI credentials
 - [ ] Add troubleshooting notes for MCP server startup failures
-- [ ] Add a small smoke-test script
+- [x] Add a small smoke-test script
 - [ ] Add a release-readiness checklist
 
 ## v0.2.0 — Safer MCP server structure
@@ -54,7 +54,7 @@ Goal: make the local MCP server safer and easier to extend.
 - [ ] Add an explicit filesystem allowlist
 - [ ] Document every exposed MCP tool
 - [ ] Separate system tools from repo/file tools
-- [ ] Add safer error handling
+- [x] Add safer error handling
 - [ ] Add tests for path safety
 - [ ] Add tests for tool output shape
 - [ ] Add a minimal example config file
