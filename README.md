@@ -192,7 +192,7 @@ python -m compileall mq-mcp/
 Run the safety tests:
 
 ```bash
-uv --directory mq-mcp run pytest tests/ -v
+uv --directory mq-mcp run pytest ../tests -v
 ```
 
 ## Roadmap

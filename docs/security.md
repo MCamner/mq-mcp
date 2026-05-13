@@ -4,38 +4,38 @@
 
 ## Tool categories
 
-### Read-only tools (repo-scoped)
+### Read-only tools — repo-scoped
 
 These tools do not modify files and are restricted to the repository root:
 
-- `get_system_resources`
 - `read_repo_file`
 - `list_repo_files`
 - `search_repo`
 - `git_status`
 - `git_diff`
+
+### Read-only tools — system or broad access
+
+These tools do not modify files, but may inspect system state or read user-provided files:
+
+- `get_system_resources`
 - `analyze_csv`
+- `analyze_guitar_pro`
 
-### Read-only tools (broad access)
+### Controlled action tools — repo-scoped
 
-These tools do not modify files but may access paths outside the repository root by design:
+These tools can perform controlled local actions inside the repository root:
 
-- `analyze_guitar_pro` — reads Guitar Pro files from the Guitar Pro 8 application
+- `validate_project`
+- `update_repo_file`
 
-### Controlled action tools (broad access)
+### Controlled action tools — broad access
 
-These tools can perform local actions and may access paths outside the repository root by design:
+These tools can affect local files or applications and should be reviewed carefully before expansion:
 
-- `open_in_app` — opens a file in its default application (e.g. Photoshop)
-- `edit_image` — applies in-place image transforms; may access files in external application folders
-
-### Controlled action tools (repo-scoped)
-
-These tools can modify files but are restricted to the repository root:
-
-- `validate_project` — runs the local validation script
-- `run_mqlaunch` — runs `mqlaunch.sh`
-- `update_repo_file` — replaces exact text in allowed repo files
+- `run_mqlaunch`
+- `open_in_app`
+- `edit_image`
 
 ## File update policy
 
@@ -67,21 +67,17 @@ Run the local validation script:
 ./scripts/validate.sh
 ```
 
-Run the safety tests:
+Run the safety tests from the repository root:
 
 ```bash
-uv --directory mq-mcp run pytest tests/ -v
+uv --directory mq-mcp run pytest ../tests -v
 ```
 
-## Design principle
+## Safe workflow
 
-Prefer small, reviewable, reversible changes.
-
-The safe workflow is:
-
-1. inspect
-2. propose
-3. update exact text
-4. show diff
-5. human reviews
-6. human commits
+1. Inspect
+2. Propose
+3. Update exact text
+4. Show diff
+5. Human reviews
+6. Human commits
