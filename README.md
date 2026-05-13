@@ -159,6 +159,29 @@ The local MCP server currently exposes these tools:
 - `open_in_app` — opens a repo file in the default app
 - `edit_image` — edits an image with supported actions
 
+## Validation
+
+Run the local validation script from the repository root:
+
+```bash
+./scripts/validate.sh
+```
+
+The validation checks:
+
+- required project files
+- absence of debug and backup files
+- Python syntax compilation
+- MCP tool listing
+- core MCP tools including `read_repo_file`, `list_repo_files`, `search_repo`, `git_status`, `git_diff`, `validate_project`, and `update_repo_file`
+
+You can also run validation through the bridge:
+
+```bash
+cd mq-mcp
+uv run python bridge.py "Run project validation."
+```
+
 ## Development checks
 
 Useful local checks:

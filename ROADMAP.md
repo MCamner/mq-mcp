@@ -22,15 +22,15 @@ Status: done.
 
 Goal: make the project understandable from the GitHub front page.
 
-- [ ] Fix root README formatting
-- [ ] Explain what the project is and is not
-- [ ] Document the repository layout
-- [ ] Document the local setup flow
-- [ ] Document how to run the MCP server
-- [ ] Document how to run the OpenAI/MCP bridge
-- [ ] Add clear safety notes
-- [ ] Add basic development checks
-- [ ] Confirm GitHub Pages link works
+- [x] Fix root README formatting
+- [x] Explain what the project is and is not
+- [x] Document the repository layout
+- [x] Document the local setup flow
+- [x] Document how to run the MCP server
+- [x] Document how to run the OpenAI/MCP bridge
+- [x] Add clear safety notes
+- [x] Add basic development checks
+- [x] Confirm GitHub Pages link works
 - [ ] Add at least one screenshot or terminal output example
 
 ## v0.1.2 — Local validation flow
@@ -52,7 +52,7 @@ Goal: make the local MCP server safer and easier to extend.
 
 - [ ] Replace hardcoded local paths with config or environment variables
 - [ ] Add an explicit filesystem allowlist
-- [ ] Document every exposed MCP tool
+- [x] Document every exposed MCP tool
 - [ ] Separate system tools from repo/file tools
 - [x] Add safer error handling
 - [ ] Add tests for path safety
