@@ -15,21 +15,21 @@ PACK_DIR = Path("/tmp/mq-mcp-vector-pack")
 
 ALLOWED_SUFFIXES = {".md", ".txt", ".py", ".sh", ".yml", ".yaml", ".html"}
 
-client = OpenAI()
-
 
 def main() -> None:
+    client = OpenAI()
+
     files = sorted(
-        path for path in PACK_DIR.rglob("*")
-        if path.is_file() and path.suffix in ALLOWED_SUFFIXES
+        p for p in PACK_DIR.rglob("*")
+        if p.is_file() and p.suffix in ALLOWED_SUFFIXES
     )
 
     if not files:
         raise SystemExit(f"No uploadable files found in {PACK_DIR}")
 
     print(f"Files to upload: {len(files)}")
-    for f in files:
-        print(f"  {f.relative_to(PACK_DIR)}")
+    for p in files:
+        print(f"  {p.relative_to(PACK_DIR)}")
     print()
 
     print(f"Creating vector store: {VECTOR_STORE_NAME}")

@@ -7,6 +7,8 @@ import sys
 import time
 from typing import Any, Optional, cast
 
+from ask import run_ask
+
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 from mcp import ClientSession, StdioServerParameters
@@ -63,12 +65,12 @@ def usage() -> None:
 Examples:
   uv run python bridge.py "List the available MCP tools."
   uv run python bridge.py -m o3 "Explain this repo."
-  uv run python bridge.py -m gpt-4.1 "Read README.md and summarize it."
+  uv run python bridge.py --search "What does server.py do?"
 """
     )
 
 
-def parse_prompt() -> tuple[str, bool, str]:
+def parse_prompt() -> tuple[str, bool, str, bool]:
     argv = sys.argv[1:]
 
     if not argv or argv[0] in {"-h", "--help", "help"}:
@@ -76,7 +78,7 @@ def parse_prompt() -> tuple[str, bool, str]:
         raise SystemExit(0)
 
     if argv[0] == "--tools":
-        return "", True, MODEL
+        return "", True, MODEL, False
 
     model = MODEL
     if argv[0] in {"-m", "--model"}:
@@ -86,12 +88,17 @@ def parse_prompt() -> tuple[str, bool, str]:
         model = argv[1]
         argv = argv[2:]
 
+    search = False
+    if argv and argv[0] == "--search":
+        search = True
+        argv = argv[1:]
+
     prompt = " ".join(argv)
     if not prompt:
         print('ERROR: no prompt given. Usage: bridget "your prompt"')
         raise SystemExit(1)
 
-    return prompt, False, model
+    return prompt, False, model, search
 
 
 def tool_catalog_text(mcp_tools: Any) -> str:
@@ -156,7 +163,11 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
 
 
 async def run_bridge() -> None:
-    prompt, list_tools_only, model = parse_prompt()
+    prompt, list_tools_only, model, search = parse_prompt()
+
+    if search:
+        run_ask(prompt, model)
+        return
 
     server_params = StdioServerParameters(
         command=SERVER_COMMAND,
