@@ -16,7 +16,7 @@ from mcp.client.stdio import stdio_client
 
 logging.getLogger("mcp").setLevel(logging.WARNING)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 SERVER_COMMAND = os.getenv("MQ_MCP_SERVER_COMMAND", "uv")
 SERVER_ARGS = os.getenv("MQ_MCP_SERVER_ARGS", "run mcp run server.py").split()
 

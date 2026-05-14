@@ -14,7 +14,7 @@ import time
 
 from openai import OpenAI
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 VECTOR_STORE_ID = os.getenv("OPENAI_VECTOR_STORE_ID", "")
 
 SYSTEM = """You are a repo-aware assistant for the mq-mcp repository.
