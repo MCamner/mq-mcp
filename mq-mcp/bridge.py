@@ -66,11 +66,12 @@ Examples:
   uv run python bridge.py "List the available MCP tools."
   uv run python bridge.py -m o3 "Explain this repo."
   uv run python bridge.py --search "What does server.py do?"
+  uv run python bridge.py --search-global "How do all my repos relate?"
 """
     )
 
 
-def parse_prompt() -> tuple[str, bool, str, bool]:
+def parse_prompt() -> tuple[str, bool, str, bool, bool]:
     argv = sys.argv[1:]
 
     if not argv or argv[0] in {"-h", "--help", "help"}:
@@ -78,7 +79,7 @@ def parse_prompt() -> tuple[str, bool, str, bool]:
         raise SystemExit(0)
 
     if argv[0] == "--tools":
-        return "", True, MODEL, False
+        return "", True, MODEL, False, False
 
     model = MODEL
     if argv[0] in {"-m", "--model"}:
@@ -89,8 +90,13 @@ def parse_prompt() -> tuple[str, bool, str, bool]:
         argv = argv[2:]
 
     search = False
+    search_global = False
     if argv and argv[0] == "--search":
         search = True
+        argv = argv[1:]
+    elif argv and argv[0] == "--search-global":
+        search = True
+        search_global = True
         argv = argv[1:]
 
     prompt = " ".join(argv)
@@ -98,7 +104,7 @@ def parse_prompt() -> tuple[str, bool, str, bool]:
         print('ERROR: no prompt given. Usage: bridget "your prompt"')
         raise SystemExit(1)
 
-    return prompt, False, model, search
+    return prompt, False, model, search, search_global
 
 
 def tool_catalog_text(mcp_tools: Any) -> str:
@@ -163,10 +169,10 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
 
 
 async def run_bridge() -> None:
-    prompt, list_tools_only, model, search = parse_prompt()
+    prompt, list_tools_only, model, search, search_global = parse_prompt()
 
     if search:
-        run_ask(prompt, model)
+        run_ask(prompt, model, global_only=search_global)
         return
 
     server_params = StdioServerParameters(
