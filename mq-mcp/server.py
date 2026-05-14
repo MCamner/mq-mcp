@@ -57,20 +57,21 @@ def read_repo_file(relative_path: str) -> str:
         return str(exc)
 @mcp.tool()
 def run_mqlaunch() -> str:
-    """Startar och kör skriptet mqlaunch.sh i projektmappen."""
+    """Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal."""
     script_path = Path(__file__).resolve().parent / "mqlaunch.sh"
-    
-    if not os.path.exists(script_path):
+
+    if not script_path.exists():
         return f"Fel: Hittade inte mqlaunch.sh på {script_path}"
-        
+
     try:
-        # Kör skriptet och fånga output
-        process = subprocess.run([script_path], capture_output=True, text=True, check=True)
-        return f"mqlaunch.sh kördes framgångsrikt!\n\nOutput:\n{process.stdout}"
-    except subprocess.CalledProcessError as e:
-        return f"mqlaunch.sh misslyckades med felkod {e.returncode}.\n\nError:\n{e.stderr}"
+        subprocess.Popen(
+            ["osascript", "-e", f'tell application "Terminal" to do script "zsh {script_path}"'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return "mqlaunch öppnat i ett nytt Terminal-fönster."
     except Exception as e:
-        return f"Ett oväntat fel uppstod: {str(e)}"
+        return f"Kunde inte öppna mqlaunch: {e}"
 
 # --- MUSIK & APP-KONTROLL ---
 
