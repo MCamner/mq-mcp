@@ -1,1 +1,4 @@
-#!/bin/bash\necho "MQ Launching..."\nsleep 1\necho "Done!"
+#!/bin/bash
+echo "MQ Launching..."
+sleep 1
+echo "Done!"
