@@ -270,5 +270,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nAvbrutet.")
     except Exception as exc:
-        print(f"\nEtt fel uppstod: {exc}")
+        if isinstance(exc, ExceptionGroup):
+            print("\nAvbrutet.")
+        else:
+            print(f"\nEtt fel uppstod: {exc}")
+            raise
         raise
