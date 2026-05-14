@@ -58,7 +58,7 @@ def read_repo_file(relative_path: str) -> str:
 @mcp.tool()
 def run_mqlaunch() -> str:
     """Startar och kör skriptet mqlaunch.sh i projektmappen."""
-    script_path = os.path.join(REPO_ROOT, "mqlaunch.sh")
+    script_path = Path(__file__).resolve().parent / "mqlaunch.sh"
     
     if not os.path.exists(script_path):
         return f"Fel: Hittade inte mqlaunch.sh på {script_path}"
