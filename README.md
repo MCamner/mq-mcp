@@ -73,7 +73,7 @@ uv run python bridge.py "List the available MCP tools."
 
 The Python project currently declares:
 
-- Python `>=3.14`
+- Python `>=3.11`
 - `mcp[cli]`
 - `openai`
 - `psutil`
@@ -107,22 +107,17 @@ Current docs include:
 - public readiness baseline
 - macOS installation guide in [`docs/install.md`](docs/install.md)
 
-## Demo material
+## Demo
 
-Current demo material:
+See [`docs/demo.md`](docs/demo.md) for example commands and expected output.
 
-- macOS installation guide in [`docs/install.md`](docs/install.md)
-- GitHub Pages landing page in `docs/index.html`
-- local MCP server experiment in `mq-mcp/server.py`
-- OpenAI/MCP bridge experiment in `mq-mcp/bridge.py`
+Quick example — list available tools through the bridge:
 
-Planned demo material:
+```bash
+uv --directory mq-mcp run python bridge.py "List the available MCP tools."
+```
 
-- local MCP server startup output
-- example MCP configuration
-- validation command output
-- troubleshooting flow
-- screenshots of setup and usage
+Expected response lists all 13 MCP tools with descriptions.
 
 ## Safety notes
 

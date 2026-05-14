@@ -1,5 +1,23 @@
 # MCP safety policy
 
+## Tool safety matrix
+
+| Tool | Access | Write | Notes |
+| --- | --- | --- | --- |
+| `get_system_resources` | Local system | No | CPU, memory, disk |
+| `read_repo_file` | Repo root | No | Scoped to repo |
+| `list_repo_files` | Repo root | No | Scoped to repo |
+| `search_repo` | Repo root | No | git grep, read-only |
+| `git_status` | Git metadata | No | Read-only |
+| `git_diff` | Git metadata | No | Read-only |
+| `validate_project` | Local command | No | Runs validate.sh |
+| `update_repo_file` | Repo root | Yes | Exact replacement only, no auto-commit |
+| `analyze_csv` | Repo root | No | CSV analysis |
+| `analyze_guitar_pro` | Repo root | No | Guitar Pro analysis |
+| `open_in_app` | Local app | No | Opens file externally |
+| `edit_image` | Image files | Yes | Writes edited output |
+| `run_mqlaunch` | Local command | Potentially | Review before use |
+
 `mq-mcp` is local-first and experimental. The MCP server exposes tools that can inspect the repository and, in limited cases, update files.
 
 ## Tool categories

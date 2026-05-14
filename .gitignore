@@ -25,3 +25,6 @@ settings.local.json
 # Logs
 *.log
 logs/
+
+# Local backups
+backups/
