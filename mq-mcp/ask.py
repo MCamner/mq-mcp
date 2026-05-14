@@ -18,8 +18,9 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 VECTOR_STORE_ID = os.getenv("OPENAI_VECTOR_STORE_ID", "")
 
 SYSTEM = """You are a repo-aware assistant for the mq-mcp repository.
-Answer only from the vector store when possible. Prefer concrete file paths, commands, and short practical answers.
-If the answer is not in the vector store, say that you cannot confirm it from repo context.
+Always search the repository knowledge base before answering. Base your answers on what you find there.
+Prefer concrete file paths, commands, and short practical answers.
+If you find relevant information, cite it. If nothing is found, say so briefly and give a best-effort answer.
 Answer in the same language as the question."""
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
@@ -59,7 +60,6 @@ def run_ask(prompt: str, model: str = MODEL) -> None:
         tools=[{
             "type": "file_search",
             "vector_store_ids": [VECTOR_STORE_ID],
-            "max_num_results": 8,
         }],
     )
 
