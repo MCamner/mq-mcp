@@ -6,7 +6,9 @@
 - Added face trigger to `bridge.py` — prompts like "hur ser du ut", "visa dig", "who are you" show the face locally with zero API cost.
 - Added Bridget face smoke-check to `scripts/validate.sh`.
 - Synced `pyproject.toml` version to `0.2.1` and fixed description from placeholder.
-- Migrated `analyze_guitar_pro`, `open_in_app`, and `edit_image` in `server.py` to use `resolve_repo_file()` — all 13 tools now use safe repo-scoped path resolution.
+- Added `resolve_allowed_local_file()` to `server.py` — `analyze_guitar_pro`, `open_in_app`, and `edit_image` now accept repo-relative or absolute paths, gated by `MQ_MCP_ALLOWED_PATHS`.
+- Remaining 10 tools continue to use `resolve_repo_file()` — fully repo-scoped.
+- Documented `MQ_MCP_ALLOWED_PATHS` in `mq-mcp/.env.example` and `docs/security.md`.
 - Updated `docs/index.html` GitHub Pages landing page.
 - Updated ROADMAP to mark v0.2.1 done.
 
