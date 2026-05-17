@@ -59,6 +59,14 @@ printf '%s\n' "$tools_output" | grep -q "update_repo_file" || fail "update_repo_
 
 ok "Core MCP tools found"
 
+section "Bridget identity"
+[[ -f "$ROOT/assets/bridget.txt" ]] || fail "assets/bridget.txt missing"
+ok "assets/bridget.txt exists"
+
+face_output="$(uv run python bridge.py "hur ser du ut?" 2>/dev/null)"
+printf '%s\n' "$face_output" | grep -q "I" || fail "Bridget face output looks empty"
+ok "Bridget face trigger works"
+
 section "README bridge smoke test"
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   uv run python bridge.py "Read README.md and summarize it briefly."

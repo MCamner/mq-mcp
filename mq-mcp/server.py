@@ -79,7 +79,7 @@ def run_mqlaunch() -> str:
 def analyze_guitar_pro(relative_path: str) -> str:
     """Analyserar en Guitar Pro-fil (GP3, GP4, GP5)."""
     try:
-        safe_path = os.path.normpath(os.path.join(REPO_ROOT, relative_path))
+        safe_path = resolve_repo_file(relative_path)
         song = guitarpro.parse(safe_path)
         return f"Titel: {song.title}, Artist: {song.artist}, Tempo: {song.tempo} BPM"
     except Exception as e: return f"Fel: {str(e)}"
@@ -88,8 +88,8 @@ def analyze_guitar_pro(relative_path: str) -> str:
 def open_in_app(relative_path: str) -> str:
     """Öppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop)."""
     try:
-        safe_path = os.path.normpath(os.path.join(REPO_ROOT, relative_path))
-        subprocess.run(["open", safe_path], check=True)
+        safe_path = resolve_repo_file(relative_path)
+        subprocess.run(["open", str(safe_path)], check=True)
         return f"Öppnar '{relative_path}'..."
     except Exception as e: return f"Fel: {str(e)}"
 
@@ -109,7 +109,7 @@ def analyze_csv(relative_path: str) -> str:
 def edit_image(relative_path: str, action: str, value: int | None = None) -> str:
     """Redigerar en bild (resize, rotate, grayscale)."""
     try:
-        safe_path = os.path.normpath(os.path.join(REPO_ROOT, relative_path))
+        safe_path = resolve_repo_file(relative_path)
         with Image.open(safe_path) as img:
             if action == "rotate": img = img.rotate(value or 90, expand=True)
             elif action == "grayscale": img = img.convert("L")

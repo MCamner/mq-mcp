@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1 - 2026-05-18
+
+- Added Bridget ASCII face identity in `assets/bridget.txt`.
+- Added face trigger to `bridge.py` — prompts like "hur ser du ut", "visa dig", "who are you" show the face locally with zero API cost.
+- Added Bridget face smoke-check to `scripts/validate.sh`.
+- Synced `pyproject.toml` version to `0.2.1` and fixed description from placeholder.
+- Migrated `analyze_guitar_pro`, `open_in_app`, and `edit_image` in `server.py` to use `resolve_repo_file()` — all 13 tools now use safe repo-scoped path resolution.
+- Updated `docs/index.html` GitHub Pages landing page.
+- Updated ROADMAP to mark v0.2.1 done.
+
 ## 0.2.0 - 2026-05-13
 
 - Added documented MCP safety policy in `docs/security.md`.

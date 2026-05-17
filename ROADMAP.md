@@ -59,16 +59,19 @@ Goal: make the local MCP server safer and easier to extend.
 - [x] Add tests for tool output shape
 - [ ] Add a minimal example config file
 
-## v0.2.1 — GitHub Actions and quality checks
+## v0.2.1 — Bridget identity + repo metadata sync
 
-Goal: avoid regressions and make the repo visibly healthy.
+Status: done.
 
-- [ ] Add Python syntax check workflow
-- [ ] Add basic test workflow
-- [ ] Add README/link validation
-- [ ] Add secret scanning guidance
-- [ ] Add status badge when CI exists
-- [ ] Add release checklist to docs
+- [x] Add Python syntax check workflow
+- [x] Add basic test workflow
+- [x] Add status badge when CI exists
+- [x] Add Bridget ASCII face identity (`assets/bridget.txt`)
+- [x] Add Bridget face trigger to `bridge.py` (zero API cost, local)
+- [x] Add Bridget smoke-check to `scripts/validate.sh`
+- [x] Sync `pyproject.toml` version with `VERSION`
+- [x] Migrate all remaining unsafe `os.path.normpath` paths in `server.py` to `resolve_repo_file()`
+- [x] Update `docs/index.html` GitHub Pages landing
 
 ## v0.3.0 — Usable macOS MCP toolkit
 
