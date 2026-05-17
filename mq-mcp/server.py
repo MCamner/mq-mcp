@@ -26,6 +26,45 @@ def resolve_repo_file(relative_path: str) -> Path:
 
     return target
 
+
+def allowed_external_roots() -> list[Path]:
+    """Return explicit external roots allowed for media/app file tools.
+
+    Configure with:
+      MQ_MCP_ALLOWED_PATHS="/Users/mansys/Music:/Users/mansys/Pictures"
+    """
+    raw = os.getenv("MQ_MCP_ALLOWED_PATHS", "")
+    roots: list[Path] = []
+    for item in raw.split(":"):
+        item = item.strip()
+        if item:
+            roots.append(Path(item).expanduser().resolve())
+    return roots
+
+
+def resolve_allowed_local_file(file_path: str) -> Path:
+    """Resolve a local file inside repo or explicitly allowed external roots.
+
+    Accepts absolute paths or repo-relative paths. External paths require
+    MQ_MCP_ALLOWED_PATHS to include the parent directory.
+    """
+    candidate = Path(file_path).expanduser()
+    target = candidate.resolve() if candidate.is_absolute() else (REPO_ROOT / candidate).resolve()
+
+    repo_root = REPO_ROOT.resolve()
+    allowed_roots = [repo_root, *allowed_external_roots()]
+
+    for root in allowed_roots:
+        try:
+            target.relative_to(root)
+            return target
+        except ValueError:
+            continue
+
+    allowed = ", ".join(str(r) for r in allowed_roots)
+    raise ValueError(f"Blocked path outside allowed roots: {file_path}. Allowed: {allowed}")
+
+
 # Definiera tillåten bas-katalog: repo-roten
 # server.py ligger i ~/mq-mcp/mq-mcp, därför är parent.parent repo-roten.
 # --- SYSTEM & FILER ---
@@ -79,8 +118,8 @@ def run_mqlaunch() -> str:
 def analyze_guitar_pro(relative_path: str) -> str:
     """Analyserar en Guitar Pro-fil (GP3, GP4, GP5)."""
     try:
-        safe_path = resolve_repo_file(relative_path)
-        song = guitarpro.parse(safe_path)
+        safe_path = resolve_allowed_local_file(relative_path)
+        song = guitarpro.parse(str(safe_path))
         return f"Titel: {song.title}, Artist: {song.artist}, Tempo: {song.tempo} BPM"
     except Exception as e: return f"Fel: {str(e)}"
 
@@ -88,7 +127,7 @@ def analyze_guitar_pro(relative_path: str) -> str:
 def open_in_app(relative_path: str) -> str:
     """Öppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop)."""
     try:
-        safe_path = resolve_repo_file(relative_path)
+        safe_path = resolve_allowed_local_file(relative_path)
         subprocess.run(["open", str(safe_path)], check=True)
         return f"Öppnar '{relative_path}'..."
     except Exception as e: return f"Fel: {str(e)}"
@@ -109,7 +148,7 @@ def analyze_csv(relative_path: str) -> str:
 def edit_image(relative_path: str, action: str, value: int | None = None) -> str:
     """Redigerar en bild (resize, rotate, grayscale)."""
     try:
-        safe_path = resolve_repo_file(relative_path)
+        safe_path = resolve_allowed_local_file(relative_path)
         with Image.open(safe_path) as img:
             if action == "rotate": img = img.rotate(value or 90, expand=True)
             elif action == "grayscale": img = img.convert("L")
