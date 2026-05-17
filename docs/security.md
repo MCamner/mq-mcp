@@ -13,9 +13,9 @@
 | `validate_project` | Local command | No | Runs validate.sh |
 | `update_repo_file` | Repo root | Yes | Exact replacement only, no auto-commit |
 | `analyze_csv` | Repo root | No | CSV analysis |
-| `analyze_guitar_pro` | Repo root | No | Guitar Pro analysis |
-| `open_in_app` | Local app | No | Opens file externally |
-| `edit_image` | Image files | Yes | Writes edited output |
+| `analyze_guitar_pro` | Repo + `MQ_MCP_ALLOWED_PATHS` | No | Guitar Pro analysis |
+| `open_in_app` | Repo + `MQ_MCP_ALLOWED_PATHS` | No | Opens file externally |
+| `edit_image` | Repo + `MQ_MCP_ALLOWED_PATHS` | Yes | Writes edited output |
 | `run_mqlaunch` | Local command | Potentially | Review before use |
 
 `mq-mcp` is local-first and experimental. The MCP server exposes tools that can inspect the repository and, in limited cases, update files.
@@ -32,13 +32,13 @@ These tools do not modify files and are restricted to the repository root:
 - `git_status`
 - `git_diff`
 
-### Read-only tools — system or broad access
+### Read-only tools — system or allowed paths
 
-These tools do not modify files, but may inspect system state or read user-provided files:
+These tools do not modify files, but may inspect system state or read files outside the repo:
 
 - `get_system_resources`
 - `analyze_csv`
-- `analyze_guitar_pro`
+- `analyze_guitar_pro` — repo root + paths listed in `MQ_MCP_ALLOWED_PATHS`
 
 ### Controlled action tools — repo-scoped
 
@@ -47,13 +47,13 @@ These tools can perform controlled local actions inside the repository root:
 - `validate_project`
 - `update_repo_file`
 
-### Controlled action tools — broad access
+### Controlled action tools — allowed paths
 
-These tools can affect local files or applications and should be reviewed carefully before expansion:
+These tools can affect local files or applications. External file access is gated by `MQ_MCP_ALLOWED_PATHS`:
 
-- `run_mqlaunch`
-- `open_in_app`
-- `edit_image`
+- `run_mqlaunch` — opens a Terminal window
+- `open_in_app` — repo root + `MQ_MCP_ALLOWED_PATHS`
+- `edit_image` — repo root + `MQ_MCP_ALLOWED_PATHS`
 
 ## File update policy
 
@@ -67,6 +67,20 @@ These tools can affect local files or applications and should be reviewed carefu
 - refuses if no exact match is found
 - refuses if the match appears more than once
 - never commits changes automatically
+
+## External path policy
+
+`analyze_guitar_pro`, `open_in_app`, and `edit_image` use `resolve_allowed_local_file()` instead of the stricter repo-only resolver. This allows absolute paths or paths under explicitly configured directories:
+
+```bash
+# mq-mcp/.env
+MQ_MCP_ALLOWED_PATHS="/Users/mansys/Music:/Users/mansys/Pictures"
+```
+
+- Paths are colon-separated absolute directories.
+- Unset or empty `MQ_MCP_ALLOWED_PATHS` means these tools are restricted to the repo root.
+- Path traversal outside all allowed roots raises `ValueError`.
+- See `.env.example` for the full template.
 
 ## Git policy
 
