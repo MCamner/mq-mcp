@@ -5,6 +5,7 @@ import os
 import random
 import sys
 import time
+from pathlib import Path
 from typing import Any, Optional, cast
 
 from ask import run_ask
@@ -168,8 +169,32 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
         return f"MCP tool call failed: {exc}"
 
 
+def show_bridget_face() -> None:
+    face_file = Path(__file__).resolve().parents[1] / "assets" / "bridget.txt"
+    print(face_file.read_text(encoding="utf-8") if face_file.exists() else "BRIDGET online.")
+
+
+def is_bridget_face_prompt(prompt: str) -> bool:
+    p = prompt.strip().lower()
+    triggers = [
+        "hur ser du ut",
+        "visa dig",
+        "visa bridget",
+        "bridget face",
+        "vem är du",
+        "who are you",
+        "show yourself",
+        "what do you look like",
+    ]
+    return any(t in p for t in triggers)
+
+
 async def run_bridge() -> None:
     prompt, list_tools_only, model, search, search_global = parse_prompt()
+
+    if is_bridget_face_prompt(prompt):
+        show_bridget_face()
+        return
 
     if search:
         run_ask(prompt, model, global_only=search_global)

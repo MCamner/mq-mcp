@@ -1,0 +1,54 @@
+      IIIIIIIIIIIIIIIIIIIIIII
+      IIIIIIIIIIIIIIIIIIIIIIIII
+     IIIIIIIIIIIIIIIIIIIIIIIII
+    IIIIIIIIIIIII      IIIIIII
+    IIIIIIIIIII          IIIIII
+    IIIIIIIIII            IIIII
+   IIIIIIIIIII   IIII    IIIII
+   IIIIIIIII  I        IIII
+   IIIIIIIII           IIII
+   IIIIIIIIIII          III
+   IIIIIIIIIIII        III
+   IIIIIIIII      III III
+   IIIIIIII         IIII
+  IIIII             III
+  IIII               II
+  IIII               II
+  III                I
+   II                 I
+    I                 I
+    I                 I
+    II       I         III
+     I        I        I  I
+     I        I
+      I        I        I     I
+      I         I             II
+                I             I
+       I         I           II
+       II        I        IIII
+        III       I       IIII
+         IIIIIIIIII        III
+         IIIIIIIIII         II
+          IIIIIIIIII        III
+           IIIIIIIII         II
+           IIIIIIIIII        II
+           IIIIIIIIIII    IIIII
+           IIIIIIIIIIIIIIIIIIII
+          IIIIIIIIIIIIIII     I
+         IIIIIIIIIIIIIIII      I
+         IIIIIIIIIIIIIIIII     I
+          IIIIIIIIIIIIIIIII    I
+          IIIIIIIIIIIIIIIIII    I
+        I    IIIIIIIIIIIIIIII    I
+               IIIIIIIIIIIIII
+                 IIIIIIIIIIIII    I
+                   IIIIIIIIIIII
+     I              IIIIIIIIIII
+     I                IIIIIIIIIIIII
+     I                   IIIIIIII I   I
+                                III  I
+      I                   I      IIII
+       I                  I
+        I                  I
+         I
+         IIIIIIIIIIIIIIIIIIII
