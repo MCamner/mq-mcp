@@ -20,6 +20,13 @@ fail() {
   exit 1
 }
 
+section "MCP tool doc check"
+if [[ -x "$ROOT/scripts/check-mcp-tool-docs.sh" ]]; then
+  "$ROOT/scripts/check-mcp-tool-docs.sh"
+else
+  fail "check-mcp-tool-docs.sh missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch
