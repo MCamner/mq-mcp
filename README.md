@@ -149,7 +149,7 @@ The local MCP server currently exposes these tools:
 - `run_mqlaunch` — runs `mqlaunch.sh`
 - `analyze_csv` — analyzes CSV files
 - `analyze_guitar_pro` — analyzes Guitar Pro files
-- `open_in_app` — opens a repo file in the default app
+- `open_in_app` — opens a repo file or explicitly allowed local file in the default app
 - `edit_image` — edits an image with supported actions
 
 ## Validation
