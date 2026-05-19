@@ -4,26 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-SAFETY_DOC="docs/TOOL_SAFETY.md"
+SERVER="mq-mcp/server.py"
+DOC="docs/TOOL_SAFETY.md"
 README="README.md"
 
-tools=(
-  get_system_resources
-  read_repo_file
-  list_repo_files
-  search_repo
-  git_status
-  git_diff
-  validate_project
-  update_repo_file
-  run_mqlaunch
-  analyze_csv
-  analyze_guitar_pro
-  open_in_app
-  edit_image
-)
-
-required_safety_terms=(
+required_terms=(
   "resolve_repo_file"
   "resolve_allowed_local_file"
   "MQ_MCP_ALLOWED_PATHS"
@@ -34,17 +19,51 @@ required_safety_terms=(
 echo "MCP TOOL DOC CHECK"
 echo "=================="
 
-[[ -f "$SAFETY_DOC" ]] || { echo "FAIL: missing $SAFETY_DOC"; exit 1; }
-[[ -f "$README" ]]     || { echo "FAIL: missing $README"; exit 1; }
+for file in "$SERVER" "$DOC" "$README"; do
+  [[ -f "$file" ]] || { echo "FAIL: missing $file"; exit 1; }
+done
+
+mapfile -t tools < <(
+  python3 - <<'PY'
+import ast
+from pathlib import Path
+
+tree = ast.parse(Path("mq-mcp/server.py").read_text(encoding="utf-8"))
+
+def is_mcp_tool(node):
+    if isinstance(node, ast.Call):
+        node = node.func
+    return (
+        isinstance(node, ast.Attribute)
+        and node.attr == "tool"
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "mcp"
+    )
+
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if any(is_mcp_tool(d) for d in node.decorator_list):
+            print(node.name)
+PY
+)
+
+if [[ "${#tools[@]}" -eq 0 ]]; then
+  echo "FAIL: no @mcp.tool() functions detected in $SERVER"
+  exit 1
+fi
+
+echo "Detected ${#tools[@]} MCP tools:"
+printf ' - %s\n' "${tools[@]}"
+echo
 
 for tool in "${tools[@]}"; do
-  grep -q "$tool" "$SAFETY_DOC" || { echo "FAIL: $tool missing from $SAFETY_DOC"; exit 1; }
-  grep -q "$tool" "$README"     || { echo "FAIL: $tool missing from $README"; exit 1; }
+  grep -q "$tool" "$DOC"    || { echo "FAIL: $tool missing from $DOC"; exit 1; }
+  grep -q "$tool" "$README" || { echo "FAIL: $tool missing from $README"; exit 1; }
 done
 
-for term in "${required_safety_terms[@]}"; do
-  grep -qi "$term" "$SAFETY_DOC" || { echo "FAIL: required term missing from $SAFETY_DOC: $term"; exit 1; }
+for term in "${required_terms[@]}"; do
+  grep -qi "$term" "$DOC" || { echo "FAIL: required term missing from $DOC: $term"; exit 1; }
 done
 
-echo "OK: all 13 MCP tools documented in $SAFETY_DOC and $README"
+echo "OK: every @mcp.tool() in server.py is documented in $DOC and $README"
 echo "OK: safety scope terms present"
