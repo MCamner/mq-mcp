@@ -200,11 +200,9 @@ def is_goto_repo_prompt(prompt: str) -> tuple[bool, str]:
 
 
 def handle_goto_repo(name: str) -> None:
-    """Open Terminal at the named repo. Prints result, no API call."""
-    import subprocess as _sp
+    """Print CD:<path> signal so the bridget() shell wrapper can cd there."""
     repos = known_local_repos()
 
-    # case-insensitive match
     match = next((k for k in repos if k.lower() == name.lower()), None)
     if not match:
         available = ", ".join(sorted(repos.keys()))
@@ -212,15 +210,11 @@ def handle_goto_repo(name: str) -> None:
         return
 
     path = repos[match]
-    try:
-        _sp.Popen(
-            ["osascript", "-e", f'tell application "Terminal" to do script "cd {path} && clear"'],
-            stdout=_sp.DEVNULL,
-            stderr=_sp.DEVNULL,
-        )
-        print(f"Opened Terminal at {match}: {path}")
-    except Exception as exc:
-        print(f"Could not open Terminal: {exc}")
+    # Shell wrapper reads this prefix and runs cd itself.
+    # A subprocess cannot cd in the parent shell directly.
+    print(f"CD:{path}")
+
+
 
 
 def is_bridget_face_prompt(prompt: str) -> bool:
