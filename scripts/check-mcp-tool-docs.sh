@@ -8,12 +8,18 @@ SERVER="mq-mcp/server.py"
 DOC="docs/TOOL_SAFETY.md"
 README="README.md"
 
-required_terms=(
+required_doc_terms=(
   "resolve_repo_file"
   "resolve_allowed_local_file"
   "MQ_MCP_ALLOWED_PATHS"
   "write"
   "subprocess"
+)
+
+required_server_terms=(
+  "resolve_repo_file"
+  "resolve_allowed_local_file"
+  "allowed_external_roots"
 )
 
 echo "MCP TOOL DOC CHECK"
@@ -23,8 +29,7 @@ for file in "$SERVER" "$DOC" "$README"; do
   [[ -f "$file" ]] || { echo "FAIL: missing $file"; exit 1; }
 done
 
-mapfile -t tools < <(
-  python3 - <<'PY'
+tools_output="$(python3 - <<'PY'
 import ast
 from pathlib import Path
 
@@ -45,25 +50,31 @@ for node in ast.walk(tree):
         if any(is_mcp_tool(d) for d in node.decorator_list):
             print(node.name)
 PY
-)
+)"
 
-if [[ "${#tools[@]}" -eq 0 ]]; then
+if [[ -z "$tools_output" ]]; then
   echo "FAIL: no @mcp.tool() functions detected in $SERVER"
   exit 1
 fi
 
-echo "Detected ${#tools[@]} MCP tools:"
-printf ' - %s\n' "${tools[@]}"
+tool_count="$(printf '%s\n' "$tools_output" | wc -l | tr -d ' ')"
+echo "Detected $tool_count MCP tools:"
+printf '%s\n' "$tools_output" | while IFS= read -r t; do printf ' - %s\n' "$t"; done
 echo
 
-for tool in "${tools[@]}"; do
-  grep -q "$tool" "$DOC"    || { echo "FAIL: $tool missing from $DOC"; exit 1; }
-  grep -q "$tool" "$README" || { echo "FAIL: $tool missing from $README"; exit 1; }
+while IFS= read -r tool; do
+  grep -Fq "$tool" "$DOC"    || { echo "FAIL: $tool missing from $DOC"; exit 1; }
+  grep -Fq "$tool" "$README" || { echo "FAIL: $tool missing from $README"; exit 1; }
+done <<< "$tools_output"
+
+for term in "${required_doc_terms[@]}"; do
+  grep -Fqi "$term" "$DOC" || { echo "FAIL: required term missing from $DOC: $term"; exit 1; }
 done
 
-for term in "${required_terms[@]}"; do
-  grep -qi "$term" "$DOC" || { echo "FAIL: required term missing from $DOC: $term"; exit 1; }
+for term in "${required_server_terms[@]}"; do
+  grep -Fq "$term" "$SERVER" || { echo "FAIL: required implementation term missing from $SERVER: $term"; exit 1; }
 done
 
 echo "OK: every @mcp.tool() in server.py is documented in $DOC and $README"
 echo "OK: safety scope terms present"
+echo "OK: resolver implementation terms present"
