@@ -118,7 +118,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 13 MCP tools with descriptions.
+Expected response lists all 14 MCP tools with descriptions.
 
 ## Safety notes
 
