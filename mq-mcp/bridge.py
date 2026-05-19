@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional, cast
 
+from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 
 from openai import OpenAI
@@ -235,8 +236,12 @@ def is_bridget_face_prompt(prompt: str) -> bool:
 async def run_bridge() -> None:
     prompt, list_tools_only, model, search, search_global = parse_prompt()
 
+    if handle_voice_command(prompt):
+        return
+
     if is_bridget_face_prompt(prompt):
         show_bridget_face()
+        speak_if_enabled("Jag är Bridget. Lokal MCP-brygga online.")
         return
 
     goto, repo_name = is_goto_repo_prompt(prompt)
@@ -295,9 +300,11 @@ async def run_bridge() -> None:
             assistant_message = first_response.choices[0].message
 
             if not assistant_message.tool_calls:
+                answer = assistant_message.content or ""
                 sys.stdout.write("Bridget: ")
                 sys.stdout.flush()
-                scramble_print(assistant_message.content or "")
+                scramble_print(answer)
+                speak_if_enabled(answer)
                 return
 
             messages.append(
@@ -337,9 +344,11 @@ async def run_bridge() -> None:
                 messages=messages,
             )
 
+            answer = final_response.choices[0].message.content or ""
             sys.stdout.write("\nBridget: ")
             sys.stdout.flush()
-            scramble_print(final_response.choices[0].message.content or "")
+            scramble_print(answer)
+            speak_if_enabled(answer)
 
 
 if __name__ == "__main__":

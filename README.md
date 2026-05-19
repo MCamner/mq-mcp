@@ -158,6 +158,20 @@ The local MCP server currently exposes these tools:
 - `open_in_app` — opens a repo file or explicitly allowed local file in the default app
 - `edit_image` — edits an image with supported actions
 
+## Bridget voice
+
+Bridget can optionally speak responses locally on macOS using the built-in `say` command. Disabled by default, no external TTS.
+
+```bash
+bridget --voice-list
+bridget --voice-name Samantha
+bridget --voice-on
+bridget --voice-test
+bridget --voice-off
+```
+
+See [`docs/bridget-voice.md`](docs/bridget-voice.md).
+
 ## Validation
 
 Run the local validation script from the repository root:
