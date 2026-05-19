@@ -118,7 +118,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 14 MCP tools with descriptions.
+Expected response lists all 16 MCP tools with descriptions.
 
 ## Safety notes
 
@@ -140,6 +140,8 @@ Before using or extending it:
 The local MCP server currently exposes these tools:
 
 - `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
+- `repo_signal_analyze` — runs repo-signal analyze on a local repository (read-only)
+- `repo_signal_checklist` — runs repo-signal publish checklist on a local repository (read-only)
 - `get_system_resources` — shows CPU, memory, and disk information
 - `read_repo_file` — reads a file inside the repository root
 - `list_repo_files` — lists repository files up to a chosen depth

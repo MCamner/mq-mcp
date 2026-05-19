@@ -378,5 +378,70 @@ def tool_safety_report() -> str:
 
     return safety_doc.read_text(encoding="utf-8")
 
+
+def _resolve_signal_repo(repo_path: str) -> Path:
+    """Resolve a repo path for repo-signal tools.
+
+    Accepts paths within MQ_MCP_ALLOWED_PATHS or REPO_ROOT.
+    Raises ValueError on traversal outside allowed roots.
+    """
+    return resolve_allowed_local_file(repo_path)
+
+
+def _import_repo_signal() -> tuple:
+    """Lazy-import repo-signal modules. Returns (scan_repository, format_analyze_report, analyze_repo, build_publish_checklist, format_publish_checklist) or raises ImportError."""
+    try:
+        from repo_signal.core.scanner import scan_repository
+        from repo_signal.analyze import analyze_repo, format_analyze_report
+        from repo_signal.publish_checklist import build_publish_checklist, format_publish_checklist
+        return scan_repository, format_analyze_report, analyze_repo, build_publish_checklist, format_publish_checklist
+    except ImportError as exc:
+        raise ImportError(f"repo-signal is not installed: {exc}") from exc
+
+
+@mcp.tool()
+def repo_signal_analyze(repo_path: str = ".") -> str:
+    """Run repo-signal analyze on a local repository. Read-only.
+
+    Returns a structured report covering project type, languages, entry points,
+    top directories, tooling, and git state. Path must be within MQ_MCP_ALLOWED_PATHS
+    or the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    try:
+        target = _resolve_signal_repo(repo_path)
+        scan_repository, format_analyze_report, _, _, _ = _import_repo_signal()
+        repo = scan_repository(str(target))
+        return format_analyze_report(repo)
+    except ImportError as exc:
+        return str(exc)
+    except Exception as exc:
+        return f"repo_signal_analyze failed: {exc}"
+
+
+@mcp.tool()
+def repo_signal_checklist(repo_path: str = ".") -> str:
+    """Run repo-signal publish checklist on a local repository. Read-only.
+
+    Returns an OK/WARN checklist covering README quality, LICENSE, CHANGELOG,
+    GitHub Pages, release signals, and documentation completeness. Path must be
+    within MQ_MCP_ALLOWED_PATHS or the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    try:
+        target = _resolve_signal_repo(repo_path)
+        _, _, _, build_publish_checklist, format_publish_checklist = _import_repo_signal()
+        result = build_publish_checklist(str(target))
+        return format_publish_checklist(result, "text")
+    except ImportError as exc:
+        return str(exc)
+    except Exception as exc:
+        return f"repo_signal_checklist failed: {exc}"
+
+
 if __name__ == "__main__":
     mcp.run()
