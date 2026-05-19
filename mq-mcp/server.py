@@ -362,5 +362,21 @@ def validate_project() -> str:
 
     return run_repo_command(["bash", str(script)], timeout=60)
 
+
+@mcp.tool()
+def tool_safety_report() -> str:
+    """Return the documented MCP tool safety classification.
+
+    Read-only. No subprocess, no external file access.
+    Exposes docs/TOOL_SAFETY.md so MCP clients can inspect tool scope,
+    access type, and risk level without touching anything outside the repo.
+    """
+    safety_doc = REPO_ROOT / "docs" / "TOOL_SAFETY.md"
+
+    if not safety_doc.exists():
+        return "Missing docs/TOOL_SAFETY.md. Run scripts/check-mcp-tool-docs.sh."
+
+    return safety_doc.read_text(encoding="utf-8")
+
 if __name__ == "__main__":
     mcp.run()

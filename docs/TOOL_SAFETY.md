@@ -28,6 +28,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `git_status` | Show branch, status, last 5 commits | Modify git state |
 | `git_diff` | Show diff for repo or a specific file | Modify git state |
 | `analyze_csv` | Read and summarize a CSV inside repo | Write, access outside repo |
+| `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`)
 
@@ -85,8 +86,10 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `git_status` | A | run_repo_command | No | No |
 | `git_diff` | A | run_repo_command | No | No |
 | `analyze_csv` | A | resolve_repo_file | No | No |
+| `tool_safety_report` | A | REPO_ROOT (fixed path) | No | No |
 | `get_system_resources` | B | psutil (no file path) | No | No |
 | `analyze_guitar_pro` | B | resolve_allowed_local_file | No | No |
+| `tool_safety_report` | A | resolve_repo_file (implicit) | No | No |
 | `update_repo_file` | C | resolve_repo_file | Yes | No |
 | `edit_image` | C | resolve_allowed_local_file | Yes | No |
 | `open_in_app` | D | resolve_allowed_local_file | No | Yes |

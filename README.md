@@ -139,6 +139,7 @@ Before using or extending it:
 
 The local MCP server currently exposes these tools:
 
+- `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
 - `get_system_resources` — shows CPU, memory, and disk information
 - `read_repo_file` — reads a file inside the repository root
 - `list_repo_files` — lists repository files up to a chosen depth
