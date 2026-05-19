@@ -174,6 +174,55 @@ def show_bridget_face() -> None:
     print(face_file.read_text(encoding="utf-8") if face_file.exists() else "BRIDGET online.")
 
 
+def known_local_repos() -> dict[str, str]:
+    """Read repo registry from MQ_MCP_LOCAL_REPOS (same logic as server.py)."""
+    from pathlib import Path as _Path
+    mcp_root = _Path(__file__).resolve().parents[1]
+    repos: dict[str, str] = {"mq-mcp": str(mcp_root)}
+    raw = os.getenv("MQ_MCP_LOCAL_REPOS", "")
+    for item in raw.split(","):
+        item = item.strip()
+        if item:
+            p = _Path(item).expanduser().resolve()
+            repos[p.name] = str(p)
+    return repos
+
+
+def is_goto_repo_prompt(prompt: str) -> tuple[bool, str]:
+    """Return (True, repo_name) if prompt is a go-to-repo command, else (False, '')."""
+    p = prompt.strip().lower()
+    prefixes = ["gå till ", "go to ", "öppna repo ", "open repo ", "cd "]
+    for prefix in prefixes:
+        if p.startswith(prefix):
+            name = prompt.strip()[len(prefix):].strip().rstrip("!.").strip()
+            return True, name
+    return False, ""
+
+
+def handle_goto_repo(name: str) -> None:
+    """Open Terminal at the named repo. Prints result, no API call."""
+    import subprocess as _sp
+    repos = known_local_repos()
+
+    # case-insensitive match
+    match = next((k for k in repos if k.lower() == name.lower()), None)
+    if not match:
+        available = ", ".join(sorted(repos.keys()))
+        print(f"Unknown repo: '{name}'\nAvailable: {available}")
+        return
+
+    path = repos[match]
+    try:
+        _sp.Popen(
+            ["osascript", "-e", f'tell application "Terminal" to do script "cd {path} && clear"'],
+            stdout=_sp.DEVNULL,
+            stderr=_sp.DEVNULL,
+        )
+        print(f"Opened Terminal at {match}: {path}")
+    except Exception as exc:
+        print(f"Could not open Terminal: {exc}")
+
+
 def is_bridget_face_prompt(prompt: str) -> bool:
     p = prompt.strip().lower()
     triggers = [
@@ -194,6 +243,11 @@ async def run_bridge() -> None:
 
     if is_bridget_face_prompt(prompt):
         show_bridget_face()
+        return
+
+    goto, repo_name = is_goto_repo_prompt(prompt)
+    if goto:
+        handle_goto_repo(repo_name)
         return
 
     if search:

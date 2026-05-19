@@ -29,6 +29,8 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `git_diff` | Show diff for repo or a specific file | Modify git state |
 | `analyze_csv` | Read and summarize a CSV inside repo | Write, access outside repo |
 | `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
+| `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
+| `open_repo_terminal` | Open a registered repo in a new Terminal window | Write files |
 | `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 
@@ -89,8 +91,10 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `git_diff` | A | run_repo_command | No | No |
 | `analyze_csv` | A | resolve_repo_file | No | No |
 | `tool_safety_report` | A | REPO_ROOT (fixed path) | No | No |
+| `list_local_repos` | A | MQ_MCP_LOCAL_REPOS (read env) | No | No |
 | `repo_signal_analyze` | B | resolve_allowed_local_file | No | No |
 | `repo_signal_checklist` | B | resolve_allowed_local_file | No | No |
+| `open_repo_terminal` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
 | `get_system_resources` | B | psutil (no file path) | No | No |
 | `analyze_guitar_pro` | B | resolve_allowed_local_file | No | No |
 | `tool_safety_report` | A | resolve_repo_file (implicit) | No | No |

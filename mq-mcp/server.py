@@ -27,18 +27,44 @@ def resolve_repo_file(relative_path: str) -> Path:
     return target
 
 
+def known_local_repos() -> dict[str, Path]:
+    """Return registered local repos from MQ_MCP_LOCAL_REPOS.
+
+    Configure with comma-separated absolute paths:
+      MQ_MCP_LOCAL_REPOS="/Users/mansys/repo-signal,/Users/mansys/mq-hal"
+
+    Name is derived from the directory basename.
+    mq-mcp repo root is always included as 'mq-mcp'.
+    """
+    repos: dict[str, Path] = {"mq-mcp": REPO_ROOT.resolve()}
+    raw = os.getenv("MQ_MCP_LOCAL_REPOS", "")
+    for item in raw.split(","):
+        item = item.strip()
+        if item:
+            p = Path(item).expanduser().resolve()
+            repos[p.name] = p
+    return repos
+
+
 def allowed_external_roots() -> list[Path]:
     """Return explicit external roots allowed for media/app file tools.
 
+    Includes MQ_MCP_ALLOWED_PATHS and all paths from MQ_MCP_LOCAL_REPOS.
+
     Configure with:
       MQ_MCP_ALLOWED_PATHS="/Users/mansys/Music:/Users/mansys/Pictures"
+      MQ_MCP_LOCAL_REPOS="/Users/mansys/repo-signal,/Users/mansys/mq-hal"
     """
-    raw = os.getenv("MQ_MCP_ALLOWED_PATHS", "")
     roots: list[Path] = []
+    raw = os.getenv("MQ_MCP_ALLOWED_PATHS", "")
     for item in raw.split(":"):
         item = item.strip()
         if item:
             roots.append(Path(item).expanduser().resolve())
+    repo_root = REPO_ROOT.resolve()
+    for path in known_local_repos().values():
+        if path != repo_root and path not in roots:
+            roots.append(path)
     return roots
 
 
@@ -377,6 +403,52 @@ def tool_safety_report() -> str:
         return "Missing docs/TOOL_SAFETY.md. Run scripts/check-mcp-tool-docs.sh."
 
     return safety_doc.read_text(encoding="utf-8")
+
+
+@mcp.tool()
+def list_local_repos() -> str:
+    """List all registered local repositories by name and path. Read-only.
+
+    Includes mq-mcp itself and any repos configured in MQ_MCP_LOCAL_REPOS.
+    """
+    repos = known_local_repos()
+    if not repos:
+        return "No local repos registered. Set MQ_MCP_LOCAL_REPOS in .env."
+    lines = ["Registered local repos:", ""]
+    for name, path in sorted(repos.items()):
+        exists = "exists" if path.exists() else "missing"
+        lines.append(f"  {name}: {path} ({exists})")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def open_repo_terminal(name: str) -> str:
+    """Open a registered local repository in a new Terminal window.
+
+    Looks up the repo by name from MQ_MCP_LOCAL_REPOS (or 'mq-mcp' for this repo).
+    Opens a new Terminal window cd'd into that directory via osascript.
+
+    Args:
+        name: Repository name as registered in MQ_MCP_LOCAL_REPOS.
+    """
+    repos = known_local_repos()
+    if name not in repos:
+        available = ", ".join(sorted(repos.keys()))
+        return f"Unknown repo: '{name}'. Available: {available}"
+
+    path = repos[name]
+    if not path.exists():
+        return f"Repo path does not exist: {path}"
+
+    try:
+        subprocess.Popen(
+            ["osascript", "-e", f'tell application "Terminal" to do script "cd {path} && clear"'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return f"Opened Terminal at {name}: {path}"
+    except Exception as exc:
+        return f"Could not open Terminal: {exc}"
 
 
 def _resolve_signal_repo(repo_path: str) -> Path:
