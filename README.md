@@ -164,7 +164,7 @@ Bridget can optionally speak responses locally on macOS using the built-in `say`
 
 ```bash
 bridget --voice-list
-bridget --voice-name Samantha
+bridget --voice-name Alva
 bridget --voice-on
 bridget --voice-test
 bridget --voice-off

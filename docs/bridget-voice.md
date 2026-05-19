@@ -12,7 +12,7 @@ uv --directory mq-mcp run python bridge.py --voice-off
 uv --directory mq-mcp run python bridge.py --voice-status
 uv --directory mq-mcp run python bridge.py --voice-test
 uv --directory mq-mcp run python bridge.py --voice-list
-uv --directory mq-mcp run python bridge.py --voice-name Samantha
+uv --directory mq-mcp run python bridge.py --voice-name Alva
 ```
 
 Or via the `bridget` shell alias (from `~/mq-mcp`):

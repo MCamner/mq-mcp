@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 
-_DEFAULT_VOICE = "Samantha"
+_DEFAULT_VOICE = "Alva"
 _MAX_SPEECH_CHARS = int(os.getenv("BRIDGET_VOICE_MAX_CHARS", "700"))
 
 
