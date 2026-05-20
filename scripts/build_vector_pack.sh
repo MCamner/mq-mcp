@@ -73,6 +73,44 @@ add_context_file() {
   (( copied++ )) || true
 }
 
+generate_symbol_memory() {
+  local out="$PACK/mq-mcp-symbol-memory.md"
+  local repo_signal_bin
+  local python_bin
+
+  if ! repo_signal_bin="$(command -v repo-signal 2>/dev/null)"; then
+    echo "  [skipped] mq-mcp-symbol-memory.md (repo-signal not found)"
+    return 0
+  fi
+
+  python_bin="$(head -n 1 "$repo_signal_bin" | sed 's|^#!||')"
+  if [[ ! -x "$python_bin" ]]; then
+    python_bin="python3"
+  fi
+
+  if "$python_bin" - "$ROOT" "$out" <<'PY'
+from pathlib import Path
+import sys
+
+repo_root = Path(sys.argv[1])
+output = Path(sys.argv[2])
+
+from repo_signal.core.models import Repository
+from repo_signal.vectorstore.openai_store import build_openai_memory_document
+
+repo = Repository.load(repo_root)
+document = build_openai_memory_document(repo, include_tests=False)
+output.write_text(document, encoding="utf-8")
+PY
+  then
+    echo "  [generated] mq-mcp-symbol-memory.md"
+    (( copied++ )) || true
+  else
+    rm -f "$out"
+    echo "  [skipped] mq-mcp-symbol-memory.md (generation failed)"
+  fi
+}
+
 # -----------------------------------------------------------------
 
 copied=0
@@ -142,6 +180,8 @@ echo "  [generated] repo-tree.md"
 echo "  [generated] git-context.md"
 (( copied += 2 )) || true
 
+generate_symbol_memory
+
 {
   echo "# mq-mcp entrypoints and commands"
   echo
@@ -161,6 +201,7 @@ echo "  [generated] git-context.md"
   echo "- \`bash scripts/build_vector_pack.sh\`: rebuilds \`/tmp/mq-mcp-vector-pack\`."
   echo "- \`uv --directory mq-mcp run python ../scripts/upload_vector_pack.py\`: replaces files in the active local vector store."
   echo "- \`python3 scripts/create_vector_store.py\`: creates a new \`mq-mcp-repo-knowledge\` store and uploads the pack."
+  echo "- \`mq-mcp-symbol-memory.md\`: generated offline from repo-signal symbols and included in the local pack when repo-signal is available."
   echo "- Active local store is read from \`OPENAI_VECTOR_STORE_ID\`."
 } > "$PACK/entrypoints-and-commands.md"
 echo "  [generated] entrypoints-and-commands.md"
