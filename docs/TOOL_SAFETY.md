@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 13 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 19 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,9 +30,6 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `analyze_csv` | Read and summarize a CSV inside repo | Write, access outside repo |
 | `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
 | `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
-| `open_repo_terminal` | Open a registered repo in a new Terminal window | Write files |
-| `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
-| `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`)
 
@@ -46,8 +43,10 @@ These tools cannot write files and cannot run processes. They can read files out
 | --- | --- | --- |
 | `get_system_resources` | Read CPU, memory, disk stats via psutil | Write, access files |
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
+| `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 
-Resolver: `resolve_allowed_local_file` (analyze_guitar_pro), none (get_system_resources)
+Resolver: `resolve_allowed_local_file`
 
 ---
 
@@ -75,9 +74,10 @@ These tools invoke external processes or open applications. Review carefully bef
 | `open_in_app` | Open a file in its default macOS app | Accepts only repo or allowed-root paths |
 | `validate_project` | Run `scripts/validate.sh` with a 60s timeout | Run arbitrary commands |
 | `run_mqlaunch` | Open `mqlaunch.sh` in a new Terminal window via osascript | — |
+| `open_repo_terminal` | Open a registered repo in a new Terminal window | Write files |
 | `hal_repo_report` | Run a read-only mq-hal report (audit, brief, release-brief, repo-status, ci) | Write files, run arbitrary commands |
 
-Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch)
+Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal), fixed allowlist (hal_repo_report)
 
 ---
 
@@ -98,7 +98,6 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `open_repo_terminal` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
 | `get_system_resources` | B | psutil (no file path) | No | No |
 | `analyze_guitar_pro` | B | resolve_allowed_local_file | No | No |
-| `tool_safety_report` | A | resolve_repo_file (implicit) | No | No |
 | `update_repo_file` | C | resolve_repo_file | Yes | No |
 | `edit_image` | C | resolve_allowed_local_file | Yes | No |
 | `open_in_app` | D | resolve_allowed_local_file | No | Yes |

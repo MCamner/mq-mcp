@@ -107,6 +107,7 @@ Current docs include:
 - screenshot folder structure
 - public readiness baseline
 - macOS installation guide in [`docs/install.md`](docs/install.md)
+- MCP client setup guide in [`docs/clients.md`](docs/clients.md)
 
 ## Demo
 
@@ -224,6 +225,10 @@ uv --directory mq-mcp run pytest ../tests -v
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for planned MCP setup, validation, troubleshooting, documentation, and release work.
+
+## Troubleshooting
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) for solutions to common issues with `uv`, Python versions, and API credentials.
 
 ## License
 

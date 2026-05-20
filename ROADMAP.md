@@ -39,10 +39,10 @@ Goal: make it easy to verify that the local MCP setup works.
 
 - [x] Add a simple validation command
 - [x] Add expected output examples
-- [ ] Add troubleshooting notes for missing `uv`
-- [ ] Add troubleshooting notes for Python version mismatch
-- [ ] Add troubleshooting notes for missing OpenAI credentials
-- [ ] Add troubleshooting notes for MCP server startup failures
+- [x] Add troubleshooting notes for missing `uv`
+- [x] Add troubleshooting notes for Python version mismatch
+- [x] Add troubleshooting notes for missing OpenAI credentials
+- [x] Add troubleshooting notes for MCP server startup failures
 - [x] Add a small smoke-test script
 - [ ] Add a release-readiness checklist
 
@@ -79,9 +79,9 @@ Goal: make the repo useful beyond a one-off experiment.
 
 - [x] Add a stable launcher command
 - [ ] Add documented MCP server profiles
-- [ ] Add setup examples for common MCP clients
+- [x] Add setup examples for common MCP clients
 - [ ] Add screenshots for installation and usage
-- [ ] Add a complete troubleshooting page
+- [x] Add a complete troubleshooting page
 - [x] Add example workflows
 - [ ] Add clear upgrade instructions
 
