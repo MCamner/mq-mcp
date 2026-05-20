@@ -31,7 +31,7 @@ Goal: make the project understandable from the GitHub front page.
 - [x] Add clear safety notes
 - [x] Add basic development checks
 - [x] Confirm GitHub Pages link works
-- [ ] Add at least one screenshot or terminal output example
+- [x] Add at least one screenshot or terminal output example
 
 ## v0.1.2 — Local validation flow
 
@@ -50,14 +50,14 @@ Goal: make it easy to verify that the local MCP setup works.
 
 Goal: make the local MCP server safer and easier to extend.
 
-- [ ] Replace hardcoded local paths with config or environment variables
+- [x] Replace hardcoded local paths with config or environment variables
 - [x] Add an explicit filesystem allowlist
 - [x] Document every exposed MCP tool
-- [ ] Separate system tools from repo/file tools
+- [x] Separate system tools from repo/file tools
 - [x] Add safer error handling
 - [x] Add tests for path safety
 - [x] Add tests for tool output shape
-- [ ] Add a minimal example config file
+- [x] Add a minimal example config file
 
 ## v0.2.1 — Bridget identity + repo metadata sync
 
@@ -77,12 +77,12 @@ Status: done.
 
 Goal: make the repo useful beyond a one-off experiment.
 
-- [ ] Add a stable launcher command
+- [x] Add a stable launcher command
 - [ ] Add documented MCP server profiles
 - [ ] Add setup examples for common MCP clients
 - [ ] Add screenshots for installation and usage
 - [ ] Add a complete troubleshooting page
-- [ ] Add example workflows
+- [x] Add example workflows
 - [ ] Add clear upgrade instructions
 
 ## Later
