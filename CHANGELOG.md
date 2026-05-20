@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add integration smoke check for mq-hal and repo-signal MCP tool wiring.
+
 ## 0.2.1 - 2026-05-18
 
 - Added Bridget ASCII face identity in `assets/bridget.txt`.

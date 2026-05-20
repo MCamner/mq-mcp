@@ -81,6 +81,24 @@ The integration should stay local-first and explicit.
 5. Keep write-capable tools documented in `docs/TOOL_SAFETY.md`.
 6. Validate documentation whenever a new MCP tool is added.
 
+## Integration smoke test
+
+Run from the repository root:
+
+```bash
+./scripts/check-integration-smoke.sh
+```
+
+The smoke test verifies that the main integration tools are present in:
+
+- `mq-mcp/server.py`
+- `README.md`
+- `docs/integration.md`
+- `docs/TOOL_SAFETY.md`
+- `scripts/validate.sh`
+
+This protects the public integration story from drifting away from the actual MCP server implementation.
+
 ## v0.3.0 direction
 
 A good v0.3.0 theme:

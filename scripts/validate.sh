@@ -34,6 +34,13 @@ else
   fail "check-integration-docs.sh missing or not executable"
 fi
 
+section "Integration smoke check"
+if [[ -x "$ROOT/scripts/check-integration-smoke.sh" ]]; then
+  "$ROOT/scripts/check-integration-smoke.sh"
+else
+  fail "check-integration-smoke.sh missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch
