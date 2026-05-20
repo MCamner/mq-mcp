@@ -172,6 +172,13 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
         return f"MCP tool call failed: {exc}"
 
 
+def tool_call_name_and_args(tool_call: Any) -> tuple[str, Optional[str]]:
+    function = getattr(tool_call, "function", None)
+    name = getattr(function, "name", "")
+    arguments = getattr(function, "arguments", None)
+    return name, arguments
+
+
 def show_bridget_face() -> None:
     assets = Path(__file__).resolve().parents[1] / "assets"
     images = [
@@ -335,10 +342,24 @@ async def run_bridge() -> None:
             )
 
             for tool_call in assistant_message.tool_calls:
+                tool_name, tool_args = tool_call_name_and_args(tool_call)
+                if not tool_name:
+                    messages.append(
+                        cast(
+                            ChatCompletionMessageParam,
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": "Tool call missing function name.",
+                            },
+                        )
+                    )
+                    continue
+
                 tool_result = await call_mcp_tool(
                     session=session,
-                    name=tool_call.function.name,
-                    raw_args=tool_call.function.arguments,
+                    name=tool_name,
+                    raw_args=tool_args,
                 )
 
                 messages.append(
@@ -365,13 +386,16 @@ async def run_bridge() -> None:
 
 
 if __name__ == "__main__":
-    sys.stdout.reconfigure(line_buffering=True)  # type: ignore[union-attr]
+    reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure_stdout:
+        reconfigure_stdout(line_buffering=True)
+
     try:
         asyncio.run(run_bridge())
     except KeyboardInterrupt:
         print("\nAvbrutet.")
     except Exception as exc:
-        if isinstance(exc, ExceptionGroup):
+        if exc.__class__.__name__ == "ExceptionGroup":
             print("\nAvbrutet.")
         else:
             print(f"\nEtt fel uppstod: {exc}")
