@@ -27,6 +27,13 @@ else
   fail "check-mcp-tool-docs.sh missing or not executable"
 fi
 
+section "Integration docs check"
+if [[ -x "$ROOT/scripts/check-integration-docs.sh" ]]; then
+  "$ROOT/scripts/check-integration-docs.sh"
+else
+  fail "check-integration-docs.sh missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch

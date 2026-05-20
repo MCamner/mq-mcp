@@ -120,6 +120,12 @@ uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 
 Expected response lists all 18 MCP tools with descriptions.
 
+## Integration map
+
+See [`docs/integration.md`](docs/integration.md) for how `mq-mcp`, `mq-hal`, and `repo-signal` work together as a local assistant and repo-quality stack.
+
+GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integration.html)
+
 ## Safety notes
 
 See [`docs/security.md`](docs/security.md) for the MCP safety policy.

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>mq-mcp Integration Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070b10;
+      --panel: #0d1420;
+      --text: #e6edf3;
+      --muted: #9da7b3;
+      --line: #243244;
+      --accent: #7dd3fc;
+      --ok: #86efac;
+      --warn: #fde68a;
+    }
+    body {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: radial-gradient(circle at top, #102033 0, var(--bg) 42%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 48px 20px; }
+    a { color: var(--accent); }
+    .hero {
+      border: 1px solid var(--line);
+      background: rgba(13,20,32,0.88);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+    }
+    h1 { margin-top: 0; font-size: 2rem; line-height: 1.2; }
+    h2 { margin-top: 36px; color: var(--accent); line-height: 1.2; }
+    p, li { color: var(--muted); }
+    pre {
+      overflow-x: auto;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #05080d;
+      color: var(--ok);
+    }
+    code { color: var(--ok); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    th, td { border-bottom: 1px solid var(--line); padding: 12px; text-align: left; vertical-align: top; }
+    th { color: var(--text); background: #111b2a; }
+    td { color: var(--muted); background: rgba(13,20,32,0.7); }
+    .tag {
+      display: inline-block;
+      margin: 4px 6px 4px 0;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--warn);
+      background: #111827;
+      font-size: 0.85rem;
+    }
+    .footer {
+      margin-top: 44px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>mq-mcp Integration Map</h1>
+    <p>
+      <strong>mq-mcp</strong> connects local MCP tools with repo-aware workflows.
+      Together with <strong>mq-hal</strong> and <strong>repo-signal</strong>, it becomes a local assistant stack for safe repository analysis and publish-quality checks.
+    </p>
+    <pre>mq-mcp + mq-hal + repo-signal
+= local AI assistant + safe repo analysis + publish-quality checks</pre>
+    <p>
+      <span class="tag">local-first</span>
+      <span class="tag">read-only by default</span>
+      <span class="tag">repo-aware</span>
+      <span class="tag">publish readiness</span>
+    </p>
+  </section>
+
+  <h2>Project roles</h2>
+  <table>
+    <tr><th>Project</th><th>Role</th></tr>
+    <tr><td><code>mq-mcp</code></td><td>Local MCP server, bridge, and safe tool layer.</td></tr>
+    <tr><td><code>mq-hal</code></td><td>Local assistant / operator layer for asking, auditing, and reporting.</td></tr>
+    <tr><td><code>repo-signal</code></td><td>Repository quality, release readiness, and publishability checks.</td></tr>
+  </table>
+
+  <h2>Main integration tools</h2>
+  <table>
+    <tr><th>MCP tool</th><th>Purpose</th><th>Safety profile</th></tr>
+    <tr><td><code>hal_repo_report</code></td><td>Runs a read-only mq-hal repo report.</td><td>Read-only</td></tr>
+    <tr><td><code>repo_signal_analyze</code></td><td>Runs repo-signal analysis on a local repository.</td><td>Read-only</td></tr>
+    <tr><td><code>repo_signal_checklist</code></td><td>Runs repo-signal publish checklist on a local repository.</td><td>Read-only</td></tr>
+    <tr><td><code>tool_safety_report</code></td><td>Shows documented MCP tool safety classes.</td><td>Read-only</td></tr>
+    <tr><td><code>list_local_repos</code></td><td>Lists registered local repos from <code>MQ_MCP_LOCAL_REPOS</code>.</td><td>Read-only</td></tr>
+    <tr><td><code>open_repo_terminal</code></td><td>Opens a registered repo in Terminal.</td><td>Local action</td></tr>
+  </table>
+
+  <h2>Example repo registration</h2>
+  <pre>export MQ_MCP_LOCAL_REPOS="/Users/mansys/repo-signal,/Users/mansys/mq-hal,/Users/mansys/macos-scripts"</pre>
+
+  <h2>Example Bridget prompts</h2>
+  <pre>bridget "run hal repo report for mq-mcp"
+bridget "run repo signal analyze for mq-mcp"
+bridget "run repo signal checklist for mq-mcp"
+bridget "show tool safety report"</pre>
+
+  <h2>Safety rules</h2>
+  <ol>
+    <li>Default to read-only tools.</li>
+    <li>Keep repo access scoped through registered local repositories.</li>
+    <li>Do not run destructive commands without explicit approval.</li>
+    <li>Do not commit secrets, tokens, private paths, or <code>.env</code> files.</li>
+    <li>Document write-capable tools in <code>docs/TOOL_SAFETY.md</code>.</li>
+    <li>Validate documentation whenever a new MCP tool is added.</li>
+  </ol>
+
+  <h2>v0.3.0 direction</h2>
+  <pre>safer local assistant workflows</pre>
+  <p>
+    Recommended release contents: integration docs, validation guard, safety map, Bridget demo prompts, and clearer repo registration examples.
+  </p>
+
+  <p class="footer">
+    Back to <a href="./index.html">mq-mcp docs</a> ·
+    <a href="https://github.com/MCamner/mq-mcp">GitHub</a>
+  </p>
+</main>
+</body>
+</html>
