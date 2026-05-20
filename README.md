@@ -108,6 +108,7 @@ Current docs include:
 - public readiness baseline
 - macOS installation guide in [`docs/install.md`](docs/install.md)
 - MCP client setup guide in [`docs/clients.md`](docs/clients.md)
+- upgrade instructions in [`docs/upgrade.md`](docs/upgrade.md)
 
 ## Demo
 

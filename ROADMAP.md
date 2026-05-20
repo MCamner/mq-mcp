@@ -83,7 +83,7 @@ Goal: make the repo useful beyond a one-off experiment.
 - [ ] Add screenshots for installation and usage
 - [x] Add a complete troubleshooting page
 - [x] Add example workflows
-- [ ] Add clear upgrade instructions
+- [x] Add clear upgrade instructions
 
 ## Later
 
