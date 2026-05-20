@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/mq-mcp"
 
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
+export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/mq-mcp-pycache}"
+
 # Handles section.
 section() {
   printf '\n== %s ==\n' "$1"
@@ -39,6 +42,13 @@ if [[ -x "$ROOT/scripts/check-integration-smoke.sh" ]]; then
   "$ROOT/scripts/check-integration-smoke.sh"
 else
   fail "check-integration-smoke.sh missing or not executable"
+fi
+
+section "Bridge tool discovery check"
+if [[ -x "$ROOT/scripts/check-bridge-tool-discovery.sh" ]]; then
+  "$ROOT/scripts/check-bridge-tool-discovery.sh"
+else
+  fail "check-bridge-tool-discovery.sh missing or not executable"
 fi
 
 section "Repo"

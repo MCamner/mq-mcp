@@ -87,6 +87,7 @@ Run from the repository root:
 
 ```bash
 ./scripts/check-integration-smoke.sh
+./scripts/check-bridge-tool-discovery.sh
 ```
 
 The smoke test verifies that the main integration tools are present in:
@@ -98,6 +99,8 @@ The smoke test verifies that the main integration tools are present in:
 - `scripts/validate.sh`
 
 This protects the public integration story from drifting away from the actual MCP server implementation.
+
+The bridge tool discovery check also verifies that `bridge.py --tools` exposes the same integration tools to Bridget before any OpenAI prompt is needed.
 
 ## v0.3.0 direction
 

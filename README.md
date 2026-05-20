@@ -196,6 +196,7 @@ The validation checks:
 - core MCP tools including `read_repo_file`, `list_repo_files`, `search_repo`, `git_status`, `git_diff`, `validate_project`, and `update_repo_file`
 - integration documentation wiring
 - integration smoke checks for mq-hal and repo-signal MCP tools
+- bridge tool discovery checks for the tools Bridget can see through `bridge.py --tools`
 
 You can also run validation through the bridge:
 
@@ -211,6 +212,7 @@ Useful local checks:
 ```bash
 git status
 python -m compileall mq-mcp/
+./scripts/check-bridge-tool-discovery.sh
 ```
 
 Run the safety tests:

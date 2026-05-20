@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add bridge tool discovery smoke check for Bridget/MCP tool visibility.
 - Add integration smoke check for mq-hal and repo-signal MCP tool wiring.
 
 ## 0.2.1 - 2026-05-18
