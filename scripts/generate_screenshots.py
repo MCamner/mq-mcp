@@ -88,7 +88,7 @@ def render_terminal_image_screenshot(filename, prompt, image_path, title="Termin
 
 
 def first_existing_bridget_image():
-    for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpeg"):
+    for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpg"):
         path = ASSETS_DIR / filename
         if path.exists():
             return path

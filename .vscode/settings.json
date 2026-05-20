@@ -1,3 +1,7 @@
 {
-    "diffEditor.codeLens": true
+    "diffEditor.codeLens": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/mq-mcp/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "./mq-mcp"
+    ]
 }

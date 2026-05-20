@@ -177,7 +177,7 @@ def show_bridget_face() -> None:
     images = [
         assets / "bridget.jpg",
         assets / "bridget2.jpg",
-        assets / "bridget3.jpeg",
+        assets / "bridget3.jpg",
     ]
     available_images = [path for path in images if path.exists()]
 
