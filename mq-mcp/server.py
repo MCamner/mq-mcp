@@ -515,5 +515,66 @@ def repo_signal_checklist(repo_path: str = ".") -> str:
         return f"repo_signal_checklist failed: {exc}"
 
 
+@mcp.tool()
+def hal_repo_report(mode: str = "audit", repo: str = "mq-mcp") -> str:
+    """Run a read-only mq-hal repository report.
+
+    Connects the mq-mcp MCP surface to mq-hal's local repo helpers.
+
+    Supported modes:
+    - audit: publish quality and README score through mq-hal/repo-signal
+    - brief: compact repository status brief
+    - release-brief: release readiness summary
+    - repo-status: read-only git repository status
+    - ci: GitHub Actions status
+
+    Read-only. Delegates to the local mq-hal CLI via a fixed command allowlist.
+    """
+    allowed_repo_chars = set(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-"
+    )
+    if not repo or any(ch not in allowed_repo_chars for ch in repo):
+        return "Unsupported repo name. Use only letters, numbers, dot, dash, and underscore."
+
+    commands: dict[str, list[str]] = {
+        "audit":         ["mq-hal", "audit",        "--repo", repo],
+        "brief":         ["mq-hal", "brief",         "--repo", repo],
+        "release-brief": ["mq-hal", "release-brief", "--repo", repo],
+        "repo-status":   ["mq-hal", "repo-status",   "--repo", repo],
+        "ci":            ["mq-hal", "ci",             "--repo", repo],
+    }
+
+    if mode not in commands:
+        return (
+            f"Unsupported mode: {mode}\n"
+            f"Supported modes: {', '.join(sorted(commands))}"
+        )
+
+    try:
+        result = subprocess.run(
+            commands[mode],
+            cwd=str(REPO_ROOT),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except FileNotFoundError:
+        return "mq-hal not found. Install mq-hal and make sure it is in PATH."
+    except subprocess.TimeoutExpired:
+        return "mq-hal timed out after 180 seconds."
+
+    output = result.stdout.strip()
+    error = result.stderr.strip()
+
+    if result.returncode != 0:
+        return (
+            f"mq-hal exited with code {result.returncode}.\n\n"
+            f"STDOUT:\n{output}\n\nSTDERR:\n{error}"
+        )
+
+    return output or "mq-hal completed with no output."
+
+
 if __name__ == "__main__":
     mcp.run()

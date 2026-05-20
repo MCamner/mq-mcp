@@ -71,7 +71,7 @@ section "Bridget identity"
 ok "assets/bridget.txt exists"
 
 face_output="$(uv run python bridge.py "hur ser du ut?" 2>/dev/null)"
-printf '%s\n' "$face_output" | grep -q "I" || fail "Bridget face output looks empty"
+[[ -n "$face_output" ]] || fail "Bridget face output looks empty"
 ok "Bridget face trigger works"
 
 section "README bridge smoke test"

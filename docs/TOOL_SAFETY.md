@@ -75,6 +75,7 @@ These tools invoke external processes or open applications. Review carefully bef
 | `open_in_app` | Open a file in its default macOS app | Accepts only repo or allowed-root paths |
 | `validate_project` | Run `scripts/validate.sh` with a 60s timeout | Run arbitrary commands |
 | `run_mqlaunch` | Open `mqlaunch.sh` in a new Terminal window via osascript | — |
+| `hal_repo_report` | Run a read-only mq-hal report (audit, brief, release-brief, repo-status, ci) | Write files, run arbitrary commands |
 
 Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch)
 
@@ -103,3 +104,4 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `open_in_app` | D | resolve_allowed_local_file | No | Yes |
 | `validate_project` | D | fixed path | No | Yes |
 | `run_mqlaunch` | D | fixed path | Potentially | Yes |
+| `hal_repo_report` | D | fixed allowlist (mq-hal CLI) | No | Yes |

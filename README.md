@@ -140,6 +140,7 @@ Before using or extending it:
 The local MCP server currently exposes these tools:
 
 - `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
+- `hal_repo_report` — runs a read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
 - `list_local_repos` — lists registered local repositories from MQ_MCP_LOCAL_REPOS
 - `open_repo_terminal` — opens a registered local repository in a new Terminal window
 - `repo_signal_analyze` — runs repo-signal analyze on a local repository (read-only)

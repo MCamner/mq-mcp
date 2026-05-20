@@ -117,6 +117,38 @@ Expected behavior:
 
 `tool_safety_report` is intentionally read-only. It only returns the repository safety documentation. It does not run commands, modify files, or access external paths.
 
+## Bridget + mq-hal + repo-signal
+
+This connects the full local chain:
+
+```text
+mq-mcp → mq-hal → repo-signal
+```
+
+### Publish-quality audit
+
+```bash
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode audit for repo mq-mcp."
+```
+
+Bridget calls `hal_repo_report`, which delegates to `mq-hal audit --repo mq-mcp`. mq-hal runs repo-signal locally and returns a publish-quality report. No files are modified.
+
+### Release readiness
+
+```bash
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode release-brief for repo mq-mcp."
+```
+
+### Other modes
+
+```bash
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode brief for repo mq-mcp."
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode repo-status for repo mq-mcp."
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode ci for repo mq-mcp."
+```
+
+`hal_repo_report` is read-only. It runs mq-hal as a local subprocess but cannot write files or run arbitrary commands.
+
 ## Notes
 
 This project is local-first and experimental. Review every tool before connecting it to private folders, credentials, or write-capable workflows. See [security.md](security.md) for the full safety policy.
