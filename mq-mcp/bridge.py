@@ -174,13 +174,16 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
 
 def show_bridget_face() -> None:
     assets = Path(__file__).resolve().parents[1] / "assets"
-    jpg = assets / "bridget.jpg"
-    txt = assets / "bridget.txt"
+    images = [
+        assets / "bridget.jpg",
+        assets / "bridget2.jpg",
+        assets / "bridget3.jpeg",
+    ]
+    available_images = [path for path in images if path.exists()]
 
-    if jpg.exists() and shutil.which("chafa"):
-        subprocess.run(["chafa", "--size", "60x30", str(jpg)], check=False)
-    elif txt.exists():
-        print(txt.read_text(encoding="utf-8"))
+    if available_images and shutil.which("chafa"):
+        image = random.choice(available_images)
+        subprocess.run(["chafa", "--size", "60x30", str(image)], check=False)
     else:
         print("BRIDGET online.")
 

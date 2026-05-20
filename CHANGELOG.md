@@ -4,10 +4,11 @@
 
 - Add bridge tool discovery smoke check for Bridget/MCP tool visibility.
 - Add integration smoke check for mq-hal and repo-signal MCP tool wiring.
+- Removed Bridget text face asset; Bridget face output now uses image assets only when available.
 
 ## 0.2.1 - 2026-05-18
 
-- Added Bridget ASCII face identity in `assets/bridget.txt`.
+- Added Bridget face identity asset.
 - Added face trigger to `bridge.py` — prompts like "hur ser du ut", "visa dig", "who are you" show the face locally with zero API cost.
 - Added Bridget face smoke-check to `scripts/validate.sh`.
 - Synced `pyproject.toml` version to `0.2.1` and fixed description from placeholder.

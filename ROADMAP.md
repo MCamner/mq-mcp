@@ -66,7 +66,7 @@ Status: done.
 - [x] Add Python syntax check workflow
 - [x] Add basic test workflow
 - [x] Add status badge when CI exists
-- [x] Add Bridget ASCII face identity (`assets/bridget.txt`)
+- [x] Add Bridget face identity asset
 - [x] Add Bridget face trigger to `bridge.py` (zero API cost, local)
 - [x] Add Bridget smoke-check to `scripts/validate.sh`
 - [x] Sync `pyproject.toml` version with `VERSION`

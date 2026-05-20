@@ -20,6 +20,13 @@ if not os.path.exists(FONT_PATH):
 FONT_SIZE = 14
 LINE_HEIGHT = 20
 PADDING = 40
+TERMINAL_WIDTH = 800
+TITLE_BAR_HEIGHT = 30
+
+
+def draw_terminal_header(draw, width, title, font):
+    draw.rectangle([0, 0, width, TITLE_BAR_HEIGHT], fill=(22, 27, 34))
+    draw.text((10, 7), title, font=font, fill=(139, 148, 158))
 
 
 def render_terminal_screenshot(filename, prompt, output_text, title="Terminal"):
@@ -32,15 +39,13 @@ def render_terminal_screenshot(filename, prompt, output_text, title="Terminal"):
         lines.append(("", TEXT_COLOR, line))
         
     # Image size
-    width = 800
+    width = TERMINAL_WIDTH
     height = (len(lines) + 2) * LINE_HEIGHT + (PADDING * 2)
     
     img = Image.new("RGB", (width, height), BG_COLOR)
     draw = ImageDraw.Draw(img)
     
-    # Draw title bar (optional)
-    draw.rectangle([0, 0, width, 30], fill=(22, 27, 34))
-    draw.text((10, 7), title, font=font, fill=(139, 148, 158))
+    draw_terminal_header(draw, width, title, font)
     
     # Draw content
     y = PADDING + 30
@@ -56,15 +61,48 @@ def render_terminal_screenshot(filename, prompt, output_text, title="Terminal"):
     print(f"Generated: {filename}")
 
 
+def render_terminal_image_screenshot(filename, prompt, image_path, title="Terminal"):
+    font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
+    width = TERMINAL_WIDTH
+    content_width = width - (PADDING * 2)
+
+    bridget = Image.open(image_path).convert("RGB")
+    bridget.thumbnail((content_width, 460))
+
+    height = TITLE_BAR_HEIGHT + PADDING + LINE_HEIGHT + 16 + bridget.height + PADDING
+    img = Image.new("RGB", (width, height), BG_COLOR)
+    draw = ImageDraw.Draw(img)
+
+    draw_terminal_header(draw, width, title, font)
+
+    y = PADDING + TITLE_BAR_HEIGHT
+    draw.text((PADDING, y), "$ ", font=font, fill=PROMPT_COLOR)
+    x = PADDING + draw.textlength("$ ", font=font)
+    draw.text((x, y), prompt, font=font, fill=TEXT_COLOR)
+
+    image_x = PADDING + ((content_width - bridget.width) // 2)
+    img.paste(bridget, (image_x, y + LINE_HEIGHT + 16))
+
+    img.save(SCREENSHOTS_DIR / filename)
+    print(f"Generated: {filename}")
+
+
+def first_existing_bridget_image():
+    for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpeg"):
+        path = ASSETS_DIR / filename
+        if path.exists():
+            return path
+    raise FileNotFoundError("No Bridget image found in assets/")
+
+
 def main():
     SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     
-    # 1. Usage: Bridget ASCII Face
-    bridget_txt = (ASSETS_DIR / "bridget.txt").read_text()
-    render_terminal_screenshot(
+    # 1. Usage: Bridget face
+    render_terminal_image_screenshot(
         "usage_bridget.png",
         "bridget \"hur ser du ut?\"",
-        bridget_txt,
+        first_existing_bridget_image(),
         title="Bridget Usage"
     )
     
