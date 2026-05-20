@@ -109,6 +109,7 @@ Current docs include:
 - macOS installation guide in [`docs/install.md`](docs/install.md)
 - MCP client setup guide in [`docs/clients.md`](docs/clients.md)
 - MCP server profiles in [`docs/profiles.md`](docs/profiles.md)
+- Ghostty terminal setup in [`docs/ghostty.md`](docs/ghostty.md)
 - upgrade instructions in [`docs/upgrade.md`](docs/upgrade.md)
 
 ## Demo
