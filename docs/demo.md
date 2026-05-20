@@ -8,6 +8,8 @@ Small local examples of mq-mcp in action. Run all commands from the repository r
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
+![MCP Tools](screenshots/usage_tools.png)
+
 Expected output (abbreviated):
 
 ```
@@ -32,6 +34,16 @@ Bridget: Here are the available MCP tools:
 13. open_in_app — opens a file in its default app
 14. edit_image — edits an image (resize, rotate, grayscale)
 ```
+
+## Bridget Identity
+
+Bridget has a local ASCII face that triggers on specific prompts.
+
+```bash
+uv --directory mq-mcp run python bridge.py "hur ser du ut?"
+```
+
+![Bridget Usage](screenshots/usage_bridget.png)
 
 ## Check system resources
 

@@ -23,6 +23,8 @@ cd mq-mcp/mq-mcp
 uv sync
 ```
 
+![Installation](screenshots/install_uv_sync.png)
+
 ## List MCP tools
 
 ```bash

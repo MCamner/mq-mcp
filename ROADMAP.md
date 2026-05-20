@@ -80,7 +80,7 @@ Goal: make the repo useful beyond a one-off experiment.
 - [x] Add a stable launcher command
 - [x] Add documented MCP server profiles
 - [x] Add setup examples for common MCP clients
-- [ ] Add screenshots for installation and usage
+- [x] Add screenshots for installation and usage
 - [x] Add a complete troubleshooting page
 - [x] Add example workflows
 - [x] Add clear upgrade instructions
