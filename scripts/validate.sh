@@ -91,8 +91,11 @@ printf '%s\n' "$tools_output" | grep -q "update_repo_file" || fail "update_repo_
 ok "Core MCP tools found"
 
 section "Bridget identity"
-[[ -f "$ROOT/assets/bridget.jpg" ]] || fail "assets/bridget.jpg missing"
-ok "assets/bridget.jpg exists"
+if compgen -G "$ROOT/.assets/*.jpg" >/dev/null || compgen -G "$ROOT/assets/bridget*.jpg" >/dev/null; then
+  ok "Bridget image assets found"
+else
+  fail "No Bridget images found in .assets/*.jpg or assets/bridget*.jpg"
+fi
 
 face_output="$(uv run python bridge.py "hur ser du ut?" 2>/dev/null)"
 [[ -n "$face_output" ]] || fail "Bridget face output looks empty"

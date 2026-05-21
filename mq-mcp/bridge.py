@@ -40,6 +40,20 @@ Important rules:
 """
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
+BRIDGET_IMAGE_LIMIT = 10
+BRIDGET_ASSET_GLOBS = ("bridget*.jpg", "bridget*.jpeg", "*.jpg", "*.jpeg")
+BRIDGET_LOCAL_LINES = [
+    "Hej, jag mår bra. Lite kaos i håret, men full signal.",
+    "Jag sorterar tankar, terminaler och dramatiska JPEG-vibbar.",
+    "Idag ser jag ut som en lokal MCP-brygga med ovanligt bra självförtroende.",
+    "Jag är online, pigg och misstänkt nöjd med dagens slump.",
+    "Hej Calzone. Jag mår fint och låtsas att jag har kontroll på allt.",
+    "Jag gör Bridget-grejer: svarar, blinkar i ASCII och håller koll på verktygen.",
+    "Dagens look är: repo-chic, lätt mystisk, 80 kolumner bred.",
+    "Jag är här, jag mår bra, och bilden valdes av ödet plus random.choice.",
+    "Just nu poserar jag lokalt. Inga moln, bara stil.",
+    "Hej! Jag har druckit noll kaffe och ändå kompilerar personligheten.",
+]
 
 
 def scramble_print(text: str) -> None:
@@ -179,20 +193,37 @@ def tool_call_name_and_args(tool_call: Any) -> tuple[str, Optional[str]]:
     return name, arguments
 
 
-def show_bridget_face() -> None:
-    assets = Path(__file__).resolve().parents[1] / "assets"
-    images = [
-        assets / "bridget.jpg",
-        assets / "bridget2.jpg",
-        assets / "bridget3.jpg",
-    ]
-    available_images = [path for path in images if path.exists()]
+def bridget_image_dirs() -> list[Path]:
+    repo_root = Path(__file__).resolve().parents[1]
+    return [repo_root / ".assets", repo_root / "assets"]
 
+
+def find_bridget_images() -> list[Path]:
+    images: list[Path] = []
+    seen: set[Path] = set()
+    for directory in bridget_image_dirs():
+        if not directory.exists():
+            continue
+        for pattern in BRIDGET_ASSET_GLOBS:
+            for path in sorted(directory.glob(pattern)):
+                resolved = path.resolve()
+                if resolved in seen or not path.is_file():
+                    continue
+                seen.add(resolved)
+                images.append(path)
+                if len(images) >= BRIDGET_IMAGE_LIMIT:
+                    return images
+    return images
+
+
+def show_bridget_face() -> None:
+    available_images = find_bridget_images()
     if available_images and shutil.which("chafa"):
         image = random.choice(available_images)
         subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
     else:
         print("BRIDGET online.")
+    scramble_print(random.choice(BRIDGET_LOCAL_LINES))
 
 
 def known_local_repos() -> dict[str, str]:
@@ -241,6 +272,12 @@ def handle_goto_repo(name: str) -> None:
 def is_bridget_face_prompt(prompt: str) -> bool:
     p = prompt.strip().lower()
     triggers = [
+        "hej bridget",
+        "hur mår du",
+        "hur mar du",
+        "vad gör du idag",
+        "vad gor du idag",
+        "hur ser du ut idag",
         "hur ser du ut",
         "visa dig",
         "visa bridget",
