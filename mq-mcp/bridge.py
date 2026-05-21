@@ -190,7 +190,7 @@ def show_bridget_face() -> None:
 
     if available_images and shutil.which("chafa"):
         image = random.choice(available_images)
-        subprocess.run(["chafa", "--size", "60x30", str(image)], check=False)
+        subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
     else:
         print("BRIDGET online.")
 
