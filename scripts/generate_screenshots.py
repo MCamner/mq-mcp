@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCREENSHOTS_DIR = REPO_ROOT / "docs" / "screenshots"
 ASSETS_DIR = REPO_ROOT / "assets"
+LOCAL_ASSETS_DIR = REPO_ROOT / ".assets"
 
 # Colors (GitHub Dark theme style)
 BG_COLOR = (13, 17, 23)
@@ -88,11 +89,12 @@ def render_terminal_image_screenshot(filename, prompt, image_path, title="Termin
 
 
 def first_existing_bridget_image():
-    for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpg"):
-        path = ASSETS_DIR / filename
-        if path.exists():
-            return path
-    raise FileNotFoundError("No Bridget image found in assets/")
+    for directory in (LOCAL_ASSETS_DIR, ASSETS_DIR):
+        for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpg"):
+            path = directory / filename
+            if path.exists():
+                return path
+    raise FileNotFoundError("No Bridget image found in .assets/ or assets/")
 
 
 def main():

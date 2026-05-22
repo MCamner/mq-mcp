@@ -1,10 +1,10 @@
-"""Apply a soft vignette (edge fade to black) to assets/bridget.jpg."""
+"""Apply a soft vignette (edge fade to black) to the local Bridget image."""
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC = REPO_ROOT / "assets" / "bridget.jpg"
-DST = REPO_ROOT / "assets" / "bridget.jpg"
+SRC = REPO_ROOT / ".assets" / "bridget.jpg"
+DST = SRC
 
 # How far from each edge the fade starts (0.0–0.5, larger = more fading)
 FEATHER = 0.28

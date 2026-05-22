@@ -37,7 +37,7 @@ Bridget: Here are the available MCP tools:
 
 ## Bridget Identity
 
-Bridget has a local ASCII face that triggers on specific prompts.
+Bridget has local image identity prompts that render a random JPG when available.
 
 ```bash
 uv --directory mq-mcp run python bridge.py "hur ser du ut?"

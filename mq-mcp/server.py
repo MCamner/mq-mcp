@@ -460,15 +460,15 @@ def _resolve_signal_repo(repo_path: str) -> Path:
     return resolve_allowed_local_file(repo_path)
 
 
-def _import_repo_signal() -> tuple:
-    """Lazy-import repo-signal modules. Returns (scan_repository, format_analyze_report, analyze_repo, build_publish_checklist, format_publish_checklist) or raises ImportError."""
-    try:
-        from repo_signal.core.scanner import scan_repository
-        from repo_signal.analyze import analyze_repo, format_analyze_report
-        from repo_signal.publish_checklist import build_publish_checklist, format_publish_checklist
-        return scan_repository, format_analyze_report, analyze_repo, build_publish_checklist, format_publish_checklist
-    except ImportError as exc:
-        raise ImportError(f"repo-signal is not installed: {exc}") from exc
+def _run_repo_signal(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
+    """Run repo-signal CLI as a subprocess. Raises FileNotFoundError if not installed."""
+    return subprocess.run(
+        ["repo-signal", *args],
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
 
 
 @mcp.tool()
@@ -484,11 +484,10 @@ def repo_signal_analyze(repo_path: str = ".") -> str:
     """
     try:
         target = _resolve_signal_repo(repo_path)
-        scan_repository, format_analyze_report, _, _, _ = _import_repo_signal()
-        repo = scan_repository(str(target))
-        return format_analyze_report(repo)
-    except ImportError as exc:
-        return str(exc)
+        result = _run_repo_signal(["analyze", str(target)], cwd=target)
+        return result.stdout or result.stderr or "repo_signal_analyze returned no output"
+    except FileNotFoundError:
+        return "repo-signal is not installed or not on PATH"
     except Exception as exc:
         return f"repo_signal_analyze failed: {exc}"
 
@@ -506,13 +505,65 @@ def repo_signal_checklist(repo_path: str = ".") -> str:
     """
     try:
         target = _resolve_signal_repo(repo_path)
-        _, _, _, build_publish_checklist, format_publish_checklist = _import_repo_signal()
-        result = build_publish_checklist(str(target))
-        return format_publish_checklist(result, "text")
-    except ImportError as exc:
-        return str(exc)
+        result = _run_repo_signal(["publish-checklist", str(target)], cwd=target)
+        return result.stdout or result.stderr or "repo_signal_checklist returned no output"
+    except FileNotFoundError:
+        return "repo-signal is not installed or not on PATH"
     except Exception as exc:
         return f"repo_signal_checklist failed: {exc}"
+
+
+@mcp.tool()
+def repo_signal_inspect(repo_path: str = ".") -> dict:
+    """Run repo-signal inspect --json and return structured inspect.v1 data. Read-only.
+
+    Returns machine-readable repository state: public readiness, detected signals,
+    core files, possible issues, and recommended next commit. Uses the stable
+    inspect.v1 JSON contract. Path must be within MQ_MCP_ALLOWED_PATHS or the
+    mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    import json as _json
+    try:
+        target = _resolve_signal_repo(repo_path)
+        result = _run_repo_signal(["inspect", "--json", str(target)], cwd=target)
+        if result.returncode != 0:
+            return {"error": result.stderr.strip() or "inspect failed", "repo_path": str(target)}
+        return _json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "repo-signal is not installed or not on PATH"}
+    except _json.JSONDecodeError as exc:
+        return {"error": f"inspect returned invalid JSON: {exc}"}
+    except Exception as exc:
+        return {"error": f"repo_signal_inspect failed: {exc}"}
+
+
+@mcp.tool()
+def repo_signal_doctor_json(repo_path: str = ".") -> dict:
+    """Run repo-signal doctor --json and return structured doctor.v1 data. Read-only.
+
+    Returns machine-readable repo health: scores for repo health, release maturity,
+    docs quality, and AI readiness. Uses the stable doctor.v1 JSON contract. Path
+    must be within MQ_MCP_ALLOWED_PATHS or the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    import json as _json
+    try:
+        target = _resolve_signal_repo(repo_path)
+        result = _run_repo_signal(["doctor", "--json", str(target)], cwd=target)
+        if result.returncode != 0:
+            return {"error": result.stderr.strip() or "doctor --json failed", "repo_path": str(target)}
+        return _json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "repo-signal is not installed or not on PATH"}
+    except _json.JSONDecodeError as exc:
+        return {"error": f"doctor returned invalid JSON: {exc}"}
+    except Exception as exc:
+        return {"error": f"repo_signal_doctor_json failed: {exc}"}
 
 
 @mcp.tool()
@@ -526,6 +577,7 @@ def hal_repo_report(mode: str = "audit", repo: str = "mq-mcp") -> str:
     - brief: compact repository status brief
     - release-brief: release readiness summary
     - repo-status: read-only git repository status
+    - repo-status-json: structured JSON repo state via inspect.v1 + doctor.v1
     - ci: GitHub Actions status
 
     Read-only. Delegates to the local mq-hal CLI via a fixed command allowlist.
@@ -537,11 +589,12 @@ def hal_repo_report(mode: str = "audit", repo: str = "mq-mcp") -> str:
         return "Unsupported repo name. Use only letters, numbers, dot, dash, and underscore."
 
     commands: dict[str, list[str]] = {
-        "audit":         ["mq-hal", "audit",        "--repo", repo],
-        "brief":         ["mq-hal", "brief",         "--repo", repo],
-        "release-brief": ["mq-hal", "release-brief", "--repo", repo],
-        "repo-status":   ["mq-hal", "repo-status",   "--repo", repo],
-        "ci":            ["mq-hal", "ci",             "--repo", repo],
+        "audit":            ["mq-hal", "audit",            "--repo", repo],
+        "brief":            ["mq-hal", "brief",            "--repo", repo],
+        "release-brief":    ["mq-hal", "release-brief",    "--repo", repo],
+        "repo-status":      ["mq-hal", "repo-status",      "--repo", repo],
+        "repo-status-json": ["mq-hal", "repo-status-json", "--repo", repo],
+        "ci":               ["mq-hal", "ci",               "--repo", repo],
     }
 
     if mode not in commands:
