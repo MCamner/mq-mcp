@@ -20,19 +20,24 @@ Prompt: List the available MCP tools.
 Bridget: Here are the available MCP tools:
 
 1.  tool_safety_report — returns the MCP tool safety classification
-2.  get_system_resources — CPU, memory, and disk info
-3.  read_repo_file — reads a file inside the repository root
-4.  list_repo_files — lists repository files up to a chosen depth
-5.  search_repo — searches repository text with git grep
-6.  git_status — shows branch, status, and recent commits
-7.  git_diff — shows current git diff
-8.  validate_project — runs scripts/validate.sh
-9.  update_repo_file — safely replaces exact text in allowed repo files
-10. run_mqlaunch — runs mqlaunch.sh
-11. analyze_csv — analyzes CSV files
-12. analyze_guitar_pro — analyzes Guitar Pro files
-13. open_in_app — opens a file in its default app
-14. edit_image — edits an image (resize, rotate, grayscale)
+2.  hal_repo_report — read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
+3.  list_local_repos — lists registered local repositories from MQ_MCP_LOCAL_REPOS
+4.  open_repo_terminal — opens a registered local repository in a new Terminal window
+5.  repo_signal_analyze — runs repo-signal analyze on a local repository (read-only)
+6.  repo_signal_checklist — runs repo-signal publish checklist on a local repository (read-only)
+7.  get_system_resources — CPU, memory, and disk info
+8.  read_repo_file — reads a file inside the repository root
+9.  list_repo_files — lists repository files up to a chosen depth
+10. search_repo — searches repository text with git grep
+11. git_status — shows branch, status, and recent commits
+12. git_diff — shows current git diff
+13. validate_project — runs scripts/validate.sh
+14. update_repo_file — safely replaces exact text in allowed repo files
+15. run_mqlaunch — runs mqlaunch.sh
+16. analyze_csv — analyzes CSV files
+17. analyze_guitar_pro — analyzes Guitar Pro files
+18. open_in_app — opens a file in its default app
+19. edit_image — edits an image (resize, rotate, grayscale)
 ```
 
 ## Bridget Identity

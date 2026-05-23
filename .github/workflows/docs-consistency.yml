@@ -1,0 +1,61 @@
+name: Docs consistency
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  consistency:
+    name: Docs consistency check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python version in install.md is not 3.14
+        run: |
+          if grep -q '3\.14' docs/install.md; then
+            echo "FAIL: docs/install.md still references Python 3.14"
+            exit 1
+          fi
+          echo "PASS: docs/install.md Python version OK"
+
+      - name: No stale tool counts (13 tools, 14 tools)
+        run: |
+          STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>/dev/null || true)
+          if [[ -n "$STALE" ]]; then
+            echo "FAIL: Stale tool count found:"
+            echo "$STALE"
+            exit 1
+          fi
+          echo "PASS: No stale tool count references"
+
+      - name: VERSION matches pyproject.toml
+        run: |
+          VERSION="$(cat VERSION)"
+          PYPROJECT_VER="$(grep '^version' mq-mcp/pyproject.toml | sed 's/version = "\(.*\)"/\1/')"
+          if [[ "$VERSION" != "$PYPROJECT_VER" ]]; then
+            echo "FAIL: VERSION=$VERSION but pyproject.toml=$PYPROJECT_VER"
+            exit 1
+          fi
+          echo "PASS: VERSION ($VERSION) matches pyproject.toml"
+
+      - name: README references current version
+        run: |
+          VERSION="$(cat VERSION)"
+          if ! grep -q "$VERSION" README.md; then
+            echo "FAIL: README does not reference version $VERSION"
+            exit 1
+          fi
+          echo "PASS: README references $VERSION"
+
+      - name: CHANGELOG references current version
+        run: |
+          VERSION="$(cat VERSION)"
+          if ! grep -q "$VERSION" CHANGELOG.md; then
+            echo "FAIL: CHANGELOG does not reference version $VERSION"
+            exit 1
+          fi
+          echo "PASS: CHANGELOG references $VERSION"

@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 19 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 50 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,8 +30,9 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `analyze_csv` | Read and summarize a CSV inside repo | Write, access outside repo |
 | `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
 | `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
+| `list_openable_apps` | Return static list of apps Bridget can open | Write, subprocess, file access |
 
-Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`)
+Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
 ---
 
@@ -45,8 +46,19 @@ These tools cannot write files and cannot run processes. They can read files out
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
 | `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_inspect` | Run repo-signal inspect --json on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_doctor_json` | Run repo-signal doctor --json on an allowed repo path | Write, access outside allowed roots |
+| `get_clipboard` | Read clipboard via pbpaste | Write, access files |
+| `get_wifi_info` | Read Wi-Fi info via airport/networksetup | Write, access files |
+| `get_battery_status` | Read battery status via pmset | Write, access files |
+| `list_running_apps` | List visible running apps via osascript | Write, access files |
+| `get_todays_events` | Read today's Calendar events via osascript | Write, access files |
+| `find_large_files` | Find files over a size threshold via find | Write, access files |
+| `find_recent_files` | Find recently modified files via find | Write, access files |
+| `check_port` | Check if a TCP port is in use via lsof | Write, access files |
+| `get_public_ip` | Return public IP via curl to api.ipify.org | Write, access files; makes external HTTP call |
 
-Resolver: `resolve_allowed_local_file`
+Resolver: `resolve_allowed_local_file` (repo-signal tools, analyze_guitar_pro); no resolver for system read-only tools (they read system state, not user files)
 
 ---
 
@@ -58,6 +70,8 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | --- | --- | --- |
 | `update_repo_file` | Replace exact text in allowed repo files | Write outside repo, commit, auto-delete, binary files |
 | `edit_image` | Rotate or convert images in repo or allowed roots | Write outside allowed roots, commit, delete |
+| `set_clipboard` | Copy text to the macOS clipboard via pbcopy | Access files, run arbitrary commands |
+| `take_screenshot` | Capture screen to a file (default ~/Desktop/screenshot.png) | Access outside ~/Desktop or given path |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -76,8 +90,25 @@ These tools invoke external processes or open applications. Review carefully bef
 | `run_mqlaunch` | Open `mqlaunch.sh` in a new Terminal window via osascript | — |
 | `open_repo_terminal` | Open a registered repo in a new Terminal window | Write files |
 | `hal_repo_report` | Run a read-only mq-hal report (audit, brief, release-brief, repo-status, ci) | Write files, run arbitrary commands |
+| `open_messages` | Open Messages.app, optionally to a contact | Send messages, write files |
+| `open_finder` | Open Finder at a path | Write files |
+| `open_url` | Open a URL in the default browser | Arbitrary HTTP; URL must start with http:// or https:// |
+| `show_notification` | Send a macOS system notification via osascript | Write files, access files |
+| `open_app` | Launch any macOS application by name | Arbitrary process launch; rejects names containing `/` |
+| `speak_text` | Speak text aloud via macOS `say` command | Write files, record audio |
+| `open_chrome` | Open Google Chrome, optionally to a URL | Arbitrary HTTP; URL validated |
+| `open_spotify` | Open Spotify, optionally to URI or search | Spotify URIs only or search query |
+| `open_terminal` | Open a new Terminal window, optionally at a path | Run arbitrary commands in Terminal |
+| `open_vscode` | Open VS Code, optionally at a file or folder | Arbitrary file access via VS Code |
+| `set_volume` | Set macOS output volume (0–100) via osascript | Access files |
+| `toggle_dark_mode` | Toggle macOS dark/light mode via osascript | Access files |
+| `lock_screen` | Lock the macOS screen via osascript keystroke | Access files |
+| `create_note` | Create a new note in Notes.app via osascript | Arbitrary note content; cannot read back |
+| `set_reminder` | Create a reminder in Reminders.app via osascript | Arbitrary reminder content |
+| `set_wallpaper` | Set macOS desktop wallpaper via osascript | Accepts any absolute image path |
+| `run_tests` | Run pytest in a registered local repository | Execute code in registered repo |
 
-Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal), fixed allowlist (hal_repo_report)
+Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal, run_tests), fixed allowlist (hal_repo_report), validated URL prefix (open_url, open_chrome), validated app name (open_app), no resolver (open_messages, show_notification, speak_text, set_volume, toggle_dark_mode, lock_screen, create_note, set_reminder, set_wallpaper), open path (open_terminal, open_vscode, open_finder, take_screenshot, find_large_files, find_recent_files, get_public_ip)
 
 ---
 
@@ -93,14 +124,45 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `analyze_csv` | A | resolve_repo_file | No | No |
 | `tool_safety_report` | A | REPO_ROOT (fixed path) | No | No |
 | `list_local_repos` | A | MQ_MCP_LOCAL_REPOS (read env) | No | No |
-| `repo_signal_analyze` | B | resolve_allowed_local_file | No | No |
-| `repo_signal_checklist` | B | resolve_allowed_local_file | No | No |
-| `open_repo_terminal` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
+| `list_openable_apps` | A | none (static output) | No | No |
 | `get_system_resources` | B | psutil (no file path) | No | No |
 | `analyze_guitar_pro` | B | resolve_allowed_local_file | No | No |
+| `repo_signal_analyze` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_checklist` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_inspect` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_doctor_json` | B | resolve_allowed_local_file | No | Yes |
+| `get_clipboard` | B | none (pbpaste) | No | Yes |
+| `get_wifi_info` | B | none (airport/networksetup) | No | Yes |
+| `get_battery_status` | B | none (pmset) | No | Yes |
+| `list_running_apps` | B | none (osascript) | No | Yes |
+| `get_todays_events` | B | none (osascript/Calendar) | No | Yes |
+| `find_large_files` | B | open path (no resolver) | No | Yes |
+| `find_recent_files` | B | open path (no resolver) | No | Yes |
+| `check_port` | B | none (lsof) | No | Yes |
+| `get_public_ip` | B | none (curl to api.ipify.org) | No | Yes |
 | `update_repo_file` | C | resolve_repo_file | Yes | No |
 | `edit_image` | C | resolve_allowed_local_file | Yes | No |
+| `set_clipboard` | C | none (pbcopy) | Clipboard | Yes |
+| `take_screenshot` | C | open path (default ~/Desktop) | Yes (file) | Yes |
 | `open_in_app` | D | resolve_allowed_local_file | No | Yes |
 | `validate_project` | D | fixed path | No | Yes |
 | `run_mqlaunch` | D | fixed path | Potentially | Yes |
+| `open_repo_terminal` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
 | `hal_repo_report` | D | fixed allowlist (mq-hal CLI) | No | Yes |
+| `open_messages` | D | none | No | Yes |
+| `open_finder` | D | open path | No | Yes |
+| `open_url` | D | URL prefix validation | No | Yes |
+| `show_notification` | D | none | No | Yes |
+| `open_app` | D | name validation (no `/`) | No | Yes |
+| `speak_text` | D | none | No | Yes |
+| `open_chrome` | D | URL prefix validation | No | Yes |
+| `open_spotify` | D | URI/search validation | No | Yes |
+| `open_terminal` | D | open path | No | Yes |
+| `open_vscode` | D | open path | No | Yes |
+| `set_volume` | D | none | No | Yes |
+| `toggle_dark_mode` | D | none | No | Yes |
+| `lock_screen` | D | none | No | Yes |
+| `create_note` | D | none | No | Yes |
+| `set_reminder` | D | none | No | Yes |
+| `set_wallpaper` | D | open path | No | Yes |
+| `run_tests` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |

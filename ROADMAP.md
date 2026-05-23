@@ -73,6 +73,17 @@ Status: done.
 - [x] Migrate all remaining unsafe `os.path.normpath` paths in `server.py` to `resolve_repo_file()`
 - [x] Update `docs/index.html` GitHub Pages landing
 
+## v0.2.2 — Credibility polish
+
+Status: done.
+
+- [x] Sync tool count to 19 across README, demo.md, and TOOL_SAFETY.md
+- [x] Fix Python version requirement in docs/install.md (3.14 → >=3.11)
+- [x] Update demo.md tool list from 14 stale tools to all 19 current tools
+- [x] Add Proof section to README
+- [x] Add scripts/release-check.sh
+- [x] Add .github/workflows/docs-consistency.yml
+
 ## v0.3.0 — Usable macOS MCP toolkit
 
 Goal: make the repo useful beyond a one-off experiment.

@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.2.1)
+[![Version](https://img.shields.io/badge/version-0.2.2-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.2.2)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -19,6 +19,16 @@ This repository is currently useful as:
 - a publishable project shell with README, roadmap, changelog, license, release, and GitHub Pages docs
 
 It is **not yet** a polished package or production-ready MCP distribution.
+
+## Proof
+
+- Python files compile in CI (`python -m compileall mq-mcp/`)
+- `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
+- Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
+- Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
+- Safety policy classifies all 19 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Tests for path safety and tool output shape run in CI via `pytest`
+- CI runs on `macos-latest` — not a Linux approximation
 
 ## What is inside
 
@@ -122,7 +132,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 18 MCP tools with descriptions.
+Expected response lists all 19 MCP tools with descriptions.
 
 ## Integration map
 
@@ -147,27 +157,65 @@ Before using or extending it:
 
 ## Available MCP tools
 
-The local MCP server currently exposes these tools:
+The local MCP server exposes 50 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
-- `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
-- `hal_repo_report` — runs a read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
-- `list_local_repos` — lists registered local repositories from MQ_MCP_LOCAL_REPOS
-- `open_repo_terminal` — opens a registered local repository in a new Terminal window
-- `repo_signal_analyze` — runs repo-signal analyze on a local repository (read-only)
-- `repo_signal_checklist` — runs repo-signal publish checklist on a local repository (read-only)
-- `get_system_resources` — shows CPU, memory, and disk information
+**Repo tools (Class A — read-only, repo-scoped):**
 - `read_repo_file` — reads a file inside the repository root
 - `list_repo_files` — lists repository files up to a chosen depth
 - `search_repo` — searches repository text
 - `git_status` — shows branch, working tree status, and recent commits
 - `git_diff` — shows current git diff, optionally for one path
-- `validate_project` — runs `scripts/validate.sh` when available
+- `analyze_csv` — analyzes CSV files inside the repo
+- `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
+- `list_local_repos` — lists registered local repositories from MQ_MCP_LOCAL_REPOS
+- `list_openable_apps` — returns static list of apps Bridget can open or control
+
+**System read (Class B — read-only, external access):**
+- `get_system_resources` — shows CPU, memory, and disk information
+- `analyze_guitar_pro` — analyzes Guitar Pro files in repo or allowed roots
+- `repo_signal_analyze` — runs repo-signal analyze on a local repository (read-only)
+- `repo_signal_checklist` — runs repo-signal publish checklist on a local repository (read-only)
+- `repo_signal_inspect` — runs repo-signal inspect --json and returns structured inspect.v1 data
+- `repo_signal_doctor_json` — runs repo-signal doctor --json and returns structured doctor.v1 data
+- `get_clipboard` — reads the current macOS clipboard
+- `get_wifi_info` — returns current Wi-Fi network name and signal info
+- `get_battery_status` — returns battery level, charging state, and estimated time remaining
+- `list_running_apps` — lists all visible macOS applications currently running
+- `get_todays_events` — returns today's events from Calendar.app
+- `find_large_files` — finds files larger than a given size in a directory
+- `find_recent_files` — finds files modified within the last N days
+- `check_port` — checks whether a TCP port is in use on localhost
+- `get_public_ip` — returns the current public IP address
+
+**Write-capable (Class C — controlled scope):**
 - `update_repo_file` — safely replaces exact text in allowed repo files without committing
-- `run_mqlaunch` — runs `mqlaunch.sh`
-- `analyze_csv` — analyzes CSV files
-- `analyze_guitar_pro` — analyzes Guitar Pro files
+- `edit_image` — edits an image with supported actions (rotate, grayscale)
+- `set_clipboard` — copies text to the macOS clipboard
+- `take_screenshot` — captures the screen and saves to a file
+
+**Subprocess / open-app (Class D):**
 - `open_in_app` — opens a repo file or explicitly allowed local file in the default app
-- `edit_image` — edits an image with supported actions
+- `validate_project` — runs `scripts/validate.sh` when available
+- `run_mqlaunch` — runs `mqlaunch.sh`
+- `open_repo_terminal` — opens a registered local repository in a new Terminal window
+- `hal_repo_report` — runs a read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
+- `open_messages` — opens Messages.app, optionally to a contact
+- `open_finder` — opens Finder at a given path
+- `open_url` — opens a URL in the default browser
+- `show_notification` — sends a macOS system notification
+- `open_app` — launches any macOS application by name
+- `speak_text` — speaks text aloud via macOS text-to-speech
+- `open_chrome` — opens Google Chrome, optionally to a URL
+- `open_spotify` — opens Spotify, optionally to a track, album, or search
+- `open_terminal` — opens a new Terminal window, optionally at a path
+- `open_vscode` — opens VS Code, optionally at a file or folder
+- `set_volume` — sets the macOS system output volume
+- `toggle_dark_mode` — toggles macOS between dark mode and light mode
+- `lock_screen` — locks the macOS screen immediately
+- `create_note` — creates a new note in Notes.app
+- `set_reminder` — creates a reminder in Reminders.app
+- `set_wallpaper` — sets the macOS desktop wallpaper
+- `run_tests` — runs pytest in a registered local repository
 
 ## Bridget voice
 

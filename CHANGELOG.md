@@ -1,7 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.2.2 - 2026-05-23
 
+- Synced tool count to 19 across README, demo.md, and TOOL_SAFETY.md (README said "18", demo.md showed a stale 14-tool list).
+- Fixed Python version requirement in docs/install.md from "3.14 or later" to ">=3.11".
+- Updated demo.md tool list to include all 19 current MCP tools.
+- Added Proof section to README.
+- Added scripts/release-check.sh — pre-release gate covering shell syntax, Python compile, validate.sh, tests, version sync, and stale tool count detection.
+- Added .github/workflows/docs-consistency.yml — CI checks for version sync, stale tool counts, and Python version accuracy in docs.
 - Add bridge tool discovery smoke check for Bridget/MCP tool visibility.
 - Add integration smoke check for mq-hal and repo-signal MCP tool wiring.
 - Removed Bridget text face asset; Bridget face output now uses image assets only when available.

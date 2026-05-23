@@ -41,12 +41,14 @@ User (zsh terminal on macOS)
 
 ## MCP architecture
 
-`server.py` is a FastMCP server with 13 tools sandboxed to `~/mq-mcp`.
+`server.py` is a FastMCP server with 50 tools. Repo tools are sandboxed to `~/mq-mcp` via `resolve_repo_file()`. External tools use `resolve_allowed_local_file()` gated by `MQ_MCP_ALLOWED_PATHS`.
 `bridge.py` spawns it as a subprocess via stdio and proxies tool calls to OpenAI.
 
-Tool safety tiers:
-- Read-only: get_system_resources, read_repo_file, list_repo_files, search_repo, git_status, git_diff, analyze_csv, analyze_guitar_pro
-- Write: update_repo_file, edit_image
+Tool safety tiers (see docs/TOOL_SAFETY.md for full classification):
+- Class A — Read-only, repo-scoped: read_repo_file, list_repo_files, search_repo, git_status, git_diff, analyze_csv, tool_safety_report, list_local_repos, list_openable_apps
+- Class B — Read-only, external access: get_system_resources, repo_signal_*, get_clipboard, get_wifi_info, get_battery_status, list_running_apps, get_todays_events, find_large_files, find_recent_files, check_port, get_public_ip, analyze_guitar_pro
+- Class C — Write-capable: update_repo_file, edit_image, set_clipboard, take_screenshot
+- Class D — Subprocess/open-app: open_in_app, validate_project, run_mqlaunch, open_repo_terminal, hal_repo_report, open_messages, open_finder, open_url, show_notification, open_app, speak_text, open_chrome, open_spotify, open_terminal, open_vscode, set_volume, toggle_dark_mode, lock_screen, create_note, set_reminder, set_wallpaper, run_tests
 - Execution: validate_project, run_mqlaunch, open_in_app
 
 ## Env management

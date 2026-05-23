@@ -6,7 +6,7 @@ This guide explains how to install and validate `mq-mcp` locally on macOS.
 
 - macOS
 - Git
-- Python 3.14 or later (managed automatically by `uv`)
+- Python >=3.11 (managed automatically by `uv`)
 - [uv](https://docs.astral.sh/uv/)
 - OpenAI API key (only needed for bridge prompts that call OpenAI)
 
