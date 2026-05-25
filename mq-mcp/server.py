@@ -9,11 +9,57 @@ import pandas as pd
 import guitarpro
 from PIL import Image
 from mcp.server.fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
-# Initiera servern
-mcp = FastMCP("mq-mcp")
+# Initiera servern. mq-agent expects the local HTTP/SSE bridge on :8765.
+MCP_HOST = os.getenv("MQ_MCP_HOST", "127.0.0.1")
+MCP_PORT = int(os.getenv("MQ_MCP_PORT", "8765"))
+mcp = FastMCP("mq-mcp", host=MCP_HOST, port=MCP_PORT)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def jsonable(value):
+    """Convert MCP/Pydantic return values into JSON-serializable objects."""
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    if isinstance(value, list):
+        return [jsonable(item) for item in value]
+    if isinstance(value, tuple):
+        return [jsonable(item) for item in value]
+    if isinstance(value, dict):
+        return {key: jsonable(item) for key, item in value.items()}
+    return value
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok", "name": "mq-mcp"})
+
+
+@mcp.custom_route("/tools", methods=["GET"])
+async def list_http_tools(request: Request) -> JSONResponse:
+    tools = await mcp.list_tools()
+    return JSONResponse({"tools": jsonable(tools)})
+
+
+@mcp.custom_route("/tools/{name}", methods=["GET"])
+async def describe_http_tool(request: Request) -> JSONResponse:
+    name = request.path_params["name"]
+    tools = await mcp.list_tools()
+    for tool in tools:
+        if tool.name == name:
+            return JSONResponse(jsonable(tool))
+    return JSONResponse({"error": f"Unknown tool: {name}"}, status_code=404)
+
+
+@mcp.custom_route("/tools/{name}", methods=["POST"])
+async def call_http_tool(request: Request) -> JSONResponse:
+    name = request.path_params["name"]
+    arguments = await request.json()
+    result = await mcp.call_tool(name, arguments)
+    return JSONResponse(jsonable(result))
 
 def resolve_repo_file(relative_path: str) -> Path:
     """Resolve a path safely inside the repository root."""
