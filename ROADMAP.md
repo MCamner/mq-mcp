@@ -48,13 +48,14 @@ Completed foundation:
 Current priority:
 
 ```text
-v0.3.1 — CI, release and validation hardening
+v0.4.0 — Tool contract and safety map v2
 ```
 
 Reason:
 
-The project is useful enough to become a shared tool layer, so the next step is
-to make CI, validation, docs consistency and release checks boringly reliable.
+v0.3.1 is complete. CI is green, docs are in sync, and validation scripts
+collect and report all failures. The next step is to make every tool
+self-describing so mq-agent can consume tool metadata safely.
 
 ---
 
@@ -70,7 +71,7 @@ to make CI, validation, docs consistency and release checks boringly reliable.
 | v0.2.2  | Docs sync + tool inventory + CI credibility | Done          |
 | v0.2.3  | AI tooling integration                      | Done          |
 | v0.3.0  | Usable macOS MCP toolkit                    | Done / verify |
-| v0.3.1  | CI, release and validation hardening        | Next          |
+| v0.3.1  | CI, release and validation hardening        | Done          |
 | v0.4.0  | Tool contract and safety map v2             | Planned       |
 | v0.5.0  | mq-agent and mqlaunch integration hardening | Planned       |
 | v0.6.0  | Packaged local install flow                 | Planned       |
@@ -220,7 +221,7 @@ Make mq-mcp useful beyond a one-off local experiment.
 
 ---
 
-## Next: v0.3.1 — CI, release and validation hardening
+## Completed: v0.3.1 — CI, release and validation hardening
 
 Goal:
 
@@ -237,14 +238,14 @@ This release should fix the trust layer before adding more features.
 - [x] Ensure Python syntax checks pass
 - [x] Ensure tests pass on supported Python versions
 - [x] Ensure docs consistency workflow passes
-- [ ] Add clear failure output for validation scripts
+- [x] Add clear failure output for validation scripts
 - [x] Add proof section for current tool count
 - [x] Confirm `VERSION`, `pyproject.toml`, README and CHANGELOG are in sync
 - [x] Confirm `docs/index.html` reflects the current version
-- [ ] Confirm `docs/TOOL_SAFETY.md` lists every exposed tool
-- [ ] Confirm `docs/TOOL_INVENTORY.md` matches actual server tools
-- [ ] Add a release checklist section for GitHub Actions
-- [ ] Add branch protection recommendation to docs
+- [x] Confirm `docs/TOOL_SAFETY.md` lists every exposed tool
+- [x] Confirm `docs/TOOL_INVENTORY.md` matches actual server tools
+- [x] Add a release checklist section for GitHub Actions
+- [x] Add branch protection recommendation to docs
 
 **Validation commands**
 
@@ -562,8 +563,8 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v0.3.1 — CI, release and validation hardening
+v0.4.0 — Tool contract and safety map v2
 ```
 
-This release should make the project boringly reliable before adding more tool
-surface or deeper mq-agent integration.
+This release should make every exposed tool self-describing and safe to reason
+about before adding more tool surface or deeper mq-agent integration.

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/mq-mcp"
 
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/mq-mcp-pycache}"
+
+FAILED=0
 
 # Handles section.
 section() {
@@ -17,36 +19,37 @@ ok() {
   printf 'OK: %s\n' "$1"
 }
 
-# Handles fail.
+# Handles fail — records the failure, does not exit.
 fail() {
-  printf 'FAIL: %s\n' "$1"
-  exit 1
+  printf 'FAIL: %s\n' "$1" >&2
+  FAILED=$((FAILED + 1))
 }
 
 section "MCP tool doc check"
 if [[ -x "$ROOT/scripts/check-mcp-tool-docs.sh" ]]; then
-  "$ROOT/scripts/check-mcp-tool-docs.sh"
+  "$ROOT/scripts/check-mcp-tool-docs.sh" || fail "check-mcp-tool-docs.sh failed"
 else
   fail "check-mcp-tool-docs.sh missing or not executable"
 fi
 
 section "Integration docs check"
 if [[ -x "$ROOT/scripts/check-integration-docs.sh" ]]; then
-  "$ROOT/scripts/check-integration-docs.sh"
+  "$ROOT/scripts/check-integration-docs.sh" || fail "check-integration-docs.sh failed"
 else
   fail "check-integration-docs.sh missing or not executable"
 fi
 
 section "Integration smoke check"
 if [[ -x "$ROOT/scripts/check-integration-smoke.sh" ]]; then
-  "$ROOT/scripts/check-integration-smoke.sh"
+  "$ROOT/scripts/check-integration-smoke.sh" || fail "check-integration-smoke.sh failed"
 else
   fail "check-integration-smoke.sh missing or not executable"
 fi
 
 section "Bridge tool discovery check"
 if [[ -x "$ROOT/scripts/check-bridge-tool-discovery.sh" ]]; then
-  "$ROOT/scripts/check-bridge-tool-discovery.sh"
+  "$ROOT/scripts/check-bridge-tool-discovery.sh" \
+    || fail "check-bridge-tool-discovery.sh failed"
 else
   fail "check-bridge-tool-discovery.sh missing or not executable"
 fi
@@ -72,11 +75,13 @@ ok "No debug/backup files found"
 
 section "Python compile"
 cd "$APP"
-python -m compileall bridge.py server.py main.py >/dev/null
+python -m compileall bridge.py server.py main.py >/dev/null \
+  || fail "Python compile failed"
 ok "Python files compile"
 
 section "MCP tool listing"
-tools_output="$(uv run python bridge.py --tools)"
+tools_output="$(uv run python bridge.py --tools)" \
+  || { fail "bridge.py --tools failed"; tools_output=""; }
 printf '%s\n' "$tools_output"
 
 printf '%s\n' "$tools_output" | grep -q "read_repo_file" || fail "read_repo_file tool missing"
@@ -98,7 +103,7 @@ else
 fi
 
 uv run python bridge.py "hur ser du ut?" >/dev/null 2>&1 \
-  || fail "Bridget face trigger crashed"
+  || { fail "Bridget face trigger crashed"; }
 ok "Bridget face trigger works"
 
 section "README bridge smoke test"
@@ -110,4 +115,10 @@ else
 fi
 
 section "Done"
-ok "mq-mcp validation completed"
+if [[ "$FAILED" -eq 0 ]]; then
+  ok "mq-mcp validation completed"
+else
+  printf 'FAIL: %d check(s) failed — fix issues above before releasing\n' \
+    "$FAILED" >&2
+  exit 1
+fi
