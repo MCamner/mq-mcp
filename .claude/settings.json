@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/mansys/mq-mcp log --oneline -15)",
+      "Bash(./scripts/release-check.sh)"
+    ]
+  }
+}
