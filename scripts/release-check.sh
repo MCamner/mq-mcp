@@ -6,8 +6,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Handles pass.
 pass() { printf "\033[1;32m[PASS]\033[0m %s\n" "$*"; }
+# Handles fail.
 fail() { printf "\033[1;31m[FAIL]\033[0m %s\n" "$*" >&2; FAILED=1; }
+# Handles step.
 step() { printf "\033[1;34m[----]\033[0m %s\n" "$*"; }
 
 FAILED=0

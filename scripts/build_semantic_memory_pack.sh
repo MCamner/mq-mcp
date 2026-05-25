@@ -22,6 +22,7 @@ total=0
 # Helpers
 # -----------------------------------------------------------------
 
+# Handles add file.
 add_file() {
   local repo="$1"   # prefix (e.g. "mq-mcp")
   local src="$2"    # absolute path to file
@@ -42,6 +43,7 @@ add_file() {
   (( total++ )) || true
 }
 
+# Handles add glob.
 add_glob() {
   local repo="$1"
   local base="$2"   # repo root
