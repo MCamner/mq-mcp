@@ -1,6 +1,6 @@
 ---
-name: bridget-bridge-maintainer
-description: Use when changing Bridget, bridge.py, OpenAI tool calling, MCP stdio connection, tool discovery, local search modes, image personality, or voice behavior.
+name: "bridget-bridge-maintainer"
+description: "Use when changing Bridget, bridge.py, OpenAI tool calling, MCP stdio connection, tool discovery, local search modes, image personality, or voice behavior."
 ---
 
 # Bridget Bridge Maintainer
