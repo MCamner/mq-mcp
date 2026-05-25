@@ -240,20 +240,19 @@ def _image_line(image: Path) -> str:
         if result.returncode != 0:
             return random.choice(BRIDGET_LOCAL_LINES)
         data = json.loads(result.stdout)
-        palette = data.get("palette", {})
-        composition = data.get("composition", {})
-        reverse = data.get("reverse_prompt", "")
         parts: list[str] = []
-        if palette.get("dominant_color"):
-            parts.append(f"dominant färg: {palette['dominant_color']}")
-        if palette.get("brightness"):
-            parts.append(f"ljusstyrka: {palette['brightness']}")
-        if composition.get("rule_of_thirds"):
-            parts.append("rule-of-thirds")
-        if composition.get("symmetry") and float(composition.get("symmetry", 0)) > 0.6:
+        palette = data.get("palette", [])
+        if palette:
+            parts.append(f"dominant färg: {palette[0]}")
+        brightness = data.get("brightness", "")
+        if brightness:
+            parts.append(brightness)
+        symmetry = data.get("symmetry", 0)
+        if float(symmetry) > 0.7:
             parts.append("stark symmetri")
-        if reverse:
-            parts.append(reverse[:80])
+        prompt = data.get("prompt", "")
+        if prompt:
+            parts.append(prompt[:80])
         if parts:
             return " · ".join(parts) + "."
     except Exception:
