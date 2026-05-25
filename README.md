@@ -9,14 +9,15 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-Early prototype with local MCP tools, validation, and repo-aware helpers.
+v0.3.1 — usable macOS MCP toolkit. 50 tools across five safety classes,
+validated release flow, and green CI on `macos-latest`.
 
-This repository is currently useful as:
+This repository is useful as:
 
-- a local MCP server experiment
-- a documentation baseline for MCP setup on macOS
-- a place to collect repeatable setup, validation, and troubleshooting flows
-- a publishable project shell with README, roadmap, changelog, license, release, and GitHub Pages docs
+- a local MCP server with 50 documented, safety-classified tools
+- a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
+- a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
+- a documented integration point for mq-hal and repo-signal
 
 It is **not yet** a polished package or production-ready MCP distribution.
 
