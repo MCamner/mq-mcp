@@ -68,20 +68,21 @@ BRIDGET_LOCAL_LINES = [
 ]
 
 
-def scramble_print(text: str) -> None:
+def scramble_print(text: str, file: Any = None) -> None:
+    out = file or sys.stdout
     for ch in text:
         if ch in (" ", "\n", "\t"):
-            sys.stdout.write(ch)
-            sys.stdout.flush()
+            out.write(ch)
+            out.flush()
             continue
         for _ in range(3):
-            sys.stdout.write(random.choice(_SCRAMBLE_CHARS) + "\b")
-            sys.stdout.flush()
+            out.write(random.choice(_SCRAMBLE_CHARS) + "\b")
+            out.flush()
             time.sleep(0.008)
-        sys.stdout.write(ch)
-        sys.stdout.flush()
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+        out.write(ch)
+        out.flush()
+    out.write("\n")
+    out.flush()
 
 
 def usage() -> None:
@@ -250,18 +251,27 @@ def _image_line(image: Path) -> str:
 
 def show_bridget_face() -> None:
     available_images = find_bridget_images()
+    try:
+        tty = open("/dev/tty", "w")
+    except OSError:
+        tty = None
+
     if available_images and shutil.which("chafa"):
         image = random.choice(available_images)
-        try:
-            with open("/dev/tty", "w") as tty:
-                subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
-        except OSError:
+        if tty:
+            subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
+        else:
             subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
         line = _image_line(image)
     else:
-        print("BRIDGET online.")
+        out = tty or sys.stdout
+        out.write("BRIDGET online.\n")
+        out.flush()
         line = random.choice(BRIDGET_LOCAL_LINES)
-    scramble_print(line)
+
+    scramble_print(line, file=tty)
+    if tty:
+        tty.close()
 
 
 def known_local_repos() -> dict[str, str]:
