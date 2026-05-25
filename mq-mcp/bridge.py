@@ -236,7 +236,7 @@ def _image_line(image: Path) -> str:
     try:
         result = subprocess.run(
             [mq, "analyze", str(image), "--json"],
-            capture_output=True, text=True, timeout=8,
+            capture_output=True, text=True, timeout=20,
         )
         if result.returncode != 0:
             return random.choice(BRIDGET_LOCAL_LINES)
@@ -250,6 +250,8 @@ def _image_line(image: Path) -> str:
 
 
 def show_bridget_face() -> None:
+    import concurrent.futures
+
     available_images = find_bridget_images()
     try:
         tty = open("/dev/tty", "w")
@@ -258,11 +260,16 @@ def show_bridget_face() -> None:
 
     if available_images and shutil.which("chafa"):
         image = random.choice(available_images)
-        if tty:
-            subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
-        else:
-            subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
-        line = _image_line(image)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_image_line, image)
+            if tty:
+                subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
+            else:
+                subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
+            try:
+                line = future.result(timeout=20)
+            except Exception:
+                line = random.choice(BRIDGET_LOCAL_LINES)
     else:
         out = tty or sys.stdout
         out.write("BRIDGET online.\n")
