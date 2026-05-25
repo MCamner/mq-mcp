@@ -84,9 +84,20 @@ Status: done.
 - [x] Add scripts/release-check.sh
 - [x] Add .github/workflows/docs-consistency.yml
 
+## v0.2.3 — AI tooling integration
+
+Goal: wire in mq-image-analyze and Claude Code subagents for richer local intelligence.
+
+- [x] Dynamic Bridget face lines via `mq-image-analyze` — palette, brightness, composition from real image analysis
+- [x] Parallel mq-image analysis with chafa rendering — lower Bridget face latency
+- [x] Fix Bridget face output routing to `/dev/tty` (survives shell capture and piped contexts)
+- [x] Add Claude Code subagents: `mq-project-context`, `mcp-tool-safety-reviewer`, `mcp-release-validator`
+- [ ] Bump VERSION to 0.2.3
+- [ ] Update CHANGELOG
+
 ## v0.3.0 — Usable macOS MCP toolkit
 
-Goal: make the repo useful beyond a one-off experiment.
+Status: done.
 
 - [x] Add a stable launcher command
 - [x] Add documented MCP server profiles
@@ -96,15 +107,24 @@ Goal: make the repo useful beyond a one-off experiment.
 - [x] Add example workflows
 - [x] Add clear upgrade instructions
 
+## v0.4.0 — Stable local AI platform
+
+Goal: make mq-mcp a solid foundation for local AI-assisted workflows, not just a demo.
+
+- [ ] Full release of v0.2.3 (version bump, CHANGELOG, tag)
+- [ ] Expand Claude Code subagent coverage: tool discovery, safety audit, integration validation
+- [ ] Add mq-image-analyze as a first-class MCP tool (expose image analysis over MCP)
+- [ ] Add Bridget session context — carries state across bridge prompts in the same session
+- [ ] Document the mq-* ecosystem (mq-mcp, mq-agent, mq-image-analyze, repo-signal) as a unified platform
+- [ ] Add a release-readiness checklist to `scripts/release-check.sh`
+
 ## Later
 
-Ideas for later versions:
-
-- [ ] Integrate with `mqlaunch`
-- [ ] Add a polished terminal menu
-- [ ] Add MCP profile templates
-- [ ] Add repo-aware MCP tools
-- [ ] Add docs for secure local automation
-- [ ] Add packaged install flow
-- [ ] Add demo videos or GIFs
+- [ ] Integrate with `mqlaunch` for one-command MCP stack startup
+- [ ] Add a polished terminal menu for tool selection
+- [ ] Add MCP profile templates (minimal, full, secure)
+- [ ] Add repo-signal MCP tools for cross-repo architecture queries
+- [ ] Add docs for secure local automation patterns
+- [ ] Add packaged install flow (Homebrew or standalone)
+- [ ] Add demo videos or GIFs for README and GitHub Pages
 - [ ] Publish a stable v1.0 release once setup, validation, docs, and safety boundaries are solid
