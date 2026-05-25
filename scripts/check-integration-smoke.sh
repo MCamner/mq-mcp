@@ -4,19 +4,24 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# Handles fail.
 fail() { echo "FAIL: $*" >&2; exit 1; }
+# Handles ok.
 ok()   { echo "OK: $*"; }
 
+# Handles require file.
 require_file() {
   [[ -f "$1" ]] || fail "Missing required file: $1"
   ok "Found $1"
 }
 
+# Handles require text.
 require_text() {
   grep -Fq "$2" "$1" || fail "Missing '$2' in $1"
   ok "$1 mentions: $2"
 }
 
+# Handles require tool everywhere.
 require_tool_everywhere() {
   local tool="$1"
   require_text "mq-mcp/server.py"   "$tool"

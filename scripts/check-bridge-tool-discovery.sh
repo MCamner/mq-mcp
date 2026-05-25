@@ -7,9 +7,12 @@ APP_DIR="$ROOT_DIR/mq-mcp"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/mq-mcp-pycache}"
 
+# Handles fail.
 fail() { echo "FAIL: $*" >&2; exit 1; }
+# Handles ok.
 ok() { echo "OK: $*"; }
 
+# Handles require text.
 require_text() {
   local text="$1"
   local pattern="$2"

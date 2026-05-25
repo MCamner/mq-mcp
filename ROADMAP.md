@@ -68,6 +68,7 @@ to make CI, validation, docs consistency and release checks boringly reliable.
 | v0.2.0  | Safer MCP server structure                  | Done          |
 | v0.2.1  | Bridget identity + repo metadata sync       | Done          |
 | v0.2.2  | Docs sync + tool inventory + CI credibility | Done          |
+| v0.2.3  | AI tooling integration                      | Done          |
 | v0.3.0  | Usable macOS MCP toolkit                    | Done / verify |
 | v0.3.1  | CI, release and validation hardening        | Next          |
 | v0.4.0  | Tool contract and safety map v2             | Planned       |
@@ -186,6 +187,21 @@ drift.
 
 ---
 
+### v0.2.3 — AI tooling integration
+
+Goal:
+
+Wire in mq-image-analyze and Claude Code subagents for richer local
+intelligence.
+
+- [x] Bridget face lines dynamically generated via `mq-image-analyze`
+- [x] Parallel mq-image analysis with chafa rendering — lower latency
+- [x] Fix Bridget face output routing to `/dev/tty` (survives piped contexts)
+- [x] Add Claude Code subagents: `mq-project-context`,
+  `mcp-tool-safety-reviewer`, `mcp-release-validator`
+
+---
+
 ### v0.3.0 — Usable macOS MCP toolkit
 
 Goal:
@@ -213,7 +229,7 @@ mqlaunch and future HAL-style workflows.
 
 This release should fix the trust layer before adding more features.
 
-### Scope
+**Scope**
 
 - [ ] Fix failing GitHub Actions on `main`
 - [ ] Ensure `scripts/validate.sh` passes locally
@@ -230,7 +246,7 @@ This release should fix the trust layer before adding more features.
 - [ ] Add a release checklist section for GitHub Actions
 - [ ] Add branch protection recommendation to docs
 
-### Validation commands
+**Validation commands**
 
 ```bash
 uv run python -m py_compile server.py bridge.py
@@ -239,7 +255,7 @@ uv run pytest -v
 ./scripts/release-check.sh
 ```
 
-### Definition of done
+**Definition of done**
 
 - [ ] Latest commit on `main` is green
 - [ ] GitHub Actions are green
@@ -260,7 +276,7 @@ Goal:
 Make every exposed MCP tool self-describing, safe to reason about and easy for
 mq-agent to consume.
 
-### Planned scope
+**Planned scope**
 
 - [ ] Add canonical tool contract schema
 - [ ] Add tool name
@@ -276,7 +292,7 @@ mq-agent to consume.
 - [ ] Generate docs from tool metadata
 - [ ] Add CI check that docs and tool registry match
 
-### Proposed safety classes
+**Proposed safety classes**
 
 ```text
 read-only
@@ -290,7 +306,7 @@ dangerous
 unknown
 ```
 
-### Definition of done
+**Definition of done**
 
 - [ ] Every tool has a declared safety class
 - [ ] Every tool has a stable metadata entry
@@ -306,7 +322,7 @@ Goal:
 
 Make mq-mcp a reliable backend for mq-agent and mqlaunch workflows.
 
-### Planned scope
+**Planned scope**
 
 - [ ] Verify mq-agent can discover mq-mcp tools
 - [ ] Verify mq-agent can display mq-mcp tool safety classes
@@ -319,7 +335,7 @@ Make mq-mcp a reliable backend for mq-agent and mqlaunch workflows.
 - [ ] Add example local workflow
 - [ ] Add troubleshooting for port conflicts and server startup
 
-### Example target flow
+**Example target flow**
 
 ```text
 mqlaunch
@@ -331,7 +347,7 @@ mq-mcp
 safe local tool execution
 ```
 
-### Possible commands
+**Possible commands**
 
 ```bash
 mq-agent mcp status
@@ -349,7 +365,7 @@ Goal:
 
 Make mq-mcp easy to install, update and run on a new macOS machine.
 
-### Planned scope
+**Planned scope**
 
 - [ ] Add install script
 - [ ] Add uninstall script
@@ -362,7 +378,7 @@ Make mq-mcp easy to install, update and run on a new macOS machine.
 - [ ] Add example `.env`
 - [ ] Add docs for clean reinstall
 
-### Possible commands
+**Possible commands**
 
 ```bash
 mq-mcp doctor
@@ -372,7 +388,7 @@ mq-mcp config path
 mq-mcp tools
 ```
 
-### Non-goals
+**Non-goals**
 
 - No hidden daemon by default
 - No automatic startup without explicit user choice
@@ -386,7 +402,7 @@ Goal:
 
 Make the MCP server and OpenAI bridge easier to inspect while running.
 
-### Planned scope
+**Planned scope**
 
 - [ ] Add health endpoint
 - [ ] Add tool count endpoint
@@ -398,7 +414,7 @@ Make the MCP server and OpenAI bridge easier to inspect while running.
 - [ ] Add JSON output for diagnostics
 - [ ] Add troubleshooting bundle command
 
-### Possible commands
+**Possible commands**
 
 ```bash
 mq-mcp doctor --json
@@ -406,7 +422,7 @@ mq-mcp health
 mq-mcp report
 ```
 
-### Safety requirements
+**Safety requirements**
 
 - Logs must not print secrets
 - Debug output must redact tokens and keys
@@ -422,7 +438,7 @@ Goal:
 Make mq-mcp easy to connect to different local MCP clients and mq ecosystem
 tools.
 
-### Planned scope
+**Planned scope**
 
 - [ ] Add Claude Desktop profile template
 - [ ] Add Codex profile template
@@ -435,7 +451,7 @@ tools.
 - [ ] Add docs for selecting the right profile
 - [ ] Add validation for profile files
 
-### Example profiles
+**Example profiles**
 
 ```text
 profiles/read-only.json

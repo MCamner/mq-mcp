@@ -73,6 +73,7 @@ add_context_file() {
   (( copied++ )) || true
 }
 
+# Handles generate symbol memory.
 generate_symbol_memory() {
   local out="$PACK/mq-mcp-symbol-memory.md"
   local repo_signal_bin
