@@ -54,6 +54,14 @@ else
   fail "check-bridge-tool-discovery.sh missing or not executable"
 fi
 
+section "Tool contracts check"
+if [[ -x "$ROOT/scripts/check-tool-contracts.sh" ]]; then
+  "$ROOT/scripts/check-tool-contracts.sh" \
+    || fail "check-tool-contracts.sh failed"
+else
+  fail "check-tool-contracts.sh missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch

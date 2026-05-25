@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0 - 2026-05-26
+
+- Added `scripts/generate_tool_contracts.py` — generates
+  `docs/tool_contracts.json` from server.py introspection and a static
+  metadata mapping (class, resolver, write, subprocess, side_effects).
+- Added `docs/tool_contracts.json` — machine-readable tool contract file
+  (schema_version: tool-contracts.v1) covering all 50 tools. Consumable
+  by mq-agent and other clients without importing server.py.
+- Added `scripts/check-tool-contracts.sh` — CI check that verifies every
+  `@mcp.tool` in server.py has a matching entry in tool_contracts.json.
+  Fails if any tool is missing or if the JSON is stale.
+- Wired `check-tool-contracts.sh` into `scripts/validate.sh`.
+- Added two steps to `.github/workflows/validate.yml`: tool contract check
+  and a drift check (regenerates JSON and asserts git diff is clean).
+- Updated ROADMAP: v0.4.0 scope done, all definition-of-done items checked.
+
 ## 0.3.1 - 2026-05-26
 
 - Fixed stale tool count in README Proof section and Demo section:
@@ -86,10 +102,12 @@
 
 - Added documented MCP safety policy in `docs/security.md`.
 - Added safety tests for repo-scoped file access and blocked paths.
-- Added CI validation for shell syntax, Python compilation, project validation, and tests.
+- Added CI validation for shell syntax, Python compilation, project
+  validation, and tests.
 - Restricted `analyze_csv` to repository-root-safe paths.
 - Clarified MCP tool scope in documentation.
-- Cleaned up install guide references and replaced PDF install guide with Markdown documentation.
+- Cleaned up install guide references and replaced PDF install guide
+  with Markdown documentation.
 - Improved README with security policy and validation guidance.
 
 ## 0.1.3 - 2026-05-13

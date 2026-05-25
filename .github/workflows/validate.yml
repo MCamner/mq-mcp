@@ -35,5 +35,14 @@ jobs:
       - name: Run local validation
         run: ./scripts/validate.sh
 
+      - name: Check tool contracts
+        run: ./scripts/check-tool-contracts.sh
+
+      - name: Verify tool_contracts.json is up to date
+        run: |
+          python3 scripts/generate_tool_contracts.py
+          git diff --exit-code docs/tool_contracts.json \
+            || (echo "FAIL: docs/tool_contracts.json is out of date — run: python scripts/generate_tool_contracts.py" && exit 1)
+
       - name: Run tests
         run: uv --directory mq-mcp run pytest ../tests/ -v

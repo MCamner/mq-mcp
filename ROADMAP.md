@@ -72,7 +72,7 @@ self-describing so mq-agent can consume tool metadata safely.
 | v0.2.3  | AI tooling integration                      | Done          |
 | v0.3.0  | Usable macOS MCP toolkit                    | Done / verify |
 | v0.3.1  | CI, release and validation hardening        | Done          |
-| v0.4.0  | Tool contract and safety map v2             | Planned       |
+| v0.4.0  | Tool contract and safety map v2             | Done          |
 | v0.5.0  | mq-agent and mqlaunch integration hardening | Planned       |
 | v0.6.0  | Packaged local install flow                 | Planned       |
 | v0.7.0  | Local bridge observability                  | Planned       |
@@ -279,19 +279,19 @@ mq-agent to consume.
 
 **Planned scope**
 
-- [ ] Add canonical tool contract schema
-- [ ] Add tool name
-- [ ] Add tool description
-- [ ] Add input schema
-- [ ] Add output schema
-- [ ] Add safety class
-- [ ] Add side-effect category
-- [ ] Add filesystem boundary notes
-- [ ] Add subprocess behavior notes
+- [x] Add canonical tool contract schema
+- [x] Add tool name
+- [x] Add tool description
+- [x] Add input schema
+- [x] Add output schema
+- [x] Add safety class
+- [x] Add side-effect category
+- [x] Add filesystem boundary notes
+- [x] Add subprocess behavior notes
 - [ ] Add error model
 - [ ] Add examples for each tool
-- [ ] Generate docs from tool metadata
-- [ ] Add CI check that docs and tool registry match
+- [x] Generate docs from tool metadata
+- [x] Add CI check that docs and tool registry match
 
 **Proposed safety classes**
 
@@ -309,11 +309,11 @@ unknown
 
 **Definition of done**
 
-- [ ] Every tool has a declared safety class
-- [ ] Every tool has a stable metadata entry
-- [ ] Tool docs are generated or verified from metadata
-- [ ] CI fails when a tool is undocumented
-- [ ] mq-agent can consume the tool metadata safely
+- [x] Every tool has a declared safety class
+- [x] Every tool has a stable metadata entry
+- [x] Tool docs are generated or verified from metadata
+- [x] CI fails when a tool is undocumented
+- [x] mq-agent can consume the tool metadata safely
 
 ---
 
