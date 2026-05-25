@@ -1,6 +1,7 @@
 # Roadmap
 
-This roadmap turns `mq-mcp` from a rough local experiment into a clear, repeatable, and publishable MCP project for macOS.
+This roadmap turns `mq-mcp` from a rough local experiment into a clear,
+repeatable, and publishable MCP project for macOS.
 
 ## v0.1.0 — Public baseline
 
@@ -88,10 +89,11 @@ Status: done.
 
 Goal: wire in mq-image-analyze and Claude Code subagents for richer local intelligence.
 
-- [x] Dynamic Bridget face lines via `mq-image-analyze` — palette, brightness, composition from real image analysis
-- [x] Parallel mq-image analysis with chafa rendering — lower Bridget face latency
-- [x] Fix Bridget face output routing to `/dev/tty` (survives shell capture and piped contexts)
-- [x] Add Claude Code subagents: `mq-project-context`, `mcp-tool-safety-reviewer`, `mcp-release-validator`
+- [x] Bridget face lines dynamically generated via `mq-image-analyze`
+- [x] Parallel mq-image analysis with chafa rendering — lower latency
+- [x] Fix Bridget face output routing to `/dev/tty` (survives piped contexts)
+- [x] Add Claude Code subagents: `mq-project-context`,
+  `mcp-tool-safety-reviewer`, `mcp-release-validator`
 - [ ] Bump VERSION to 0.2.3
 - [ ] Update CHANGELOG
 
@@ -109,13 +111,13 @@ Status: done.
 
 ## v0.4.0 — Stable local AI platform
 
-Goal: make mq-mcp a solid foundation for local AI-assisted workflows, not just a demo.
+Goal: make mq-mcp a solid foundation for local AI-assisted workflows.
 
 - [ ] Full release of v0.2.3 (version bump, CHANGELOG, tag)
-- [ ] Expand Claude Code subagent coverage: tool discovery, safety audit, integration validation
-- [ ] Add mq-image-analyze as a first-class MCP tool (expose image analysis over MCP)
-- [ ] Add Bridget session context — carries state across bridge prompts in the same session
-- [ ] Document the mq-* ecosystem (mq-mcp, mq-agent, mq-image-analyze, repo-signal) as a unified platform
+- [ ] Expand Claude Code subagent coverage (discovery, safety, integration)
+- [ ] Expose mq-image-analyze as a first-class MCP tool
+- [ ] Add Bridget session context (state across bridge prompts)
+- [ ] Document the mq-* ecosystem (mq-mcp, mq-agent, mq-image, repo-signal)
 - [ ] Add a release-readiness checklist to `scripts/release-check.sh`
 
 ## Later
@@ -127,4 +129,4 @@ Goal: make mq-mcp a solid foundation for local AI-assisted workflows, not just a
 - [ ] Add docs for secure local automation patterns
 - [ ] Add packaged install flow (Homebrew or standalone)
 - [ ] Add demo videos or GIFs for README and GitHub Pages
-- [ ] Publish a stable v1.0 release once setup, validation, docs, and safety boundaries are solid
+- [ ] Publish a stable v1.0 once setup, validation, docs, and safety are solid
