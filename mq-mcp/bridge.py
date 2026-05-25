@@ -232,7 +232,11 @@ def show_bridget_face() -> None:
     available_images = find_bridget_images()
     if available_images and shutil.which("chafa"):
         image = random.choice(available_images)
-        subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
+        try:
+            with open("/dev/tty", "w") as tty:
+                subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
+        except OSError:
+            subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
     else:
         print("BRIDGET online.")
     scramble_print(random.choice(BRIDGET_LOCAL_LINES))
