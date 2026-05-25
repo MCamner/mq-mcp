@@ -40,8 +40,8 @@ Important rules:
 """
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
-BRIDGET_IMAGE_LIMIT = 10
-BRIDGET_ASSET_GLOBS = ("bridget*.jpg", "bridget*.jpeg", "*.jpg", "*.jpeg")
+BRIDGET_ASSET_GLOB = "bridget*.jpg"
+_last_bridget_image: Path | None = None
 BRIDGET_LOCAL_LINES = [
     "Hej, jag mår bra. Lite kaos i håret, men full signal.",
     "Jag sorterar tankar, terminaler och dramatiska JPEG-vibbar.",
@@ -65,6 +65,11 @@ BRIDGET_LOCAL_LINES = [
     "Ça va très bien. Mon secret beauté är chafa och lite kaos.",
     "Oui oui, dagens look är lokal, slumpad och fullständigt övertygad.",
     "Ich bin nicht overdressed, terminalen är bara underdressed.",
+    "Jag blinkar inte, jag throttlar bara dramatiken till en ansvarsfull nivå.",
+    "Dagens outfit är diskret nog för kontoret och farlig nog för commit-historiken.",
+    "Jag är inte sen, jag gjorde bara en långsam entré med vuxet självförtroende.",
+    "Min riskprofil är medium-high, men min eyeliner har full täckning.",
+    "Jag håller det professionellt, men terminalen rodnade först.",
 ]
 
 
@@ -217,16 +222,29 @@ def find_bridget_images() -> list[Path]:
     for directory in bridget_image_dirs():
         if not directory.exists():
             continue
-        for pattern in BRIDGET_ASSET_GLOBS:
-            for path in sorted(directory.glob(pattern)):
-                resolved = path.resolve()
-                if resolved in seen or not path.is_file():
-                    continue
-                seen.add(resolved)
-                images.append(path)
-                if len(images) >= BRIDGET_IMAGE_LIMIT:
-                    return images
+        for path in sorted(directory.glob(BRIDGET_ASSET_GLOB)):
+            resolved = path.resolve()
+            if resolved in seen or not path.is_file():
+                continue
+            seen.add(resolved)
+            images.append(path)
     return images
+
+
+def choose_bridget_image(images: list[Path]) -> Path:
+    global _last_bridget_image
+
+    if not images:
+        raise ValueError("No Bridget images available.")
+
+    candidates = images
+    if len(images) > 1 and _last_bridget_image is not None:
+        last = _last_bridget_image.resolve()
+        candidates = [image for image in images if image.resolve() != last]
+
+    image = random.choice(candidates)
+    _last_bridget_image = image
+    return image
 
 
 def _image_line(image: Path) -> str:
@@ -259,7 +277,7 @@ def show_bridget_face() -> None:
         tty = None
 
     if available_images and shutil.which("chafa"):
-        image = random.choice(available_images)
+        image = choose_bridget_image(available_images)
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_image_line, image)
             if tty:

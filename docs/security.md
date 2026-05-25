@@ -113,3 +113,39 @@ uv --directory mq-mcp run pytest ../tests -v
 4. Show diff
 5. Human reviews
 6. Human commits
+
+## Branch protection recommendation
+
+Protect the `main` branch to prevent force-pushes and unreviewed merges.
+
+Recommended settings on GitHub → Settings → Branches → Add rule for `main`:
+
+- Require a pull request before merging
+- Require status checks to pass before merging:
+  - `Validate` (`.github/workflows/validate.yml`)
+  - `Docs consistency` (`.github/workflows/docs-consistency.yml`)
+- Do not allow bypassing the above settings
+- Do not allow force pushes
+- Do not allow deletions
+
+This ensures every merge to `main` has passed CI before landing.
+
+## GitHub Actions release checklist
+
+Before tagging a release, confirm the following in GitHub Actions:
+
+1. Open the repository on GitHub and click **Actions**.
+2. Confirm the latest commit on `main` shows green checks for:
+   - `Validate` workflow — MCP tool listing, required files,
+     Python compile, integration wiring
+   - `Docs consistency` workflow — version sync, stale tool counts,
+     Python version accuracy
+3. If any workflow is red, read the failed step output and fix
+   locally before pushing.
+4. Run `./scripts/release-check.sh` locally and confirm
+   `release-check passed — ready for vX.Y.Z`.
+5. Create the GitHub release:
+   - Tag: `vX.Y.Z`
+   - Title: `vX.Y.Z — <milestone name>`
+   - Body: paste the relevant CHANGELOG section
+6. Confirm GitHub Pages deploys successfully after the release.

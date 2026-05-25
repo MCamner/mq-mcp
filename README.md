@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-0.2.2-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.2.2)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.4.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,14 +9,15 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-Early prototype with local MCP tools, validation, and repo-aware helpers.
+v0.3.1 — usable macOS MCP toolkit. 50 tools across five safety classes,
+validated release flow, and green CI on `macos-latest`.
 
-This repository is currently useful as:
+This repository is useful as:
 
-- a local MCP server experiment
-- a documentation baseline for MCP setup on macOS
-- a place to collect repeatable setup, validation, and troubleshooting flows
-- a publishable project shell with README, roadmap, changelog, license, release, and GitHub Pages docs
+- a local MCP server with 50 documented, safety-classified tools
+- a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
+- a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
+- a documented integration point for mq-hal and repo-signal
 
 It is **not yet** a polished package or production-ready MCP distribution.
 
@@ -26,7 +27,7 @@ It is **not yet** a polished package or production-ready MCP distribution.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 19 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 50 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -132,7 +133,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 19 MCP tools with descriptions.
+Expected response lists all 50 MCP tools with descriptions.
 
 ## Integration map
 

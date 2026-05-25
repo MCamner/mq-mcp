@@ -1,0 +1,564 @@
+{
+  "schema_version": "tool-contracts.v1",
+  "mq_mcp_version": "0.4.0",
+  "tool_count": 50,
+  "tools": [
+    {
+      "name": "analyze_csv",
+      "class": "A",
+      "description": "Analyserar en CSV-fil inom repo-katalogen.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "analyze_guitar_pro",
+      "class": "B",
+      "description": "Analyserar en Guitar Pro-fil (GP3, GP4, GP5).",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "check_port",
+      "class": "B",
+      "description": "Check whether a TCP port is in use on localhost.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "create_note",
+      "class": "D",
+      "description": "Create a new note in Notes.app.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "edit_image",
+      "class": "C",
+      "description": "Redigerar en bild (resize, rotate, grayscale).",
+      "resolver": "resolve_allowed_local_file",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "find_large_files",
+      "class": "B",
+      "description": "Find files larger than a given size in a directory.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "find_recent_files",
+      "class": "B",
+      "description": "Find files modified within the last N days.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_battery_status",
+      "class": "B",
+      "description": "Return battery level, charging state, and estimated time remaining.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_clipboard",
+      "class": "B",
+      "description": "Return the current contents of the macOS clipboard.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "clipboard-read"
+      ],
+      "examples": []
+    },
+    {
+      "name": "get_public_ip",
+      "class": "B",
+      "description": "Return the current public IP address.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "network"
+      ],
+      "examples": []
+    },
+    {
+      "name": "get_system_resources",
+      "class": "B",
+      "description": "CPU, minne och disk-info.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_todays_events",
+      "class": "B",
+      "description": "Return today's events from Calendar.app.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_wifi_info",
+      "class": "B",
+      "description": "Return the current Wi-Fi network name and signal info.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "git_diff",
+      "class": "A",
+      "description": "Show git diff for the repo or a specific relative path. Read-only.",
+      "resolver": "run_repo_command",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "git_status",
+      "class": "A",
+      "description": "Show current git branch, status, and latest commit. Read-only.",
+      "resolver": "run_repo_command",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "hal_repo_report",
+      "class": "D",
+      "description": "Run a read-only mq-hal repository report.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_local_repos",
+      "class": "A",
+      "description": "List all registered local repositories by name and path. Read-only.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_openable_apps",
+      "class": "A",
+      "description": "List all applications Bridget can open or control directly.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_repo_files",
+      "class": "A",
+      "description": "List files in the repository, excluding common cache/build folders.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_running_apps",
+      "class": "B",
+      "description": "List all visible macOS applications currently running.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "lock_screen",
+      "class": "D",
+      "description": "Lock the macOS screen immediately.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "system"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_app",
+      "class": "D",
+      "description": "Launch a macOS application by name.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_chrome",
+      "class": "D",
+      "description": "Open Google Chrome, optionally to a specific URL.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_finder",
+      "class": "D",
+      "description": "Open Finder at a given path, or at the home directory if no path is given.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_in_app",
+      "class": "D",
+      "description": "Öppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop).",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_messages",
+      "class": "D",
+      "description": "Open Messages.app, optionally to a specific contact or phone number.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_repo_terminal",
+      "class": "D",
+      "description": "Open a registered local repository in a new Terminal window.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_spotify",
+      "class": "D",
+      "description": "Open Spotify, optionally to a track, album, playlist, or search.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_terminal",
+      "class": "D",
+      "description": "Open a new Terminal window, optionally cd'd into a given path.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_url",
+      "class": "D",
+      "description": "Open a URL in the default browser.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "open_vscode",
+      "class": "D",
+      "description": "Open Visual Studio Code, optionally at a file or folder.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "read_repo_file",
+      "class": "A",
+      "description": "Läser innehållet i en fil inom repo-katalogen.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "repo_signal_analyze",
+      "class": "B",
+      "description": "Run repo-signal analyze on a local repository. Read-only.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "repo_signal_checklist",
+      "class": "B",
+      "description": "Run repo-signal publish checklist on a local repository. Read-only.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "repo_signal_doctor_json",
+      "class": "B",
+      "description": "Run repo-signal doctor --json and return structured doctor.v1 data. Read-only.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "repo_signal_inspect",
+      "class": "B",
+      "description": "Run repo-signal inspect --json and return structured inspect.v1 data. Read-only.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch",
+      "class": "D",
+      "description": "Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch",
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_tests",
+      "class": "D",
+      "description": "Run pytest in a registered local repository.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "search_repo",
+      "class": "A",
+      "description": "Search repository text using git grep. Read-only.",
+      "resolver": "run_repo_command",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "set_clipboard",
+      "class": "C",
+      "description": "Copy text to the macOS clipboard.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "clipboard-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "set_reminder",
+      "class": "D",
+      "description": "Create a reminder in Reminders.app.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "app-launch"
+      ],
+      "examples": []
+    },
+    {
+      "name": "set_volume",
+      "class": "D",
+      "description": "Set the macOS system output volume.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "system",
+        "audio"
+      ],
+      "examples": []
+    },
+    {
+      "name": "set_wallpaper",
+      "class": "D",
+      "description": "Set the macOS desktop wallpaper.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "system"
+      ],
+      "examples": []
+    },
+    {
+      "name": "show_notification",
+      "class": "D",
+      "description": "Send a macOS notification via osascript.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "notification"
+      ],
+      "examples": []
+    },
+    {
+      "name": "speak_text",
+      "class": "D",
+      "description": "Speak text aloud using macOS text-to-speech.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "audio"
+      ],
+      "examples": []
+    },
+    {
+      "name": "take_screenshot",
+      "class": "C",
+      "description": "Take a screenshot and save it to a file.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": true,
+      "side_effects": [
+        "file-write",
+        "screen"
+      ],
+      "examples": []
+    },
+    {
+      "name": "toggle_dark_mode",
+      "class": "D",
+      "description": "Toggle macOS between dark mode and light mode.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "system"
+      ],
+      "examples": []
+    },
+    {
+      "name": "tool_safety_report",
+      "class": "A",
+      "description": "Return the documented MCP tool safety classification.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "update_repo_file",
+      "class": "C",
+      "description": "Safely update a text file inside the repo by replacing exact text. Does not commit.",
+      "resolver": "resolve_repo_file",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "validate_project",
+      "class": "D",
+      "description": "Run the local project validation script if it exists.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    }
+  ]
+}

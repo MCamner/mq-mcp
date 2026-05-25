@@ -51,8 +51,8 @@ else
   fail "CHANGELOG does not reference version $VERSION"
 fi
 
-step "No stale tool counts (13 tools, 14 tools)"
-STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>/dev/null || true)
+step "No stale tool counts (13, 14, 19 tools)"
+STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b\|\b19 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>/dev/null || true)
 if [[ -z "$STALE" ]]; then
   pass "No stale tool count references found"
 else
