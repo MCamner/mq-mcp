@@ -90,9 +90,8 @@ def render_terminal_image_screenshot(filename, prompt, image_path, title="Termin
 
 def first_existing_bridget_image():
     for directory in (LOCAL_ASSETS_DIR, ASSETS_DIR):
-        for filename in ("bridget.jpg", "bridget2.jpg", "bridget3.jpg"):
-            path = directory / filename
-            if path.exists():
+        for path in sorted(directory.glob("bridget*.jpg")):
+            if path.is_file():
                 return path
     raise FileNotFoundError("No Bridget image found in .assets/ or assets/")
 
