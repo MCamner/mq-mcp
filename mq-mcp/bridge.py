@@ -228,6 +228,39 @@ def find_bridget_images() -> list[Path]:
     return images
 
 
+def _image_line(image: Path) -> str:
+    mq = shutil.which("mq-image")
+    if not mq:
+        return random.choice(BRIDGET_LOCAL_LINES)
+    try:
+        result = subprocess.run(
+            [mq, "analyze", str(image), "--json"],
+            capture_output=True, text=True, timeout=8,
+        )
+        if result.returncode != 0:
+            return random.choice(BRIDGET_LOCAL_LINES)
+        data = json.loads(result.stdout)
+        palette = data.get("palette", {})
+        composition = data.get("composition", {})
+        reverse = data.get("reverse_prompt", "")
+        parts: list[str] = []
+        if palette.get("dominant_color"):
+            parts.append(f"dominant färg: {palette['dominant_color']}")
+        if palette.get("brightness"):
+            parts.append(f"ljusstyrka: {palette['brightness']}")
+        if composition.get("rule_of_thirds"):
+            parts.append("rule-of-thirds")
+        if composition.get("symmetry") and float(composition.get("symmetry", 0)) > 0.6:
+            parts.append("stark symmetri")
+        if reverse:
+            parts.append(reverse[:80])
+        if parts:
+            return " · ".join(parts) + "."
+    except Exception:
+        pass
+    return random.choice(BRIDGET_LOCAL_LINES)
+
+
 def show_bridget_face() -> None:
     available_images = find_bridget_images()
     if available_images and shutil.which("chafa"):
@@ -237,9 +270,11 @@ def show_bridget_face() -> None:
                 subprocess.run(["chafa", "--size", "80x50", str(image)], stdout=tty, check=False)
         except OSError:
             subprocess.run(["chafa", "--size", "80x50", str(image)], check=False)
+        line = _image_line(image)
     else:
         print("BRIDGET online.")
-    scramble_print(random.choice(BRIDGET_LOCAL_LINES))
+        line = random.choice(BRIDGET_LOCAL_LINES)
+    scramble_print(line)
 
 
 def known_local_repos() -> dict[str, str]:
