@@ -231,16 +231,16 @@ This release should fix the trust layer before adding more features.
 
 **Scope**
 
-- [ ] Fix failing GitHub Actions on `main`
-- [ ] Ensure `scripts/validate.sh` passes locally
-- [ ] Ensure `scripts/release-check.sh` passes locally
-- [ ] Ensure Python syntax checks pass
-- [ ] Ensure tests pass on supported Python versions
-- [ ] Ensure docs consistency workflow passes
+- [x] Fix failing GitHub Actions on `main`
+- [x] Ensure `scripts/validate.sh` passes locally
+- [x] Ensure `scripts/release-check.sh` passes locally
+- [x] Ensure Python syntax checks pass
+- [x] Ensure tests pass on supported Python versions
+- [x] Ensure docs consistency workflow passes
 - [ ] Add clear failure output for validation scripts
-- [ ] Add proof section for current tool count
-- [ ] Confirm `VERSION`, `pyproject.toml`, README and CHANGELOG are in sync
-- [ ] Confirm `docs/index.html` reflects the current version
+- [x] Add proof section for current tool count
+- [x] Confirm `VERSION`, `pyproject.toml`, README and CHANGELOG are in sync
+- [x] Confirm `docs/index.html` reflects the current version
 - [ ] Confirm `docs/TOOL_SAFETY.md` lists every exposed tool
 - [ ] Confirm `docs/TOOL_INVENTORY.md` matches actual server tools
 - [ ] Add a release checklist section for GitHub Actions
@@ -257,13 +257,13 @@ uv run pytest -v
 
 **Definition of done**
 
-- [ ] Latest commit on `main` is green
-- [ ] GitHub Actions are green
-- [ ] Local validation passes
-- [ ] Release check passes
-- [ ] Tool count is documented once and referenced consistently
-- [ ] README proof section is current
-- [ ] CHANGELOG includes v0.3.1
+- [x] Latest commit on `main` is green
+- [x] GitHub Actions are green
+- [x] Local validation passes
+- [x] Release check passes
+- [x] Tool count is documented once and referenced consistently
+- [x] README proof section is current
+- [x] CHANGELOG includes v0.3.1
 - [ ] GitHub release `v0.3.1` exists
 - [ ] GitHub Pages deployment is successful
 
