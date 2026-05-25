@@ -1,11 +1,12 @@
 ---
 name: "bridget-bridge-maintainer"
-description: "Use when changing Bridget, bridge.py, OpenAI tool calling, MCP stdio connection, tool discovery, local search modes, image personality, or voice behavior."
+description: "Use when changing Bridget, bridge.py, OpenAI tool calling, MCP tool discovery, search modes, image behavior, or voice behavior."
 ---
 
 # Bridget Bridge Maintainer
 
-Use this skill for `mq-mcp/bridge.py`, Bridget behavior, OpenAI tool calls, and the local MCP bridge experience.
+Use this skill for `mq-mcp/bridge.py`, Bridget behavior, OpenAI tool
+calls, and the local MCP bridge experience.
 
 ## Core Files
 
@@ -33,12 +34,14 @@ The bridge:
 
 ## Guardrails
 
-- Do not invent tools in the prompt or output. Tool answers must come from discovered MCP catalog.
+- Do not invent tools in the prompt or output.
+- Tool answers must come from the discovered MCP catalog.
 - Keep `--tools` working without requiring `OPENAI_API_KEY`.
-- Keep errors concise and useful when the MCP server fails to start or a tool call fails.
-- Preserve local-only voice behavior. Do not add external TTS unless explicitly requested and documented.
+- Keep errors concise when the MCP server or a tool call fails.
+- Preserve local-only voice behavior.
+- Do not add external TTS unless explicitly requested and documented.
 - Avoid hardcoding model names or paths when env vars already exist.
-- Do not break scriptability with unnecessary animations or noisy output in machine-oriented modes.
+- Do not break scriptability with animations or noisy machine-mode output.
 
 ## When Changing Tool Calling
 
@@ -57,7 +60,10 @@ Check:
 python -m compileall mq-mcp/bridge.py mq-mcp/ask.py mq-mcp/bridget_voice.py -q
 uv --directory mq-mcp run python bridge.py --tools
 ./scripts/check-bridge-tool-discovery.sh
-uv --directory mq-mcp run pytest ../tests/test_bridget_images.py ../tests/test_bridget_voice.py -q
+uv --directory mq-mcp run pytest \
+  ../tests/test_bridget_images.py \
+  ../tests/test_bridget_voice.py \
+  -q
 ```
 
 If `OPENAI_API_KEY` is available and the task touched prompt flow:
@@ -68,4 +74,6 @@ uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 
 ## UX Standard
 
-Bridget should feel local, fast, practical, and transparent. Preserve personality where it exists, but keep operational output calm and debuggable.
+Bridget should feel local, fast, practical, and transparent.
+Preserve personality where it exists, but keep operational output calm
+and debuggable.
