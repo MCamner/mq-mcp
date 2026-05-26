@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-0.7.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v0.7.0)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v0.8.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,14 +9,15 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v0.7.0 — local bridge observability for the macOS MCP toolkit. 50 tools
-across five safety classes, packaged install flow, redacted diagnostics, and
-green CI on `macos-latest`.
+v0.8.0 — profile templates and client setup polish for the macOS MCP toolkit.
+50 tools across five safety classes, packaged install flow, redacted
+diagnostics, validated profiles, and green CI on `macos-latest`.
 
 This repository is useful as:
 
 - a local MCP server with 50 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
+- validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
 - a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
 - a documented integration point for mq-hal and repo-signal
@@ -46,6 +47,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 | `scripts/upgrade.sh` | Safe update helper for pull, sync, reinstall, and validation |
 | `scripts/uninstall.sh` | Local CLI uninstall helper |
 | `completions/_mq-mcp` | Optional zsh completions |
+| `profiles/` | Versioned MCP profile templates for clients and workflows |
 | `docs/index.html` | GitHub Pages landing page |
 | `docs/screenshots/` | Place for screenshots and visual docs |
 | `CHANGELOG.md` | Release history |
@@ -70,6 +72,7 @@ Check the local install:
 mq-mcp doctor
 mq-mcp health
 mq-mcp tools
+mq-mcp profiles list
 ```
 
 Run the local MCP server experiment:

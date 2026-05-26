@@ -1,0 +1,26 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "openai-bridge",
+  "title": "OpenAI bridge",
+  "summary": "Profile for Bridget and bridge.py workflows that combine OpenAI prompts with local MCP tools.",
+  "client": "openai-bridge",
+  "command": "uv",
+  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "python", "bridge.py"],
+  "env": {
+    "OPENAI_MODEL": "gpt-5.4-mini",
+    "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
+    "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}}"
+  },
+  "recommended_tools": [
+    "read_repo_file",
+    "list_repo_files",
+    "search_repo",
+    "tool_safety_report",
+    "repo_signal_analyze",
+    "hal_repo_report"
+  ],
+  "safety_notes": [
+    "OPENAI_API_KEY is intentionally not stored in this template.",
+    "Bridge prompts should use the actual tool catalog and avoid invented tools."
+  ]
+}

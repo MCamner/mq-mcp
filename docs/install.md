@@ -37,6 +37,7 @@ mq-mcp serve
 mq-mcp validate
 mq-mcp config path
 mq-mcp report --json
+mq-mcp profiles list
 ```
 
 ![Installation](screenshots/install_uv_sync.png)
@@ -142,6 +143,20 @@ mq-mcp bundle --validate
 ```
 
 Diagnostics redact secret-like environment variables such as API keys.
+
+## Profiles
+
+Profile templates live in `profiles/` and cover common clients and workflows:
+
+```bash
+mq-mcp profiles list
+mq-mcp profiles show read-only
+mq-mcp profiles show claude-desktop
+mq-mcp profiles validate
+```
+
+See [`profiles.md`](profiles.md) for when to use each profile and which
+placeholders to replace locally.
 
 ## Notes
 

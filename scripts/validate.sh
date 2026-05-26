@@ -62,6 +62,14 @@ else
   fail "check-tool-contracts.sh missing or not executable"
 fi
 
+section "Profile templates check"
+if [[ -x "$ROOT/scripts/check-profiles.py" ]]; then
+  "$ROOT/scripts/check-profiles.py" \
+    || fail "check-profiles.py failed"
+else
+  fail "check-profiles.py missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch

@@ -9,6 +9,7 @@ _mq_mcp() {
     'info:print local server and tool metadata'
     'report:print redacted diagnostics report'
     'bundle:write a redacted troubleshooting JSON bundle'
+    'profiles:inspect MCP profile templates'
     'serve:run the local MCP server'
     'validate:run repository validation'
     'config:show config paths'
@@ -20,6 +21,14 @@ _mq_mcp() {
     'path:print .env path'
     'example:print .env.example path'
     'root:print repository root'
+  )
+
+  local -a profile_commands
+  profile_commands=(
+    'list:list available profile templates'
+    'show:show one profile template'
+    'path:print profiles directory'
+    'validate:validate profile templates'
   )
 
   if (( CURRENT == 2 )); then
@@ -42,6 +51,11 @@ _mq_mcp() {
       ;;
     bundle)
       _arguments '--validate[include validation output]'
+      ;;
+    profiles)
+      if (( CURRENT == 3 )); then
+        _describe 'profiles command' profile_commands
+      fi
       ;;
     serve)
       _arguments '--host[override host]:host:' '--port[override port]:port:'

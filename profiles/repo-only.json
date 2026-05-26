@@ -1,0 +1,26 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "repo-only",
+  "title": "Repo-scoped development",
+  "summary": "Repo-scoped profile for working inside mq-mcp with validation and exact-match file updates.",
+  "client": "generic",
+  "command": "uv",
+  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "env": {
+    "MQ_MCP_ALLOWED_PATHS": "",
+    "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}}"
+  },
+  "recommended_tools": [
+    "read_repo_file",
+    "list_repo_files",
+    "search_repo",
+    "git_status",
+    "git_diff",
+    "validate_project",
+    "update_repo_file"
+  ],
+  "safety_notes": [
+    "File reads and writes remain scoped to the repository root.",
+    "update_repo_file replaces exact text and never commits automatically."
+  ]
+}

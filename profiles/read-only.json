@@ -1,0 +1,25 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "read-only",
+  "title": "Read-only repo inspection",
+  "summary": "Minimal profile for reading the mq-mcp repository and checking safety docs without extra local access.",
+  "client": "generic",
+  "command": "uv",
+  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "env": {
+    "MQ_MCP_ALLOWED_PATHS": "",
+    "MQ_MCP_LOCAL_REPOS": ""
+  },
+  "recommended_tools": [
+    "read_repo_file",
+    "list_repo_files",
+    "search_repo",
+    "git_status",
+    "git_diff",
+    "tool_safety_report"
+  ],
+  "safety_notes": [
+    "No external paths are granted.",
+    "Use this profile for inspection and review before enabling subprocess or macOS actions."
+  ]
+}

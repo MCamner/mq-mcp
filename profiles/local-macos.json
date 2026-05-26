@@ -1,0 +1,28 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "local-macos",
+  "title": "Local macOS assistant",
+  "summary": "macOS-focused profile for local app, clipboard, notification, and system helper workflows.",
+  "client": "generic",
+  "command": "uv",
+  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "env": {
+    "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
+    "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}}"
+  },
+  "recommended_tools": [
+    "get_system_resources",
+    "get_clipboard",
+    "set_clipboard",
+    "open_app",
+    "open_url",
+    "open_terminal",
+    "open_finder",
+    "show_notification",
+    "check_port"
+  ],
+  "safety_notes": [
+    "This profile enables local macOS actions through explicit tools.",
+    "Use read-only or repo-only profiles when app control is not needed."
+  ]
+}

@@ -1,90 +1,129 @@
 # MCP Server Profiles
 
-Server profiles allow you to configure `mq-mcp` for specific use cases by adjusting environment variables and client settings.
+`mq-mcp` ships versioned JSON profile templates in `profiles/`.
 
-## Profile: Standard (Safe / Minimal)
+Profiles are not hidden automation. They are copyable configuration templates
+that make client setup explicit: command, args, environment, recommended tools,
+and safety notes live in one place.
 
-Best for: Reviewing the `mq-mcp` repository itself with maximum safety.
+## Commands
 
-**Environment (`.env`):**
 ```bash
-# No extra repos or paths
-MQ_MCP_LOCAL_REPOS=""
-MQ_MCP_ALLOWED_PATHS=""
+mq-mcp profiles list
+mq-mcp profiles show read-only
+mq-mcp profiles path
+mq-mcp profiles validate
 ```
 
-**Key Tools:** `read_repo_file`, `list_repo_files`, `git_status`, `validate_project`.
+The validation command runs the same contract check used by `scripts/validate.sh`.
 
----
+## Available Profiles
 
-## Profile: Full Developer (Multi-Repo)
+| Profile | Best for | Client |
+| --- | --- | --- |
+| `read-only` | Safe repo inspection and safety review | Generic |
+| `repo-only` | Repo-scoped development inside `mq-mcp` | Generic |
+| `developer` | Multi-repo mq ecosystem development | Generic |
+| `local-macos` | macOS app, clipboard, notification, and local helper workflows | Generic |
+| `mq-agent` | mq-agent discovery, safety display, dry-run, and local repo workflows | mq-agent |
+| `openai-bridge` | Bridget / `bridge.py` prompt workflows | OpenAI bridge |
+| `claude-desktop` | Claude Desktop `mcpServers` setup | Claude Desktop |
+| `codex` | Codex repo-aware local MCP sessions | Codex |
 
-Best for: Working across multiple projects and using Bridget as a central assistant.
+## Choosing a Profile
 
-**Environment (`.env`):**
+Start with the smallest profile that can do the job.
+
+Use `read-only` when you only need inspection. It grants no extra repos or
+external paths.
+
+Use `repo-only` when you need validation or exact-match edits inside this repo.
+
+Use `developer` when working across registered mq ecosystem repositories.
+
+Use `local-macos` only when local app or system helper tools are useful.
+
+Use `mq-agent`, `openai-bridge`, `claude-desktop`, or `codex` when configuring
+that specific client surface.
+
+## Placeholders
+
+Templates use placeholders so they can be committed safely:
+
+```text
+{{MQ_MCP_REPO_ROOT}}
+{{MQ_MCP_APP_DIR}}
+{{MQ_HAL_REPO}}
+{{REPO_SIGNAL_REPO}}
+{{MACOS_SCRIPTS_REPO}}
+```
+
+Replace placeholders with absolute paths in local client configs. Do not commit
+machine-specific paths, API keys, or real secrets.
+
+## Claude Desktop
+
+Inspect the template:
+
 ```bash
-# Register all your active projects
-MQ_MCP_LOCAL_REPOS="/Users/name/repo-signal,/Users/name/mq-hal,/Users/name/my-app"
-# No external path access needed
-MQ_MCP_ALLOWED_PATHS=""
+mq-mcp profiles show claude-desktop
 ```
 
-**Key Tools:** `hal_repo_report`, `repo_signal_analyze`, `list_local_repos`, `open_repo_terminal`.
+Copy the `mcpServers` object into:
 
----
+```text
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
 
-## Profile: Media & Creative
+Replace placeholder paths, then restart Claude Desktop.
 
-Best for: Managing music files (Guitar Pro) and performing quick image edits.
+## Codex
 
-**Environment (`.env`):**
+Use the `codex` profile when Codex needs repo inspection, validation, safety
+metadata, and mq ecosystem context.
+
 ```bash
-# Allow access to your creative folders
-MQ_MCP_ALLOWED_PATHS="/Users/name/Music/Tabs:/Users/name/Pictures/Assets"
+mq-mcp profiles show codex
 ```
 
-**Key Tools:** `analyze_guitar_pro`, `edit_image`, `open_in_app`.
+Keep write-capable tools explicit and review diffs before committing.
 
----
+## mq-agent
 
-## Profile: System Monitor
+The `mq-agent` profile is designed for:
 
-Best for: Keeping an eye on local system health while working.
+- tool discovery
+- safety class display
+- dry-run behavior
+- mq-hal and repo-signal integration
 
-**Environment (`.env`):**
 ```bash
-# Standard config
+mq-mcp profiles show mq-agent
 ```
 
-**Key Tools:** `get_system_resources`.
+mq-agent should continue to approval-gate unsafe subprocess and write-capable
+tool calls.
 
----
+## OpenAI Bridge
 
-## Implementing Profiles in Clients
+The `openai-bridge` profile documents the Bridget / `bridge.py` workflow.
 
-You can define these profiles directly in your `claude_desktop_config.json` by creating multiple server entries with different names and environments.
+It intentionally does not store `OPENAI_API_KEY`. Keep API credentials in your
+local shell environment or uncommitted `.env`.
 
-### Example: Claude Desktop with Profiles
+## Validation
 
-```json
-{
-  "mcpServers": {
-    "mq-mcp-safe": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/mq-mcp/mq-mcp", "run", "mcp", "run", "server.py"],
-      "env": {
-        "MQ_MCP_LOCAL_REPOS": ""
-      }
-    },
-    "mq-mcp-dev": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/mq-mcp/mq-mcp", "run", "mcp", "run", "server.py"],
-      "env": {
-        "MQ_MCP_LOCAL_REPOS": "/path/to/repo1,/path/to/repo2"
-      }
-    }
-  }
-}
+Run:
+
+```bash
+./scripts/check-profiles.py
+./scripts/validate.sh
 ```
 
-By doing this, you can choose which "profile" of the server to talk to depending on your current task.
+Profile validation checks:
+
+- JSON parses cleanly
+- filenames match profile names
+- required fields are present
+- expected profile names exist
+- command args, env, recommended tools, and safety notes have useful shape

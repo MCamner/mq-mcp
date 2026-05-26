@@ -1,0 +1,26 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "mq-agent",
+  "title": "mq-agent integration",
+  "summary": "Profile for mq-agent tool discovery, safety class display, dry-run, and local repo workflows.",
+  "client": "mq-agent",
+  "command": "mq-mcp",
+  "args": ["serve"],
+  "env": {
+    "MQ_MCP_HOST": "127.0.0.1",
+    "MQ_MCP_PORT": "8765",
+    "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
+    "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}}"
+  },
+  "recommended_tools": [
+    "tool_safety_report",
+    "list_local_repos",
+    "repo_signal_analyze",
+    "repo_signal_checklist",
+    "hal_repo_report"
+  ],
+  "safety_notes": [
+    "mq-agent should read safety metadata before allowing subprocess or write-capable calls.",
+    "Unsafe tool execution should remain approval-gated by the client."
+  ]
+}

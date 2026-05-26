@@ -1,0 +1,27 @@
+{
+  "schema_version": "mq-mcp.profile.v1",
+  "name": "developer",
+  "title": "Multi-repo developer",
+  "summary": "Developer profile for mq ecosystem work across registered local repositories.",
+  "client": "generic",
+  "command": "uv",
+  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "env": {
+    "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
+    "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}},{{MACOS_SCRIPTS_REPO}}"
+  },
+  "recommended_tools": [
+    "list_local_repos",
+    "open_repo_terminal",
+    "repo_signal_analyze",
+    "repo_signal_checklist",
+    "repo_signal_inspect",
+    "repo_signal_doctor_json",
+    "hal_repo_report",
+    "run_tests"
+  ],
+  "safety_notes": [
+    "Only explicitly registered repos are discoverable by name.",
+    "Subprocess tools remain fixed-command or allowlist based."
+  ]
+}

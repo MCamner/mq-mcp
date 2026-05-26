@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 - 2026-05-26
+
+- Added versioned MCP profile templates under `profiles/` for Claude Desktop,
+  Codex, mq-agent, OpenAI bridge, local macOS, repo-only, read-only, and
+  developer workflows.
+- Added `mq-mcp profiles list`, `profiles show`, `profiles path`, and
+  `profiles validate`.
+- Added `scripts/check-profiles.py` and wired it into `scripts/validate.sh`.
+- Reworked `docs/profiles.md` around choosing the smallest safe profile.
+- Updated client and install docs to point at validated profile templates.
+- Added tests for profile template contracts and CLI profile discovery.
+
 ## 0.7.0 - 2026-05-26
 
 - Added observability endpoints: `/health`, `/tool-count`, `/server-info`,

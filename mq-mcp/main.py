@@ -21,6 +21,7 @@ ENV_FILE = APP_DIR / ".env"
 ENV_EXAMPLE_FILE = APP_DIR / ".env.example"
 CONTRACTS_FILE = REPO_ROOT / "docs" / "tool_contracts.json"
 VALIDATE_SCRIPT = REPO_ROOT / "scripts" / "validate.sh"
+PROFILES_DIR = REPO_ROOT / "profiles"
 
 
 def read_version() -> str:
@@ -113,6 +114,22 @@ def load_contract_summary() -> dict[str, object]:
         "tool_count": data.get("tool_count"),
         "safety_classes": classes,
     }
+
+
+def load_profiles() -> list[dict[str, object]]:
+    profiles: list[dict[str, object]] = []
+    for path in sorted(PROFILES_DIR.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["_path"] = str(path)
+        profiles.append(data)
+    return profiles
+
+
+def find_profile(name: str) -> dict[str, object] | None:
+    for profile in load_profiles():
+        if profile.get("name") == name:
+            return profile
+    return None
 
 
 def build_health_payload() -> dict[str, object]:
@@ -240,6 +257,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("validate", help="Run scripts/validate.sh from the repository root.")
     sub.add_parser("tools", help="List tools exposed through bridge.py.")
 
+    profiles_parser = sub.add_parser("profiles", help="Inspect MCP profile templates.")
+    profiles_sub = profiles_parser.add_subparsers(dest="profiles_command")
+    profiles_sub.add_parser("list", help="List available profile templates.")
+    show_parser = profiles_sub.add_parser("show", help="Show one profile template.")
+    show_parser.add_argument("name", help="Profile name, e.g. read-only or claude-desktop.")
+    profiles_sub.add_parser("path", help="Print the profiles directory.")
+    profiles_sub.add_parser("validate", help="Validate profile templates.")
+
     config_parser = sub.add_parser("config", help="Inspect local config paths.")
     config_sub = config_parser.add_subparsers(dest="config_command")
     config_sub.add_parser("path", help="Print the .env path.")
@@ -309,6 +334,24 @@ def main(argv: list[str] | None = None) -> int:
         return run_command([str(REPO_ROOT / "scripts" / "validate.sh")], REPO_ROOT)
     if args.command == "tools":
         return run_command(["uv", "run", "python", "bridge.py", "--tools"], APP_DIR)
+    if args.command == "profiles":
+        if args.profiles_command == "list":
+            for profile in load_profiles():
+                print(f"{profile['name']}\t{profile['title']}")
+            return 0
+        if args.profiles_command == "show":
+            profile = find_profile(args.name)
+            if profile is None:
+                print(f"ERROR: unknown profile: {args.name}", file=sys.stderr)
+                return 1
+            print(json.dumps(profile, indent=2, sort_keys=True))
+            return 0
+        if args.profiles_command == "path":
+            print(PROFILES_DIR)
+            return 0
+        if args.profiles_command == "validate":
+            return run_command([str(REPO_ROOT / "scripts" / "check-profiles.py")], REPO_ROOT)
+        parser.error("profiles requires one of: list, show, path, validate")
     if args.command == "config":
         if args.config_command == "path":
             print(ENV_FILE)

@@ -26,7 +26,7 @@ every tool has:
 Current project phase:
 
 ```text
-v0.7.0 — local bridge observability
+v0.8.0 — profile templates and client setup polish
 ```
 
 Completed foundation:
@@ -50,19 +50,19 @@ Completed foundation:
 - install, upgrade, and uninstall scripts
 - health, info, report, and troubleshooting bundle commands
 - redacted observability endpoints
+- validated MCP profile templates for common clients and workflows
 
 Current priority:
 
 ```text
-v0.8.0 — Profile templates and client setup polish
+v1.0.0 — Stable local MCP platform
 ```
 
 Reason:
 
-v0.7.0 adds local runtime inspection through `mq-mcp health`,
-`mq-mcp info`, `mq-mcp report`, `mq-mcp bundle`, and redacted server
-diagnostic endpoints. The next step is polished profile templates for common
-MCP clients and mq ecosystem tools.
+v0.8.0 adds validated profile templates for Claude Desktop, Codex, mq-agent,
+OpenAI bridge, repo-only, read-only, developer, and local macOS workflows. The
+next step is stabilizing the full local MCP platform for v1.0.0.
 
 ---
 
@@ -83,7 +83,7 @@ MCP clients and mq ecosystem tools.
 | v0.5.0  | mq-agent and mqlaunch integration hardening | Done          |
 | v0.6.0  | Packaged local install flow                 | Done          |
 | v0.7.0  | Local bridge observability                  | Done          |
-| v0.8.0  | Profile templates and client setup polish   | Planned       |
+| v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Future        |
 
 ---
@@ -451,16 +451,16 @@ tools.
 
 **Planned scope**
 
-- [ ] Add Claude Desktop profile template
-- [ ] Add Codex profile template
-- [ ] Add OpenAI bridge profile template
-- [ ] Add mq-agent profile template
-- [ ] Add macOS local profile
-- [ ] Add repo-only profile
-- [ ] Add read-only profile
-- [ ] Add developer profile
-- [ ] Add docs for selecting the right profile
-- [ ] Add validation for profile files
+- [x] Add Claude Desktop profile template
+- [x] Add Codex profile template
+- [x] Add OpenAI bridge profile template
+- [x] Add mq-agent profile template
+- [x] Add macOS local profile
+- [x] Add repo-only profile
+- [x] Add read-only profile
+- [x] Add developer profile
+- [x] Add docs for selecting the right profile
+- [x] Add validation for profile files
 
 **Example profiles**
 
@@ -573,8 +573,8 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v0.8.0 — Profile templates and client setup polish
+v1.0.0 — Stable local MCP platform
 ```
 
-This release should make common MCP client setup repeatable through versioned
-profile templates and validation.
+This release should harden startup, docs, profiles, validation, install flow,
+tool metadata, and release evidence into a stable local MCP platform.

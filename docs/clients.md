@@ -7,12 +7,15 @@ This guide explains how to connect `mq-mcp` to various MCP-compatible clients on
 Ensure you have installed `mq-mcp` and validated the installation:
 
 ```bash
-cd mq-mcp/mq-mcp
-uv sync
-uv run mcp run server.py
+cd mq-mcp
+./scripts/install.sh
+mq-mcp doctor
+mq-mcp profiles validate
 ```
 
 You will need the **absolute path** to your `mq-mcp` repository for the following configurations.
+Profile templates live in `profiles/` and can be inspected with
+`mq-mcp profiles list`.
 
 ---
 
@@ -22,7 +25,13 @@ Claude Desktop is a primary client for MCP. It uses a JSON configuration file.
 
 1.  Open the Claude Desktop configuration file:
     `~/Library/Application Support/Claude/claude_desktop_config.json`
-2.  Add `mq-mcp` to the `mcpServers` section:
+2.  Inspect the profile template:
+
+```bash
+mq-mcp profiles show claude-desktop
+```
+
+3.  Add `mq-mcp` to the `mcpServers` section:
 
 ```json
 {
@@ -46,8 +55,8 @@ Claude Desktop is a primary client for MCP. It uses a JSON configuration file.
 }
 ```
 
-3.  **Replace** `YOUR_USERNAME` and the paths with your actual local paths.
-4.  Restart Claude Desktop.
+4.  **Replace** `YOUR_USERNAME` and the paths with your actual local paths.
+5.  Restart Claude Desktop.
 
 ---
 

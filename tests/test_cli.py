@@ -26,7 +26,7 @@ def test_doctor_json_reports_required_status(capsys):
 
     assert result == 0
     assert payload["name"] == "mq-mcp"
-    assert payload["version"] == "0.7.0"
+    assert payload["version"] == "0.8.0"
     assert payload["status"] == "ok"
     assert any(item["name"] == "validate_script" for item in payload["checks"])
 
@@ -45,7 +45,7 @@ def test_health_json_reports_tool_count(capsys):
     payload = json.loads(capsys.readouterr().out)
 
     assert result == 0
-    assert payload["version"] == "0.7.0"
+    assert payload["version"] == "0.8.0"
     assert payload["status"] == "ok"
     assert payload["tool_count"] == 50
     assert payload["contracts_ok"] is True
@@ -58,3 +58,24 @@ def test_report_redacts_secret_environment(monkeypatch):
 
     assert report["env"]["OPENAI_API_KEY"]["value"] == "<redacted>"
     assert "sk-test-secret" not in json.dumps(report)
+
+
+def test_profiles_list_includes_expected_templates(capsys):
+    cli = load_cli()
+    result = cli.main(["profiles", "list"])
+    output = capsys.readouterr().out
+
+    assert result == 0
+    assert "read-only" in output
+    assert "claude-desktop" in output
+    assert "mq-agent" in output
+
+
+def test_profiles_show_returns_profile_json(capsys):
+    cli = load_cli()
+    result = cli.main(["profiles", "show", "read-only"])
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["schema_version"] == "mq-mcp.profile.v1"
+    assert payload["name"] == "read-only"
