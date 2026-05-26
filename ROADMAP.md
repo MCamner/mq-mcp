@@ -502,6 +502,91 @@ Make mq-mcp stable enough to be the default MCP tool layer for the mq ecosystem.
 
 ---
 
+## Review Engine — AI Engineering Runtime
+
+mq-mcp is evolving beyond a local MCP tool layer into a repo-aware engineering
+cognition system. The review engine adds structured, contract-driven AI review
+directly into the MCP surface.
+
+Strategic principle: better context architecture, not more AI.
+
+---
+
+### Phase 1 — Review Foundation (done)
+
+Goal: make review output consistent, stable, and contract-driven.
+
+- [x] `reviews/contracts/comment-review.md` — hard rules: severity labels,
+  output format, scope, max findings, uncertainty handling
+- [x] `reviews/skills/python-comment-review.md` — Python-specific guidance:
+  docstrings, type hints, naming, module-level side effects
+- [x] `reviews/skills/shell-review.md` — shell-specific guidance: headers,
+  unquoted vars, silent errors, set -e
+- [x] `reviews/skills/mcp-tool-review.md` — MCP tool guidance: Args blocks,
+  safety notes, path boundary docs, naming conventions
+- [x] `server.py`: `review_file`, `build_repo_context`, `list_review_contracts`
+  MCP tools — review engine exposed on the MCP surface
+- [ ] `reviews/golden/` — high-quality reference examples per review mode
+- [ ] `reviews/contracts/architecture-review.md`
+- [ ] `reviews/contracts/security-review.md`
+
+---
+
+### Phase 2 — Repo-Aware Intelligence (in progress)
+
+Goal: give the review engine real system understanding.
+
+- [x] `review_engine/repo_context_builder.py` — generates
+  `architecture_map.json` (role of each file) and `file_summary_index.json`
+  (public symbols, docstrings, line counts) from file heuristics + Python AST
+- [ ] `review_engine/review_router.py` — route files to the correct skill
+  based on extension and path (`.sh` → shell, `.py` → python, MCP tools → mcp)
+- [ ] `review_engine/severity_engine.py` — structured severity output formatter
+- [ ] `docs/architecture/SYSTEM_OVERVIEW.md`
+- [ ] `docs/architecture/REVIEW_PIPELINE.md`
+
+---
+
+### Phase 3 — Semantic Review Memory (planned)
+
+Goal: intelligent long-term memory for the review engine.
+
+- [ ] Separate review vector store from repo semantic memory
+- [ ] Store previous reviews and retrieve similar findings at review time
+- [ ] Retrieve coding conventions and architecture notes automatically
+
+---
+
+### Phase 4 — Multi-Pass Review Engine (planned)
+
+Goal: higher quality through structured pipeline.
+
+```text
+Pass 1: structure understanding
+Pass 2: architecture reasoning
+Pass 3: comment/doc review
+Pass 4: consistency review
+Pass 5: output normalization
+```
+
+---
+
+### Phase 5 — Advanced Engineering Review (planned)
+
+- [ ] `--risk` mode: subprocess safety, env leakage, shell injection, MCP exposure
+- [ ] Architecture drift detection: README says X, runtime does Y
+- [ ] Contract validation: tool contracts, repo boundaries, API assumptions
+
+---
+
+### Phase 6 — Autonomous Review Runtime (planned)
+
+- [ ] Continuous review triggered by `git diff`
+- [ ] Review TUI: severity, history, semantic context
+- [ ] Agentic review: model selects skill, contract, and generates report automatically
+
+---
+
 ## Long-term ideas
 
 These are intentionally not scheduled yet.
@@ -574,9 +659,17 @@ Every powerful tool must have:
 Work on:
 
 ```text
-post-v1 hardening
+Review Engine — Phase 1 completion + Phase 2
 ```
 
-Keep validating releases with `./scripts/release-check.sh`, monitor GitHub
-Actions and Pages after tags, and only add new tool surface when the safety
-metadata, tests, profiles, and docs move with it.
+Immediate priorities:
+
+1. `reviews/golden/` — add one high-quality golden review of `bridge.py`
+   as few-shot reference for the review engine
+2. `review_engine/review_router.py` — route files to the correct skill
+   automatically based on extension and path
+3. `reviews/contracts/architecture-review.md` — contract for architecture
+   and boundary reviews
+
+Keep validating releases with `./scripts/release-check.sh` and only add new
+tool surface when safety metadata, tests, profiles, and docs move with it.
