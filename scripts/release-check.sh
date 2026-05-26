@@ -31,6 +31,9 @@ python -m compileall mq-mcp/ -q && pass "Python files compile OK" || fail "Pytho
 step "Run validate.sh"
 ./scripts/validate.sh && pass "validate.sh passed" || fail "validate.sh failed"
 
+step "Run stability check"
+./scripts/check-stability.py && pass "stability baseline passed" || fail "stability baseline failed"
+
 step "Run tests"
 uv --directory mq-mcp run pytest ../tests -v && pass "tests passed" || fail "tests failed"
 

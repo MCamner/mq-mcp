@@ -68,5 +68,13 @@ The integration tools require these projects to be installed locally and registe
 ## Still having issues?
 
 1.  Run the full validation: `./scripts/validate.sh`.
-2.  Check the [Safety notes](security.md) to ensure your paths are allowed.
-3.  Open an issue on GitHub with the output of the failing command.
+2.  Generate a redacted local report:
+    ```bash
+    mq-mcp report --json
+    mq-mcp bundle --validate
+    ```
+3.  Check the [Safety notes](security.md) to ensure your paths are allowed.
+4.  Check the [Stability baseline](stability.md) if a release or profile
+    contract appears out of sync.
+5.  Open an issue on GitHub with the output of the failing command and the
+    redacted bundle path.

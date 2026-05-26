@@ -70,6 +70,14 @@ else
   fail "check-profiles.py missing or not executable"
 fi
 
+section "Stability baseline check"
+if [[ -x "$ROOT/scripts/check-stability.py" ]]; then
+  "$ROOT/scripts/check-stability.py" \
+    || fail "check-stability.py failed"
+else
+  fail "check-stability.py missing or not executable"
+fi
+
 section "Repo"
 cd "$ROOT"
 git status --short --branch

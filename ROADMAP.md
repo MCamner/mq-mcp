@@ -55,14 +55,15 @@ Completed foundation:
 Current priority:
 
 ```text
-v1.0.0 — Stable local MCP platform
+v1.0.0 — stable local MCP platform
 ```
 
 Reason:
 
 v0.8.0 adds validated profile templates for Claude Desktop, Codex, mq-agent,
 OpenAI bridge, repo-only, read-only, developer, and local macOS workflows. The
-next step is stabilizing the full local MCP platform for v1.0.0.
+v1.0.0 adds a machine-readable stability baseline and release evidence for the
+full local MCP platform.
 
 ---
 
@@ -84,7 +85,7 @@ next step is stabilizing the full local MCP platform for v1.0.0.
 | v0.6.0  | Packaged local install flow                 | Done          |
 | v0.7.0  | Local bridge observability                  | Done          |
 | v0.8.0  | Profile templates and client setup polish   | Done          |
-| v1.0.0  | Stable local MCP platform                   | Future        |
+| v1.0.0  | Stable local MCP platform                   | Done          |
 
 ---
 
@@ -482,22 +483,22 @@ Make mq-mcp stable enough to be the default MCP tool layer for the mq ecosystem.
 
 ### v1.0.0 requirements
 
-- [ ] Stable server startup
-- [ ] Stable tool registry
-- [ ] Stable tool metadata schema
-- [ ] Stable safety classes
-- [ ] Stable filesystem boundary model
-- [ ] Stable config format
-- [ ] Stable validation command
-- [ ] Stable install flow
-- [ ] Complete tool docs
-- [ ] Complete troubleshooting docs
-- [ ] Complete example workflows
-- [ ] Green CI
-- [ ] Protected main branch
-- [ ] GitHub release
-- [ ] GitHub Pages documentation
-- [ ] No known critical safety gaps
+- [x] Stable server startup
+- [x] Stable tool registry
+- [x] Stable tool metadata schema
+- [x] Stable safety classes
+- [x] Stable filesystem boundary model
+- [x] Stable config format
+- [x] Stable validation command
+- [x] Stable install flow
+- [x] Complete tool docs
+- [x] Complete troubleshooting docs
+- [x] Complete example workflows
+- [x] Green CI
+- [x] Protected main branch
+- [x] GitHub release
+- [x] GitHub Pages documentation
+- [x] No known critical safety gaps
 
 ---
 
@@ -573,8 +574,9 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v1.0.0 — Stable local MCP platform
+post-v1 hardening
 ```
 
-This release should harden startup, docs, profiles, validation, install flow,
-tool metadata, and release evidence into a stable local MCP platform.
+Keep validating releases with `./scripts/release-check.sh`, monitor GitHub
+Actions and Pages after tags, and only add new tool surface when the safety
+metadata, tests, profiles, and docs move with it.

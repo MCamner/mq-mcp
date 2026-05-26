@@ -22,6 +22,7 @@ ENV_EXAMPLE_FILE = APP_DIR / ".env.example"
 CONTRACTS_FILE = REPO_ROOT / "docs" / "tool_contracts.json"
 VALIDATE_SCRIPT = REPO_ROOT / "scripts" / "validate.sh"
 PROFILES_DIR = REPO_ROOT / "profiles"
+STABILITY_FILE = REPO_ROOT / "docs" / "stability.json"
 
 
 def read_version() -> str:
@@ -130,6 +131,10 @@ def find_profile(name: str) -> dict[str, object] | None:
         if profile.get("name") == name:
             return profile
     return None
+
+
+def load_stability() -> dict[str, object]:
+    return json.loads(STABILITY_FILE.read_text(encoding="utf-8"))
 
 
 def build_health_payload() -> dict[str, object]:
@@ -265,6 +270,11 @@ def build_parser() -> argparse.ArgumentParser:
     profiles_sub.add_parser("path", help="Print the profiles directory.")
     profiles_sub.add_parser("validate", help="Validate profile templates.")
 
+    stability_parser = sub.add_parser("stability", help="Inspect the v1 stability baseline.")
+    stability_sub = stability_parser.add_subparsers(dest="stability_command")
+    stability_sub.add_parser("show", help="Show stability baseline JSON.")
+    stability_sub.add_parser("validate", help="Validate stability baseline.")
+
     config_parser = sub.add_parser("config", help="Inspect local config paths.")
     config_sub = config_parser.add_subparsers(dest="config_command")
     config_sub.add_parser("path", help="Print the .env path.")
@@ -352,6 +362,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.profiles_command == "validate":
             return run_command([str(REPO_ROOT / "scripts" / "check-profiles.py")], REPO_ROOT)
         parser.error("profiles requires one of: list, show, path, validate")
+    if args.command == "stability":
+        if args.stability_command == "show":
+            print(json.dumps(load_stability(), indent=2, sort_keys=True))
+            return 0
+        if args.stability_command == "validate":
+            return run_command([str(REPO_ROOT / "scripts" / "check-stability.py")], REPO_ROOT)
+        parser.error("stability requires one of: show, validate")
     if args.command == "config":
         if args.config_command == "path":
             print(ENV_FILE)

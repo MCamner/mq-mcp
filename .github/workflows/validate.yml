@@ -38,6 +38,12 @@ jobs:
       - name: Check tool contracts
         run: ./scripts/check-tool-contracts.sh
 
+      - name: Check profiles
+        run: ./scripts/check-profiles.py
+
+      - name: Check stability baseline
+        run: ./scripts/check-stability.py
+
       - name: Verify tool_contracts.json is up to date
         run: |
           python3 scripts/generate_tool_contracts.py

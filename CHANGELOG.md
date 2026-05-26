@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0 - 2026-05-26
+
+- Added `docs/stability.json` and `docs/stability.md` as the v1 stable
+  local MCP platform baseline.
+- Added `scripts/check-stability.py` and wired it into `scripts/validate.sh`,
+  `scripts/release-check.sh`, and GitHub Actions.
+- Added `mq-mcp stability show` and `mq-mcp stability validate`.
+- Documented stable startup, metadata, profiles, safety boundaries, validation,
+  install flow, troubleshooting, example workflows, GitHub Pages, and release
+  evidence.
+- Updated version surfaces to `1.0.0`.
+
 ## 0.8.0 - 2026-05-26
 
 - Added versioned MCP profile templates under `profiles/` for Claude Desktop,

@@ -38,6 +38,7 @@ mq-mcp validate
 mq-mcp config path
 mq-mcp report --json
 mq-mcp profiles list
+mq-mcp stability validate
 ```
 
 ![Installation](screenshots/install_uv_sync.png)
@@ -157,6 +158,18 @@ mq-mcp profiles validate
 
 See [`profiles.md`](profiles.md) for when to use each profile and which
 placeholders to replace locally.
+
+## Stability
+
+For v1 readiness:
+
+```bash
+mq-mcp stability show
+mq-mcp stability validate
+./scripts/release-check.sh
+```
+
+See [`stability.md`](stability.md).
 
 ## Notes
 

@@ -10,6 +10,7 @@ _mq_mcp() {
     'report:print redacted diagnostics report'
     'bundle:write a redacted troubleshooting JSON bundle'
     'profiles:inspect MCP profile templates'
+    'stability:inspect the v1 stability baseline'
     'serve:run the local MCP server'
     'validate:run repository validation'
     'config:show config paths'
@@ -29,6 +30,12 @@ _mq_mcp() {
     'show:show one profile template'
     'path:print profiles directory'
     'validate:validate profile templates'
+  )
+
+  local -a stability_commands
+  stability_commands=(
+    'show:show stability baseline JSON'
+    'validate:validate stability baseline'
   )
 
   if (( CURRENT == 2 )); then
@@ -55,6 +62,11 @@ _mq_mcp() {
     profiles)
       if (( CURRENT == 3 )); then
         _describe 'profiles command' profile_commands
+      fi
+      ;;
+    stability)
+      if (( CURRENT == 3 )); then
+        _describe 'stability command' stability_commands
       fi
       ;;
     serve)
