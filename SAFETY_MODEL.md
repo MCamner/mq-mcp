@@ -3,6 +3,7 @@
 mq-mcp is local-first and experimental.
 
 Safety principles:
+
 - never commit .env files
 - never upload API keys or credentials
 - keep filesystem access scoped to the repository root
@@ -13,6 +14,7 @@ Safety principles:
 - validate before release
 
 High-risk areas:
+
 - update_repo_file can modify repository files
 - run_mqlaunch may execute local workflows
 - edit_image writes image output

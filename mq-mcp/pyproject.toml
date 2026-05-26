@@ -21,3 +21,11 @@ dev = [
 
 [project.scripts]
 mq-mcp = "main:main"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = ["psutil", "guitarpro", "pandas", "pandas.*"]
+ignore_missing_imports = true

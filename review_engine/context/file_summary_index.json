@@ -1,0 +1,1023 @@
+[
+  {
+    "path": ".claude/agents/mcp-release-validator.md",
+    "role": "Claude Code subagent definition",
+    "lines": 81,
+    "size_bytes": 2714,
+    "title": "---"
+  },
+  {
+    "path": ".claude/agents/mcp-tool-safety-reviewer.md",
+    "role": "Claude Code subagent definition",
+    "lines": 64,
+    "size_bytes": 2795,
+    "title": "---"
+  },
+  {
+    "path": ".claude/agents/mq-project-context.md",
+    "role": "Claude Code subagent definition",
+    "lines": 51,
+    "size_bytes": 2271,
+    "title": "---"
+  },
+  {
+    "path": ".claude/settings.json",
+    "role": "unknown",
+    "lines": 38,
+    "size_bytes": 2326
+  },
+  {
+    "path": ".claude/settings.local.json",
+    "role": "unknown",
+    "lines": 80,
+    "size_bytes": 4393
+  },
+  {
+    "path": ".github/ISSUE_TEMPLATE/bug.md",
+    "role": "unknown",
+    "lines": 24,
+    "size_bytes": 325,
+    "title": "---"
+  },
+  {
+    "path": ".github/ISSUE_TEMPLATE/docs.md",
+    "role": "unknown",
+    "lines": 24,
+    "size_bytes": 357,
+    "title": "---"
+  },
+  {
+    "path": ".github/workflows/docs-consistency.yml",
+    "role": "GitHub Actions CI workflow",
+    "lines": 62,
+    "size_bytes": 1931
+  },
+  {
+    "path": ".github/workflows/validate.yml",
+    "role": "GitHub Actions CI workflow",
+    "lines": 55,
+    "size_bytes": 1380
+  },
+  {
+    "path": ".markdownlint.json",
+    "role": "unknown",
+    "lines": 5,
+    "size_bytes": 40
+  },
+  {
+    "path": ".vscode/settings.json",
+    "role": "unknown",
+    "lines": 8,
+    "size_bytes": 181
+  },
+  {
+    "path": "CHANGELOG.md",
+    "role": "release changelog",
+    "lines": 188,
+    "size_bytes": 8225,
+    "title": "Changelog"
+  },
+  {
+    "path": "README.md",
+    "role": "project readme",
+    "lines": 314,
+    "size_bytes": 11603,
+    "title": "mq-mcp"
+  },
+  {
+    "path": "ROADMAP.md",
+    "role": "project roadmap",
+    "lines": 583,
+    "size_bytes": 14511,
+    "title": "mq-mcp Roadmap"
+  },
+  {
+    "path": "RUNBOOK.md",
+    "role": "operational runbook",
+    "lines": 51,
+    "size_bytes": 513,
+    "title": "mq-mcp Runbook"
+  },
+  {
+    "path": "SAFETY_MODEL.md",
+    "role": "safety model documentation",
+    "lines": 20,
+    "size_bytes": 580,
+    "title": "mq-mcp Safety Model"
+  },
+  {
+    "path": "TOOL_INDEX.md",
+    "role": "MCP tool index",
+    "lines": 22,
+    "size_bytes": 1029,
+    "title": "mq-mcp Tool Index"
+  },
+  {
+    "path": "VECTOR_CONTEXT.md",
+    "role": "unknown",
+    "lines": 28,
+    "size_bytes": 885,
+    "title": "mq-mcp Vector Context"
+  },
+  {
+    "path": "docs/TOOL_INVENTORY.md",
+    "role": "documentation",
+    "lines": 109,
+    "size_bytes": 4833,
+    "title": "MCP Tool Inventory"
+  },
+  {
+    "path": "docs/TOOL_SAFETY.md",
+    "role": "documentation",
+    "lines": 169,
+    "size_bytes": 10553,
+    "title": "MCP Tool Safety Classification"
+  },
+  {
+    "path": "docs/bridget-voice.md",
+    "role": "documentation",
+    "lines": 63,
+    "size_bytes": 1511,
+    "title": "Bridget Voice"
+  },
+  {
+    "path": "docs/clients.md",
+    "role": "documentation",
+    "lines": 119,
+    "size_bytes": 3024,
+    "title": "MCP Client Setup"
+  },
+  {
+    "path": "docs/demo.md",
+    "role": "documentation",
+    "lines": 172,
+    "size_bytes": 5347,
+    "title": "mq-mcp Demo"
+  },
+  {
+    "path": "docs/ghostty.md",
+    "role": "documentation",
+    "lines": 125,
+    "size_bytes": 3025,
+    "title": "Ghostty Configuration"
+  },
+  {
+    "path": "docs/global/GLOBAL_ARCHITECTURE_NOTES.md",
+    "role": "documentation",
+    "lines": 66,
+    "size_bytes": 3181,
+    "title": "Global Architecture Notes"
+  },
+  {
+    "path": "docs/global/GLOBAL_COMMAND_SURFACE.md",
+    "role": "documentation",
+    "lines": 108,
+    "size_bytes": 2739,
+    "title": "Global Command Surface"
+  },
+  {
+    "path": "docs/global/GLOBAL_REPO_MAP.md",
+    "role": "documentation",
+    "lines": 55,
+    "size_bytes": 2274,
+    "title": "Global Repo Map"
+  },
+  {
+    "path": "docs/global/GLOBAL_VECTOR_STORE_POLICY.md",
+    "role": "documentation",
+    "lines": 54,
+    "size_bytes": 1784,
+    "title": "Global Vector Store Policy"
+  },
+  {
+    "path": "docs/install.md",
+    "role": "documentation",
+    "lines": 177,
+    "size_bytes": 3351,
+    "title": "Installation Guide"
+  },
+  {
+    "path": "docs/integration.md",
+    "role": "documentation",
+    "lines": 137,
+    "size_bytes": 3395,
+    "title": "mq-mcp Integration Map"
+  },
+  {
+    "path": "docs/profiles.md",
+    "role": "documentation",
+    "lines": 130,
+    "size_bytes": 3301,
+    "title": "MCP Server Profiles"
+  },
+  {
+    "path": "docs/screenshots/README.md",
+    "role": "documentation",
+    "lines": 13,
+    "size_bytes": 156,
+    "title": "Screenshots"
+  },
+  {
+    "path": "docs/security.md",
+    "role": "documentation",
+    "lines": 152,
+    "size_bytes": 5017,
+    "title": "MCP safety policy"
+  },
+  {
+    "path": "docs/semantic-index/architecture.md",
+    "role": "documentation",
+    "lines": 87,
+    "size_bytes": 3586,
+    "title": "mq-mcp Architecture"
+  },
+  {
+    "path": "docs/semantic-index/mcp-tools-map.md",
+    "role": "documentation",
+    "lines": 51,
+    "size_bytes": 3518,
+    "title": "MCP Tools Map"
+  },
+  {
+    "path": "docs/stability.json",
+    "role": "documentation",
+    "lines": 87,
+    "size_bytes": 2589
+  },
+  {
+    "path": "docs/stability.md",
+    "role": "documentation",
+    "lines": 94,
+    "size_bytes": 1461,
+    "title": "Stability Baseline"
+  },
+  {
+    "path": "docs/tool_contracts.json",
+    "role": "documentation",
+    "lines": 565,
+    "size_bytes": 14322
+  },
+  {
+    "path": "docs/troubleshooting.md",
+    "role": "documentation",
+    "lines": 81,
+    "size_bytes": 2495,
+    "title": "Troubleshooting"
+  },
+  {
+    "path": "docs/upgrade.md",
+    "role": "documentation",
+    "lines": 69,
+    "size_bytes": 1430,
+    "title": "Upgrade Guide"
+  },
+  {
+    "path": "mq-mcp/ask.py",
+    "role": "semantic memory — vector store querying",
+    "lines": 124,
+    "size_bytes": 3924,
+    "module_docstring": "Ask questions using OpenAI vector stores.\n\nUsage:\n  uv run python ask.py \"What does server.py do?\"\n  uv run python ask.py -m gpt-5.5 \"Deep review of bridge.py\"\n  uv run python ask.py -g \"How do all my repos relate?\"   # global memory only",
+    "public_functions": [
+      "scramble_print",
+      "run_ask",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "MODEL",
+      "VECTOR_STORE_ID",
+      "SEMANTIC_MEMORY_ID",
+      "SYSTEM_LOCAL",
+      "SYSTEM_GLOBAL",
+      "_SCRAMBLE_CHARS"
+    ]
+  },
+  {
+    "path": "mq-mcp/bridge.py",
+    "role": "orchestration layer — MCP ↔ LLM bridge",
+    "lines": 520,
+    "size_bytes": 16974,
+    "module_docstring": null,
+    "public_functions": [
+      "scramble_print",
+      "usage",
+      "parse_prompt",
+      "tool_catalog_text",
+      "to_openai_tools",
+      "content_to_text",
+      "call_mcp_tool",
+      "tool_call_name_and_args",
+      "bridget_image_dirs",
+      "find_bridget_images",
+      "choose_bridget_image",
+      "show_bridget_face",
+      "known_local_repos",
+      "is_goto_repo_prompt",
+      "handle_goto_repo",
+      "is_bridget_face_prompt",
+      "run_bridge"
+    ],
+    "public_classes": [],
+    "constants": [
+      "MODEL",
+      "SERVER_COMMAND",
+      "SERVER_ARGS",
+      "SYSTEM_PROMPT",
+      "_SCRAMBLE_CHARS",
+      "BRIDGET_ASSET_GLOB",
+      "BRIDGET_LOCAL_LINES"
+    ]
+  },
+  {
+    "path": "mq-mcp/bridget_voice.py",
+    "role": "voice command handler — TTS and voice triggers",
+    "lines": 154,
+    "size_bytes": 4416,
+    "module_docstring": null,
+    "public_functions": [
+      "set_voice_enabled",
+      "is_voice_enabled",
+      "set_voice_name",
+      "get_voice_name",
+      "strip_for_speech",
+      "speak_if_enabled",
+      "handle_voice_command"
+    ],
+    "public_classes": [],
+    "constants": [
+      "_DEFAULT_VOICE",
+      "_MAX_SPEECH_CHARS"
+    ]
+  },
+  {
+    "path": "mq-mcp/main.py",
+    "role": "CLI entry point",
+    "lines": 390,
+    "size_bytes": 15731,
+    "module_docstring": "Small local CLI for mq-mcp install and runtime workflows.",
+    "public_functions": [
+      "read_version",
+      "run_command",
+      "capture_command",
+      "safe_git_summary",
+      "redacted_env_summary",
+      "load_contract_summary",
+      "load_profiles",
+      "find_profile",
+      "load_stability",
+      "build_health_payload",
+      "build_report",
+      "print_payload",
+      "doctor",
+      "build_parser",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "APP_DIR",
+      "REPO_ROOT",
+      "VERSION_FILE",
+      "PYPROJECT_FILE",
+      "ENV_FILE",
+      "ENV_EXAMPLE_FILE",
+      "CONTRACTS_FILE",
+      "VALIDATE_SCRIPT",
+      "PROFILES_DIR",
+      "STABILITY_FILE"
+    ]
+  },
+  {
+    "path": "mq-mcp/mqlaunch.sh",
+    "role": "interactive TUI launcher script",
+    "lines": 1605,
+    "size_bytes": 39470
+  },
+  {
+    "path": "mq-mcp/pyproject.toml",
+    "role": "Python project configuration",
+    "lines": 24,
+    "size_bytes": 429
+  },
+  {
+    "path": "mq-mcp/server.py",
+    "role": "MCP server — tool registry and HTTP endpoints",
+    "lines": 1581,
+    "size_bytes": 53346,
+    "module_docstring": null,
+    "public_functions": [
+      "jsonable",
+      "health_check",
+      "tool_count",
+      "server_info",
+      "diagnostics",
+      "serve_tool_contracts",
+      "list_http_tools",
+      "describe_http_tool",
+      "call_http_tool",
+      "resolve_repo_file",
+      "known_local_repos",
+      "allowed_external_roots",
+      "resolve_allowed_local_file",
+      "get_system_resources",
+      "read_repo_file",
+      "run_mqlaunch",
+      "analyze_guitar_pro",
+      "open_in_app",
+      "analyze_csv",
+      "edit_image",
+      "run_repo_command",
+      "list_repo_files",
+      "search_repo",
+      "git_status",
+      "git_diff",
+      "update_repo_file",
+      "validate_project",
+      "tool_safety_report",
+      "list_local_repos",
+      "open_repo_terminal",
+      "repo_signal_analyze",
+      "repo_signal_checklist",
+      "repo_signal_inspect",
+      "repo_signal_doctor_json",
+      "hal_repo_report",
+      "open_messages",
+      "open_finder",
+      "open_url",
+      "show_notification",
+      "get_clipboard",
+      "set_clipboard",
+      "open_app",
+      "get_wifi_info",
+      "speak_text",
+      "take_screenshot",
+      "open_chrome",
+      "open_spotify",
+      "open_terminal",
+      "open_vscode",
+      "set_volume",
+      "get_battery_status",
+      "toggle_dark_mode",
+      "list_running_apps",
+      "lock_screen",
+      "create_note",
+      "get_todays_events",
+      "set_reminder",
+      "find_large_files",
+      "find_recent_files",
+      "run_tests",
+      "check_port",
+      "set_wallpaper",
+      "get_public_ip",
+      "list_openable_apps",
+      "review_file",
+      "build_repo_context",
+      "list_review_contracts"
+    ],
+    "public_classes": [],
+    "constants": [
+      "MCP_HOST",
+      "MCP_PORT",
+      "REPO_ROOT",
+      "_CONTRACTS_PATH",
+      "_STARTED_AT"
+    ]
+  },
+  {
+    "path": "profiles/claude-desktop.json",
+    "role": "MCP client profile template",
+    "lines": 36,
+    "size_bytes": 1153
+  },
+  {
+    "path": "profiles/codex.json",
+    "role": "MCP client profile template",
+    "lines": 29,
+    "size_bytes": 920
+  },
+  {
+    "path": "profiles/developer.json",
+    "role": "MCP client profile template",
+    "lines": 28,
+    "size_bytes": 886
+  },
+  {
+    "path": "profiles/local-macos.json",
+    "role": "MCP client profile template",
+    "lines": 29,
+    "size_bytes": 839
+  },
+  {
+    "path": "profiles/mq-agent.json",
+    "role": "MCP client profile template",
+    "lines": 27,
+    "size_bytes": 842
+  },
+  {
+    "path": "profiles/openai-bridge.json",
+    "role": "MCP client profile template",
+    "lines": 27,
+    "size_bytes": 870
+  },
+  {
+    "path": "profiles/read-only.json",
+    "role": "MCP client profile template",
+    "lines": 26,
+    "size_bytes": 738
+  },
+  {
+    "path": "profiles/repo-only.json",
+    "role": "MCP client profile template",
+    "lines": 27,
+    "size_bytes": 778
+  },
+  {
+    "path": "release.sh",
+    "role": "unknown",
+    "lines": 355,
+    "size_bytes": 8459
+  },
+  {
+    "path": "review_engine/context/architecture_map.json",
+    "role": "review engine — context building and routing",
+    "lines": 128,
+    "size_bytes": 6586
+  },
+  {
+    "path": "review_engine/context/file_summary_index.json",
+    "role": "review engine — context building and routing",
+    "lines": 999,
+    "size_bytes": 24914
+  },
+  {
+    "path": "review_engine/repo_context_builder.py",
+    "role": "review engine — context building and routing",
+    "lines": 239,
+    "size_bytes": 8552,
+    "module_docstring": "Repo Context Builder — mq-mcp review engine, Phase 2.1\n\nGenerates lightweight context artifacts for the review engine:\n\n  architecture_map.json   — what each file IS (role/purpose), not just what it imports\n  file_summary_index.json — per-file: docstring, public symbols, line count\n\nDoes NOT do full AST callgraph analysis. That is a later phase.\nDesigned to run fast (< 2s on mq-mcp scale), be re-run on every review,\nand produce output that a review prompt can include directly.\n\nUsage:\n  python review_engine/repo_context_builder.py\n  python review_engine/repo_context_builder.py --out /path/to/output/",
+    "public_functions": [
+      "build_context"
+    ],
+    "public_classes": [],
+    "constants": [
+      "REPO_ROOT",
+      "IGNORED_DIRS",
+      "IGNORED_FILES"
+    ]
+  },
+  {
+    "path": "reviews/contracts/comment-review.md",
+    "role": "review contract — hard rules for review output",
+    "lines": 130,
+    "size_bytes": 3339,
+    "title": "Review Contract: Comment Review"
+  },
+  {
+    "path": "reviews/skills/mcp-tool-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 62,
+    "size_bytes": 2043,
+    "title": "Review Skill: MCP Tool — Comment Review"
+  },
+  {
+    "path": "reviews/skills/python-comment-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 54,
+    "size_bytes": 1867,
+    "title": "Review Skill: Python — Comment Review"
+  },
+  {
+    "path": "reviews/skills/shell-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 50,
+    "size_bytes": 1652,
+    "title": "Review Skill: Shell — Comment Review"
+  },
+  {
+    "path": "scripts/build_semantic_memory_pack.sh",
+    "role": "automation script",
+    "lines": 236,
+    "size_bytes": 7021
+  },
+  {
+    "path": "scripts/build_vector_pack.sh",
+    "role": "automation script",
+    "lines": 292,
+    "size_bytes": 9745
+  },
+  {
+    "path": "scripts/check-bridge-tool-discovery.sh",
+    "role": "automation script",
+    "lines": 56,
+    "size_bytes": 1820
+  },
+  {
+    "path": "scripts/check-integration-docs.sh",
+    "role": "automation script",
+    "lines": 49,
+    "size_bytes": 1368
+  },
+  {
+    "path": "scripts/check-integration-smoke.sh",
+    "role": "automation script",
+    "lines": 72,
+    "size_bytes": 1790
+  },
+  {
+    "path": "scripts/check-mcp-tool-docs.sh",
+    "role": "automation script",
+    "lines": 81,
+    "size_bytes": 2171
+  },
+  {
+    "path": "scripts/check-profiles.py",
+    "role": "automation script",
+    "lines": 88,
+    "size_bytes": 2394,
+    "module_docstring": "Validate mq-mcp profile templates.",
+    "public_functions": [
+      "fail",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "PROFILES_DIR",
+      "REQUIRED_FIELDS",
+      "EXPECTED_PROFILES"
+    ]
+  },
+  {
+    "path": "scripts/check-stability.py",
+    "role": "automation script",
+    "lines": 96,
+    "size_bytes": 3092,
+    "module_docstring": "Validate the mq-mcp v1 stability baseline.",
+    "public_functions": [
+      "fail",
+      "require_file",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "STABILITY",
+      "REQUIRED_REQUIREMENTS"
+    ]
+  },
+  {
+    "path": "scripts/check-tool-contracts.sh",
+    "role": "automation script",
+    "lines": 70,
+    "size_bytes": 2222
+  },
+  {
+    "path": "scripts/create_vector_store.py",
+    "role": "automation script",
+    "lines": 92,
+    "size_bytes": 2526,
+    "module_docstring": "Creates an OpenAI vector store named mq-mcp-repo-knowledge\nand uploads all relevant files from /tmp/mq-mcp-vector-pack.\n\nRun from repo root:\n  bash scripts/build_vector_pack.sh\n  python3 scripts/create_vector_store.py",
+    "public_functions": [
+      "update_env",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "VECTOR_STORE_NAME",
+      "PACK_DIR",
+      "ENV_FILE",
+      "ALLOWED_SUFFIXES"
+    ]
+  },
+  {
+    "path": "scripts/generate_screenshots.py",
+    "role": "automation script",
+    "lines": 151,
+    "size_bytes": 4809,
+    "module_docstring": null,
+    "public_functions": [
+      "draw_terminal_header",
+      "render_terminal_screenshot",
+      "render_terminal_image_screenshot",
+      "first_existing_bridget_image",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "REPO_ROOT",
+      "SCREENSHOTS_DIR",
+      "ASSETS_DIR",
+      "LOCAL_ASSETS_DIR",
+      "BG_COLOR",
+      "TEXT_COLOR",
+      "PROMPT_COLOR",
+      "ACCENT_COLOR",
+      "FONT_PATH",
+      "FONT_SIZE",
+      "LINE_HEIGHT",
+      "PADDING",
+      "TERMINAL_WIDTH",
+      "TITLE_BAR_HEIGHT"
+    ]
+  },
+  {
+    "path": "scripts/generate_tool_contracts.py",
+    "role": "automation script",
+    "lines": 141,
+    "size_bytes": 10073,
+    "module_docstring": "Generate docs/tool_contracts.json from server.py + static metadata.\n\nRun from the repository root:\n    python scripts/generate_tool_contracts.py",
+    "public_functions": [
+      "extract_tools",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "SERVER",
+      "OUT"
+    ]
+  },
+  {
+    "path": "scripts/install.sh",
+    "role": "automation script",
+    "lines": 38,
+    "size_bytes": 1019
+  },
+  {
+    "path": "scripts/release-check.sh",
+    "role": "automation script",
+    "lines": 85,
+    "size_bytes": 2753
+  },
+  {
+    "path": "scripts/uninstall.sh",
+    "role": "automation script",
+    "lines": 26,
+    "size_bytes": 572
+  },
+  {
+    "path": "scripts/upgrade.sh",
+    "role": "automation script",
+    "lines": 23,
+    "size_bytes": 533
+  },
+  {
+    "path": "scripts/upload_semantic_memory.py",
+    "role": "automation script",
+    "lines": 91,
+    "size_bytes": 2607,
+    "module_docstring": "Upload the cross-repo semantic memory pack to the 'semantic repository memory' vector store.\n\nReplaces all existing files in the store with the current pack contents.\n\nRun from mq-mcp/mq-mcp dir:\n  bash ../scripts/build_semantic_memory_pack.sh\n  uv run python ../scripts/upload_semantic_memory.py",
+    "public_functions": [
+      "clear_store",
+      "upload_pack",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "VECTOR_STORE_ID",
+      "PACK_DIR",
+      "ALLOWED_SUFFIXES"
+    ]
+  },
+  {
+    "path": "scripts/upload_vector_pack.py",
+    "role": "automation script",
+    "lines": 113,
+    "size_bytes": 3027,
+    "module_docstring": "Upload /tmp/mq-mcp-vector-pack to the active mq-mcp OpenAI vector store.\n\nThis replaces all existing files in OPENAI_VECTOR_STORE_ID with the current\npack contents. Load mq-mcp/.env before running if the variable is not already\nin the environment.\n\nRun from repo root:\n  bash scripts/build_vector_pack.sh\n  set -a; source mq-mcp/.env; set +a\n  python3 scripts/upload_vector_pack.py",
+    "public_functions": [
+      "pack_files",
+      "clear_store",
+      "upload_pack",
+      "main"
+    ],
+    "public_classes": [],
+    "constants": [
+      "PACK_DIR",
+      "ALLOWED_SUFFIXES"
+    ]
+  },
+  {
+    "path": "scripts/validate.sh",
+    "role": "automation script",
+    "lines": 149,
+    "size_bytes": 4749
+  },
+  {
+    "path": "scripts/vignette.py",
+    "role": "automation script",
+    "lines": 45,
+    "size_bytes": 1247,
+    "module_docstring": "Apply a soft vignette (edge fade to black) to the local Bridget image.",
+    "public_functions": [
+      "make_vignette_mask",
+      "apply_vignette"
+    ],
+    "public_classes": [],
+    "constants": [
+      "REPO_ROOT",
+      "SRC",
+      "DST",
+      "FEATHER",
+      "BLUR_RADIUS"
+    ]
+  },
+  {
+    "path": "skills/bridget-bridge-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 80,
+    "size_bytes": 2370,
+    "title": "---"
+  },
+  {
+    "path": "skills/docs-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 73,
+    "size_bytes": 2056,
+    "title": "---"
+  },
+  {
+    "path": "skills/integration-stack-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 80,
+    "size_bytes": 2587,
+    "title": "---"
+  },
+  {
+    "path": "skills/mcp-tool-safety-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 79,
+    "size_bytes": 2916,
+    "title": "---"
+  },
+  {
+    "path": "skills/release-readiness/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 83,
+    "size_bytes": 1852,
+    "title": "---"
+  },
+  {
+    "path": "skills/repo-aware/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 77,
+    "size_bytes": 2661,
+    "title": "---"
+  },
+  {
+    "path": "skills/semantic-memory-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 62,
+    "size_bytes": 2066,
+    "title": "---"
+  },
+  {
+    "path": "skills/terminal-ui-polisher/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 58,
+    "size_bytes": 1862,
+    "title": "---"
+  },
+  {
+    "path": "tests/test_allowed_local_paths.py",
+    "role": "test file",
+    "lines": 74,
+    "size_bytes": 2658,
+    "module_docstring": null,
+    "public_functions": [
+      "test_resolve_allowed_local_file_allows_repo_relative",
+      "test_resolve_allowed_local_file_blocks_external_without_allowlist",
+      "test_resolve_allowed_local_file_allows_external_with_allowlist",
+      "test_resolve_allowed_local_file_blocks_sibling_of_allowed_root",
+      "test_allowed_external_roots_empty_without_env",
+      "test_allowed_external_roots_parses_colon_separated_paths",
+      "test_allowed_external_roots_ignores_empty_segments"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "SERVER_PATH"
+    ]
+  },
+  {
+    "path": "tests/test_bridget_images.py",
+    "role": "test file",
+    "lines": 53,
+    "size_bytes": 1770,
+    "module_docstring": null,
+    "public_functions": [
+      "bridge",
+      "test_find_bridget_images_uses_bridget_jpg_glob",
+      "test_choose_bridget_image_does_not_repeat_when_possible"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "BRIDGE_PATH"
+    ]
+  },
+  {
+    "path": "tests/test_bridget_voice.py",
+    "role": "voice command handler — TTS and voice triggers",
+    "lines": 85,
+    "size_bytes": 2880,
+    "module_docstring": null,
+    "public_functions": [
+      "test_voice_toggle_state_file",
+      "test_voice_env_override",
+      "test_voice_name_file",
+      "test_strip_for_speech_removes_code_blocks",
+      "test_strip_for_speech_truncates",
+      "test_handle_voice_command_on_off",
+      "test_handle_voice_name_command"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT"
+    ]
+  },
+  {
+    "path": "tests/test_cli.py",
+    "role": "test file",
+    "lines": 92,
+    "size_bytes": 2652,
+    "module_docstring": null,
+    "public_functions": [
+      "load_cli",
+      "test_read_version_matches_version_file",
+      "test_doctor_json_reports_required_status",
+      "test_config_path_command_prints_env_path",
+      "test_health_json_reports_tool_count",
+      "test_report_redacts_secret_environment",
+      "test_profiles_list_includes_expected_templates",
+      "test_profiles_show_returns_profile_json",
+      "test_stability_show_returns_baseline_json"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "CLI_PATH"
+    ]
+  },
+  {
+    "path": "tests/test_profiles.py",
+    "role": "test file",
+    "lines": 35,
+    "size_bytes": 843,
+    "module_docstring": null,
+    "public_functions": [
+      "test_expected_profiles_exist",
+      "test_profiles_have_required_contract"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "PROFILES"
+    ]
+  },
+  {
+    "path": "tests/test_server_observability.py",
+    "role": "test file",
+    "lines": 37,
+    "size_bytes": 1011,
+    "module_docstring": null,
+    "public_functions": [
+      "server",
+      "test_health_endpoint_reports_version_and_tool_count",
+      "test_redacted_env_hides_api_key"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "SERVER_PATH"
+    ]
+  },
+  {
+    "path": "tests/test_server_safety.py",
+    "role": "test file",
+    "lines": 94,
+    "size_bytes": 2915,
+    "module_docstring": null,
+    "public_functions": [
+      "server",
+      "test_resolve_repo_file_allows_readme",
+      "test_resolve_repo_file_blocks_parent_escape",
+      "test_resolve_repo_file_blocks_absolute_path",
+      "test_update_repo_file_blocks_secret_files",
+      "test_update_repo_file_blocks_system_dirs",
+      "test_update_repo_file_blocks_unsupported_suffix",
+      "test_update_repo_file_rejects_empty_old_text",
+      "test_update_repo_file_no_match_returns_error",
+      "test_update_repo_file_refuses_ambiguous_match",
+      "test_analyze_csv_blocks_parent_escape",
+      "test_read_repo_file_reads_readme",
+      "test_read_repo_file_missing_file",
+      "test_list_repo_files_includes_readme",
+      "test_list_repo_files_excludes_git_dir"
+    ],
+    "public_classes": [],
+    "constants": [
+      "ROOT",
+      "SERVER_PATH"
+    ]
+  }
+]

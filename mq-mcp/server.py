@@ -4,6 +4,7 @@ import requests
 import os
 import time
 from pathlib import Path
+from typing import Any
 import psutil
 import shutil
 import subprocess
@@ -80,7 +81,7 @@ def _redacted_env() -> dict[str, object]:
     return redacted
 
 
-def jsonable(value):
+def jsonable(value: Any) -> Any:
     """Convert MCP/Pydantic return values into JSON-serializable objects."""
     if hasattr(value, "model_dump"):
         return value.model_dump(mode="json")
@@ -93,10 +94,10 @@ def jsonable(value):
     return value
 
 
-def _enrich_tool(tool_dict: dict) -> dict:
+def _enrich_tool(tool_dict: dict[str, Any]) -> dict[str, Any]:
     """Add safety_class to a serialized tool dict from the contracts map."""
-    name = tool_dict.get("name", "")
-    tool_dict["safety_class"] = _SAFETY_MAP.get(name, "unknown")
+    name = str(tool_dict.get("name", ""))
+    tool_dict["safety_class"] = _SAFETY_MAP.get(name, "unknown")  # type: ignore[call-overload]
     return tool_dict
 
 
@@ -374,8 +375,8 @@ def edit_image(relative_path: str, action: str, value: int | None = None) -> str
     try:
         safe_path = resolve_allowed_local_file(relative_path)
         with Image.open(safe_path) as img:
-            if action == "rotate": img = img.rotate(value or 90, expand=True)
-            elif action == "grayscale": img = img.convert("L")
+            if action == "rotate": img = img.rotate(value or 90, expand=True)  # type: ignore[assignment]
+            elif action == "grayscale": img = img.convert("L")  # type: ignore[assignment]
             img.save(safe_path)
             return f"Bilden har uppdaterats ({action})."
     except Exception as e: return f"Fel: {str(e)}"
@@ -1426,6 +1427,154 @@ Any app by name:
     1Password, CleanMyMac, Keynote, Pages, Numbers, …
 
 Type: open_app("AppName") to launch anything not listed above."""
+
+
+# --- REVIEW ENGINE ---
+
+def _load_review_contract(mode: str) -> str:
+    """Load a review contract markdown by mode name. Falls back to comment-review."""
+    contracts_dir = REPO_ROOT / "reviews" / "contracts"
+    candidate = contracts_dir / f"{mode}-review.md"
+    fallback = contracts_dir / "comment-review.md"
+
+    if candidate.exists():
+        return candidate.read_text(encoding="utf-8")
+    if fallback.exists():
+        return fallback.read_text(encoding="utf-8")
+    return ""
+
+
+def _load_architecture_role(relative_path: str) -> str:
+    """Return the architecture role for a file from the cached context map, if available."""
+    ctx_path = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
+    if not ctx_path.exists():
+        return ""
+    try:
+        data = json.loads(ctx_path.read_text(encoding="utf-8"))
+        return data.get(relative_path, "")
+    except Exception:
+        return ""
+
+
+@mcp.tool()
+def review_file(relative_path: str, mode: str = "comment") -> str:
+    """Run an AI review on a repo file using the configured review contract.
+
+    Uses the OpenAI API (OPENAI_API_KEY must be set). The review contract
+    for the given mode controls output format and severity labels.
+
+    Args:
+        relative_path: Repo-relative path to the file to review.
+        mode: Review mode. Must match a contract in reviews/contracts/.
+              Supported: 'comment'. Defaults to 'comment'.
+    """
+    import openai as _openai
+
+    try:
+        target = resolve_repo_file(relative_path)
+    except ValueError as exc:
+        return f"review_file blocked: {exc}"
+
+    if not target.exists() or not target.is_file():
+        return f"File not found: {relative_path}"
+
+    if target.stat().st_size > 200_000:
+        return f"File too large to review (> 200 KB): {relative_path}"
+
+    try:
+        file_content = target.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:
+        return f"Could not read file: {exc}"
+
+    contract = _load_review_contract(mode)
+    if not contract:
+        return f"No review contract found for mode '{mode}'. Add reviews/contracts/{mode}-review.md."
+
+    arch_role = _load_architecture_role(relative_path)
+    role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
+
+    system = f"""You are a code review engine operating under a strict review contract.
+Follow the contract exactly. Do not deviate from the output format.
+Do not modify code. Output only structured review findings.
+
+{contract}"""
+
+    user = f"""Review this file under the contract above.
+
+File: {relative_path}{role_context}
+
+```
+{file_content}
+```"""
+
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return "review_file requires OPENAI_API_KEY to be set."
+
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+
+    try:
+        client = _openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+        )
+        return response.choices[0].message.content or "No review output."
+    except Exception as exc:
+        return f"review_file API call failed: {exc}"
+
+
+@mcp.tool()
+def build_repo_context() -> str:
+    """Rebuild the repo context artifacts used by the review engine.
+
+    Generates:
+      review_engine/context/architecture_map.json  — role of each file
+      review_engine/context/file_summary_index.json — symbols and docstrings
+
+    Read-only analysis. Does not modify repo files.
+    """
+    import sys as _sys
+    ctx_script = REPO_ROOT / "review_engine" / "repo_context_builder.py"
+    if not ctx_script.exists():
+        return "repo_context_builder.py not found in review_engine/."
+
+    result = subprocess.run(
+        [_sys.executable, str(ctx_script)],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    out = (result.stdout + result.stderr).strip()
+    return out or "build_repo_context completed with no output."
+
+
+@mcp.tool()
+def list_review_contracts() -> str:
+    """List available review contracts and their modes.
+
+    Read-only. Shows contracts from reviews/contracts/.
+    """
+    contracts_dir = REPO_ROOT / "reviews" / "contracts"
+    if not contracts_dir.exists():
+        return "No reviews/contracts/ directory found."
+
+    files = sorted(contracts_dir.glob("*.md"))
+    if not files:
+        return "No review contracts found in reviews/contracts/."
+
+    lines = ["Available review contracts:", ""]
+    for f in files:
+        mode = f.stem.replace("-review", "")
+        lines.append(f"  mode={mode!r:20s}  contract={f.name}")
+    lines.append("")
+    lines.append("Usage: review_file(relative_path='...', mode='comment')")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

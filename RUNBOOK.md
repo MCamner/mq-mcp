@@ -40,6 +40,7 @@ uv --directory mq-mcp run pytest ../tests -v
 ## Release check
 
 Review:
+
 - git status
 - VERSION
 - CHANGELOG.md
