@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(git -C /Users/mansys/mq-mcp log --oneline -15)",
-      "Bash(./scripts/release-check.sh)"
+      "Bash(./scripts/release-check.sh)",
+      "Bash(grep -o '`[a-z_]*`' docs/TOOL_SAFETY.md)",
+      "Bash(grep -o '`[a-z_]*`' docs/TOOL_INVENTORY.md)",
+      "Bash(grep -E '^\\\\| `[a-z_]+`' docs/TOOL_SAFETY.md)",
+      "Bash(python3 scripts/generate_tool_contracts.py)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('docs/tool_contracts.json'\\)\\); print\\(d['schema_version'], d['tool_count'], 'tools'\\); print\\(json.dumps\\(d['tools'][0], indent=2\\)\\)\")",
+      "Bash(chmod +x scripts/check-tool-contracts.sh)",
+      "Bash(./scripts/check-tool-contracts.sh)",
+      "Bash(git -C /Users/mansys/mq-agent log --oneline -15)",
+      "Bash(git -C /Users/mansys/mq-agent status)",
+      "Bash(git -C /Users/mansys/mq-agent branch -a)",
+      "Bash(git -C /Users/mansys/mq-agent diff main...HEAD --name-only)",
+      "Bash(git -C /Users/mansys/mq-agent log main --oneline -5)",
+      "Bash(python -m pytest tests/test_orchestration_contract.py -q)",
+      "Bash(python -m pytest tests/ -q --tb=no --ignore=tests/test_orchestration_contract.py)",
+      "Bash(python -m pytest tests/ -q --tb=short --ignore=tests/test_orchestration_contract.py)",
+      "Bash(git -C /Users/mansys/mq-agent show --stat HEAD origin/main..HEAD)",
+      "Bash(git -C /Users/mansys/mq-agent checkout main)",
+      "Bash(git reset *)"
     ]
   }
 }
