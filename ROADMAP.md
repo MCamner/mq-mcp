@@ -325,16 +325,16 @@ Make mq-mcp a reliable backend for mq-agent and mqlaunch workflows.
 
 **Planned scope**
 
-- [ ] Verify mq-agent can discover mq-mcp tools
-- [ ] Verify mq-agent can display mq-mcp tool safety classes
-- [ ] Verify mq-agent can dry-run mq-mcp tool calls
-- [ ] Verify mq-agent blocks unsafe tools without approval
-- [ ] Add docs for mq-agent integration
+- [x] Verify mq-agent can discover mq-mcp tools
+- [x] Verify mq-agent can display mq-mcp tool safety classes
+- [x] Verify mq-agent can dry-run mq-mcp tool calls
+- [x] Verify mq-agent blocks unsafe tools without approval
+- [x] Add docs for mq-agent integration
 - [ ] Add docs for mqlaunch integration
-- [ ] Add smoke test for mq-agent → mq-mcp
+- [x] Add smoke test for mq-agent → mq-mcp
 - [ ] Add smoke test for mqlaunch → mq-agent → mq-mcp
-- [ ] Add example local workflow
-- [ ] Add troubleshooting for port conflicts and server startup
+- [x] Add example local workflow
+- [x] Add troubleshooting for port conflicts and server startup
 
 **Example target flow**
 

@@ -1,3 +1,4 @@
+import json
 import random
 import requests
 import os
@@ -18,6 +19,19 @@ MCP_PORT = int(os.getenv("MQ_MCP_PORT", "8765"))
 mcp = FastMCP("mq-mcp", host=MCP_HOST, port=MCP_PORT)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+_CONTRACTS_PATH = REPO_ROOT / "docs" / "tool_contracts.json"
+
+
+def _load_safety_map() -> dict[str, str]:
+    """Build tool_name → safety_class from tool_contracts.json."""
+    try:
+        data = json.loads(_CONTRACTS_PATH.read_text(encoding="utf-8"))
+        return {t["name"]: t.get("class", "unknown") for t in data.get("tools", [])}
+    except Exception:
+        return {}
+
+
+_SAFETY_MAP: dict[str, str] = _load_safety_map()
 
 
 def jsonable(value):
@@ -33,15 +47,33 @@ def jsonable(value):
     return value
 
 
+def _enrich_tool(tool_dict: dict) -> dict:
+    """Add safety_class to a serialized tool dict from the contracts map."""
+    name = tool_dict.get("name", "")
+    tool_dict["safety_class"] = _SAFETY_MAP.get(name, "unknown")
+    return tool_dict
+
+
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request) -> JSONResponse:
     return JSONResponse({"status": "ok", "name": "mq-mcp"})
 
 
+@mcp.custom_route("/tool-contracts", methods=["GET"])
+async def serve_tool_contracts(request: Request) -> JSONResponse:
+    """Serve the machine-readable tool contract schema."""
+    try:
+        data = json.loads(_CONTRACTS_PATH.read_text(encoding="utf-8"))
+        return JSONResponse(data)
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+
 @mcp.custom_route("/tools", methods=["GET"])
 async def list_http_tools(request: Request) -> JSONResponse:
     tools = await mcp.list_tools()
-    return JSONResponse({"tools": jsonable(tools)})
+    enriched = [_enrich_tool(jsonable(t)) for t in tools]
+    return JSONResponse({"tools": enriched})
 
 
 @mcp.custom_route("/tools/{name}", methods=["GET"])
@@ -50,7 +82,7 @@ async def describe_http_tool(request: Request) -> JSONResponse:
     tools = await mcp.list_tools()
     for tool in tools:
         if tool.name == name:
-            return JSONResponse(jsonable(tool))
+            return JSONResponse(_enrich_tool(jsonable(tool)))
     return JSONResponse({"error": f"Unknown tool: {name}"}, status_code=404)
 
 
