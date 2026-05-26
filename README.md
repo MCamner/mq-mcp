@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.4.0)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.6.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,17 +9,19 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v0.3.1 — usable macOS MCP toolkit. 50 tools across five safety classes,
-validated release flow, and green CI on `macos-latest`.
+v0.6.0 — packaged local install flow for the macOS MCP toolkit. 50 tools
+across five safety classes, validated release flow, and green CI on
+`macos-latest`.
 
 This repository is useful as:
 
 - a local MCP server with 50 documented, safety-classified tools
+- a packaged local CLI with `mq-mcp doctor`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
 - a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
 - a documented integration point for mq-hal and repo-signal
 
-It is **not yet** a polished package or production-ready MCP distribution.
+It is **not yet** a production-ready MCP distribution or hidden daemon.
 
 ## Proof
 
@@ -40,6 +42,10 @@ It is **not yet** a polished package or production-ready MCP distribution.
 | `mq-mcp/main.py` | Minimal Python entry point |
 | `mq-mcp/pyproject.toml` | Python project metadata and dependencies |
 | `mq-mcp/.env.example` | Example environment file |
+| `scripts/install.sh` | Local install helper for dependencies, `.env`, and the `mq-mcp` command |
+| `scripts/upgrade.sh` | Safe update helper for pull, sync, reinstall, and validation |
+| `scripts/uninstall.sh` | Local CLI uninstall helper |
+| `completions/_mq-mcp` | Optional zsh completions |
 | `docs/index.html` | GitHub Pages landing page |
 | `docs/screenshots/` | Place for screenshots and visual docs |
 | `CHANGELOG.md` | Release history |
@@ -50,34 +56,37 @@ It is **not yet** a polished package or production-ready MCP distribution.
 
 ## Quick Start
 
-Clone the repository and enter the Python project folder:
+Clone the repository and run the local installer:
 
 ```bash
 git clone https://github.com/MCamner/mq-mcp.git
-cd mq-mcp/mq-mcp
+cd mq-mcp
+./scripts/install.sh
 ```
 
-Install dependencies with `uv`:
+Check the local install:
 
 ```bash
-uv sync
-```
-
-Run the minimal Python entry point:
-
-```bash
-uv run python main.py
+mq-mcp doctor
+mq-mcp tools
 ```
 
 Run the local MCP server experiment:
 
 ```bash
-uv run mcp run server.py
+mq-mcp serve
+```
+
+Run validation:
+
+```bash
+mq-mcp validate
 ```
 
 Run the bridge with a prompt:
 
 ```bash
+cd mq-mcp
 uv run python bridge.py "List the available MCP tools."
 ```
 
@@ -118,6 +127,7 @@ Current docs include:
 - screenshot folder structure
 - public readiness baseline
 - macOS installation guide in [`docs/install.md`](docs/install.md)
+- packaged local install, upgrade, uninstall, and clean reinstall commands
 - MCP client setup guide in [`docs/clients.md`](docs/clients.md)
 - MCP server profiles in [`docs/profiles.md`](docs/profiles.md)
 - Ghostty terminal setup in [`docs/ghostty.md`](docs/ghostty.md)

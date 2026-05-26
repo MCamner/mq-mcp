@@ -1,0 +1,39 @@
+#compdef mq-mcp
+
+_mq_mcp() {
+  local -a commands config_commands
+
+  commands=(
+    'doctor:check local install readiness'
+    'serve:run the local MCP server'
+    'validate:run repository validation'
+    'config:show config paths'
+    'tools:list exposed MCP tools'
+    'version:print version'
+  )
+
+  config_commands=(
+    'path:print .env path'
+    'example:print .env.example path'
+    'root:print repository root'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe 'mq-mcp command' commands
+    return
+  fi
+
+  case "${words[2]}" in
+    config)
+      _describe 'config command' config_commands
+      ;;
+    doctor)
+      _arguments '--json[print machine-readable status]'
+      ;;
+    serve)
+      _arguments '--host[override host]:host:' '--port[override port]:port:'
+      ;;
+  esac
+}
+
+_mq_mcp "$@"

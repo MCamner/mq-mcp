@@ -17,9 +17,10 @@ mq-mcp + mq-hal + repo-signal
 
 | Project | Role |
 | --- | --- |
-| `mq-mcp` | Local MCP server, bridge, and safe tool layer |
+| `mq-mcp` | Local MCP server, bridge, packaged CLI, and safe tool layer |
 | `mq-hal` | Local assistant / operator layer for asking, auditing, and reporting |
 | `repo-signal` | Repository quality, readiness, and publishability checks |
+| `mqlaunch` | macOS menu and terminal launcher for starting local workflows |
 
 ## Main integration tools
 
@@ -68,6 +69,22 @@ bridget "run repo signal checklist for mq-mcp"
 
 ```bash
 bridget "show tool safety report"
+```
+
+### Start from mqlaunch
+
+```bash
+mqlaunch agent mcp-status
+mqlaunch agent mcp-tools
+```
+
+Target flow:
+
+```text
+mqlaunch
+  -> mq-agent
+  -> mq-mcp
+  -> safe local tool execution
 ```
 
 ## Safety rules

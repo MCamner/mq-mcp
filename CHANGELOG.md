@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 - 2026-05-26
+
+- Added packaged local `mq-mcp` CLI with `doctor`, `serve`, `validate`,
+  `tools`, `config path`, and `version` commands.
+- Added `scripts/install.sh`, `scripts/upgrade.sh`, and
+  `scripts/uninstall.sh` for repeatable local macOS setup and cleanup.
+- Added optional zsh completion at `completions/_mq-mcp`.
+- Added CLI tests for version, doctor JSON, and config path behavior.
+- Updated install, upgrade, README, and GitHub Pages docs for the v0.6.0
+  local install flow.
+- Documented mqlaunch integration flow as part of the hardened local stack.
+
 ## 0.4.0 - 2026-05-26
 
 - Added `scripts/generate_tool_contracts.py` — generates

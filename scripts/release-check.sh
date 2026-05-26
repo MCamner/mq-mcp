@@ -20,6 +20,11 @@ VERSION="$(cat VERSION)"
 step "Shell syntax: validate.sh"
 bash -n scripts/validate.sh && pass "scripts/validate.sh syntax OK" || fail "scripts/validate.sh has syntax errors"
 
+for script in scripts/install.sh scripts/upgrade.sh scripts/uninstall.sh; do
+  step "Shell syntax: $script"
+  bash -n "$script" && pass "$script syntax OK" || fail "$script has syntax errors"
+done
+
 step "Python compile"
 python -m compileall mq-mcp/ -q && pass "Python files compile OK" || fail "Python compile failed"
 

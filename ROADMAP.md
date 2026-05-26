@@ -26,7 +26,7 @@ every tool has:
 Current project phase:
 
 ```text
-v0.3.x — usable macOS MCP toolkit
+v0.6.0 — packaged local install flow
 ```
 
 Completed foundation:
@@ -44,18 +44,23 @@ Completed foundation:
 - tool safety documentation
 - tool inventory sync
 - Python version documentation cleanup
+- tool contract JSON and safety metadata
+- mq-agent and mqlaunch integration docs
+- packaged `mq-mcp` CLI
+- install, upgrade, and uninstall scripts
 
 Current priority:
 
 ```text
-v0.4.0 — Tool contract and safety map v2
+v0.7.0 — Local bridge observability
 ```
 
 Reason:
 
-v0.3.1 is complete. CI is green, docs are in sync, and validation scripts
-collect and report all failures. The next step is to make every tool
-self-describing so mq-agent can consume tool metadata safely.
+v0.6.0 gives new macOS installs a repeatable command surface:
+`mq-mcp doctor`, `mq-mcp serve`, `mq-mcp validate`, `mq-mcp config path`, and
+`mq-mcp tools`. The next step is richer runtime observability while the bridge
+is running.
 
 ---
 
@@ -73,8 +78,8 @@ self-describing so mq-agent can consume tool metadata safely.
 | v0.3.0  | Usable macOS MCP toolkit                    | Done / verify |
 | v0.3.1  | CI, release and validation hardening        | Done          |
 | v0.4.0  | Tool contract and safety map v2             | Done          |
-| v0.5.0  | mq-agent and mqlaunch integration hardening | Planned       |
-| v0.6.0  | Packaged local install flow                 | Planned       |
+| v0.5.0  | mq-agent and mqlaunch integration hardening | Done          |
+| v0.6.0  | Packaged local install flow                 | Done          |
 | v0.7.0  | Local bridge observability                  | Planned       |
 | v0.8.0  | Profile templates and client setup polish   | Planned       |
 | v1.0.0  | Stable local MCP platform                   | Future        |
@@ -330,9 +335,9 @@ Make mq-mcp a reliable backend for mq-agent and mqlaunch workflows.
 - [x] Verify mq-agent can dry-run mq-mcp tool calls
 - [x] Verify mq-agent blocks unsafe tools without approval
 - [x] Add docs for mq-agent integration
-- [ ] Add docs for mqlaunch integration
+- [x] Add docs for mqlaunch integration
 - [x] Add smoke test for mq-agent → mq-mcp
-- [ ] Add smoke test for mqlaunch → mq-agent → mq-mcp
+- [x] Add smoke test for mqlaunch → mq-agent → mq-mcp
 - [x] Add example local workflow
 - [x] Add troubleshooting for port conflicts and server startup
 
@@ -368,16 +373,16 @@ Make mq-mcp easy to install, update and run on a new macOS machine.
 
 **Planned scope**
 
-- [ ] Add install script
-- [ ] Add uninstall script
-- [ ] Add upgrade script
-- [ ] Add shell completions if useful
-- [ ] Add launch command
-- [ ] Add optional background service mode
-- [ ] Add health check command
-- [ ] Add local config discovery
-- [ ] Add example `.env`
-- [ ] Add docs for clean reinstall
+- [x] Add install script
+- [x] Add uninstall script
+- [x] Add upgrade script
+- [x] Add shell completions if useful
+- [x] Add launch command
+- [x] Add optional background service mode
+- [x] Add health check command
+- [x] Add local config discovery
+- [x] Add example `.env`
+- [x] Add docs for clean reinstall
 
 **Possible commands**
 
@@ -563,8 +568,8 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v0.4.0 — Tool contract and safety map v2
+v0.7.0 — Local bridge observability
 ```
 
-This release should make every exposed tool self-describing and safe to reason
-about before adding more tool surface or deeper mq-agent integration.
+This release should make the running server and bridge easier to inspect with
+health, info, timing, and redacted diagnostic output.

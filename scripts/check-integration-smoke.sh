@@ -56,6 +56,7 @@ echo ""
 
 require_text "docs/integration.md" "mq-mcp + mq-hal + repo-signal"
 require_text "docs/integration.md" "MQ_MCP_LOCAL_REPOS"
+require_text "docs/integration.md" "mqlaunch"
 require_text "README.md"           "Integration map"
 require_text "README.md"           "repo-quality stack"
 

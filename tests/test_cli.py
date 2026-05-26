@@ -1,0 +1,39 @@
+import importlib.util
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CLI_PATH = ROOT / "mq-mcp" / "main.py"
+
+
+def load_cli():
+    spec = importlib.util.spec_from_file_location("mq_mcp_cli", CLI_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_read_version_matches_version_file():
+    cli = load_cli()
+    assert cli.read_version() == (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+
+def test_doctor_json_reports_required_status(capsys):
+    cli = load_cli()
+    result = cli.doctor(json_output=True)
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["name"] == "mq-mcp"
+    assert payload["version"] == "0.6.0"
+    assert payload["status"] == "ok"
+    assert any(item["name"] == "validate_script" for item in payload["checks"])
+
+
+def test_config_path_command_prints_env_path(capsys):
+    cli = load_cli()
+    result = cli.main(["config", "path"])
+
+    assert result == 0
+    assert capsys.readouterr().out.strip().endswith("mq-mcp/.env")

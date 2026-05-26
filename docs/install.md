@@ -1,4 +1,4 @@
-# Installation guide
+# Installation Guide
 
 This guide explains how to install and validate `mq-mcp` locally on macOS.
 
@@ -10,57 +10,114 @@ This guide explains how to install and validate `mq-mcp` locally on macOS.
 - [uv](https://docs.astral.sh/uv/)
 - OpenAI API key (only needed for bridge prompts that call OpenAI)
 
-## Clone
+## Standard Install
 
 ```bash
 git clone https://github.com/MCamner/mq-mcp.git
-cd mq-mcp/mq-mcp
+cd mq-mcp
+./scripts/install.sh
 ```
 
-## Install dependencies
+The installer:
+
+- creates `mq-mcp/.env` from `.env.example` when missing
+- runs `uv sync`
+- installs the local `mq-mcp` command with `uv tool install`
+- runs `mq-mcp doctor`
+
+## Local Commands
+
+After install, use the command surface from any terminal:
 
 ```bash
-uv sync
+mq-mcp doctor
+mq-mcp tools
+mq-mcp serve
+mq-mcp validate
+mq-mcp config path
 ```
 
 ![Installation](screenshots/install_uv_sync.png)
 
-## List MCP tools
+## Run Without Installing the Command
+
+You can also run directly from the Python project folder:
 
 ```bash
+cd mq-mcp
 uv run python bridge.py --tools
-```
-
-## Run the MCP server
-
-```bash
 uv run mcp run server.py
-```
-
-## Run the bridge
-
-```bash
-uv run python bridge.py "List the available MCP tools."
-```
-
-## Validate the project
-
-From the repository root:
-
-```bash
-cd ..
-./scripts/validate.sh
 ```
 
 ## Environment
 
-Copy the example environment file before using bridge prompts that need an API key:
+The installer creates `mq-mcp/.env` if it does not already exist.
+
+Edit it before using bridge prompts that need an API key:
 
 ```bash
-cp .env.example .env
+OPENAI_API_KEY=your_api_key_here
+MQ_MCP_ALLOWED_PATHS=""
+MQ_MCP_LOCAL_REPOS=""
 ```
 
-Edit `.env` and add your `OPENAI_API_KEY`. Do not commit this file.
+Do not commit real API keys, tokens, private paths, or secrets.
+
+## Upgrade
+
+From the repository root:
+
+```bash
+./scripts/upgrade.sh
+```
+
+The upgrade helper pulls `main`, syncs dependencies, reinstalls the local
+command, and runs validation.
+
+## Uninstall
+
+From the repository root:
+
+```bash
+./scripts/uninstall.sh
+```
+
+This removes the `uv tool` command and keeps your local `.env`.
+
+To remove the local `.env` interactively:
+
+```bash
+./scripts/uninstall.sh --remove-env
+```
+
+## Clean Reinstall
+
+Use this when dependencies or local tool shims are stale:
+
+```bash
+./scripts/uninstall.sh
+cd mq-mcp
+rm -rf .venv
+cd ..
+./scripts/install.sh
+mq-mcp validate
+```
+
+## Optional Zsh Completion
+
+```bash
+mkdir -p ~/.zsh/completions
+ln -sf "$(pwd)/completions/_mq-mcp" ~/.zsh/completions/_mq-mcp
+```
+
+Make sure `~/.zsh/completions` is in your `fpath`.
+
+## Background Service Mode
+
+`mq-mcp` does not install a daemon or autostart service by default. MCP clients
+usually start the server as a local process. If you later add an explicit
+LaunchAgent, keep it user-owned, disabled by default, and pointed at
+`mq-mcp serve`.
 
 ## Notes
 

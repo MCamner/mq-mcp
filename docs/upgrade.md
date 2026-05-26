@@ -6,6 +6,17 @@ How to update `mq-mcp` to the latest version.
 
 To update your local installation, run these commands from the repository root:
 
+```bash
+./scripts/upgrade.sh
+```
+
+The helper pulls `main`, syncs dependencies, reinstalls the `mq-mcp` command,
+and runs validation.
+
+## Manual Update
+
+Use the manual flow when you want to inspect each step:
+
 1.  **Pull the latest changes**:
     ```bash
     git pull origin main
@@ -20,7 +31,7 @@ To update your local installation, run these commands from the repository root:
 3.  **Run validation**:
     ```bash
     cd ..
-    ./scripts/validate.sh
+    mq-mcp validate
     ```
 
 ## Environment Changes
@@ -53,5 +64,5 @@ If the project fails after an update:
 To verify your current version:
 
 ```bash
-cat VERSION
+mq-mcp version
 ```

@@ -118,14 +118,13 @@ ask "prompt"
   <h2>Install</h2>
   <pre><code><span class="comment"># Clone and set up</span>
 git clone https://github.com/MCamner/mq-mcp
-cd mq-mcp/mq-mcp
-uv sync
+cd mq-mcp
+./scripts/install.sh
 
-<span class="comment"># Add to .env</span>
-echo 'OPENAI_API_KEY=sk-...' >> .env
-
-<span class="comment"># Install the bridget wrapper</span>
-cp ../bin/bridget ~/bin/bridget   <span class="comment"># or create ~/bin/bridget, see docs/install.md</span></code></pre>
+<span class="comment"># Check and run</span>
+mq-mcp doctor
+mq-mcp tools
+mq-mcp serve</code></pre>
 
   <h2>Docs</h2>
   <p>
