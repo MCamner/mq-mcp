@@ -265,8 +265,8 @@ uv run pytest -v
 - [x] Tool count is documented once and referenced consistently
 - [x] README proof section is current
 - [x] CHANGELOG includes v0.3.1
-- [ ] GitHub release `v0.3.1` exists
-- [ ] GitHub Pages deployment is successful
+- [x] GitHub release `v0.3.1` exists (shipped as v0.4.0 — merged directly)
+- [x] GitHub Pages deployment is successful
 
 ---
 
