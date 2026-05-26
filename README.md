@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/0.6.0)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v0.7.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,14 +9,14 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v0.6.0 — packaged local install flow for the macOS MCP toolkit. 50 tools
-across five safety classes, validated release flow, and green CI on
-`macos-latest`.
+v0.7.0 — local bridge observability for the macOS MCP toolkit. 50 tools
+across five safety classes, packaged install flow, redacted diagnostics, and
+green CI on `macos-latest`.
 
 This repository is useful as:
 
 - a local MCP server with 50 documented, safety-classified tools
-- a packaged local CLI with `mq-mcp doctor`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
+- a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
 - a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
 - a documented integration point for mq-hal and repo-signal
@@ -68,6 +68,7 @@ Check the local install:
 
 ```bash
 mq-mcp doctor
+mq-mcp health
 mq-mcp tools
 ```
 
@@ -81,6 +82,13 @@ Run validation:
 
 ```bash
 mq-mcp validate
+```
+
+Write a redacted troubleshooting bundle:
+
+```bash
+mq-mcp report --json
+mq-mcp bundle --validate
 ```
 
 Run the bridge with a prompt:
@@ -128,6 +136,7 @@ Current docs include:
 - public readiness baseline
 - macOS installation guide in [`docs/install.md`](docs/install.md)
 - packaged local install, upgrade, uninstall, and clean reinstall commands
+- redacted observability commands and HTTP endpoints for local diagnostics
 - MCP client setup guide in [`docs/clients.md`](docs/clients.md)
 - MCP server profiles in [`docs/profiles.md`](docs/profiles.md)
 - Ghostty terminal setup in [`docs/ghostty.md`](docs/ghostty.md)

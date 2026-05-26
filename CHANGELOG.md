@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0 - 2026-05-26
+
+- Added observability endpoints: `/health`, `/tool-count`, `/server-info`,
+  and `/diagnostics`.
+- Added optional request logging via `MQ_MCP_REQUEST_LOG=1` with no secret
+  values in logs.
+- Added `mq-mcp health`, `mq-mcp info`, `mq-mcp report`, and
+  `mq-mcp bundle` commands.
+- Added redacted diagnostics output for local environment and repository
+  state.
+- Added optional validation capture in `mq-mcp report --validate` and
+  `mq-mcp bundle --validate`.
+- Added tests for observability JSON and secret redaction.
+
 ## 0.6.0 - 2026-05-26
 
 - Added packaged local `mq-mcp` CLI with `doctor`, `serve`, `validate`,

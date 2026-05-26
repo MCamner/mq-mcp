@@ -31,10 +31,12 @@ After install, use the command surface from any terminal:
 
 ```bash
 mq-mcp doctor
+mq-mcp health
 mq-mcp tools
 mq-mcp serve
 mq-mcp validate
 mq-mcp config path
+mq-mcp report --json
 ```
 
 ![Installation](screenshots/install_uv_sync.png)
@@ -118,6 +120,28 @@ Make sure `~/.zsh/completions` is in your `fpath`.
 usually start the server as a local process. If you later add an explicit
 LaunchAgent, keep it user-owned, disabled by default, and pointed at
 `mq-mcp serve`.
+
+## Observability
+
+When the server is running, local HTTP/SSE transports expose:
+
+```text
+/health
+/tool-count
+/server-info
+/diagnostics
+```
+
+The CLI also works without a running server:
+
+```bash
+mq-mcp health
+mq-mcp info --json
+mq-mcp report --json
+mq-mcp bundle --validate
+```
+
+Diagnostics redact secret-like environment variables such as API keys.
 
 ## Notes
 

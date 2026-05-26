@@ -5,6 +5,10 @@ _mq_mcp() {
 
   commands=(
     'doctor:check local install readiness'
+    'health:print local health summary'
+    'info:print local server and tool metadata'
+    'report:print redacted diagnostics report'
+    'bundle:write a redacted troubleshooting JSON bundle'
     'serve:run the local MCP server'
     'validate:run repository validation'
     'config:show config paths'
@@ -29,6 +33,15 @@ _mq_mcp() {
       ;;
     doctor)
       _arguments '--json[print machine-readable status]'
+      ;;
+    health|info)
+      _arguments '--json[print machine-readable status]'
+      ;;
+    report)
+      _arguments '--json[print machine-readable status]' '--validate[include validation output]'
+      ;;
+    bundle)
+      _arguments '--validate[include validation output]'
       ;;
     serve)
       _arguments '--host[override host]:host:' '--port[override port]:port:'

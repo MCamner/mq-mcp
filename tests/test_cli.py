@@ -26,7 +26,7 @@ def test_doctor_json_reports_required_status(capsys):
 
     assert result == 0
     assert payload["name"] == "mq-mcp"
-    assert payload["version"] == "0.6.0"
+    assert payload["version"] == "0.7.0"
     assert payload["status"] == "ok"
     assert any(item["name"] == "validate_script" for item in payload["checks"])
 
@@ -37,3 +37,24 @@ def test_config_path_command_prints_env_path(capsys):
 
     assert result == 0
     assert capsys.readouterr().out.strip().endswith("mq-mcp/.env")
+
+
+def test_health_json_reports_tool_count(capsys):
+    cli = load_cli()
+    result = cli.main(["health", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["version"] == "0.7.0"
+    assert payload["status"] == "ok"
+    assert payload["tool_count"] == 50
+    assert payload["contracts_ok"] is True
+
+
+def test_report_redacts_secret_environment(monkeypatch):
+    cli = load_cli()
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-secret")
+    report = cli.build_report(run_validation=False)
+
+    assert report["env"]["OPENAI_API_KEY"]["value"] == "<redacted>"
+    assert "sk-test-secret" not in json.dumps(report)

@@ -26,7 +26,7 @@ every tool has:
 Current project phase:
 
 ```text
-v0.6.0 — packaged local install flow
+v0.7.0 — local bridge observability
 ```
 
 Completed foundation:
@@ -48,19 +48,21 @@ Completed foundation:
 - mq-agent and mqlaunch integration docs
 - packaged `mq-mcp` CLI
 - install, upgrade, and uninstall scripts
+- health, info, report, and troubleshooting bundle commands
+- redacted observability endpoints
 
 Current priority:
 
 ```text
-v0.7.0 — Local bridge observability
+v0.8.0 — Profile templates and client setup polish
 ```
 
 Reason:
 
-v0.6.0 gives new macOS installs a repeatable command surface:
-`mq-mcp doctor`, `mq-mcp serve`, `mq-mcp validate`, `mq-mcp config path`, and
-`mq-mcp tools`. The next step is richer runtime observability while the bridge
-is running.
+v0.7.0 adds local runtime inspection through `mq-mcp health`,
+`mq-mcp info`, `mq-mcp report`, `mq-mcp bundle`, and redacted server
+diagnostic endpoints. The next step is polished profile templates for common
+MCP clients and mq ecosystem tools.
 
 ---
 
@@ -80,7 +82,7 @@ is running.
 | v0.4.0  | Tool contract and safety map v2             | Done          |
 | v0.5.0  | mq-agent and mqlaunch integration hardening | Done          |
 | v0.6.0  | Packaged local install flow                 | Done          |
-| v0.7.0  | Local bridge observability                  | Planned       |
+| v0.7.0  | Local bridge observability                  | Done          |
 | v0.8.0  | Profile templates and client setup polish   | Planned       |
 | v1.0.0  | Stable local MCP platform                   | Future        |
 
@@ -410,22 +412,25 @@ Make the MCP server and OpenAI bridge easier to inspect while running.
 
 **Planned scope**
 
-- [ ] Add health endpoint
-- [ ] Add tool count endpoint
-- [ ] Add server info endpoint
-- [ ] Add request logging option
-- [ ] Add redacted debug mode
-- [ ] Add timing metrics
-- [ ] Add validation report output
-- [ ] Add JSON output for diagnostics
-- [ ] Add troubleshooting bundle command
+- [x] Add health endpoint
+- [x] Add tool count endpoint
+- [x] Add server info endpoint
+- [x] Add request logging option
+- [x] Add redacted debug mode
+- [x] Add timing metrics
+- [x] Add validation report output
+- [x] Add JSON output for diagnostics
+- [x] Add troubleshooting bundle command
 
 **Possible commands**
 
 ```bash
 mq-mcp doctor --json
 mq-mcp health
-mq-mcp report
+mq-mcp info --json
+mq-mcp report --json
+mq-mcp report --validate
+mq-mcp bundle --validate
 ```
 
 **Safety requirements**
@@ -568,8 +573,8 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v0.7.0 — Local bridge observability
+v0.8.0 — Profile templates and client setup polish
 ```
 
-This release should make the running server and bridge easier to inspect with
-health, info, timing, and redacted diagnostic output.
+This release should make common MCP client setup repeatable through versioned
+profile templates and validation.

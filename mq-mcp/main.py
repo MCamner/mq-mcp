@@ -8,6 +8,8 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 
@@ -17,6 +19,8 @@ VERSION_FILE = REPO_ROOT / "VERSION"
 PYPROJECT_FILE = APP_DIR / "pyproject.toml"
 ENV_FILE = APP_DIR / ".env"
 ENV_EXAMPLE_FILE = APP_DIR / ".env.example"
+CONTRACTS_FILE = REPO_ROOT / "docs" / "tool_contracts.json"
+VALIDATE_SCRIPT = REPO_ROOT / "scripts" / "validate.sh"
 
 
 def read_version() -> str:
@@ -28,6 +32,135 @@ def run_command(args: list[str], cwd: Path, env: dict[str, str] | None = None) -
     if env:
         merged_env.update(env)
     return subprocess.run(args, cwd=cwd, env=merged_env, check=False).returncode
+
+
+def capture_command(args: list[str], cwd: Path, timeout: int = 90) -> dict[str, object]:
+    started = time.time()
+    try:
+        result = subprocess.run(
+            args,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+        output = (result.stdout + result.stderr)[-12000:]
+        return {
+            "args": args,
+            "returncode": result.returncode,
+            "elapsed_ms": round((time.time() - started) * 1000, 2),
+            "output_tail": output,
+        }
+    except subprocess.TimeoutExpired as exc:
+        output = ((exc.stdout or "") + (exc.stderr or ""))[-12000:]
+        return {
+            "args": args,
+            "returncode": 124,
+            "elapsed_ms": round((time.time() - started) * 1000, 2),
+            "output_tail": output,
+            "error": "timeout",
+        }
+
+
+def safe_git_summary() -> dict[str, object]:
+    branch = capture_command(["git", "branch", "--show-current"], REPO_ROOT, timeout=10)
+    status = capture_command(["git", "status", "--short", "--branch"], REPO_ROOT, timeout=10)
+    commit = capture_command(["git", "log", "-1", "--oneline"], REPO_ROOT, timeout=10)
+    return {
+        "branch": str(branch.get("output_tail", "")).strip(),
+        "status": str(status.get("output_tail", "")).strip().splitlines(),
+        "latest_commit": str(commit.get("output_tail", "")).strip(),
+    }
+
+
+def redacted_env_summary() -> dict[str, object]:
+    keys = [
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL",
+        "MQ_MCP_HOST",
+        "MQ_MCP_PORT",
+        "MQ_MCP_ALLOWED_PATHS",
+        "MQ_MCP_LOCAL_REPOS",
+        "MQ_MCP_REQUEST_LOG",
+    ]
+    secret_markers = ("KEY", "TOKEN", "SECRET", "PASSWORD")
+    summary: dict[str, object] = {}
+    for key in keys:
+        value = os.getenv(key)
+        if value is None:
+            summary[key] = {"set": False}
+        elif any(marker in key for marker in secret_markers):
+            summary[key] = {"set": True, "value": "<redacted>"}
+        else:
+            summary[key] = {"set": True, "value": value}
+    return summary
+
+
+def load_contract_summary() -> dict[str, object]:
+    try:
+        data = json.loads(CONTRACTS_FILE.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    classes: dict[str, int] = {}
+    for tool in data.get("tools", []):
+        safety_class = str(tool.get("class", "unknown"))
+        classes[safety_class] = classes.get(safety_class, 0) + 1
+    return {
+        "ok": True,
+        "schema_version": data.get("schema_version"),
+        "version": data.get("mq_mcp_version"),
+        "tool_count": data.get("tool_count"),
+        "safety_classes": classes,
+    }
+
+
+def build_health_payload() -> dict[str, object]:
+    contracts = load_contract_summary()
+    return {
+        "name": "mq-mcp",
+        "version": read_version() if VERSION_FILE.is_file() else "unknown",
+        "status": "ok" if contracts.get("ok") else "degraded",
+        "repo_root": str(REPO_ROOT),
+        "config_path": str(ENV_FILE),
+        "tool_count": contracts.get("tool_count"),
+        "contracts_ok": contracts.get("ok", False),
+    }
+
+
+def build_report(run_validation: bool = False) -> dict[str, object]:
+    started = time.time()
+    report: dict[str, object] = {
+        "name": "mq-mcp",
+        "version": read_version() if VERSION_FILE.is_file() else "unknown",
+        "generated_at_unix": round(started, 3),
+        "health": build_health_payload(),
+        "contracts": load_contract_summary(),
+        "git": safe_git_summary(),
+        "env": redacted_env_summary(),
+        "paths": {
+            "repo_root": str(REPO_ROOT),
+            "app_dir": str(APP_DIR),
+            "config_path": str(ENV_FILE),
+            "contracts": str(CONTRACTS_FILE),
+            "validate_script": str(VALIDATE_SCRIPT),
+        },
+    }
+    if run_validation:
+        report["validation"] = capture_command([str(VALIDATE_SCRIPT)], REPO_ROOT, timeout=120)
+    report["elapsed_ms"] = round((time.time() - started) * 1000, 2)
+    return report
+
+
+def print_payload(payload: dict[str, object], json_output: bool = False) -> None:
+    if json_output:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    print(f"mq-mcp {payload.get('version', 'unknown')}")
+    print(f"status: {payload.get('status', 'ok')}")
+    print(f"repo:   {payload.get('repo_root', REPO_ROOT)}")
+    if "tool_count" in payload:
+        print(f"tools:  {payload.get('tool_count')}")
 
 
 def doctor(json_output: bool = False) -> int:
@@ -87,6 +220,19 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser = sub.add_parser("doctor", help="Check local install readiness.")
     doctor_parser.add_argument("--json", action="store_true", help="Print machine-readable status.")
 
+    health_parser = sub.add_parser("health", help="Print local health summary.")
+    health_parser.add_argument("--json", action="store_true", help="Print machine-readable status.")
+
+    info_parser = sub.add_parser("info", help="Print local server and tool metadata.")
+    info_parser.add_argument("--json", action="store_true", help="Print machine-readable status.")
+
+    report_parser = sub.add_parser("report", help="Print redacted diagnostics report.")
+    report_parser.add_argument("--json", action="store_true", help="Print machine-readable status.")
+    report_parser.add_argument("--validate", action="store_true", help="Include validation output.")
+
+    bundle_parser = sub.add_parser("bundle", help="Write a redacted troubleshooting JSON bundle.")
+    bundle_parser.add_argument("--validate", action="store_true", help="Include validation output.")
+
     serve_parser = sub.add_parser("serve", help="Run the local MCP server.")
     serve_parser.add_argument("--host", help="Override MQ_MCP_HOST for HTTP/SSE transports.")
     serve_parser.add_argument("--port", help="Override MQ_MCP_PORT for HTTP/SSE transports.")
@@ -112,6 +258,46 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "doctor":
         return doctor(json_output=args.json)
+    if args.command == "health":
+        print_payload(build_health_payload(), json_output=args.json)
+        return 0
+    if args.command == "info":
+        payload = build_report(run_validation=False)
+        summary = {
+            "name": payload["name"],
+            "version": payload["version"],
+            "status": payload["health"]["status"],  # type: ignore[index]
+            "repo_root": str(REPO_ROOT),
+            "tool_count": payload["contracts"].get("tool_count"),  # type: ignore[union-attr]
+            "safety_classes": payload["contracts"].get("safety_classes"),  # type: ignore[union-attr]
+            "git": payload["git"],
+        }
+        print_payload(summary, json_output=args.json)
+        return 0
+    if args.command == "report":
+        payload = build_report(run_validation=args.validate)
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            health = payload["health"]
+            contracts = payload["contracts"]
+            print(f"mq-mcp {payload['version']}")
+            print(f"status: {health['status']}")  # type: ignore[index]
+            print(f"tools:  {contracts.get('tool_count')}")  # type: ignore[union-attr]
+            print(f"repo:   {REPO_ROOT}")
+            print(f"config: {ENV_FILE}")
+            if args.validate:
+                validation = payload.get("validation", {})
+                print(f"validation_returncode: {validation.get('returncode')}")
+        return 0
+    if args.command == "bundle":
+        payload = build_report(run_validation=args.validate)
+        fd, path = tempfile.mkstemp(prefix="mq-mcp-report-", suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        print(path)
+        return 0
     if args.command == "serve":
         env: dict[str, str] = {}
         if args.host:

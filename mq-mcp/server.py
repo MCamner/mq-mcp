@@ -2,6 +2,7 @@ import json
 import random
 import requests
 import os
+import time
 from pathlib import Path
 import psutil
 import shutil
@@ -20,6 +21,7 @@ mcp = FastMCP("mq-mcp", host=MCP_HOST, port=MCP_PORT)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 _CONTRACTS_PATH = REPO_ROOT / "docs" / "tool_contracts.json"
+_STARTED_AT = time.time()
 
 
 def _load_safety_map() -> dict[str, str]:
@@ -32,6 +34,50 @@ def _load_safety_map() -> dict[str, str]:
 
 
 _SAFETY_MAP: dict[str, str] = _load_safety_map()
+
+
+def _version() -> str:
+    try:
+        return (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    except Exception:
+        return "unknown"
+
+
+def _request_logging_enabled() -> bool:
+    return os.getenv("MQ_MCP_REQUEST_LOG", "").lower() in {"1", "true", "yes", "on"}
+
+
+def _log_observability_request(request: Request, name: str, started: float) -> None:
+    if not _request_logging_enabled():
+        return
+    elapsed_ms = round((time.time() - started) * 1000, 2)
+    print(
+        f"mq-mcp request path={request.url.path} route={name} elapsed_ms={elapsed_ms}",
+        flush=True,
+    )
+
+
+def _redacted_env() -> dict[str, object]:
+    keys = [
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL",
+        "MQ_MCP_HOST",
+        "MQ_MCP_PORT",
+        "MQ_MCP_ALLOWED_PATHS",
+        "MQ_MCP_LOCAL_REPOS",
+        "MQ_MCP_REQUEST_LOG",
+    ]
+    secret_markers = ("KEY", "TOKEN", "SECRET", "PASSWORD")
+    redacted: dict[str, object] = {}
+    for key in keys:
+        value = os.getenv(key)
+        if value is None:
+            redacted[key] = {"set": False}
+        elif any(marker in key for marker in secret_markers):
+            redacted[key] = {"set": True, "value": "<redacted>"}
+        else:
+            redacted[key] = {"set": True, "value": value}
+    return redacted
 
 
 def jsonable(value):
@@ -56,7 +102,81 @@ def _enrich_tool(tool_dict: dict) -> dict:
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request) -> JSONResponse:
-    return JSONResponse({"status": "ok", "name": "mq-mcp"})
+    started = time.time()
+    tools = await mcp.list_tools()
+    payload = {
+        "status": "ok",
+        "name": "mq-mcp",
+        "version": _version(),
+        "host": MCP_HOST,
+        "port": MCP_PORT,
+        "tool_count": len(tools),
+        "uptime_seconds": round(time.time() - _STARTED_AT, 3),
+        "elapsed_ms": round((time.time() - started) * 1000, 2),
+    }
+    _log_observability_request(request, "health", started)
+    return JSONResponse(payload)
+
+
+@mcp.custom_route("/tool-count", methods=["GET"])
+async def tool_count(request: Request) -> JSONResponse:
+    started = time.time()
+    tools = await mcp.list_tools()
+    payload = {
+        "name": "mq-mcp",
+        "version": _version(),
+        "tool_count": len(tools),
+        "elapsed_ms": round((time.time() - started) * 1000, 2),
+    }
+    _log_observability_request(request, "tool-count", started)
+    return JSONResponse(payload)
+
+
+@mcp.custom_route("/server-info", methods=["GET"])
+async def server_info(request: Request) -> JSONResponse:
+    started = time.time()
+    tools = await mcp.list_tools()
+    classes: dict[str, int] = {}
+    for safety_class in _SAFETY_MAP.values():
+        classes[safety_class] = classes.get(safety_class, 0) + 1
+    payload = {
+        "name": "mq-mcp",
+        "version": _version(),
+        "repo_root": str(REPO_ROOT),
+        "host": MCP_HOST,
+        "port": MCP_PORT,
+        "tool_count": len(tools),
+        "safety_classes": classes,
+        "request_logging": _request_logging_enabled(),
+        "uptime_seconds": round(time.time() - _STARTED_AT, 3),
+        "elapsed_ms": round((time.time() - started) * 1000, 2),
+    }
+    _log_observability_request(request, "server-info", started)
+    return JSONResponse(payload)
+
+
+@mcp.custom_route("/diagnostics", methods=["GET"])
+async def diagnostics(request: Request) -> JSONResponse:
+    started = time.time()
+    tools = await mcp.list_tools()
+    payload = {
+        "name": "mq-mcp",
+        "version": _version(),
+        "status": "ok",
+        "repo_root": str(REPO_ROOT),
+        "tool_count": len(tools),
+        "env": _redacted_env(),
+        "paths": {
+            "contracts": str(_CONTRACTS_PATH),
+            "validate_script": str(REPO_ROOT / "scripts" / "validate.sh"),
+        },
+        "metrics": {
+            "uptime_seconds": round(time.time() - _STARTED_AT, 3),
+            "elapsed_ms": round((time.time() - started) * 1000, 2),
+        },
+    }
+    _log_observability_request(request, "diagnostics", started)
+    return JSONResponse(payload)
 
 
 @mcp.custom_route("/tool-contracts", methods=["GET"])
