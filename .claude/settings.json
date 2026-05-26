@@ -20,7 +20,9 @@
       "Bash(python -m pytest tests/ -q --tb=short --ignore=tests/test_orchestration_contract.py)",
       "Bash(git -C /Users/mansys/mq-agent show --stat HEAD origin/main..HEAD)",
       "Bash(git -C /Users/mansys/mq-agent checkout main)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('mq-mcp/server.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(git -C /Users/mansys/mq-agent status --short)"
     ]
   }
 }
