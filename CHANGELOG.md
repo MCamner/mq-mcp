@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.1.0 - 2026-05-27
+
+- Added `review_runtime_contract` MCP tool — structural + AI pass that verifies
+  `docs/RUNTIME_CONTRACT.md` claims against actual server state (path resolvers,
+  no-auto-commit, `_redacted_env`, tool count, safety class breakdown).
+- Extended `detect_architecture_drift` with checks 8–10: RUNTIME_CONTRACT.md
+  existence (RISK), freshness relative to server.py (NOTE/WARNING), and reference
+  document existence for all docs listed in the contract.
+- Added `list_architecture_docs` MCP tool — inventory of `docs/architecture/`
+  with freshness status relative to server.py mtime.
+- Added `review_architecture_doc` MCP tool — applies the architecture review
+  contract to a named doc with injected runtime state.
+- Added `review_engine/callgraph_builder.py` — Python AST cross-file import
+  graph. Outputs `review_engine/context/callgraph.json` (imports, importers,
+  hub_files, symbols, edges). Wired into `build_repo_context` and `review_file`.
+- Added `_build_rich_cross_file_context()` — replaces bare file names with
+  architecture role, top public symbols, and last review summary for every related
+  file. Files are no longer reviewed in isolation.
+- Added `review_engine/context_selector.py` — `ContextSelector` enforces a
+  12 000-char budget on injected context. Past findings (priority 2) are preferred
+  over cross-file context (priority 3) when budget is tight.
+- Added `review_engine/callgraph_builder._try_merge_repo_signal_packs()` — hook
+  that merges repo-signal intelligence packs when available. No-op until
+  repo-signal writes packs to disk.
+- Added golden reviews for `.md` (SYSTEM_OVERVIEW.md) and `.json`
+  (tool_contracts.json) file types under `reviews/golden/`.
+- Updated `docs/RUNTIME_CONTRACT.md` — authoritative identity and execution
+  contract for the runtime.
+- Completed Review Engine Phases 2, 3 (remaining items), and 4.
+
 ## 1.0.0 - 2026-05-26
 
 - Added `docs/stability.json` and `docs/stability.md` as the v1 stable

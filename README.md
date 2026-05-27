@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.0.0)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.1.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,9 +9,9 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v1.0.0 — stable local MCP platform for the macOS MCP toolkit. 61 tools across
-five safety classes, packaged install flow, redacted diagnostics, validated
-profiles, stability baseline, and green CI on `macos-latest`.
+v1.1.0 — runtime self-inspection and repo-aware review intelligence. 61 tools,
+self-describing architecture contracts, multi-pass review with cross-file context,
+callgraph-backed semantic similarity, and golden reviews for all supported file types.
 
 This repository is useful as:
 
