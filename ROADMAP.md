@@ -743,7 +743,13 @@ and surface drift between documentation and implementation.
   architecture role, top public symbols, and last review summary for every file
   that imports or is imported by the file under review. Injected into both
   single-pass and deep-mode `review_file`. Removes the file-isolation barrier.
-- [ ] Golden reviews for `.md` and `.json` file types
+- [x] Golden reviews for `.md` and `.json` file types —
+  `reviews/golden/system-overview-md-markdown-review.md` (5 findings:
+  stale tool count, incomplete router table, stale pipeline diagram, missing
+  file responsibilities, static date pattern) and
+  `reviews/golden/tool-contracts-json-review.md` (5 findings: version drift,
+  Swedish descriptions, free-text resolver field, empty examples, undeclared
+  side_effects vocabulary).
 
 ---
 
