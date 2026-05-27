@@ -2,6 +2,12 @@
 
 mq-mcp is a **local deterministic AI execution runtime for engineering workflows**.
 
+The real strategic category is **local engineering cognition runtime** — not
+"MCP server" or "tool collection". The distinction matters: a tool collection
+grows by adding tools. An engineering cognition runtime grows by improving the
+quality of context, structure, and symbolic understanding it brings to every
+tool call.
+
 It is not a chatbot, agent framework, or autonomous system. It exposes a
 controlled, documented, and testable MCP surface where every tool has a declared
 safety class, path boundary, and predictable output shape.
@@ -14,6 +20,11 @@ The goal is to create a system that is:
 - verifiable — contracts are enforced and drift is detected
 - self-reflective — the runtime can review and diagnose itself
 - deterministic — same inputs, same output structure, always
+- symbolically aware — the runtime understands structure, not just content
+
+**The highest-leverage improvement at any phase is context quality, not more
+features.** All real quality gains come from giving the model better structured
+knowledge of the system it is reasoning about.
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 
@@ -596,6 +607,12 @@ Goal: give the review engine real system understanding.
   env vars, tool classes; used for drift detection
 - [x] `docs/architecture/REVIEW_PIPELINE.md` — full pipeline reference:
   stages, prompt structure, severity parsing, memory persistence, MCP tools
+- [ ] `review_engine/callgraph_builder.py` — cross-file call graph and
+  dependency map: which functions call which, which files import which. This
+  is the **symbolic intelligence gap** — the system currently understands
+  files in isolation; the call graph enables cross-file reasoning. Output:
+  `review_engine/context/callgraph.json` injected into deep reviews of
+  high-connectivity files (hub files, orchestration files, API boundaries).
 
 ---
 
@@ -612,7 +629,11 @@ Goal: intelligent long-term memory for the review engine.
 - [x] `get_last_review` MCP tool — full last review for a specific file
 - [x] `reviews/skills/markdown-review.md` + `reviews/skills/json-review.md` —
   review skills for `.md` and `.json` file types; wired into review_router
-- [ ] Retrieve similar findings across different files (semantic similarity)
+- [ ] Cross-file reasoning: when reviewing file A, inject context from files
+  that A imports or that import A — symbols, last review findings, architecture
+  role. This requires `callgraph.json` (Phase 2) + a context selector that
+  picks the most relevant cross-file symbols. **This is the next big quality
+  barrier** — the system currently analyzes files in isolation.
 - [ ] Persist coding conventions extracted from reviews into architecture memory
 
 ---
@@ -746,16 +767,31 @@ verifiable — not just documented in prose.
 
 These are intentionally not scheduled yet.
 
+**Model routing strategy** — three tiers matched to task depth:
+
+| Mode | Model | Use case |
+| --- | --- | --- |
+| Fast | Local small (qwen3:4b, llama3) | Single-file comment review, quick checks |
+| Deep | Local large (qwen3:14b, deepseek-coder) | Multi-pass review, architecture analysis |
+| Architecture | Cloud (GPT-4, Claude Opus) | Cross-repo reasoning, design decisions |
+
+The fast tier enables offline-first review with no API cost. The routing
+decision should be made automatically based on file size, review mode, and
+available local models.
+
+**Review TUI** — terminal-native review surface showing severity history,
+cross-file graph, semantic context panel, and architecture role for the
+current file. Leverages `callgraph.json` and `architecture_map.json` as
+data sources.
+
+Other ideas:
+
 - Bridget voice mode
 - Bridget terminal avatar mode
-- richer local TUI
-- local model fallback
 - local event history
 - repo health history
 - MCP tool marketplace
-- integration with mq-hal
 - integration with mq-ums
-- integration with repo-signal semantic memory
 - cross-repo tool inventory
 - visual safety map — runtime dependency graph, orchestration topology
 - generated architecture diagrams from architecture_memory
