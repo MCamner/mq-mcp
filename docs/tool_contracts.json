@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.0.0",
-  "tool_count": 58,
+  "tool_count": 59,
   "tools": [
     {
       "name": "analyze_csv",
@@ -643,6 +643,16 @@
       "write": false,
       "subprocess": false,
       "side_effects": ["openai_api_call", "review_memory_write"],
+      "examples": []
+    },
+    {
+      "name": "review_runtime_contract",
+      "class": "A",
+      "description": "Verify docs/RUNTIME_CONTRACT.md claims against actual runtime state. Runs structural checks (path resolvers, no-auto-commit, _redacted_env) and an AI architecture pass that injects current tool count and safety class breakdown as context. Structural pass requires no API key.",
+      "resolver": "REPO_ROOT (reads docs/RUNTIME_CONTRACT.md, server.py, docs/TOOL_SAFETY.md)",
+      "write": false,
+      "subprocess": false,
+      "side_effects": ["openai_api_call"],
       "examples": []
     }
   ]

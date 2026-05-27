@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 55 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 59 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -39,6 +39,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `detect_architecture_drift` | Detect drift between declared docs and actual runtime state | Write, access outside repo |
 | `review_diff` | Review git-changed files using review_file | Write, modify code; calls git + OpenAI API |
 | `review_repo` | Review least-recently-reviewed repo files using review_file | Write, modify code; calls OpenAI API |
+| `review_runtime_contract` | Verify RUNTIME_CONTRACT.md claims against actual server state | Write, modify server |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -182,3 +183,4 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `detect_architecture_drift` | A | REPO_ROOT (AST + file reads) | No | No |
 | `review_diff` | A | resolve_repo_file (per file) | No | No (git + OpenAI API) |
 | `review_repo` | A | REPO_ROOT walk + resolve_repo_file | No | No (OpenAI API) |
+| `review_runtime_contract` | A | REPO_ROOT (reads contract + server.py) | No | No (OpenAI API) |

@@ -1750,6 +1750,209 @@ def detect_architecture_drift() -> str:
 
 
 @mcp.tool()
+def review_runtime_contract() -> str:
+    """Review docs/RUNTIME_CONTRACT.md against actual runtime state.
+
+    Runs two passes:
+
+    1. Structural checks (deterministic, no API key required) — verifies that
+       the contract's declared guarantees are present in the implementation:
+       - Both path resolvers (resolve_repo_file, resolve_allowed_local_file)
+         exist in server.py
+       - No auto-commit guarantee: git commit/push absent from server.py
+       - No secret leakage guarantee: _redacted_env present in server.py
+       - RUNTIME_CONTRACT.md itself exists on disk
+
+    2. AI architecture pass (requires OPENAI_API_KEY) — injects current runtime
+       state (tool count, safety class breakdown, resolver names) as context and
+       runs the architecture review contract against RUNTIME_CONTRACT.md, asking
+       the model to identify claims that diverge from the actual implementation.
+
+    Returns structural findings always, AI findings appended if key is available.
+    Read-only. Class A.
+    """
+    import ast as _ast
+    import re as _re
+    import sys as _sys
+
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    contract_path = REPO_ROOT / "docs" / "RUNTIME_CONTRACT.md"
+    server_path = REPO_ROOT / "mq-mcp" / "server.py"
+    safety_path = REPO_ROOT / "docs" / "TOOL_SAFETY.md"
+
+    findings: list[str] = []
+
+    # — Structural checks —
+
+    # 1. Contract file exists
+    if not contract_path.exists():
+        return (
+            "review_runtime_contract blocked: docs/RUNTIME_CONTRACT.md does not exist.\n"
+            "Create the file first."
+        )
+
+    try:
+        server_text = server_path.read_text(encoding="utf-8")
+    except Exception as exc:
+        return f"review_runtime_contract failed: could not read server.py: {exc}"
+
+    # 2. Path resolvers present
+    for resolver in ("resolve_repo_file", "resolve_allowed_local_file"):
+        if resolver not in server_text:
+            findings.append(
+                f"[RISK] server.py:{resolver}\n"
+                f"RUNTIME_CONTRACT.md declares '{resolver}' as a path boundary enforcer "
+                f"but the function is not present in server.py."
+            )
+
+    # 3. No auto-commit guarantee: no subprocess execution of git commit/push.
+    # Strip comment lines before searching to avoid matching example text in comments.
+    code_only = "\n".join(
+        ln for ln in server_text.splitlines() if not ln.lstrip().startswith("#")
+    )
+    for subcommand in ("commit", "push"):
+        if _re.search(
+            r'subprocess\.[a-z_]+\s*\([^)]*["\']git["\'][^)]*["\']' + subcommand + r'["\']',
+            code_only,
+        ) or _re.search(
+            r'os\.system\s*\([^)]*git\s+' + subcommand,
+            code_only,
+        ):
+            findings.append(
+                f"[RISK] server.py\n"
+                f"RUNTIME_CONTRACT.md guarantees no auto-commit but "
+                f"a subprocess call to 'git {subcommand}' was found in server.py."
+            )
+
+    # 4. No secret leakage: _redacted_env must exist
+    if "_redacted_env" not in server_text:
+        findings.append(
+            "[RISK] server.py:_redacted_env\n"
+            "RUNTIME_CONTRACT.md guarantees no secret leakage via _redacted_env "
+            "but the function is not present in server.py."
+        )
+
+    structural_section = (
+        "## Structural checks\n\n"
+        + (
+            "\n\n".join(findings)
+            if findings
+            else "All structural guarantees verified: resolvers present, "
+                 "no auto-commit, _redacted_env present."
+        )
+    )
+
+    # — Runtime state summary (used as AI context) —
+    try:
+        tree = _ast.parse(server_text)
+        tool_names: list[str] = []
+        for node in _ast.walk(tree):
+            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                for dec in node.decorator_list:
+                    attr = dec.func if isinstance(dec, _ast.Call) else dec
+                    if (
+                        isinstance(attr, _ast.Attribute)
+                        and attr.attr == "tool"
+                        and isinstance(attr.value, _ast.Name)
+                        and attr.value.id == "mcp"
+                    ):
+                        tool_names.append(node.name)
+        actual_count = len(tool_names)
+    except Exception:
+        tool_names = []
+        actual_count = 0
+
+    try:
+        safety_text = safety_path.read_text(encoding="utf-8")
+        # Only count rows in the summary table section
+        m_section = _re.search(r"^## Summary table", safety_text, _re.MULTILINE)
+        summary_section = safety_text[m_section.start():] if m_section else safety_text
+        class_counts: dict[str, int] = {}
+        for line in summary_section.splitlines():
+            # Format: | `tool_name` | A | resolver | ...
+            m = _re.match(r"^\|\s*`[a-z_]+`\s*\|\s*([A-D])\s*\|", line)
+            if m:
+                cls = f"Class {m.group(1)}"
+                class_counts[cls] = class_counts.get(cls, 0) + 1
+        class_summary = "  ".join(f"{k}: {v}" for k, v in sorted(class_counts.items()))
+    except Exception:
+        class_summary = "unavailable"
+
+    runtime_state = (
+        f"## Current runtime state\n\n"
+        f"- Tool count: {actual_count}\n"
+        f"- Safety class breakdown: {class_summary}\n"
+        f"- Path resolvers present: resolve_repo_file, resolve_allowed_local_file\n"
+        f"- Tools (first 20): {', '.join(tool_names[:20])}"
+        + (f" … (+{actual_count - 20} more)" if actual_count > 20 else "")
+    )
+
+    # — AI architecture pass —
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return (
+            f"{structural_section}\n\n"
+            f"{runtime_state}\n\n"
+            "## AI pass\n\nSkipped — OPENAI_API_KEY not set."
+        )
+
+    try:
+        import openai as _openai
+
+        contract_text = contract_path.read_text(encoding="utf-8")
+        arch_contract_path = REPO_ROOT / "reviews" / "contracts" / "architecture-review.md"
+        arch_contract = (
+            arch_contract_path.read_text(encoding="utf-8")
+            if arch_contract_path.exists()
+            else ""
+        )
+
+        system = (
+            "You are a code review engine verifying a runtime contract document against "
+            "its actual implementation.\n\n"
+            "Follow the architecture review contract exactly. Output only structured "
+            "findings in the format: [SEVERITY] file:location\\nbody\n\n"
+            f"{arch_contract}\n\n"
+            f"{runtime_state}"
+        )
+        user = (
+            "Review docs/RUNTIME_CONTRACT.md below.\n\n"
+            "Identify claims in the contract that:\n"
+            "- contradict or are unsupported by the current runtime state above\n"
+            "- describe guarantees not verifiable from the implementation\n"
+            "- make architectural claims that appear stale or incorrect\n\n"
+            "Do NOT flag accurate claims. Do NOT summarize. Output findings only.\n\n"
+            f"```\n{contract_text}\n```"
+        )
+
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        client = _openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+        )
+        ai_raw = (response.choices[0].message.content or "").strip()
+
+        from review_engine.severity_engine import parse_findings, format_summary
+        ai_findings = parse_findings(ai_raw)
+        ai_section = (
+            "## AI architecture pass\n\n"
+            + (format_summary(ai_findings, "docs/RUNTIME_CONTRACT.md") if ai_findings else ai_raw)
+        )
+
+    except Exception as exc:
+        ai_section = f"## AI architecture pass\n\nFailed: {exc}"
+
+    return f"{structural_section}\n\n{runtime_state}\n\n{ai_section}"
+
+
+@mcp.tool()
 def review_diff(mode: str = "comment", deep: bool = False) -> str:
     """Review all files changed in the working tree or staging area.
 

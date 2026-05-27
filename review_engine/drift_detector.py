@@ -10,6 +10,10 @@ Checks:
   3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.
   4. Phantom contracts — tools in tool_contracts.json not found in server.py.
   5. Architecture map freshness — architecture_map.json older than server.py.
+  6. RUNTIME_CONTRACT.md existence — RISK if the identity contract is missing.
+  7. RUNTIME_CONTRACT.md freshness — NOTE/WARNING if server.py is newer.
+  8. Reference document existence — WARNING for each doc listed in the reference
+     table of RUNTIME_CONTRACT.md that is missing on disk.
 
 Usage:
   from review_engine.drift_detector import DriftDetector
@@ -40,12 +44,24 @@ class DriftFinding:
 
 
 class DriftDetector:
+    # Docs that must exist per RUNTIME_CONTRACT.md reference table
+    _REFERENCE_DOCS: list[str] = [
+        "docs/architecture/SYSTEM_OVERVIEW.md",
+        "docs/architecture/REVIEW_PIPELINE.md",
+        "docs/TOOL_SAFETY.md",
+        "docs/tool_contracts.json",
+        "TOOL_INDEX.md",
+        "ROADMAP.md",
+        "SAFETY_MODEL.md",
+    ]
+
     def __init__(self) -> None:
         self._server = REPO_ROOT / "mq-mcp" / "server.py"
         self._contracts = REPO_ROOT / "docs" / "tool_contracts.json"
         self._safety = REPO_ROOT / "docs" / "TOOL_SAFETY.md"
         self._readme = REPO_ROOT / "README.md"
         self._arch_map = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
+        self._runtime_contract = REPO_ROOT / "docs" / "RUNTIME_CONTRACT.md"
 
     def _server_tools(self) -> list[str]:
         """Extract @mcp.tool() function names from server.py via AST."""
@@ -202,6 +218,46 @@ class DriftDetector:
                 location="review_engine/context/architecture_map.json",
                 description="architecture_map.json missing. Run build_repo_context() to generate.",
             ))
+
+        # 8 — RUNTIME_CONTRACT.md existence
+        if not self._runtime_contract.exists():
+            findings.append(DriftFinding(
+                severity="RISK",
+                location="docs/RUNTIME_CONTRACT.md",
+                description=(
+                    "RUNTIME_CONTRACT.md is missing. "
+                    "This is the authoritative identity contract for the runtime. "
+                    "Create it at docs/RUNTIME_CONTRACT.md."
+                ),
+            ))
+        else:
+            # 9 — RUNTIME_CONTRACT.md freshness relative to server.py
+            contract_mtime = self._runtime_contract.stat().st_mtime
+            server_mtime = self._server.stat().st_mtime
+            if server_mtime > contract_mtime:
+                hours = (server_mtime - contract_mtime) / 3600
+                sev = "WARNING" if hours > 48 else "NOTE"
+                findings.append(DriftFinding(
+                    severity=sev,
+                    location="docs/RUNTIME_CONTRACT.md",
+                    description=(
+                        f"RUNTIME_CONTRACT.md is {hours:.0f}h older than server.py. "
+                        f"Review whether tool model, safety classes, or guarantees need updating."
+                    ),
+                ))
+
+        # 10 — Reference document existence (docs listed in RUNTIME_CONTRACT.md reference table)
+        for rel in self._REFERENCE_DOCS:
+            path = REPO_ROOT / rel
+            if not path.exists():
+                findings.append(DriftFinding(
+                    severity="WARNING",
+                    location=rel,
+                    description=(
+                        f"{rel} is listed in the RUNTIME_CONTRACT.md reference table "
+                        f"but does not exist on disk."
+                    ),
+                ))
 
         return findings
 

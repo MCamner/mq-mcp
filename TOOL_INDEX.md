@@ -28,6 +28,7 @@ Review engine tools:
 - detect_architecture_drift: detects drift between declared documentation and actual runtime state
 - review_diff: reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 - review_repo: reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
+- review_runtime_contract: verifies RUNTIME_CONTRACT.md claims against actual server state; structural checks + AI architecture pass
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.
