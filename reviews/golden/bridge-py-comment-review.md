@@ -8,7 +8,7 @@ and the expected tone and depth.
 
 ## Review output
 
-```
+```text
 [MISSING] mq-mcp/bridge.py:76
 scramble_print has no docstring. The function has a non-obvious side effect:
 it animates each character to stdout (or a given file handle) with randomized
@@ -95,14 +95,17 @@ even when the caller only expects a return value. This is intentional UX
 but surprises readers who expect pure function behavior.
 
 **tty handle leak (line 270):** The pattern is:
+
 ```python
 tty = open("/dev/tty", "w")
 ...
 tty.close()
 ```
+
 If any exception occurs between open and close, the handle is never
 closed. In practice the exception paths here (image rendering failures)
 are all caught, but the structure is fragile. The correct pattern is:
+
 ```python
 try:
     ...
@@ -136,7 +139,7 @@ wrappers work.
 
 ## Metadata
 
-```
+```text
 file: mq-mcp/bridge.py
 mode: comment
 contract: comment-review v1.0
