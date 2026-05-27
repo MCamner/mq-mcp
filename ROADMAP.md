@@ -532,7 +532,9 @@ Goal: make review output consistent, stable, and contract-driven.
   review with reasoning notes and excluded-findings section
 - [x] `reviews/contracts/architecture-review.md` — ARCHITECTURE and RISK
   severity labels; scoped to boundaries, coupling, doc vs runtime
-- [ ] `reviews/contracts/security-review.md`
+- [x] `reviews/contracts/security-review.md` — NOTE/WARNING/RISK labels;
+  scoped to subprocess injection, path traversal, prompt injection,
+  secret leakage, env forwarding, osascript injection
 
 ---
 
@@ -547,7 +549,9 @@ Goal: give the review engine real system understanding.
   by extension and path; wired into `review_file` — skill injected automatically
 - [x] `review_engine/severity_engine.py` — parse_findings(), format_summary(),
   has_blocking_findings(), severity_counts(); sorts by severity then line number
-- [ ] `docs/architecture/SYSTEM_OVERVIEW.md`
+- [x] `docs/architecture/SYSTEM_OVERVIEW.md` — ground-truth reference:
+  runtime layers, file responsibilities, review pipeline, path safety,
+  env vars, tool classes; used for drift detection
 - [ ] `docs/architecture/REVIEW_PIPELINE.md`
 
 ---
@@ -664,17 +668,15 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Review Engine — Phase 1 golden reviews + Phase 2 severity engine
+Review Engine — Phase 2 completion + Phase 3 start
 ```
 
 Immediate priorities:
 
-1. `docs/architecture/SYSTEM_OVERVIEW.md` — static architecture doc so the
-   review engine has a ground-truth reference for drift detection
-2. `reviews/contracts/security-review.md` — contract for security and
-   risk reviews (subprocess safety, env leakage, path boundaries)
-3. Wire `severity_engine` into `review_file` MCP tool — parse model output
-   and return structured findings instead of raw text
+1. `docs/architecture/REVIEW_PIPELINE.md` — document the full review
+   pipeline (contract → skill → context → model → severity engine)
+2. Add `review_router` skill for `.md` and `.json` files
+3. Phase 3: separate review vector store — persist findings across sessions
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.

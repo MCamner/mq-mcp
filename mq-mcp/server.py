@@ -1536,7 +1536,22 @@ File: {relative_path}{role_context}
             ],
             max_tokens=2048,
         )
-        return response.choices[0].message.content or "No review output."
+        raw = response.choices[0].message.content or ""
+        if not raw:
+            return "No review output."
+
+        # Parse through severity engine for structured output
+        try:
+            if str(REPO_ROOT) not in _sys.path:
+                _sys.path.insert(0, str(REPO_ROOT))
+            from review_engine.severity_engine import parse_findings, format_summary
+            findings = parse_findings(raw)
+            if findings:
+                return format_summary(findings, relative_path)
+        except Exception:
+            pass
+
+        return raw
     except Exception as exc:
         return f"review_file API call failed: {exc}"
 
