@@ -727,15 +727,17 @@ and surface drift between documentation and implementation.
 - [x] Extend `detect_architecture_drift` — checks 8-10: RUNTIME_CONTRACT.md
   existence (RISK), freshness relative to server.py (NOTE/WARNING), and reference
   document existence for all docs listed in the contract's reference table
-- [ ] `list_architecture_docs` MCP tool — inventory of all docs in
+- [x] `list_architecture_docs` MCP tool — inventory of all docs in
   `docs/architecture/`, with last-modified timestamps and freshness status
   relative to `server.py` mtime
-- [ ] `review_architecture_doc` MCP tool — applies the `architecture` review
+- [x] `review_architecture_doc` MCP tool — applies the `architecture` review
   contract to a named architecture document, injecting current runtime state
   (tool count, safety classes, actual server mtime) so the model can detect
   stale counts, incorrect classifications, and undocumented behaviors
-- [ ] Cross-file semantic similarity: retrieve past findings from related files
-  when reviewing — Phase 3 carry-over
+- [x] Cross-file semantic similarity: `_build_rich_cross_file_context()` pulls
+  architecture role, top public symbols, and last review summary for every file
+  that imports or is imported by the file under review. Injected into both
+  single-pass and deep-mode `review_file`. Removes the file-isolation barrier.
 - [ ] Golden reviews for `.md` and `.json` file types
 
 ---

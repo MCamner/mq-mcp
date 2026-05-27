@@ -1456,6 +1456,78 @@ def _load_architecture_role(relative_path: str) -> str:
         return ""
 
 
+def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: int = 4) -> str:
+    """Build rich cross-file context from callgraph, arch map, and review memory.
+
+    For each file that imports or is imported by relative_path, includes:
+    architecture role, top public symbols, and last review summary.
+    """
+    cg_path = REPO_ROOT / "review_engine" / "context" / "callgraph.json"
+    if not cg_path.exists():
+        return ""
+    try:
+        cg = json.loads(cg_path.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+
+    rel = relative_path.replace("\\", "/")
+    deps = cg.get("imports", {}).get(rel, [])
+    dependents = cg.get("importers", {}).get(rel, [])
+    is_hub = rel in cg.get("hub_files", [])
+    symbols_map = cg.get("symbols", {})
+
+    if not deps and not dependents:
+        return ""
+
+    arch_map: dict = {}
+    arch_map_path = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
+    if arch_map_path.exists():
+        try:
+            arch_map = json.loads(arch_map_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    lines = ["## Cross-file context"]
+    if is_hub:
+        n = len(cg.get("importers", {}).get(rel, []))
+        lines.append(f"Hub file — imported by {n} files.")
+
+    # Interleave deps and dependents up to max_related
+    half = max_related // 2
+    related = (
+        [(f, "imports") for f in deps[: half + 1]]
+        + [(f, "imported by") for f in dependents[: half + 1]]
+    )[:max_related]
+
+    for file_rel, relation in related:
+        fname = Path(file_rel).name
+        lines.append(f"\n**{fname}** ({relation} this file)")
+
+        role = arch_map.get(file_rel, "")
+        if role and role != "unknown":
+            lines.append(f"Role: {role}")
+
+        syms = symbols_map.get(file_rel, [])[:5]
+        if syms:
+            lines.append(f"Symbols: {', '.join(syms)}")
+
+        if mem is not None:
+            try:
+                last = mem.get_last(file_rel)
+                if last:
+                    age_str = f"{last.age_days():.0f}d ago" if last.age_days() >= 1 else "today"
+                    dist = ", ".join(
+                        f"{k}:{v}" for k, v in sorted(last.severity_counts.items()) if v
+                    )
+                    lines.append(
+                        f"Last review: {last.finding_count} findings ({dist}) — {age_str}"
+                    )
+            except Exception:
+                pass
+
+    return "\n".join(lines)
+
+
 @mcp.tool()
 def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -> str:
     """Run an AI review on a repo file using the configured review contract.
@@ -1516,12 +1588,10 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     except Exception:
         pass
 
-    # Load cross-file context from callgraph (injected for hub files and deep reviews)
+    # Build rich cross-file context: arch role, symbols, last review for related files
     cross_file_ctx = ""
     try:
-        from review_engine.callgraph_builder import CallgraphBuilder as _CGB
-        _cg = _CGB(repo_root=REPO_ROOT)
-        cross_file_ctx = _cg.cross_file_context(relative_path)
+        cross_file_ctx = _build_rich_cross_file_context(relative_path, mem=_mem)
     except Exception:
         pass
 
