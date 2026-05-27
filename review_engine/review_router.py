@@ -23,6 +23,10 @@ _ROUTES: list[tuple[str | None, set[str], str]] = [
     (None,                {".sh"},  "shell-review.md"),
     # Python source
     (None,                {".py"},  "python-comment-review.md"),
+    # Markdown documentation
+    (None,                {".md"},  "markdown-review.md"),
+    # JSON config and metadata
+    (None,                {".json"}, "json-review.md"),
 ]
 
 

@@ -244,6 +244,14 @@ The local MCP server exposes 55 tools across five safety classes. See [`docs/TOO
 - `set_wallpaper` — sets the macOS desktop wallpaper
 - `run_tests` — runs pytest in a registered local repository
 
+**Review engine tools:**
+
+- `review_file` — runs an AI review on a repo file using a review contract (requires OPENAI_API_KEY)
+- `build_repo_context` — rebuilds architecture_map.json and file_summary_index.json for the review engine
+- `list_review_contracts` — lists available review contracts and their modes
+- `list_review_history` — lists all files with review history and last review summary
+- `get_last_review` — returns the most recent review findings for a repo file from local memory
+
 ## Bridget voice
 
 Bridget can optionally speak responses locally on macOS using the built-in `say` command. Disabled by default, no external TTS.

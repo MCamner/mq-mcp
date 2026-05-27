@@ -552,7 +552,8 @@ Goal: give the review engine real system understanding.
 - [x] `docs/architecture/SYSTEM_OVERVIEW.md` — ground-truth reference:
   runtime layers, file responsibilities, review pipeline, path safety,
   env vars, tool classes; used for drift detection
-- [ ] `docs/architecture/REVIEW_PIPELINE.md`
+- [x] `docs/architecture/REVIEW_PIPELINE.md` — full pipeline reference:
+  stages, prompt structure, severity parsing, memory persistence, MCP tools
 
 ---
 
@@ -567,6 +568,8 @@ Goal: intelligent long-term memory for the review engine.
   saves structured findings after; past findings shown as `## Previous review context`
 - [x] `list_review_history` MCP tool — summary of all reviewed files
 - [x] `get_last_review` MCP tool — full last review for a specific file
+- [x] `reviews/skills/markdown-review.md` + `reviews/skills/json-review.md` —
+  review skills for `.md` and `.json` file types; wired into review_router
 - [ ] Retrieve similar findings across different files (semantic similarity)
 - [ ] Persist coding conventions extracted from reviews into architecture memory
 
@@ -679,9 +682,9 @@ Review Engine — Phase 3 + Phase 4 start
 
 Immediate priorities:
 
-1. `docs/architecture/REVIEW_PIPELINE.md` — document the full review pipeline
-2. Add `review_router` skill for `.md` and `.json` files
-3. Phase 4: multi-pass review — structure pass before comment pass
+1. Phase 4: multi-pass review — structure understanding pass before comment/doc pass
+2. Add `.md`/`.json` golden reviews
+3. Cross-file semantic similarity: retrieve past findings from similar files
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
