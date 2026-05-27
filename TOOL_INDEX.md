@@ -25,6 +25,9 @@ Review engine tools:
 - build_repo_context: rebuilds architecture_map.json and file_summary_index.json for the review engine
 - list_review_history: lists all files with review history and last review summary
 - get_last_review: returns the most recent review findings for a repo file from local memory
+- detect_architecture_drift: detects drift between declared documentation and actual runtime state
+- review_diff: reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
+- review_repo: reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

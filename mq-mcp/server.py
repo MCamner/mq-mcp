@@ -1728,5 +1728,137 @@ def get_last_review(relative_path: str) -> str:
         return f"get_last_review failed: {exc}"
 
 
+@mcp.tool()
+def detect_architecture_drift() -> str:
+    """Detect drift between declared documentation and actual runtime state.
+
+    Checks tool counts (server.py vs README, TOOL_SAFETY.md, tool_contracts.json),
+    contract coverage, safety doc coverage, and architecture map freshness.
+
+    Read-only. Requires no API key.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from review_engine.drift_detector import DriftDetector as _DriftDetector
+        detector = _DriftDetector()
+        findings = detector.detect()
+        return detector.format_report(findings)
+    except Exception as exc:
+        return f"detect_architecture_drift failed: {exc}"
+
+
+@mcp.tool()
+def review_diff(mode: str = "comment", deep: bool = False) -> str:
+    """Review all files changed in the working tree or staging area.
+
+    Gets changed file paths from git diff, then runs review_file on each one.
+    Only files with a supported extension (.py, .sh, .md, .json) are reviewed.
+    Capped at 10 files per call. Requires OPENAI_API_KEY.
+
+    Args:
+        mode: Review mode passed to each review_file call. Defaults to 'comment'.
+        deep: If True, runs multi-pass review for each file. Defaults to False.
+    """
+    import subprocess
+
+    try:
+        proc = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+        )
+        changed = [f.strip() for f in proc.stdout.splitlines() if f.strip()]
+    except Exception as exc:
+        return f"review_diff: git diff failed: {exc}"
+
+    if not changed:
+        try:
+            proc = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+            )
+            changed = [f.strip() for f in proc.stdout.splitlines() if f.strip()]
+        except Exception:
+            pass
+
+    if not changed:
+        return "review_diff: no changed files found in working tree or staging area."
+
+    reviewable_exts = {".py", ".sh", ".md", ".json"}
+    from pathlib import Path as _Path
+    files = [f for f in changed if _Path(f).suffix.lower() in reviewable_exts]
+
+    if not files:
+        return (
+            f"review_diff: {len(changed)} changed file(s), none with reviewable "
+            f"extensions ({', '.join(sorted(reviewable_exts))})."
+        )
+
+    MAX_FILES = 10
+    truncated = len(files) > MAX_FILES
+    files = files[:MAX_FILES]
+
+    results = []
+    for path in files:
+        output = review_file(path, mode=mode, deep=deep)
+        results.append(f"--- {path} ---\n{output}")
+
+    header = f"review_diff: {len(files)} file(s) reviewed  mode={mode}  deep={deep}"
+    if truncated:
+        header += f"  [capped at {MAX_FILES}]"
+    return header + "\n\n" + "\n\n".join(results)
+
+
+@mcp.tool()
+def review_repo(mode: str = "comment", max_files: int = 5) -> str:
+    """Review the least-recently-reviewed Python files in the repo.
+
+    Uses review history to prioritize files that have never been reviewed or
+    were reviewed longest ago. Falls back to all .py files if no history exists.
+    Requires OPENAI_API_KEY.
+
+    Args:
+        mode: Review mode. Defaults to 'comment'.
+        max_files: Number of files to review. Capped at 20. Defaults to 5.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    cap = min(max(1, max_files), 20)
+
+    ignore_parts = {"__pycache__", ".venv", "node_modules", ".git"}
+    py_files = [
+        str(p.relative_to(REPO_ROOT))
+        for p in REPO_ROOT.rglob("*.py")
+        if not any(part in ignore_parts or part.startswith(".") for part in p.parts[len(REPO_ROOT.parts):])
+    ]
+
+    if not py_files:
+        return "review_repo: no Python files found in repo."
+
+    history: dict[str, list[dict]] = {}
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        history = _ReviewMemory()._data
+    except Exception:
+        pass
+
+    def last_ts(path: str) -> float:
+        entries = history.get(path, [])
+        return entries[0].get("timestamp", 0.0) if entries else 0.0
+
+    to_review = sorted(py_files, key=last_ts)[:cap]
+
+    results = []
+    for path in to_review:
+        output = review_file(path, mode=mode, deep=False)
+        results.append(f"--- {path} ---\n{output}")
+
+    header = f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}"
+    return header + "\n\n" + "\n\n".join(results)
+
+
 if __name__ == "__main__":
     mcp.run()

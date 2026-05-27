@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.0.0",
-  "tool_count": 50,
+  "tool_count": 58,
   "tools": [
     {
       "name": "analyze_csv",
@@ -613,6 +613,36 @@
       "write": false,
       "subprocess": false,
       "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "detect_architecture_drift",
+      "class": "A",
+      "description": "Detect drift between declared documentation and actual runtime state. Checks tool counts, contract coverage, safety doc coverage, and architecture map freshness.",
+      "resolver": "REPO_ROOT (AST + file reads)",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "review_diff",
+      "class": "A",
+      "description": "Review all git-changed files using the configured review mode. Gets changed paths from git diff, runs review_file on each. Capped at 10 files. Requires OPENAI_API_KEY.",
+      "resolver": "resolve_repo_file (per file)",
+      "write": false,
+      "subprocess": false,
+      "side_effects": ["openai_api_call", "review_memory_write"],
+      "examples": []
+    },
+    {
+      "name": "review_repo",
+      "class": "A",
+      "description": "Review the least-recently-reviewed Python files in the repo. Prioritizes files with no review history. Requires OPENAI_API_KEY.",
+      "resolver": "REPO_ROOT walk + resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": ["openai_api_call", "review_memory_write"],
       "examples": []
     }
   ]

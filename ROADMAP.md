@@ -591,19 +591,25 @@ Goal: higher quality through structured pipeline.
 
 ---
 
-### Phase 5 — Advanced Engineering Review (planned)
+### Phase 5 — Advanced Engineering Review (done)
 
-- [ ] `--risk` mode: subprocess safety, env leakage, shell injection, MCP exposure
-- [ ] Architecture drift detection: README says X, runtime does Y
-- [ ] Contract validation: tool contracts, repo boundaries, API assumptions
+- [x] `--risk` mode: `mode="security"` in `review_file` via `reviews/contracts/security-review.md`
+  covers subprocess injection, path traversal, prompt injection, secret leakage,
+  env forwarding, osascript injection
+- [x] `review_engine/drift_detector.py` — `DriftDetector` checks: tool count vs
+  README/TOOL_SAFETY.md/tool_contracts.json, contract coverage (all tools in JSON),
+  phantom contracts (JSON tools not in server), safety doc coverage, arch map freshness
+- [x] `detect_architecture_drift` MCP tool — exposes DriftDetector on the MCP surface
 
 ---
 
-### Phase 6 — Autonomous Review Runtime (planned)
+### Phase 6 — Autonomous Review Runtime (done)
 
-- [ ] Continuous review triggered by `git diff`
-- [ ] Review TUI: severity, history, semantic context
-- [ ] Agentic review: model selects skill, contract, and generates report automatically
+- [x] `review_diff` MCP tool — continuous review triggered by git diff: reviews all
+  `.py/.sh/.md/.json` files changed in the working tree or staging area, capped at 10
+- [x] `review_repo` MCP tool — agentic review: prioritizes the least-recently-reviewed
+  Python files in the repo (uses review memory to order by staleness), max 20 files
+- [ ] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
 
 ---
 
@@ -684,8 +690,8 @@ Review Engine — Phase 3 + Phase 4 start
 
 Immediate priorities:
 
-1. Phase 5: `--risk` mode, architecture drift detection, contract validation
-2. Cross-file semantic similarity: retrieve past findings from similar files
+1. Cross-file semantic similarity: retrieve past findings from similar files
+2. Persist coding conventions extracted from reviews into architecture memory
 3. Golden reviews for `.md` and `.json` file types
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
