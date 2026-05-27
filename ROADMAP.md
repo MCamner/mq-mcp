@@ -1,23 +1,21 @@
 # mq-mcp Roadmap
 
-mq-mcp is the local MCP tool layer for the mq ecosystem.
+mq-mcp is a **local deterministic AI execution runtime for engineering workflows**.
 
-It exposes safe, repo-aware and system-aware tools that can be used by local
-agents, OpenAI bridge workflows, mq-agent, mqlaunch and future HAL-style local
-automation.
+It is not a chatbot, agent framework, or autonomous system. It exposes a
+controlled, documented, and testable MCP surface where every tool has a declared
+safety class, path boundary, and predictable output shape.
 
 The goal is not to create an unrestricted local automation server.
 
-The goal is to create a controlled, documented and testable MCP surface where
-every tool has:
+The goal is to create a system that is:
 
-- a clear purpose
-- a safety class
-- documented inputs
-- predictable outputs
-- path boundaries
-- tests
-- failure behavior
+- self-describing — the runtime can explain its own boundaries
+- verifiable — contracts are enforced and drift is detected
+- self-reflective — the runtime can review and diagnose itself
+- deterministic — same inputs, same output structure, always
+
+Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 
 ---
 
@@ -26,44 +24,85 @@ every tool has:
 Current project phase:
 
 ```text
-v0.8.0 — profile templates and client setup polish
+v1.0.0 — stable local MCP platform (done)
+Next:    Runtime Consolidation — self-describing, self-reviewing runtime
 ```
 
 Completed foundation:
 
-- local MCP server
+- local MCP server with 58 tools across safety classes A–D
 - OpenAI/MCP bridge
-- repo-scoped file tools
+- repo-scoped file tools with path boundary enforcement
 - system resource tools
 - git tools
 - shell/subprocess safety boundaries
 - explicit filesystem allowlist
 - Bridget identity asset
-- validation script
+- validation and release-check scripts
 - docs and GitHub Pages
-- tool safety documentation
-- tool inventory sync
-- Python version documentation cleanup
-- tool contract JSON and safety metadata
+- tool safety documentation and tool inventory sync
+- tool contract JSON and safety metadata (`docs/tool_contracts.json`)
 - mq-agent and mqlaunch integration docs
 - packaged `mq-mcp` CLI
 - install, upgrade, and uninstall scripts
 - health, info, report, and troubleshooting bundle commands
 - redacted observability endpoints
 - validated MCP profile templates for common clients and workflows
+- Review engine: contracts, skills, severity engine, review memory, multi-pass
+  reviewer, drift detector, `review_diff`, `review_repo`
+- `docs/RUNTIME_CONTRACT.md` — authoritative identity and execution contract
 
-Current priority:
+---
+
+## Ecosystem position
 
 ```text
-v1.0.0 — stable local MCP platform
+mq-agent          — orchestration layer (consumes mq-mcp as runtime)
+mq-mcp            — deterministic execution runtime  ← this repo
+repo-signal       — repository intelligence (read-only analysis)
+mq-hal            — operator interface layer
+mq-image-analyze  — vision layer (invoked as a tool)
 ```
 
-Reason:
+This layering is not aspirational — it is enforced by the architecture.
+mq-mcp executes. mq-agent orchestrates. The boundary must not blur.
 
-v0.8.0 adds validated profile templates for Claude Desktop, Codex, mq-agent,
-OpenAI bridge, repo-only, read-only, developer, and local macOS workflows. The
-v1.0.0 adds a machine-readable stability baseline and release evidence for the
-full local MCP platform.
+---
+
+## System feedback loops
+
+The most valuable loop in the system:
+
+```text
+Better contracts
+→ better review
+→ better self-understanding
+→ better runtime stability
+→ better contracts
+```
+
+The self-review loop:
+
+```text
+mq-mcp reviews itself
+→ finds drift
+→ improves contracts
+→ improves next review
+```
+
+When this loop is closed, the runtime acquires:
+
+- self-diagnostics
+- architectural immune response
+- adaptive stabilization
+
+The permanent design tension:
+
+```text
+More AI flexibility → more emergent behavior → more contracts needed → less flexibility
+```
+
+This is not a problem to solve. It is a tension to design.
 
 ---
 
@@ -86,6 +125,9 @@ full local MCP platform.
 | v0.7.0  | Local bridge observability                  | Done          |
 | v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Done          |
+| v1.1.0  | Runtime self-inspection                     | Planned       |
+| v1.2.0  | Architecture memory                         | Planned       |
+| v1.3.0  | Orchestration boundary formalization        | Planned       |
 
 ---
 
@@ -613,6 +655,93 @@ Goal: higher quality through structured pipeline.
 
 ---
 
+## Runtime Consolidation
+
+mq-mcp has reached a transition point. The system no longer lacks capability.
+
+The functional capacity already exceeds many established AI runtime projects.
+What was missing was a central model for how the system understands itself.
+
+`docs/RUNTIME_CONTRACT.md` is the first output of this phase — the authoritative
+identity contract. The remaining interventions make the runtime self-inspecting,
+self-documenting, and structurally resistant to architectural drift.
+
+Strategic principle: **no new features until the existing runtime is
+self-describing, verifiable, and self-reflective**.
+
+---
+
+### v1.1.0 — Runtime self-inspection
+
+Goal: the runtime can analyze its own architecture, verify its own contracts,
+and surface drift between documentation and implementation.
+
+- [ ] `review_runtime_contract` MCP tool — reviews `docs/RUNTIME_CONTRACT.md`
+  against actual server state: tool safety classes, path resolvers, subprocess
+  behavior, write guardrails; surfaces divergence as `[WARNING]` or `[RISK]`
+  findings using the existing severity engine
+- [ ] `list_architecture_docs` MCP tool — inventory of all docs in
+  `docs/architecture/`, with last-modified timestamps and freshness status
+  relative to `server.py` mtime
+- [ ] `review_architecture_doc` MCP tool — applies the `architecture` review
+  contract to a named architecture document, checking for stale tool counts,
+  incorrect safety classifications, and undocumented behaviors
+- [ ] Extend `detect_architecture_drift` — add check for RUNTIME_CONTRACT.md
+  freshness relative to `server.py`; add check for safety guarantee coverage
+  (6 guarantees in contract vs actual implementation)
+- [ ] Cross-file semantic similarity: retrieve past findings from related files
+  when reviewing — Phase 3 carry-over
+- [ ] Golden reviews for `.md` and `.json` file types
+
+---
+
+### v1.2.0 — Architecture memory
+
+Goal: durable, structured memory for design decisions and architectural intent —
+not just review findings.
+
+The current `review_engine/memory/review_history.json` stores what the review
+engine found. Architecture memory stores why the system is designed as it is.
+
+- [ ] `architecture_memory/` directory — structured ADR-style entries:
+  - `decisions/` — design decisions with rationale and date
+  - `rejected/` — patterns explicitly rejected, and why
+  - `boundaries/` — system boundary definitions with justification
+  - `philosophy/` — stable invariants that must not change without ADR
+- [ ] `record_architecture_decision` MCP tool — appends a new ADR entry to
+  `architecture_memory/decisions/` (Class C, requires exact content input)
+- [ ] `list_architecture_decisions` MCP tool — returns all ADRs with date,
+  title, and status
+- [ ] `get_architecture_decision` MCP tool — retrieves a specific ADR
+- [ ] Inject relevant ADRs into `review_file` context when reviewing files in
+  areas covered by a decision (e.g. path resolver decisions injected when
+  reviewing `server.py`)
+- [ ] Persist coding conventions extracted from reviews into architecture memory
+  — Phase 3 carry-over
+
+---
+
+### v1.3.0 — Orchestration boundary formalization
+
+Goal: make the mq-agent / mq-mcp boundary explicit, machine-readable, and
+verifiable — not just documented in prose.
+
+- [ ] `docs/ORCHESTRATION_CONTRACT.md` — formal contract defining:
+  - what mq-agent is allowed to invoke
+  - what return shapes it can rely on
+  - what side effects it must never assume
+  - how context flows from mq-agent into mq-mcp and back
+- [ ] `validate_orchestration_contract` MCP tool — verifies that the current
+  tool set satisfies the orchestration contract: all caller-visible tools are
+  documented, no undeclared side effects, no missing error prefixes
+- [ ] Semantic coupling audit: identify any hidden coupling between mq-mcp
+  and consuming systems through shared context formats, file paths, or naming
+  conventions that are not declared in a contract
+- [ ] Profile validation: verify that each profile in `profiles/` restricts
+  tool access to the minimum required for its declared use case
+
+---
+
 ## Long-term ideas
 
 These are intentionally not scheduled yet.
@@ -621,7 +750,6 @@ These are intentionally not scheduled yet.
 - Bridget terminal avatar mode
 - richer local TUI
 - local model fallback
-- Ollama integration
 - local event history
 - repo health history
 - MCP tool marketplace
@@ -629,8 +757,9 @@ These are intentionally not scheduled yet.
 - integration with mq-ums
 - integration with repo-signal semantic memory
 - cross-repo tool inventory
-- visual safety map
-- generated architecture diagrams
+- visual safety map — runtime dependency graph, orchestration topology
+- generated architecture diagrams from architecture_memory
+- drift visualization: doc vs implementation divergence over time
 - demo videos or GIFs
 
 ---
@@ -685,14 +814,18 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Review Engine — Phase 3 + Phase 4 start
+Runtime Consolidation — v1.1.0 Runtime self-inspection
 ```
+
+The system's functional capacity is sufficient. The leverage point is now
+making the runtime self-describing and self-verifying.
 
 Immediate priorities:
 
-1. Cross-file semantic similarity: retrieve past findings from similar files
-2. Persist coding conventions extracted from reviews into architecture memory
-3. Golden reviews for `.md` and `.json` file types
+1. `review_runtime_contract` MCP tool — runtime reviews its own contract
+2. Extend `detect_architecture_drift` with RUNTIME_CONTRACT.md coverage check
+3. Cross-file semantic similarity — carry-over from Phase 3
+4. Golden reviews for `.md` and `.json` file types
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
