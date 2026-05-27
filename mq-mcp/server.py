@@ -1516,6 +1516,15 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     except Exception:
         pass
 
+    # Load cross-file context from callgraph (injected for hub files and deep reviews)
+    cross_file_ctx = ""
+    try:
+        from review_engine.callgraph_builder import CallgraphBuilder as _CGB
+        _cg = _CGB(repo_root=REPO_ROOT)
+        cross_file_ctx = _cg.cross_file_context(relative_path)
+    except Exception:
+        pass
+
     api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key:
         return "review_file requires OPENAI_API_KEY to be set."
@@ -1537,6 +1546,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                     skill_content=skill_content,
                     skill_name=skill_name,
                     past_context=past_context,
+                    cross_file_ctx=cross_file_ctx,
                 )
                 # result.output is already formatted and deduplicated
                 output = result.output
@@ -1570,6 +1580,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
             skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
             past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
+            cross_section = f"\n\n{cross_file_ctx}" if cross_file_ctx else ""
 
             system = (
                 "You are a code review engine operating under a strict review contract.\n"
@@ -1579,7 +1590,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             )
             user = (
                 f"Review this file under the contract above.\n\n"
-                f"File: {relative_path}{role_context}{past_section}\n\n"
+                f"File: {relative_path}{role_context}{cross_section}{past_section}\n\n"
                 f"```\n{file_content}\n```"
             )
 
@@ -1639,10 +1650,14 @@ def build_repo_context() -> str:
     Generates:
       review_engine/context/architecture_map.json  — role of each file
       review_engine/context/file_summary_index.json — symbols and docstrings
+      review_engine/context/callgraph.json          — import graph, hub files
 
     Read-only analysis. Does not modify repo files.
     """
     import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
     ctx_script = REPO_ROOT / "review_engine" / "repo_context_builder.py"
     if not ctx_script.exists():
         return "repo_context_builder.py not found in review_engine/."
@@ -1655,7 +1670,18 @@ def build_repo_context() -> str:
         timeout=30,
     )
     out = (result.stdout + result.stderr).strip()
-    return out or "build_repo_context completed with no output."
+
+    # Also build callgraph
+    cg_out = ""
+    try:
+        from review_engine.callgraph_builder import CallgraphBuilder as _CGB
+        builder = _CGB(repo_root=REPO_ROOT)
+        cg_result = builder.build()
+        cg_out = "\n" + builder.format_summary(cg_result)
+    except Exception as exc:
+        cg_out = f"\ncallgraph_builder failed: {exc}"
+
+    return (out or "build_repo_context completed with no output.") + cg_out
 
 
 @mcp.tool()

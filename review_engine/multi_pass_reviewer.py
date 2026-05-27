@@ -148,6 +148,7 @@ class MultiPassReviewer:
         skill_name: str = "",
         past_context: str = "",
         structure_summary: str = "",
+        cross_file_ctx: str = "",
     ) -> str:
         """Pass 2 — contract-driven review enriched with structure context."""
         skill_section = (
@@ -163,6 +164,7 @@ class MultiPassReviewer:
         )
 
         role_line = f"\nArchitecture role: {arch_role}" if arch_role else ""
+        cross_section = f"\n\n{cross_file_ctx}" if cross_file_ctx else ""
         past_section = (
             f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
         )
@@ -171,7 +173,7 @@ class MultiPassReviewer:
         )
         user = (
             f"Review this file under the contract above.\n\n"
-            f"File: {file_path}{role_line}{structure_section}{past_section}\n\n"
+            f"File: {file_path}{role_line}{cross_section}{structure_section}{past_section}\n\n"
             f"```\n{file_content}\n```"
         )
         return self._call(system, user, max_tokens=2048)
@@ -237,6 +239,7 @@ class MultiPassReviewer:
         skill_content: str = "",
         skill_name: str = "",
         past_context: str = "",
+        cross_file_ctx: str = "",
     ) -> PassResult:
         """Run all passes. Returns a PassResult with formatted, deduplicated output."""
         from review_engine.severity_engine import parse_findings, format_summary
@@ -254,6 +257,7 @@ class MultiPassReviewer:
             skill_name=skill_name,
             past_context=past_context,
             structure_summary=structure_summary,
+            cross_file_ctx=cross_file_ctx,
         )
 
         # Pass 3 — consistency check

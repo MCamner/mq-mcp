@@ -73,10 +73,27 @@ mq-mcp            — deterministic execution runtime  ← this repo
 repo-signal       — repository intelligence (read-only analysis)
 mq-hal            — operator interface layer
 mq-image-analyze  — vision layer (invoked as a tool)
+atlas-one         — prompt and interaction layer
+macos-scripts     — human terminal UX and launch surface
 ```
 
 This layering is not aspirational — it is enforced by the architecture.
 mq-mcp executes. mq-agent orchestrates. The boundary must not blur.
+
+### Cross-repo responsibility contract
+
+mq-mcp owns the central cognition runtime:
+
+- review engine and review contracts
+- semantic retrieval and review memory
+- repo context selection for reviews
+- architecture memory and architecture drift detection
+- MCP runtime and safety metadata
+- multi-pass review and risk analysis
+
+mq-mcp must not absorb heavy UI, duplicated repository indexing, repo metrics
+dashboards, or workflow automation logic. Those belong to mq-agent,
+repo-signal, macos-scripts and mq-hal.
 
 ---
 
@@ -607,12 +624,18 @@ Goal: give the review engine real system understanding.
   env vars, tool classes; used for drift detection
 - [x] `docs/architecture/REVIEW_PIPELINE.md` — full pipeline reference:
   stages, prompt structure, severity parsing, memory persistence, MCP tools
-- [ ] `review_engine/callgraph_builder.py` — cross-file call graph and
-  dependency map: which functions call which, which files import which. This
-  is the **symbolic intelligence gap** — the system currently understands
-  files in isolation; the call graph enables cross-file reasoning. Output:
-  `review_engine/context/callgraph.json` injected into deep reviews of
-  high-connectivity files (hub files, orchestration files, API boundaries).
+- [x] `review_engine/callgraph_builder.py` — cross-file import graph and hub
+  file detection. Outputs `review_engine/context/callgraph.json` with
+  `imports`, `importers`, `hub_files`, `symbols`, and `edges`. Wired into
+  `build_repo_context` (regenerated alongside architecture_map.json) and
+  `review_file` / `MultiPassReviewer.review_pass` — cross-file context injected
+  for every file, with hub files and their importers named explicitly.
+- [ ] Import repo-signal generated packs when available — repo-signal currently
+  keeps its graph in-memory; add a check here when it starts writing
+  `callgraph.json`, `symbol_index.json`, `repo_summary.json` to disk.
+- [ ] Context selection rules — prefer contracts, architecture docs, relevant
+  symbols, and recent review history over large raw file dumps; cap total
+  injected context tokens before each API call.
 
 ---
 
@@ -730,6 +753,14 @@ engine found. Architecture memory stores why the system is designed as it is.
   - `rejected/` — patterns explicitly rejected, and why
   - `boundaries/` — system boundary definitions with justification
   - `philosophy/` — stable invariants that must not change without ADR
+- [ ] Seed architecture memory from stable docs:
+  `docs/architecture/SYSTEM_OVERVIEW.md`,
+  `docs/architecture/REVIEW_PIPELINE.md`, `docs/RUNTIME_CONTRACT.md` and
+  future `docs/ORCHESTRATION_CONTRACT.md`
+- [ ] Add boundary entries for central cognition ownership: review logic,
+  semantic retrieval, architecture reasoning, risk analysis and MCP safety
+  metadata stay in mq-mcp; UI, launchers, indexing and workflow automation stay
+  in their owning repos.
 - [ ] `record_architecture_decision` MCP tool — appends a new ADR entry to
   `architecture_memory/decisions/` (Class C, requires exact content input)
 - [ ] `list_architecture_decisions` MCP tool — returns all ADRs with date,
@@ -753,6 +784,11 @@ verifiable — not just documented in prose.
   - what return shapes it can rely on
   - what side effects it must never assume
   - how context flows from mq-agent into mq-mcp and back
+- [ ] Document cross-repo input/output contracts:
+  - repo-signal exports repo intelligence packs
+  - mq-image-analyze exports visual analysis JSON
+  - mq-hal exports runtime and model health summaries
+  - mq-agent routes review/orchestration requests to mq-mcp
 - [ ] `validate_orchestration_contract` MCP tool — verifies that the current
   tool set satisfies the orchestration contract: all caller-visible tools are
   documented, no undeclared side effects, no missing error prefixes
