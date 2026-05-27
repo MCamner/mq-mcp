@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 53 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 55 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -34,6 +34,8 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `list_review_contracts` | List available review contracts from reviews/contracts/ | Write, access outside repo |
 | `review_file` | Run AI review on a repo file using a review contract | Write, modify code; calls OpenAI API |
 | `build_repo_context` | Rebuild architecture_map.json and file_summary_index.json | Write outside repo, modify repo files |
+| `list_review_history` | List all files with review history and last review summary | Write, access outside repo |
+| `get_last_review` | Return last review findings for a repo file from local memory | Write, access outside repo |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -172,3 +174,5 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `list_review_contracts` | A | REPO_ROOT (fixed path) | No | No |
 | `review_file` | A | resolve_repo_file | No | No (OpenAI API) |
 | `build_repo_context` | D | fixed script path | No | Yes |
+| `list_review_history` | A | REPO_ROOT (fixed path) | No | No |
+| `get_last_review` | A | REPO_ROOT (fixed path) | No | No |

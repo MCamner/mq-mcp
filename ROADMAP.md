@@ -556,13 +556,19 @@ Goal: give the review engine real system understanding.
 
 ---
 
-### Phase 3 — Semantic Review Memory (planned)
+### Phase 3 — Semantic Review Memory (in progress)
 
 Goal: intelligent long-term memory for the review engine.
 
-- [ ] Separate review vector store from repo semantic memory
-- [ ] Store previous reviews and retrieve similar findings at review time
-- [ ] Retrieve coding conventions and architecture notes automatically
+- [x] `review_engine/review_memory.py` — local persistent review history;
+  `ReviewMemory` saves/retrieves findings per file, formats past context
+  for injection into future reviews (max 5 findings, capped 10 entries/file)
+- [x] `review_file` wired to memory: loads past context before model call,
+  saves structured findings after; past findings shown as `## Previous review context`
+- [x] `list_review_history` MCP tool — summary of all reviewed files
+- [x] `get_last_review` MCP tool — full last review for a specific file
+- [ ] Retrieve similar findings across different files (semantic similarity)
+- [ ] Persist coding conventions extracted from reviews into architecture memory
 
 ---
 
@@ -668,15 +674,14 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Review Engine — Phase 2 completion + Phase 3 start
+Review Engine — Phase 3 + Phase 4 start
 ```
 
 Immediate priorities:
 
-1. `docs/architecture/REVIEW_PIPELINE.md` — document the full review
-   pipeline (contract → skill → context → model → severity engine)
+1. `docs/architecture/REVIEW_PIPELINE.md` — document the full review pipeline
 2. Add `review_router` skill for `.md` and `.json` files
-3. Phase 3: separate review vector store — persist findings across sessions
+3. Phase 4: multi-pass review — structure pass before comment pass
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.

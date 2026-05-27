@@ -23,6 +23,8 @@ Review engine tools:
 - list_review_contracts: lists available review contracts and their modes
 - review_file: runs an AI review on a repo file using a review contract (requires OPENAI_API_KEY)
 - build_repo_context: rebuilds architecture_map.json and file_summary_index.json for the review engine
+- list_review_history: lists all files with review history and last review summary
+- get_last_review: returns the most recent review findings for a repo file from local memory
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

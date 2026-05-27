@@ -594,6 +594,26 @@
         "writes-review-engine-context"
       ],
       "examples": []
+    },
+    {
+      "name": "list_review_history",
+      "class": "A",
+      "description": "List all files with review history and their last review summary from local memory.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_last_review",
+      "class": "A",
+      "description": "Return the most recent review findings for a repo file from local review memory.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
     }
   ]
 }

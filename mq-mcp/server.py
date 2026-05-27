@@ -1490,21 +1490,32 @@ def review_file(relative_path: str, mode: str = "comment") -> str:
     if not contract:
         return f"No review contract found for mode '{mode}'. Add reviews/contracts/{mode}-review.md."
 
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
     arch_role = _load_architecture_role(relative_path)
     role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
 
-    # Load skill guidance via router
+    # Load skill via router
     try:
-        import sys as _sys
-        _review_engine = str(REPO_ROOT / "review_engine")
-        if _review_engine not in _sys.path:
-            _sys.path.insert(0, str(REPO_ROOT))
         from review_engine.review_router import route_file as _route_file
         skill_name, skill_content = _route_file(relative_path)
     except Exception:
         skill_name, skill_content = "none", ""
 
     skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
+
+    # Load past review context from memory
+    past_context = ""
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        _mem = _ReviewMemory()
+        past_context = _mem.format_past_context(relative_path)
+    except Exception:
+        _mem = None
+
+    past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
 
     system = f"""You are a code review engine operating under a strict review contract.
 Follow the contract exactly. Do not deviate from the output format.
@@ -1514,7 +1525,7 @@ Do not modify code. Output only structured review findings.
 
     user = f"""Review this file under the contract above.
 
-File: {relative_path}{role_context}
+File: {relative_path}{role_context}{past_section}
 
 ```
 {file_content}
@@ -1541,17 +1552,37 @@ File: {relative_path}{role_context}
             return "No review output."
 
         # Parse through severity engine for structured output
+        output = raw
+        findings = []
         try:
-            if str(REPO_ROOT) not in _sys.path:
-                _sys.path.insert(0, str(REPO_ROOT))
-            from review_engine.severity_engine import parse_findings, format_summary
+            from review_engine.severity_engine import (
+                parse_findings,
+                format_summary,
+                severity_counts,
+            )
             findings = parse_findings(raw)
             if findings:
-                return format_summary(findings, relative_path)
+                output = format_summary(findings, relative_path)
         except Exception:
             pass
 
-        return raw
+        # Persist to review memory
+        try:
+            if _mem is not None:
+                scounts = severity_counts(findings) if findings else {}
+                _mem.save(
+                    file_path=relative_path,
+                    mode=mode,
+                    findings_text=output,
+                    finding_count=len(findings),
+                    severity_counts=scounts,
+                    model=model,
+                    skill=skill_name,
+                )
+        except Exception:
+            pass
+
+        return output
     except Exception as exc:
         return f"review_file API call failed: {exc}"
 
@@ -1603,6 +1634,53 @@ def list_review_contracts() -> str:
     lines.append("")
     lines.append("Usage: review_file(relative_path='...', mode='comment')")
     return "\n".join(lines)
+
+
+@mcp.tool()
+def list_review_history() -> str:
+    """List all files that have review history and their last review summary.
+
+    Read-only. Shows data from review_engine/memory/review_history.json.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        mem = _ReviewMemory()
+        return mem.summary()
+    except Exception as exc:
+        return f"list_review_history failed: {exc}"
+
+
+@mcp.tool()
+def get_last_review(relative_path: str) -> str:
+    """Return the most recent review findings for a repo file.
+
+    Read-only. Fetches from local review memory (review_engine/memory/).
+    Returns a summary with severity distribution and full findings text.
+
+    Args:
+        relative_path: Repo-relative path to look up in review history.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        mem = _ReviewMemory()
+        entry = mem.get_last(relative_path)
+        if entry is None:
+            return f"No review history for: {relative_path}"
+        dist = "  ".join(f"{k}={v}" for k, v in sorted(entry.severity_counts.items()) if v > 0)
+        header = (
+            f"Last review: {relative_path}\n"
+            f"  mode={entry.mode}  model={entry.model}  skill={entry.skill}\n"
+            f"  date={entry.timestamp_iso}  findings={entry.finding_count}  [{dist}]\n"
+        )
+        return header + "\n" + entry.findings_text
+    except Exception as exc:
+        return f"get_last_review failed: {exc}"
 
 
 if __name__ == "__main__":
