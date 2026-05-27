@@ -575,24 +575,19 @@ Goal: intelligent long-term memory for the review engine.
 
 ---
 
-### Phase 4 — Multi-Pass Review Engine (in progress)
+### Phase 4 — Multi-Pass Review Engine (done)
 
 Goal: higher quality through structured pipeline.
 
 - [x] `review_engine/multi_pass_reviewer.py` — `MultiPassReviewer` class:
-  Pass 1 produces a structural analysis (responsibility, patterns, hotspots,
-  review focus, ≤400 tokens); Pass 2 runs the contract review enriched with
-  that analysis
-- [x] `review_file` extended with `deep: bool = False` — single-pass remains
-  default; `deep=True` runs `MultiPassReviewer`, ~2x API calls, same memory
-  and severity pipeline
-
-Planned:
-
-```text
-Pass 3: consistency review
-Pass 4: output normalization / deduplication
-```
+  - Pass 1: structural analysis (responsibility, patterns, hotspots, ≤400 tokens)
+  - Pass 2: contract-driven review enriched with structure context (≤2048 tokens)
+  - Pass 3: consistency pass — doc vs runtime divergence (docstrings, names,
+    type hints vs actual behavior; ≤1024 tokens)
+  - Pass 4: deduplication — merges Pass 2 + Pass 3 findings, keeps highest
+    severity per location, drops near-duplicate bodies (pure Python, no API call)
+- [x] `review_file(deep=True)` — single-pass stays default; `deep=True` runs
+  all 4 passes, returns formatted + deduplicated findings, ~3x API calls
 
 ---
 
@@ -689,9 +684,9 @@ Review Engine — Phase 3 + Phase 4 start
 
 Immediate priorities:
 
-1. Phase 4: multi-pass review — structure understanding pass before comment/doc pass
-2. Add `.md`/`.json` golden reviews
-3. Cross-file semantic similarity: retrieve past findings from similar files
+1. Phase 5: `--risk` mode, architecture drift detection, contract validation
+2. Cross-file semantic similarity: retrieve past findings from similar files
+3. Golden reviews for `.md` and `.json` file types
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.

@@ -1538,9 +1538,34 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                     skill_name=skill_name,
                     past_context=past_context,
                 )
-                raw = result.raw_review
+                # result.output is already formatted and deduplicated
+                output = result.output
+                findings = result.findings
             except Exception as exc:
                 return f"review_file deep mode failed: {exc}"
+
+            if not output:
+                return "No review output."
+
+            # Persist to review memory
+            try:
+                if _mem is not None:
+                    from review_engine.severity_engine import severity_counts
+                    scounts = severity_counts(findings) if findings else {}
+                    _mem.save(
+                        file_path=relative_path,
+                        mode=mode,
+                        findings_text=output,
+                        finding_count=len(findings),
+                        severity_counts=scounts,
+                        model=model,
+                        skill=skill_name,
+                    )
+            except Exception:
+                pass
+
+            return output
+
         else:
             role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
             skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
@@ -1568,41 +1593,41 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             )
             raw = response.choices[0].message.content or ""
 
-        if not raw:
-            return "No review output."
+            if not raw:
+                return "No review output."
 
-        # Parse through severity engine for structured output
-        output = raw
-        findings = []
-        try:
-            from review_engine.severity_engine import (
-                parse_findings,
-                format_summary,
-                severity_counts,
-            )
-            findings = parse_findings(raw)
-            if findings:
-                output = format_summary(findings, relative_path)
-        except Exception:
-            pass
-
-        # Persist to review memory
-        try:
-            if _mem is not None:
-                scounts = severity_counts(findings) if findings else {}
-                _mem.save(
-                    file_path=relative_path,
-                    mode=mode,
-                    findings_text=output,
-                    finding_count=len(findings),
-                    severity_counts=scounts,
-                    model=model,
-                    skill=skill_name,
+            # Parse through severity engine for structured output
+            output = raw
+            findings = []
+            try:
+                from review_engine.severity_engine import (
+                    parse_findings,
+                    format_summary,
+                    severity_counts,
                 )
-        except Exception:
-            pass
+                findings = parse_findings(raw)
+                if findings:
+                    output = format_summary(findings, relative_path)
+            except Exception:
+                pass
 
-        return output
+            # Persist to review memory
+            try:
+                if _mem is not None:
+                    scounts = severity_counts(findings) if findings else {}
+                    _mem.save(
+                        file_path=relative_path,
+                        mode=mode,
+                        findings_text=output,
+                        finding_count=len(findings),
+                        severity_counts=scounts,
+                        model=model,
+                        skill=skill_name,
+                    )
+            except Exception:
+                pass
+
+            return output
     except Exception as exc:
         return f"review_file API call failed: {exc}"
 
