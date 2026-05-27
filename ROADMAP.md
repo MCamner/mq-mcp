@@ -525,7 +525,9 @@ Goal: make review output consistent, stable, and contract-driven.
 - [x] `reviews/skills/mcp-tool-review.md` — MCP tool guidance: Args blocks,
   safety notes, path boundary docs, naming conventions
 - [x] `server.py`: `review_file`, `build_repo_context`, `list_review_contracts`
-  MCP tools — review engine exposed on the MCP surface
+  MCP tools — review engine exposed on the MCP surface (53 tools total)
+- [x] Tool docs synced: TOOL_SAFETY.md, TOOL_INDEX.md, README.md,
+  tool_contracts.json — all updated to 53 tools
 - [ ] `reviews/golden/` — high-quality reference examples per review mode
 - [ ] `reviews/contracts/architecture-review.md`
 - [ ] `reviews/contracts/security-review.md`
@@ -539,8 +541,8 @@ Goal: give the review engine real system understanding.
 - [x] `review_engine/repo_context_builder.py` — generates
   `architecture_map.json` (role of each file) and `file_summary_index.json`
   (public symbols, docstrings, line counts) from file heuristics + Python AST
-- [ ] `review_engine/review_router.py` — route files to the correct skill
-  based on extension and path (`.sh` → shell, `.py` → python, MCP tools → mcp)
+- [x] `review_engine/review_router.py` — routes files to the correct skill
+  by extension and path; wired into `review_file` — skill injected automatically
 - [ ] `review_engine/severity_engine.py` — structured severity output formatter
 - [ ] `docs/architecture/SYSTEM_OVERVIEW.md`
 - [ ] `docs/architecture/REVIEW_PIPELINE.md`
@@ -659,15 +661,15 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Review Engine — Phase 1 completion + Phase 2
+Review Engine — Phase 1 golden reviews + Phase 2 severity engine
 ```
 
 Immediate priorities:
 
-1. `reviews/golden/` — add one high-quality golden review of `bridge.py`
-   as few-shot reference for the review engine
-2. `review_engine/review_router.py` — route files to the correct skill
-   automatically based on extension and path
+1. `reviews/golden/` — one high-quality golden review of `bridge.py`
+   as few-shot reference; this is the highest-leverage quality improvement
+2. `review_engine/severity_engine.py` — structured output formatter;
+   normalizes findings across review passes
 3. `reviews/contracts/architecture-review.md` — contract for architecture
    and boundary reviews
 
