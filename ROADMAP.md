@@ -136,7 +136,7 @@ This is not a problem to solve. It is a tension to design.
 | v0.7.0  | Local bridge observability                  | Done          |
 | v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Done          |
-| v1.1.0  | Runtime self-inspection                     | Planned       |
+| v1.1.0  | Runtime self-inspection                     | In progress   |
 | v1.2.0  | Architecture memory                         | Planned       |
 | v1.3.0  | Orchestration boundary formalization        | Planned       |
 
@@ -697,19 +697,20 @@ self-describing, verifiable, and self-reflective**.
 Goal: the runtime can analyze its own architecture, verify its own contracts,
 and surface drift between documentation and implementation.
 
-- [ ] `review_runtime_contract` MCP tool — reviews `docs/RUNTIME_CONTRACT.md`
-  against actual server state: tool safety classes, path resolvers, subprocess
-  behavior, write guardrails; surfaces divergence as `[WARNING]` or `[RISK]`
-  findings using the existing severity engine
+- [x] `review_runtime_contract` MCP tool — reviews `docs/RUNTIME_CONTRACT.md`
+  against actual server state: structural checks (path resolvers, no-auto-commit,
+  _redacted_env) + AI architecture pass with injected tool count and safety class
+  breakdown
+- [x] Extend `detect_architecture_drift` — checks 8-10: RUNTIME_CONTRACT.md
+  existence (RISK), freshness relative to server.py (NOTE/WARNING), and reference
+  document existence for all docs listed in the contract's reference table
 - [ ] `list_architecture_docs` MCP tool — inventory of all docs in
   `docs/architecture/`, with last-modified timestamps and freshness status
   relative to `server.py` mtime
 - [ ] `review_architecture_doc` MCP tool — applies the `architecture` review
-  contract to a named architecture document, checking for stale tool counts,
-  incorrect safety classifications, and undocumented behaviors
-- [ ] Extend `detect_architecture_drift` — add check for RUNTIME_CONTRACT.md
-  freshness relative to `server.py`; add check for safety guarantee coverage
-  (6 guarantees in contract vs actual implementation)
+  contract to a named architecture document, injecting current runtime state
+  (tool count, safety classes, actual server mtime) so the model can detect
+  stale counts, incorrect classifications, and undocumented behaviors
 - [ ] Cross-file semantic similarity: retrieve past findings from related files
   when reviewing — Phase 3 carry-over
 - [ ] Golden reviews for `.md` and `.json` file types

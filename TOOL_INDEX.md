@@ -29,6 +29,8 @@ Review engine tools:
 - review_diff: reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 - review_repo: reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
 - review_runtime_contract: verifies RUNTIME_CONTRACT.md claims against actual server state; structural checks + AI architecture pass
+- list_architecture_docs: lists docs/architecture/ with freshness status relative to server.py
+- review_architecture_doc: applies architecture review contract to a named architecture document with injected runtime state
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

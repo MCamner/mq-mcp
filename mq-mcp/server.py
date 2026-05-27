@@ -1953,6 +1953,229 @@ def review_runtime_contract() -> str:
 
 
 @mcp.tool()
+def list_architecture_docs() -> str:
+    """List all architecture documents with freshness status relative to server.py.
+
+    Returns an inventory of docs/architecture/ showing each document's name,
+    size, last-modified timestamp, and whether it is fresh (newer than server.py)
+    or potentially stale (older). Use this to decide which architecture docs
+    need review or update after server changes.
+
+    Read-only. Requires no API key. Class A.
+    """
+    import datetime as _datetime
+
+    arch_dir = REPO_ROOT / "docs" / "architecture"
+    server_path = REPO_ROOT / "mq-mcp" / "server.py"
+
+    if not arch_dir.exists():
+        return "list_architecture_docs: docs/architecture/ directory not found."
+
+    try:
+        server_mtime = server_path.stat().st_mtime
+    except Exception:
+        server_mtime = None
+
+    docs = sorted(arch_dir.glob("*.md"))
+    if not docs:
+        return "No .md files found in docs/architecture/."
+
+    lines = ["# Architecture documents\n"]
+    lines.append(f"{'Document':<40} {'Size':>8} {'Last modified':<24} Status")
+    lines.append("-" * 90)
+
+    for doc in docs:
+        try:
+            stat = doc.stat()
+            size_kb = stat.st_size / 1024
+            mtime = stat.st_mtime
+            mtime_str = _datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+
+            if server_mtime is None:
+                status = "unknown"
+            elif mtime >= server_mtime:
+                status = "fresh"
+            else:
+                hours_behind = (server_mtime - mtime) / 3600
+                status = f"stale ({hours_behind:.0f}h behind server.py)"
+
+            lines.append(f"{doc.name:<40} {size_kb:>7.1f}K {mtime_str:<24} {status}")
+        except Exception as exc:
+            lines.append(f"{doc.name:<40} {'?':>8} {'?':<24} error: {exc}")
+
+    lines.append("")
+    if server_mtime:
+        server_ts = _datetime.datetime.fromtimestamp(server_mtime).strftime("%Y-%m-%d %H:%M")
+        lines.append(f"Reference: server.py last modified {server_ts}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def review_architecture_doc(doc_name: str) -> str:
+    """Review an architecture document against current runtime state.
+
+    Applies the architecture review contract to the named document, injecting
+    current runtime state (tool count, safety class breakdown, server.py
+    last-modified) as context so the model can identify stale counts,
+    incorrect safety classifications, and claims that no longer match the
+    implementation.
+
+    doc_name accepts:
+      - bare name: "SYSTEM_OVERVIEW" (resolves to docs/architecture/SYSTEM_OVERVIEW.md)
+      - with extension: "SYSTEM_OVERVIEW.md"
+      - full path: "docs/architecture/SYSTEM_OVERVIEW.md"
+
+    Requires OPENAI_API_KEY. Read-only. Class A.
+
+    Args:
+        doc_name: Name or path of the architecture document to review.
+    """
+    import ast as _ast
+    import datetime as _datetime
+    import re as _re
+    import sys as _sys
+
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    arch_dir = REPO_ROOT / "docs" / "architecture"
+    server_path = REPO_ROOT / "mq-mcp" / "server.py"
+    safety_path = REPO_ROOT / "docs" / "TOOL_SAFETY.md"
+
+    # Resolve doc path
+    candidates = [
+        REPO_ROOT / doc_name,
+        arch_dir / doc_name,
+        arch_dir / (doc_name + ".md"),
+    ]
+    doc_path = next((p for p in candidates if p.exists()), None)
+    if doc_path is None:
+        available = [p.name for p in sorted(arch_dir.glob("*.md"))] if arch_dir.exists() else []
+        avail_str = ", ".join(available) if available else "none"
+        return (
+            f"review_architecture_doc: '{doc_name}' not found.\n"
+            f"Available in docs/architecture/: {avail_str}"
+        )
+
+    try:
+        doc_text = doc_path.read_text(encoding="utf-8")
+    except Exception as exc:
+        return f"review_architecture_doc failed: could not read {doc_path.name}: {exc}"
+
+    # Build runtime state context
+    try:
+        server_text = server_path.read_text(encoding="utf-8")
+        tree = _ast.parse(server_text)
+        tool_names: list[str] = []
+        for node in _ast.walk(tree):
+            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                for dec in node.decorator_list:
+                    attr = dec.func if isinstance(dec, _ast.Call) else dec
+                    if (
+                        isinstance(attr, _ast.Attribute)
+                        and attr.attr == "tool"
+                        and isinstance(attr.value, _ast.Name)
+                        and attr.value.id == "mcp"
+                    ):
+                        tool_names.append(node.name)
+        actual_count = len(tool_names)
+    except Exception:
+        tool_names = []
+        actual_count = 0
+
+    try:
+        safety_text = safety_path.read_text(encoding="utf-8")
+        m_section = _re.search(r"^## Summary table", safety_text, _re.MULTILINE)
+        summary_section = safety_text[m_section.start():] if m_section else safety_text
+        class_counts: dict[str, int] = {}
+        for line in summary_section.splitlines():
+            m = _re.match(r"^\|\s*`[a-z_]+`\s*\|\s*([A-D])\s*\|", line)
+            if m:
+                cls = f"Class {m.group(1)}"
+                class_counts[cls] = class_counts.get(cls, 0) + 1
+        class_summary = "  ".join(f"{k}: {v}" for k, v in sorted(class_counts.items()))
+    except Exception:
+        class_summary = "unavailable"
+
+    try:
+        server_mtime_str = _datetime.datetime.fromtimestamp(
+            server_path.stat().st_mtime
+        ).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        server_mtime_str = "unknown"
+
+    runtime_state = (
+        f"## Current runtime state (injected for accuracy checking)\n\n"
+        f"- Tool count: {actual_count}\n"
+        f"- Safety class breakdown: {class_summary}\n"
+        f"- server.py last modified: {server_mtime_str}\n"
+        f"- Path resolvers: resolve_repo_file, resolve_allowed_local_file\n"
+        f"- Tools: {', '.join(tool_names[:30])}"
+        + (f" … (+{actual_count - 30} more)" if actual_count > 30 else "")
+    )
+
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return (
+            f"review_architecture_doc: OPENAI_API_KEY not set.\n\n"
+            f"Document: {doc_path.name}\n\n"
+            f"{runtime_state}"
+        )
+
+    try:
+        import openai as _openai
+
+        arch_contract_path = REPO_ROOT / "reviews" / "contracts" / "architecture-review.md"
+        arch_contract = (
+            arch_contract_path.read_text(encoding="utf-8")
+            if arch_contract_path.exists()
+            else ""
+        )
+
+        system = (
+            "You are a code review engine verifying an architecture document against "
+            "the current runtime implementation.\n\n"
+            "Follow the architecture review contract exactly. Output only structured "
+            "findings in the format: [SEVERITY] file:location\\nbody\n\n"
+            f"{arch_contract}\n\n"
+            f"{runtime_state}"
+        )
+        user = (
+            f"Review {doc_path.name} below.\n\n"
+            "Identify:\n"
+            "- Tool counts, version numbers, or statistics that do not match the "
+            "runtime state above\n"
+            "- Safety class claims inconsistent with the actual breakdown\n"
+            "- Architectural claims that appear outdated or no longer accurate\n"
+            "- Missing documentation for capabilities that now exist\n\n"
+            "Do NOT flag accurate claims. Do NOT summarize. Output findings only.\n\n"
+            f"```\n{doc_text}\n```"
+        )
+
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        client = _openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+        )
+        raw = (response.choices[0].message.content or "").strip()
+
+        from review_engine.severity_engine import parse_findings, format_summary
+        findings = parse_findings(raw)
+        result = format_summary(findings, doc_path.name) if findings else raw
+
+        return f"## {doc_path.name}\n\n{runtime_state}\n\n---\n\n{result}"
+
+    except Exception as exc:
+        return f"review_architecture_doc failed: {exc}"
+
+
+@mcp.tool()
 def review_diff(mode: str = "comment", deep: bool = False) -> str:
     """Review all files changed in the working tree or staging area.
 
