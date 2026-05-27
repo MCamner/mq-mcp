@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 64 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 65 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -86,6 +86,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `set_clipboard` | Copy text to the macOS clipboard via pbcopy | Access files, run arbitrary commands |
 | `take_screenshot` | Capture screen to a file (default ~/Desktop/screenshot.png) | Access outside ~/Desktop or given path |
 | `record_architecture_decision` | Append a new ADR entry to architecture_memory/ | Write outside repo, commit, overwrite existing entries |
+| `extract_coding_conventions` | Extract conventions from last review and persist to architecture_memory/ | Write outside repo, commit; requires OPENAI_API_KEY |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -194,3 +195,4 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `list_architecture_decisions` | A | REPO_ROOT/architecture_memory/ | No | No |
 | `get_architecture_decision` | A | REPO_ROOT/architecture_memory/ | No | No |
 | `record_architecture_decision` | C | REPO_ROOT/architecture_memory/ | Yes | No |
+| `extract_coding_conventions` | C | REPO_ROOT/architecture_memory/ + review memory | Yes | No (OpenAI API) |

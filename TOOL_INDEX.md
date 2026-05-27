@@ -34,6 +34,7 @@ Review engine tools:
 - list_architecture_decisions: lists all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns)
 - get_architecture_decision: returns the full text of a specific architecture memory entry by ID
 - record_architecture_decision: records a new architecture decision in architecture_memory/ (Class C)
+- extract_coding_conventions: extracts generalizable coding conventions from the last review of a file and persists them to architecture_memory/ (Class C, requires OPENAI_API_KEY)
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

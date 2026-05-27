@@ -154,7 +154,7 @@ This is not a problem to solve. It is a tension to design.
 | v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Done          |
 | v1.1.0  | Runtime self-inspection                     | In progress   |
-| v1.2.0  | Architecture memory                         | In progress   |
+| v1.2.0  | Architecture memory                         | Done          |
 | v1.3.0  | Orchestration boundary formalization        | Planned       |
 
 ---
@@ -779,8 +779,14 @@ engine found. Architecture memory stores why the system is designed as it is.
   relevant ADRs (decision body, capped at 300 chars each) at priority 1 in
   `ContextSelector` — highest priority, before past findings and cross-file context.
   Deep mode prepends ADRs to `cross_file_ctx`.
-- [ ] Persist coding conventions extracted from reviews into architecture memory
-  — Phase 3 carry-over (deferred, requires review output parsing for convention extraction)
+- [x] `review_engine/convention_extractor.py` — `ConventionExtractor` runs a single
+  model call to extract generalizable coding conventions from review findings.
+  Output format: `CONVENTION / AREA / RATIONALE` blocks, parsed into structured entries.
+  Deduplicates against existing convention titles before writing.
+- [x] `extract_coding_conventions` MCP tool — loads last review from ReviewMemory,
+  runs ConventionExtractor, saves each convention to `architecture_memory/decisions/`
+  with `status: convention`. Conventions are immediately injected into future reviews
+  of matching files via the existing ADR context mechanism (Class C).
 
 ---
 

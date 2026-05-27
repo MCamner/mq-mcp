@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.1.0",
-  "tool_count": 64,
+  "tool_count": 65,
   "tools": [
     {
       "name": "analyze_csv",
@@ -703,6 +703,16 @@
       "write": true,
       "subprocess": false,
       "side_effects": ["file-write"],
+      "examples": []
+    },
+    {
+      "name": "extract_coding_conventions",
+      "class": "C",
+      "description": "Extract generalizable coding conventions from the last review of a file and persist them into architecture_memory/decisions/ as convention entries. Conventions are injected into future reviews of matching files. Requires OPENAI_API_KEY.",
+      "resolver": "REPO_ROOT/architecture_memory/ + review_engine/memory/",
+      "write": true,
+      "subprocess": false,
+      "side_effects": ["openai_api_call", "file-write"],
       "examples": []
     }
   ]

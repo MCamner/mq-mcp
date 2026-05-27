@@ -2407,6 +2407,94 @@ def record_architecture_decision(
 
 
 @mcp.tool()
+def extract_coding_conventions(relative_path: str) -> str:
+    """Extract generalizable coding conventions from the last review of a file
+    and persist them into architecture_memory/decisions/ as convention entries.
+
+    Conventions are rules that apply across multiple files — not one-off findings.
+    They are injected into future reviews via the architecture decision context,
+    giving the model codebase-specific guidance without repeating it in every prompt.
+
+    Requires: the file must have at least one saved review (use review_file first).
+    Requires: OPENAI_API_KEY must be set.
+
+    Args:
+        relative_path: Repo-relative path to the file whose last review to process.
+                       E.g. "mq-mcp/server.py".
+
+    Safety: Class C — reads review memory (repo-scoped), writes to
+    architecture_memory/ (repo-scoped). Does not commit.
+    Approval: Required — this tool writes persistent files.
+    """
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        mem = _ReviewMemory()
+        last = mem.get_last(relative_path)
+        if last is None:
+            return (
+                f"No review found for '{relative_path}'. "
+                "Run review_file first to generate findings."
+            )
+        findings_text = last.findings_text
+
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return "extract_coding_conventions requires OPENAI_API_KEY to be set."
+
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        client = _openai.OpenAI(api_key=api_key)
+
+        # Collect existing convention titles to avoid duplicates
+        from review_engine.architecture_memory import ArchitectureMemory as _AM
+        arch_mem = _AM()
+        existing = arch_mem.list_all()
+        existing_titles = [
+            e["title"] for e in existing
+            if e.get("status") == "convention"
+        ]
+
+        from review_engine.convention_extractor import ConventionExtractor as _CE
+        extractor = _CE(client, model)
+        conventions = extractor.extract(
+            file_path=relative_path,
+            findings_text=findings_text,
+            existing_titles=existing_titles,
+        )
+
+        if not conventions:
+            return (
+                f"No generalizable conventions found in the last review of "
+                f"'{relative_path}'. The findings may be file-specific or already "
+                f"covered by existing conventions."
+            )
+
+        saved: list[str] = []
+        for c in conventions:
+            adr_id = arch_mem.record(
+                title=c.convention,
+                area=c.area,
+                decision=c.convention,
+                rationale=c.rationale,
+                category="decisions",
+                status="convention",
+            )
+            saved.append(f"  {adr_id}: {c.convention}")
+
+        lines = [
+            f"Extracted {len(saved)} convention(s) from '{relative_path}':",
+            "",
+        ] + saved + [
+            "",
+            "Conventions are now injected into future reviews of matching files.",
+            "Use list_architecture_decisions to see all entries.",
+        ]
+        return "\n".join(lines)
+
+    except Exception as exc:
+        return f"extract_coding_conventions failed: {exc}"
+
+
+@mcp.tool()
 def review_diff(mode: str = "comment", deep: bool = False) -> str:
     """Review all files changed in the working tree or staging area.
 
