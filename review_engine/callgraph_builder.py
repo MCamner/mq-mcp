@@ -221,6 +221,11 @@ class CallgraphBuilder:
             "edges": edges,
         }
 
+        # Merge repo-signal packs if available (hook — activates when repo-signal
+        # starts writing intelligence packs to review_engine/context/).
+        rs_status = self._try_merge_repo_signal_packs(result)
+        result["repo_signal_status"] = rs_status
+
         self._out_dir.mkdir(parents=True, exist_ok=True)
         out_path = self._out_dir / "callgraph.json"
         out_path.write_text(
@@ -229,6 +234,70 @@ class CallgraphBuilder:
         )
 
         return result
+
+    def _try_merge_repo_signal_packs(self, data: dict) -> str:
+        """Merge repo-signal intelligence packs into callgraph data if present.
+
+        Expected pack files in review_engine/context/:
+          repo_signal_callgraph.json — edges {from, to, import_names}
+          repo_signal_symbols.json  — {file_path: [symbol, ...]}
+          repo_signal_summary.json  — repo-level metadata blob
+
+        Returns a short status string for inclusion in build output.
+        When repo-signal starts writing packs, this hook activates automatically.
+        """
+        pack_dir = self._out_dir
+        found: list[str] = []
+
+        cg_pack = pack_dir / "repo_signal_callgraph.json"
+        if cg_pack.exists():
+            try:
+                pack = json.loads(cg_pack.read_text(encoding="utf-8"))
+                for edge in pack.get("edges", []):
+                    from_f = edge.get("from", "")
+                    to_f = edge.get("to", "")
+                    if not from_f or not to_f:
+                        continue
+                    data["imports"].setdefault(from_f, [])
+                    if to_f not in data["imports"][from_f]:
+                        data["imports"][from_f].append(to_f)
+                    data["importers"].setdefault(to_f, [])
+                    if from_f not in data["importers"][to_f]:
+                        data["importers"][to_f].append(from_f)
+                    data["edges"].append(edge)
+                found.append("callgraph")
+            except Exception:
+                pass
+
+        sym_pack = pack_dir / "repo_signal_symbols.json"
+        if sym_pack.exists():
+            try:
+                pack = json.loads(sym_pack.read_text(encoding="utf-8"))
+                for file_path, syms in pack.get("symbols", {}).items():
+                    if file_path not in data["symbols"]:
+                        data["symbols"][file_path] = syms
+                    else:
+                        existing = set(data["symbols"][file_path])
+                        data["symbols"][file_path].extend(
+                            s for s in syms if s not in existing
+                        )
+                found.append("symbols")
+            except Exception:
+                pass
+
+        summary_pack = pack_dir / "repo_signal_summary.json"
+        if summary_pack.exists():
+            try:
+                data["repo_signal_summary"] = json.loads(
+                    summary_pack.read_text(encoding="utf-8")
+                )
+                found.append("summary")
+            except Exception:
+                pass
+
+        if found:
+            return f"repo-signal packs merged: {', '.join(found)}"
+        return "repo-signal packs: not available (repo-signal does not yet write packs to disk)"
 
     def format_summary(self, result: dict) -> str:
         n_files = result["file_count"]
@@ -242,6 +311,9 @@ class CallgraphBuilder:
             f"  Hub files ({len(hubs)}): {hub_str or 'none'}",
             f"  Output: review_engine/context/callgraph.json",
         ]
+        rs_status = result.get("repo_signal_status", "")
+        if rs_status:
+            lines.append(f"  {rs_status}")
         return "\n".join(lines)
 
     def cross_file_context(self, rel_path: str, max_items: int = 5) -> str:

@@ -608,7 +608,7 @@ Goal: make review output consistent, stable, and contract-driven.
 
 ---
 
-### Phase 2 — Repo-Aware Intelligence (in progress)
+### Phase 2 — Repo-Aware Intelligence (done)
 
 Goal: give the review engine real system understanding.
 
@@ -630,12 +630,16 @@ Goal: give the review engine real system understanding.
   `build_repo_context` (regenerated alongside architecture_map.json) and
   `review_file` / `MultiPassReviewer.review_pass` — cross-file context injected
   for every file, with hub files and their importers named explicitly.
-- [ ] Import repo-signal generated packs when available — repo-signal currently
-  keeps its graph in-memory; add a check here when it starts writing
-  `callgraph.json`, `symbol_index.json`, `repo_summary.json` to disk.
-- [ ] Context selection rules — prefer contracts, architecture docs, relevant
-  symbols, and recent review history over large raw file dumps; cap total
-  injected context tokens before each API call.
+- [x] `callgraph_builder._try_merge_repo_signal_packs()` — hook that merges
+  `repo_signal_callgraph.json`, `repo_signal_symbols.json`, and
+  `repo_signal_summary.json` from `review_engine/context/` when present.
+  Activates automatically when repo-signal starts writing intelligence packs to
+  disk; no-op until then. Status surfaced in `build_repo_context` output.
+- [x] `review_engine/context_selector.py` — `ContextSelector` enforces a 12 000-
+  char budget (~3 000 tokens) on injected context. Priority order: past findings
+  (2) before cross-file context (3). High-priority pieces are truncated rather
+  than dropped when budget is tight. Wired into `review_file` after loading
+  `past_context` and `cross_file_ctx`, before either review branch.
 
 ---
 

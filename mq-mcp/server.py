@@ -1595,6 +1595,19 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     except Exception:
         pass
 
+    # Context selection: cap injected context to budget, prefer past findings over
+    # cross-file context when budget is tight. arch_role is always short, not capped.
+    try:
+        from review_engine.context_selector import ContextSelector as _ContextSelector
+        _cs = _ContextSelector()
+        _cs.add("past_context", past_context, priority=2)
+        _cs.add("cross_file_ctx", cross_file_ctx, priority=3)
+        _selected = _cs.selected()
+        past_context = _selected.get("past_context", "")
+        cross_file_ctx = _selected.get("cross_file_ctx", "")
+    except Exception:
+        pass
+
     api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key:
         return "review_file requires OPENAI_API_KEY to be set."
