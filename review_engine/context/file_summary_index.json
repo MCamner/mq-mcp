@@ -23,8 +23,8 @@
   {
     "path": ".claude/settings.json",
     "role": "unknown",
-    "lines": 38,
-    "size_bytes": 2326
+    "lines": 62,
+    "size_bytes": 4505
   },
   {
     "path": ".claude/settings.local.json",
@@ -61,8 +61,8 @@
   {
     "path": ".markdownlint.json",
     "role": "unknown",
-    "lines": 5,
-    "size_bytes": 40
+    "lines": 6,
+    "size_bytes": 58
   },
   {
     "path": ".vscode/settings.json",
@@ -80,36 +80,36 @@
   {
     "path": "README.md",
     "role": "project readme",
-    "lines": 314,
-    "size_bytes": 11603,
+    "lines": 325,
+    "size_bytes": 12412,
     "title": "mq-mcp"
   },
   {
     "path": "ROADMAP.md",
     "role": "project roadmap",
-    "lines": 583,
-    "size_bytes": 14511,
+    "lines": 699,
+    "size_bytes": 20272,
     "title": "mq-mcp Roadmap"
   },
   {
     "path": "RUNBOOK.md",
     "role": "operational runbook",
-    "lines": 51,
-    "size_bytes": 513,
+    "lines": 52,
+    "size_bytes": 514,
     "title": "mq-mcp Runbook"
   },
   {
     "path": "SAFETY_MODEL.md",
     "role": "safety model documentation",
-    "lines": 20,
-    "size_bytes": 580,
+    "lines": 22,
+    "size_bytes": 582,
     "title": "mq-mcp Safety Model"
   },
   {
     "path": "TOOL_INDEX.md",
     "role": "MCP tool index",
-    "lines": 22,
-    "size_bytes": 1029,
+    "lines": 34,
+    "size_bytes": 1795,
     "title": "mq-mcp Tool Index"
   },
   {
@@ -129,9 +129,23 @@
   {
     "path": "docs/TOOL_SAFETY.md",
     "role": "documentation",
-    "lines": 169,
-    "size_bytes": 10553,
+    "lines": 185,
+    "size_bytes": 12045,
     "title": "MCP Tool Safety Classification"
+  },
+  {
+    "path": "docs/architecture/REVIEW_PIPELINE.md",
+    "role": "architecture documentation",
+    "lines": 270,
+    "size_bytes": 9050,
+    "title": "Review Pipeline"
+  },
+  {
+    "path": "docs/architecture/SYSTEM_OVERVIEW.md",
+    "role": "architecture documentation",
+    "lines": 220,
+    "size_bytes": 7555,
+    "title": "mq-mcp System Overview"
   },
   {
     "path": "docs/bridget-voice.md",
@@ -254,8 +268,8 @@
   {
     "path": "docs/tool_contracts.json",
     "role": "documentation",
-    "lines": 565,
-    "size_bytes": 14322
+    "lines": 650,
+    "size_bytes": 17220
   },
   {
     "path": "docs/troubleshooting.md",
@@ -395,14 +409,14 @@
   {
     "path": "mq-mcp/pyproject.toml",
     "role": "Python project configuration",
-    "lines": 24,
-    "size_bytes": 429
+    "lines": 32,
+    "size_bytes": 600
   },
   {
     "path": "mq-mcp/server.py",
     "role": "MCP server — tool registry and HTTP endpoints",
-    "lines": 1581,
-    "size_bytes": 53346,
+    "lines": 1865,
+    "size_bytes": 63967,
     "module_docstring": null,
     "public_functions": [
       "jsonable",
@@ -471,7 +485,12 @@
       "list_openable_apps",
       "review_file",
       "build_repo_context",
-      "list_review_contracts"
+      "list_review_contracts",
+      "list_review_history",
+      "get_last_review",
+      "detect_architecture_drift",
+      "review_diff",
+      "review_repo"
     ],
     "public_classes": [],
     "constants": [
@@ -539,14 +558,47 @@
   {
     "path": "review_engine/context/architecture_map.json",
     "role": "review engine — context building and routing",
-    "lines": 128,
-    "size_bytes": 6586
+    "lines": 131,
+    "size_bytes": 6871
   },
   {
     "path": "review_engine/context/file_summary_index.json",
     "role": "review engine — context building and routing",
-    "lines": 999,
-    "size_bytes": 24914
+    "lines": 1023,
+    "size_bytes": 25661
+  },
+  {
+    "path": "review_engine/drift_detector.py",
+    "role": "review engine — context building and routing",
+    "lines": 228,
+    "size_bytes": 8913,
+    "module_docstring": "Drift Detector — mq-mcp review engine, Phase 5.\n\nDetects architecture drift between declared documentation and actual runtime state.\n\nChecks:\n  1. Tool count — server.py actual count vs README, TOOL_SAFETY.md summary table,\n     and tool_contracts.json tool_count field.\n  2. Contract coverage — all @mcp.tool() functions present in tool_contracts.json.\n  3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.\n  4. Phantom contracts — tools in tool_contracts.json not found in server.py.\n  5. Architecture map freshness — architecture_map.json older than server.py.\n\nUsage:\n  from review_engine.drift_detector import DriftDetector\n  detector = DriftDetector()\n  findings = detector.detect()\n  print(detector.format_report(findings))",
+    "public_functions": [],
+    "public_classes": [
+      "DriftFinding",
+      "DriftDetector"
+    ],
+    "constants": [
+      "REPO_ROOT"
+    ]
+  },
+  {
+    "path": "review_engine/multi_pass_reviewer.py",
+    "role": "review engine — context building and routing",
+    "lines": 280,
+    "size_bytes": 9399,
+    "module_docstring": "Multi-Pass Reviewer — mq-mcp review engine, Phase 4.\n\nPass 1 — Structure analysis: compact structural summary of the file.\n          No findings. Output is context for subsequent passes.\nPass 2 — Review pass: contract-driven review enriched with structure context.\nPass 3 — Consistency pass: checks doc vs runtime divergence (docstrings,\n          names, type hints vs actual implementation behavior).\nPass 4 — Deduplication: merges Pass 2 + Pass 3 findings, keeps highest\n          severity per location, drops near-duplicate bodies, re-sorts.\n\nUsage:\n  from review_engine.multi_pass_reviewer import MultiPassReviewer\n  reviewer = MultiPassReviewer(client, model)\n  result = reviewer.run(\n      file_path=relative_path,\n      file_content=content,\n      contract=contract_text,\n      arch_role=arch_role_string,\n      skill_content=skill_text,\n      skill_name=skill_name,\n      past_context=past_findings_text,\n  )\n  print(result.output)     # formatted, deduplicated findings\n  print(result.pass_count) # 3",
+    "public_functions": [],
+    "public_classes": [
+      "PassResult",
+      "MultiPassReviewer"
+    ],
+    "constants": [
+      "STRUCTURE_PASS_SYSTEM",
+      "STRUCTURE_PASS_USER",
+      "CONSISTENCY_PASS_SYSTEM",
+      "CONSISTENCY_PASS_USER"
+    ]
   },
   {
     "path": "review_engine/repo_context_builder.py",
@@ -565,11 +617,103 @@
     ]
   },
   {
+    "path": "review_engine/review_memory.py",
+    "role": "review engine — context building and routing",
+    "lines": 181,
+    "size_bytes": 5679,
+    "module_docstring": "Review Memory — mq-mcp review engine, Phase 3.\n\nLocal persistent store for review history.\nEach review is saved as a JSON entry indexed by file path and timestamp.\nPast findings are retrieved and injected as context for future reviews of the same file.\n\nStorage: review_engine/memory/review_history.json\n\nUsage:\n  from review_engine.review_memory import ReviewMemory\n  mem = ReviewMemory()\n  mem.save(path, mode, findings_text, finding_count, severity_counts)\n  past = mem.get_last(path)\n  context = mem.format_past_context(path)",
+    "public_functions": [],
+    "public_classes": [
+      "ReviewEntry",
+      "ReviewMemory"
+    ],
+    "constants": [
+      "REPO_ROOT",
+      "MEMORY_DIR",
+      "HISTORY_FILE",
+      "MAX_ENTRIES_PER_FILE",
+      "MAX_CONTEXT_FINDINGS"
+    ]
+  },
+  {
+    "path": "review_engine/review_router.py",
+    "role": "review engine — context building and routing",
+    "lines": 89,
+    "size_bytes": 2762,
+    "module_docstring": "Review Router — mq-mcp review engine, Phase 2.2\n\nRoutes a file to the correct review skill based on extension and path.\nReturns the skill content to inject into a review prompt.\n\nUsage:\n  from review_engine.review_router import route_file\n  skill_text = route_file(\"mq-mcp/server.py\")",
+    "public_functions": [
+      "route_file",
+      "list_routes"
+    ],
+    "public_classes": [],
+    "constants": [
+      "REPO_ROOT",
+      "SKILLS_DIR"
+    ]
+  },
+  {
+    "path": "review_engine/severity_engine.py",
+    "role": "review engine — context building and routing",
+    "lines": 171,
+    "size_bytes": 4902,
+    "module_docstring": "Severity Engine — mq-mcp review engine, Phase 2.3\n\nParses, validates, and formats review findings from the review model output.\nEnsures output conforms to the comment-review contract severity schema.\n\nUsage:\n  from review_engine.severity_engine import parse_findings, format_summary\n  findings = parse_findings(raw_review_text)\n  print(format_summary(findings))",
+    "public_functions": [
+      "parse_findings",
+      "format_summary",
+      "format_findings_text",
+      "severity_counts",
+      "has_blocking_findings"
+    ],
+    "public_classes": [
+      "Severity",
+      "Finding"
+    ],
+    "constants": [
+      "SEVERITY_ORDER",
+      "_FINDING_PATTERN"
+    ]
+  },
+  {
+    "path": "reviews/contracts/architecture-review.md",
+    "role": "review contract — hard rules for review output",
+    "lines": 142,
+    "size_bytes": 4280,
+    "title": "Review Contract: Architecture Review"
+  },
+  {
     "path": "reviews/contracts/comment-review.md",
     "role": "review contract — hard rules for review output",
     "lines": 130,
     "size_bytes": 3339,
     "title": "Review Contract: Comment Review"
+  },
+  {
+    "path": "reviews/contracts/security-review.md",
+    "role": "review contract — hard rules for review output",
+    "lines": 137,
+    "size_bytes": 4033,
+    "title": "Review Contract: Security Review"
+  },
+  {
+    "path": "reviews/golden/bridge-py-comment-review.md",
+    "role": "golden review — high-quality reference example",
+    "lines": 150,
+    "size_bytes": 5947,
+    "title": "Golden Review: mq-mcp/bridge.py — Comment Mode"
+  },
+  {
+    "path": "reviews/skills/json-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 51,
+    "size_bytes": 1833,
+    "title": "Skill: JSON Review"
+  },
+  {
+    "path": "reviews/skills/markdown-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 48,
+    "size_bytes": 1835,
+    "title": "Skill: Markdown Review"
   },
   {
     "path": "reviews/skills/mcp-tool-review.md",
