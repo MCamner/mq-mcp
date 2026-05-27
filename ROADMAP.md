@@ -643,7 +643,7 @@ Goal: give the review engine real system understanding.
 
 ---
 
-### Phase 3 — Semantic Review Memory (in progress)
+### Phase 3 — Semantic Review Memory (done)
 
 Goal: intelligent long-term memory for the review engine.
 
@@ -656,12 +656,13 @@ Goal: intelligent long-term memory for the review engine.
 - [x] `get_last_review` MCP tool — full last review for a specific file
 - [x] `reviews/skills/markdown-review.md` + `reviews/skills/json-review.md` —
   review skills for `.md` and `.json` file types; wired into review_router
-- [ ] Cross-file reasoning: when reviewing file A, inject context from files
-  that A imports or that import A — symbols, last review findings, architecture
-  role. This requires `callgraph.json` (Phase 2) + a context selector that
-  picks the most relevant cross-file symbols. **This is the next big quality
-  barrier** — the system currently analyzes files in isolation.
+- [x] Cross-file reasoning: `_build_rich_cross_file_context()` injects arch role,
+  top public symbols, and last review summary (finding count + severity
+  distribution) for every file that imports or is imported by the file under
+  review. Backed by `callgraph.json` (Phase 2) + `ContextSelector` (Phase 2).
+  Files are no longer reviewed in isolation.
 - [ ] Persist coding conventions extracted from reviews into architecture memory
+  — deferred to v1.2.0 (Architecture memory), where it belongs structurally.
 
 ---
 
