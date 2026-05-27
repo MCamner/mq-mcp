@@ -1457,7 +1457,7 @@ def _load_architecture_role(relative_path: str) -> str:
 
 
 @mcp.tool()
-def review_file(relative_path: str, mode: str = "comment") -> str:
+def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -> str:
     """Run an AI review on a repo file using the configured review contract.
 
     Uses the OpenAI API (OPENAI_API_KEY must be set). The review contract
@@ -1466,7 +1466,10 @@ def review_file(relative_path: str, mode: str = "comment") -> str:
     Args:
         relative_path: Repo-relative path to the file to review.
         mode: Review mode. Must match a contract in reviews/contracts/.
-              Supported: 'comment'. Defaults to 'comment'.
+              Supported: 'comment', 'architecture', 'security'. Defaults to 'comment'.
+        deep: If True, runs a two-pass review: Pass 1 produces a structural
+              analysis of the file; Pass 2 uses that analysis to ground the
+              contract-driven review. Higher quality, ~2x API calls. Defaults to False.
     """
     import openai as _openai
 
@@ -1495,7 +1498,6 @@ def review_file(relative_path: str, mode: str = "comment") -> str:
         _sys.path.insert(0, str(REPO_ROOT))
 
     arch_role = _load_architecture_role(relative_path)
-    role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
 
     # Load skill via router
     try:
@@ -1504,32 +1506,15 @@ def review_file(relative_path: str, mode: str = "comment") -> str:
     except Exception:
         skill_name, skill_content = "none", ""
 
-    skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
-
     # Load past review context from memory
     past_context = ""
+    _mem = None
     try:
         from review_engine.review_memory import ReviewMemory as _ReviewMemory
         _mem = _ReviewMemory()
         past_context = _mem.format_past_context(relative_path)
     except Exception:
-        _mem = None
-
-    past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
-
-    system = f"""You are a code review engine operating under a strict review contract.
-Follow the contract exactly. Do not deviate from the output format.
-Do not modify code. Output only structured review findings.
-
-{contract}{skill_section}"""
-
-    user = f"""Review this file under the contract above.
-
-File: {relative_path}{role_context}{past_section}
-
-```
-{file_content}
-```"""
+        pass
 
     api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key:
@@ -1539,15 +1524,50 @@ File: {relative_path}{role_context}{past_section}
 
     try:
         client = _openai.OpenAI(api_key=api_key)
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            max_tokens=2048,
-        )
-        raw = response.choices[0].message.content or ""
+
+        if deep:
+            try:
+                from review_engine.multi_pass_reviewer import MultiPassReviewer as _MultiPassReviewer
+                reviewer = _MultiPassReviewer(client, model)
+                result = reviewer.run(
+                    file_path=relative_path,
+                    file_content=file_content,
+                    contract=contract,
+                    arch_role=arch_role,
+                    skill_content=skill_content,
+                    skill_name=skill_name,
+                    past_context=past_context,
+                )
+                raw = result.raw_review
+            except Exception as exc:
+                return f"review_file deep mode failed: {exc}"
+        else:
+            role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
+            skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
+            past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
+
+            system = (
+                "You are a code review engine operating under a strict review contract.\n"
+                "Follow the contract exactly. Do not deviate from the output format.\n"
+                "Do not modify code. Output only structured review findings.\n\n"
+                f"{contract}{skill_section}"
+            )
+            user = (
+                f"Review this file under the contract above.\n\n"
+                f"File: {relative_path}{role_context}{past_section}\n\n"
+                f"```\n{file_content}\n```"
+            )
+
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                max_tokens=2048,
+            )
+            raw = response.choices[0].message.content or ""
+
         if not raw:
             return "No review output."
 

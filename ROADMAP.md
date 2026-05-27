@@ -575,16 +575,23 @@ Goal: intelligent long-term memory for the review engine.
 
 ---
 
-### Phase 4 — Multi-Pass Review Engine (planned)
+### Phase 4 — Multi-Pass Review Engine (in progress)
 
 Goal: higher quality through structured pipeline.
 
+- [x] `review_engine/multi_pass_reviewer.py` — `MultiPassReviewer` class:
+  Pass 1 produces a structural analysis (responsibility, patterns, hotspots,
+  review focus, ≤400 tokens); Pass 2 runs the contract review enriched with
+  that analysis
+- [x] `review_file` extended with `deep: bool = False` — single-pass remains
+  default; `deep=True` runs `MultiPassReviewer`, ~2x API calls, same memory
+  and severity pipeline
+
+Planned:
+
 ```text
-Pass 1: structure understanding
-Pass 2: architecture reasoning
-Pass 3: comment/doc review
-Pass 4: consistency review
-Pass 5: output normalization
+Pass 3: consistency review
+Pass 4: output normalization / deduplication
 ```
 
 ---

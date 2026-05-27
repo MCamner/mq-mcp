@@ -6,6 +6,8 @@ This document describes the full execution path of `review_file` — from tool i
 
 ## Overview
 
+### Single-pass mode (default)
+
 ```text
 review_file(relative_path, mode)
   │
@@ -19,6 +21,33 @@ review_file(relative_path, mode)
   ├── 8. Output formatting    severity_engine.format_summary(findings, path)
   └── 9. Memory persistence   review_engine/review_memory.save(...)
 ```
+
+### Deep mode (`deep=True`)
+
+```text
+review_file(relative_path, mode, deep=True)
+  │
+  ├── 1–5. Same as single-pass (path safety, contract, arch context, skill, memory)
+  │
+  ├── 6a. Pass 1 — Structure analysis
+  │       MultiPassReviewer.structure_pass()
+  │       → compact summary: responsibility, patterns, hotspots, review focus
+  │       → max 400 tokens, no findings
+  │
+  ├── 6b. Pass 2 — Review pass
+  │       MultiPassReviewer.review_pass()
+  │       → same contract + skill + memory context as single-pass
+  │       → structure summary injected as ## Structure analysis
+  │       → max 2048 tokens
+  │
+  ├── 7. Severity parsing     review_engine/severity_engine.parse_findings(raw)
+  ├── 8. Output formatting    severity_engine.format_summary(findings, path)
+  └── 9. Memory persistence   review_engine/review_memory.save(...)
+```
+
+Deep mode costs ~2x API calls but gives the model explicit structural grounding
+before it starts reviewing. The structure pass is cheap (400 tokens) and its
+output is used solely as context for the review pass — it is not returned.
 
 ---
 
@@ -128,7 +157,7 @@ Do not modify code. Output only structured review findings.
 
 User prompt structure:
 
-```text
+````text
 Review this file under the contract above.
 
 File: {relative_path}
@@ -141,7 +170,7 @@ Architecture role: {arch_role}
 ```
 {file_content}
 ```
-```
+````
 
 Model: `OPENAI_MODEL` env var, defaults to `gpt-4.1-mini`. Max tokens: 2048.
 
