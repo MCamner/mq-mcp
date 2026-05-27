@@ -22,7 +22,25 @@
       "Bash(git -C /Users/mansys/mq-agent checkout main)",
       "Bash(git reset *)",
       "Bash(python3 -c \"import ast; ast.parse\\(open\\('mq-mcp/server.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
-      "Bash(git -C /Users/mansys/mq-agent status --short)"
+      "Bash(git -C /Users/mansys/mq-agent status --short)",
+      "Bash(mkdir -p /Users/mansys/mq-mcp/reviews/contracts /Users/mansys/mq-mcp/reviews/profiles /Users/mansys/mq-mcp/reviews/skills /Users/mansys/mq-mcp/reviews/golden /Users/mansys/mq-mcp/review_engine /Users/mansys/mq-mcp/docs/architecture && ls /Users/mansys/mq-mcp/reviews/ && ls /Users/mansys/mq-mcp/review_engine/)",
+      "Bash(python review_engine/repo_context_builder.py)",
+      "Bash(python review_engine/repo_context_builder.py --json)",
+      "Bash(python -m json.tool)",
+      "Bash(python -m py_compile mq-mcp/server.py)",
+      "Bash(python -m py_compile mq-mcp/server.py review_engine/repo_context_builder.py)",
+      "Bash(python -m mypy server.py --ignore-missing-imports)",
+      "Bash(python -m py_compile /Users/mansys/mq-mcp/mq-mcp/server.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import json,sys; t=json.load\\(sys.stdin\\)['tools'][-1]; print\\(json.dumps\\(t, indent=2\\)\\)\")",
+      "Bash(python review_engine/review_router.py)",
+      "Bash(python review_engine/review_router.py mq-mcp/server.py)",
+      "Bash(python review_engine/review_router.py mq-mcp/bridge.py)",
+      "Bash(python review_engine/review_router.py scripts/validate.sh)",
+      "Bash(python -m py_compile /Users/mansys/mq-mcp/mq-mcp/server.py /Users/mansys/mq-mcp/review_engine/review_router.py)"
+    ],
+    "additionalDirectories": [
+      "/Users/mansys/mq-mcp/reviews"
     ]
   }
 }

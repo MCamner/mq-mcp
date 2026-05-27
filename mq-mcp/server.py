@@ -1493,11 +1493,24 @@ def review_file(relative_path: str, mode: str = "comment") -> str:
     arch_role = _load_architecture_role(relative_path)
     role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
 
+    # Load skill guidance via router
+    try:
+        import sys as _sys
+        _review_engine = str(REPO_ROOT / "review_engine")
+        if _review_engine not in _sys.path:
+            _sys.path.insert(0, str(REPO_ROOT))
+        from review_engine.review_router import route_file as _route_file
+        skill_name, skill_content = _route_file(relative_path)
+    except Exception:
+        skill_name, skill_content = "none", ""
+
+    skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
+
     system = f"""You are a code review engine operating under a strict review contract.
 Follow the contract exactly. Do not deviate from the output format.
 Do not modify code. Output only structured review findings.
 
-{contract}"""
+{contract}{skill_section}"""
 
     user = f"""Review this file under the contract above.
 

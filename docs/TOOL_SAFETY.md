@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 50 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 53 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -31,6 +31,9 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
 | `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
 | `list_openable_apps` | Return static list of apps Bridget can open | Write, subprocess, file access |
+| `list_review_contracts` | List available review contracts from reviews/contracts/ | Write, access outside repo |
+| `review_file` | Run AI review on a repo file using a review contract | Write, modify code; calls OpenAI API |
+| `build_repo_context` | Rebuild architecture_map.json and file_summary_index.json | Write outside repo, modify repo files |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -166,3 +169,6 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `set_reminder` | D | none | No | Yes |
 | `set_wallpaper` | D | open path | No | Yes |
 | `run_tests` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
+| `list_review_contracts` | A | REPO_ROOT (fixed path) | No | No |
+| `review_file` | A | resolve_repo_file | No | No (OpenAI API) |
+| `build_repo_context` | D | fixed script path | No | Yes |

@@ -559,6 +559,41 @@
         "subprocess"
       ],
       "examples": []
+    },
+    {
+      "name": "list_review_contracts",
+      "class": "A",
+      "description": "List available review contracts and their modes from reviews/contracts/.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "review_file",
+      "class": "A",
+      "description": "Run an AI review on a repo file using the configured review contract. Calls OpenAI API. Read-only on the repo.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "external-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "build_repo_context",
+      "class": "D",
+      "description": "Rebuild architecture_map.json and file_summary_index.json for the review engine by running repo_context_builder.py.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess",
+        "writes-review-engine-context"
+      ],
+      "examples": []
     }
   ]
 }
