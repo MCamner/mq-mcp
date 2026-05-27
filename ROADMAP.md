@@ -528,8 +528,10 @@ Goal: make review output consistent, stable, and contract-driven.
   MCP tools — review engine exposed on the MCP surface (53 tools total)
 - [x] Tool docs synced: TOOL_SAFETY.md, TOOL_INDEX.md, README.md,
   tool_contracts.json — all updated to 53 tools
-- [ ] `reviews/golden/` — high-quality reference examples per review mode
-- [ ] `reviews/contracts/architecture-review.md`
+- [x] `reviews/golden/bridge-py-comment-review.md` — 12-finding reference
+  review with reasoning notes and excluded-findings section
+- [x] `reviews/contracts/architecture-review.md` — ARCHITECTURE and RISK
+  severity labels; scoped to boundaries, coupling, doc vs runtime
 - [ ] `reviews/contracts/security-review.md`
 
 ---
@@ -543,7 +545,8 @@ Goal: give the review engine real system understanding.
   (public symbols, docstrings, line counts) from file heuristics + Python AST
 - [x] `review_engine/review_router.py` — routes files to the correct skill
   by extension and path; wired into `review_file` — skill injected automatically
-- [ ] `review_engine/severity_engine.py` — structured severity output formatter
+- [x] `review_engine/severity_engine.py` — parse_findings(), format_summary(),
+  has_blocking_findings(), severity_counts(); sorts by severity then line number
 - [ ] `docs/architecture/SYSTEM_OVERVIEW.md`
 - [ ] `docs/architecture/REVIEW_PIPELINE.md`
 
@@ -666,12 +669,12 @@ Review Engine — Phase 1 golden reviews + Phase 2 severity engine
 
 Immediate priorities:
 
-1. `reviews/golden/` — one high-quality golden review of `bridge.py`
-   as few-shot reference; this is the highest-leverage quality improvement
-2. `review_engine/severity_engine.py` — structured output formatter;
-   normalizes findings across review passes
-3. `reviews/contracts/architecture-review.md` — contract for architecture
-   and boundary reviews
+1. `docs/architecture/SYSTEM_OVERVIEW.md` — static architecture doc so the
+   review engine has a ground-truth reference for drift detection
+2. `reviews/contracts/security-review.md` — contract for security and
+   risk reviews (subprocess safety, env leakage, path boundaries)
+3. Wire `severity_engine` into `review_file` MCP tool — parse model output
+   and return structured findings instead of raw text
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
