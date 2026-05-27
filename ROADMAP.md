@@ -154,7 +154,7 @@ This is not a problem to solve. It is a tension to design.
 | v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Done          |
 | v1.1.0  | Runtime self-inspection                     | In progress   |
-| v1.2.0  | Architecture memory                         | Planned       |
+| v1.2.0  | Architecture memory                         | In progress   |
 | v1.3.0  | Orchestration boundary formalization        | Planned       |
 
 ---
@@ -761,29 +761,26 @@ not just review findings.
 The current `review_engine/memory/review_history.json` stores what the review
 engine found. Architecture memory stores why the system is designed as it is.
 
-- [ ] `architecture_memory/` directory — structured ADR-style entries:
-  - `decisions/` — design decisions with rationale and date
-  - `rejected/` — patterns explicitly rejected, and why
-  - `boundaries/` — system boundary definitions with justification
-  - `philosophy/` — stable invariants that must not change without ADR
-- [ ] Seed architecture memory from stable docs:
-  `docs/architecture/SYSTEM_OVERVIEW.md`,
-  `docs/architecture/REVIEW_PIPELINE.md`, `docs/RUNTIME_CONTRACT.md` and
-  future `docs/ORCHESTRATION_CONTRACT.md`
-- [ ] Add boundary entries for central cognition ownership: review logic,
-  semantic retrieval, architecture reasoning, risk analysis and MCP safety
-  metadata stay in mq-mcp; UI, launchers, indexing and workflow automation stay
-  in their owning repos.
-- [ ] `record_architecture_decision` MCP tool — appends a new ADR entry to
-  `architecture_memory/decisions/` (Class C, requires exact content input)
-- [ ] `list_architecture_decisions` MCP tool — returns all ADRs with date,
-  title, and status
-- [ ] `get_architecture_decision` MCP tool — retrieves a specific ADR
-- [ ] Inject relevant ADRs into `review_file` context when reviewing files in
-  areas covered by a decision (e.g. path resolver decisions injected when
-  reviewing `server.py`)
+- [x] `architecture_memory/` directory — structured ADR-style entries:
+  `decisions/` (ADR-001–005), `rejected/` (REJ-001), `boundaries/` (BND-001–002),
+  `philosophy/` (PHI-001–002). 8 seed entries covering path resolvers, no-auto-commit,
+  safety classes, review contracts, secret handling, cognition ownership,
+  execution vs orchestration, determinism, and context quality.
+- [x] `review_engine/architecture_memory.py` — `ArchitectureMemory` class: `list_all()`,
+  `list_by_category()`, `get(id)`, `relevant_for(file_path)`, `format_context_block()`,
+  `record()`. Relevance matching by area keyword against file path; philosophy entries
+  match all files.
+- [x] `list_architecture_decisions` MCP tool — lists all entries with ID, status,
+  category, title (Class A, read-only)
+- [x] `get_architecture_decision` MCP tool — returns full text by ID (Class A)
+- [x] `record_architecture_decision` MCP tool — writes a new ADR to
+  `architecture_memory/{category}/` (Class C, does not commit)
+- [x] ADR injection in `review_file` — `format_context_block()` injects up to 3
+  relevant ADRs (decision body, capped at 300 chars each) at priority 1 in
+  `ContextSelector` — highest priority, before past findings and cross-file context.
+  Deep mode prepends ADRs to `cross_file_ctx`.
 - [ ] Persist coding conventions extracted from reviews into architecture memory
-  — Phase 3 carry-over
+  — Phase 3 carry-over (deferred, requires review output parsing for convention extraction)
 
 ---
 

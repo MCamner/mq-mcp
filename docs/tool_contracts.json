@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.1.0",
-  "tool_count": 61,
+  "tool_count": 64,
   "tools": [
     {
       "name": "analyze_csv",
@@ -673,6 +673,36 @@
       "write": false,
       "subprocess": false,
       "side_effects": ["openai_api_call"],
+      "examples": []
+    },
+    {
+      "name": "list_architecture_decisions",
+      "class": "A",
+      "description": "List all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns) with ID, status, category, and title. Read-only.",
+      "resolver": "REPO_ROOT/architecture_memory/",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_architecture_decision",
+      "class": "A",
+      "description": "Return the full text of a specific architecture memory entry by ID (e.g. ADR-001, BND-001, PHI-001, REJ-001). Case-insensitive. Read-only.",
+      "resolver": "REPO_ROOT/architecture_memory/",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "record_architecture_decision",
+      "class": "C",
+      "description": "Record a new architecture decision (ADR) in architecture_memory/. Writes a Markdown file with YAML frontmatter. Does not commit. Requires explicit user approval.",
+      "resolver": "REPO_ROOT/architecture_memory/",
+      "write": true,
+      "subprocess": false,
+      "side_effects": ["file-write"],
       "examples": []
     }
   ]

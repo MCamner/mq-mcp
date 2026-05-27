@@ -1595,14 +1595,25 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     except Exception:
         pass
 
-    # Context selection: cap injected context to budget, prefer past findings over
-    # cross-file context when budget is tight. arch_role is always short, not capped.
+    # Load relevant architecture decisions for this file
+    arch_decisions_ctx = ""
+    try:
+        from review_engine.architecture_memory import ArchitectureMemory as _ArchMem
+        arch_decisions_ctx = _ArchMem().format_context_block(relative_path, max_items=3)
+    except Exception:
+        pass
+
+    # Context selection: cap injected context to budget.
+    # Priority: arch decisions (1) > past findings (2) > cross-file context (3).
+    # arch_role is always a single line — not subject to budget.
     try:
         from review_engine.context_selector import ContextSelector as _ContextSelector
         _cs = _ContextSelector()
+        _cs.add("arch_decisions_ctx", arch_decisions_ctx, priority=1)
         _cs.add("past_context", past_context, priority=2)
         _cs.add("cross_file_ctx", cross_file_ctx, priority=3)
         _selected = _cs.selected()
+        arch_decisions_ctx = _selected.get("arch_decisions_ctx", "")
         past_context = _selected.get("past_context", "")
         cross_file_ctx = _selected.get("cross_file_ctx", "")
     except Exception:
@@ -1621,6 +1632,12 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             try:
                 from review_engine.multi_pass_reviewer import MultiPassReviewer as _MultiPassReviewer
                 reviewer = _MultiPassReviewer(client, model)
+                # Prepend ADR context to cross_file_ctx for deep mode
+                deep_cross_ctx = (
+                    f"{arch_decisions_ctx}\n\n{cross_file_ctx}"
+                    if arch_decisions_ctx and cross_file_ctx
+                    else arch_decisions_ctx or cross_file_ctx
+                )
                 result = reviewer.run(
                     file_path=relative_path,
                     file_content=file_content,
@@ -1629,7 +1646,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                     skill_content=skill_content,
                     skill_name=skill_name,
                     past_context=past_context,
-                    cross_file_ctx=cross_file_ctx,
+                    cross_file_ctx=deep_cross_ctx,
                 )
                 # result.output is already formatted and deduplicated
                 output = result.output
@@ -1662,6 +1679,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
         else:
             role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
             skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
+            adr_section = f"\n\n{arch_decisions_ctx}" if arch_decisions_ctx else ""
             past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
             cross_section = f"\n\n{cross_file_ctx}" if cross_file_ctx else ""
 
@@ -1673,7 +1691,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             )
             user = (
                 f"Review this file under the contract above.\n\n"
-                f"File: {relative_path}{role_context}{cross_section}{past_section}\n\n"
+                f"File: {relative_path}{role_context}{adr_section}{cross_section}{past_section}\n\n"
                 f"```\n{file_content}\n```"
             )
 
@@ -2282,6 +2300,110 @@ def review_architecture_doc(doc_name: str) -> str:
 
     except Exception as exc:
         return f"review_architecture_doc failed: {exc}"
+
+
+@mcp.tool()
+def list_architecture_decisions() -> str:
+    """List all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns).
+
+    Returns a table with ID, status, category, and title for every entry in
+    the architecture_memory/ directory. Use get_architecture_decision to read
+    the full text of a specific entry.
+
+    Args:
+        None
+
+    Safety: Class A — read-only, repo-scoped.
+    """
+    try:
+        from review_engine.architecture_memory import ArchitectureMemory as _AM
+        mem = _AM()
+        entries = mem.list_all()
+        if not entries:
+            return "No architecture memory entries found."
+        lines = [
+            f"Architecture memory — {len(entries)} entries\n",
+            f"{'ID':<10} {'Status':<12} {'Category':<12} Title",
+            "-" * 72,
+        ]
+        for e in entries:
+            lines.append(
+                f"{e.get('id', ''):<10} {e.get('status', ''):<12} "
+                f"{e.get('category', ''):<12} {e.get('title', '')}"
+            )
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"list_architecture_decisions failed: {exc}"
+
+
+@mcp.tool()
+def get_architecture_decision(adr_id: str) -> str:
+    """Return the full text of a specific architecture memory entry by ID.
+
+    Args:
+        adr_id: The entry ID, e.g. 'ADR-001', 'BND-001', 'PHI-001', 'REJ-001'.
+                Case-insensitive.
+
+    Safety: Class A — read-only, repo-scoped.
+    """
+    try:
+        from review_engine.architecture_memory import ArchitectureMemory as _AM
+        mem = _AM()
+        text = mem.get(adr_id)
+        if text is None:
+            return f"No entry found for id '{adr_id}'. Use list_architecture_decisions to see all ids."
+        return text
+    except Exception as exc:
+        return f"get_architecture_decision failed: {exc}"
+
+
+@mcp.tool()
+def record_architecture_decision(
+    title: str,
+    area: str,
+    decision: str,
+    rationale: str,
+    consequences: str = "",
+    category: str = "decisions",
+) -> str:
+    """Record a new architecture decision (ADR) in the architecture_memory/ store.
+
+    Writes a new Markdown entry with YAML frontmatter. The entry is immediately
+    available to list_architecture_decisions, get_architecture_decision, and the
+    review_file context injector.
+
+    Args:
+        title:        Short descriptive title (e.g. 'Path resolvers are the only boundary').
+        area:         Comma-separated keywords for file-path matching during review
+                      injection (e.g. 'safety, server, paths').
+        decision:     The decision itself — what was decided and what it means in practice.
+        rationale:    Why this decision was made. Include constraints, trade-offs, incidents.
+        consequences: Optional. What this decision implies for future work.
+        category:     One of 'decisions', 'rejected', 'boundaries', 'philosophy'.
+                      Defaults to 'decisions'.
+
+    Safety: Class C — writes to architecture_memory/ inside the repo. Does not commit.
+    Approval: Required — this tool writes a persistent file.
+    """
+    try:
+        from review_engine.architecture_memory import ArchitectureMemory as _AM
+        mem = _AM()
+        adr_id = mem.record(
+            title=title,
+            area=area,
+            decision=decision,
+            rationale=rationale,
+            consequences=consequences,
+            category=category,
+        )
+        return (
+            f"Recorded {adr_id}: {title}\n"
+            f"Category: {category}  Area: {area}\n"
+            f"File: architecture_memory/{category}/{adr_id.lower()}-*.md\n\n"
+            f"Use get_architecture_decision('{adr_id}') to verify."
+        )
+    except Exception as exc:
+        return f"record_architecture_decision failed: {exc}"
 
 
 @mcp.tool()

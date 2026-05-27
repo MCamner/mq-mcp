@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 61 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 64 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -42,6 +42,8 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `review_runtime_contract` | Verify RUNTIME_CONTRACT.md claims against actual server state | Write, modify server |
 | `list_architecture_docs` | List docs/architecture/ files with freshness status relative to server.py | Write, access outside repo |
 | `review_architecture_doc` | Apply architecture review contract to a named architecture document | Write, modify docs; calls OpenAI API |
+| `list_architecture_decisions` | List all architecture memory entries (ADRs, boundaries, philosophy, rejected) | Write, access outside repo |
+| `get_architecture_decision` | Return full text of a specific architecture memory entry by ID | Write, access outside repo |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -83,10 +85,11 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `edit_image` | Rotate or convert images in repo or allowed roots | Write outside allowed roots, commit, delete |
 | `set_clipboard` | Copy text to the macOS clipboard via pbcopy | Access files, run arbitrary commands |
 | `take_screenshot` | Capture screen to a file (default ~/Desktop/screenshot.png) | Access outside ~/Desktop or given path |
+| `record_architecture_decision` | Append a new ADR entry to architecture_memory/ | Write outside repo, commit, overwrite existing entries |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
-Resolver: `resolve_repo_file` (update_repo_file), `resolve_allowed_local_file` (edit_image)
+Resolver: `resolve_repo_file` (update_repo_file, record_architecture_decision), `resolve_allowed_local_file` (edit_image)
 
 ---
 
@@ -188,3 +191,6 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `review_runtime_contract` | A | REPO_ROOT (reads contract + server.py) | No | No (OpenAI API) |
 | `list_architecture_docs` | A | REPO_ROOT/docs/architecture/ | No | No |
 | `review_architecture_doc` | A | REPO_ROOT/docs/architecture/ + server.py | No | No (OpenAI API) |
+| `list_architecture_decisions` | A | REPO_ROOT/architecture_memory/ | No | No |
+| `get_architecture_decision` | A | REPO_ROOT/architecture_memory/ | No | No |
+| `record_architecture_decision` | C | REPO_ROOT/architecture_memory/ | Yes | No |
