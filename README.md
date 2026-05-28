@@ -187,6 +187,7 @@ Before using or extending it:
 The local MCP server exposes 66 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
+
 - `read_repo_file` — reads a file inside the repository root
 - `list_repo_files` — lists repository files up to a chosen depth
 - `search_repo` — searches repository text
@@ -198,6 +199,7 @@ The local MCP server exposes 66 tools across five safety classes. See [`docs/TOO
 - `list_openable_apps` — returns static list of apps Bridget can open or control
 
 **System read (Class B — read-only, external access):**
+
 - `get_system_resources` — shows CPU, memory, and disk information
 - `analyze_guitar_pro` — analyzes Guitar Pro files in repo or allowed roots
 - `repo_signal_analyze` — runs repo-signal analyze on a local repository (read-only)
@@ -215,12 +217,14 @@ The local MCP server exposes 66 tools across five safety classes. See [`docs/TOO
 - `get_public_ip` — returns the current public IP address
 
 **Write-capable (Class C — controlled scope):**
+
 - `update_repo_file` — safely replaces exact text in allowed repo files without committing
 - `edit_image` — edits an image with supported actions (rotate, grayscale)
 - `set_clipboard` — copies text to the macOS clipboard
 - `take_screenshot` — captures the screen and saves to a file
 
 **Subprocess / open-app (Class D):**
+
 - `open_in_app` — opens a repo file or explicitly allowed local file in the default app
 - `validate_project` — runs `scripts/validate.sh` when available
 - `run_mqlaunch` — runs `mqlaunch.sh`
