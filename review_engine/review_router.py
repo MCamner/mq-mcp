@@ -14,8 +14,17 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "reviews" / "skills"
 
-# Routing table: (path_pattern, extension_set) → skill filename
-# Checked in order — first match wins.
+# Path-prefix routing: directory prefix → skill filename.
+# Matched before extension routing — first match wins.
+# Covers domain-owned directories where the skill carries invariants and checklists
+# specific to that part of the codebase, regardless of file type.
+_PREFIX_ROUTES: list[tuple[str, str]] = [
+    ("review_engine/",    "review-engine.md"),
+    ("semantic_memory/",  "semantic-memory.md"),
+]
+
+# Extension routing table: (path_pattern, extension_set) → skill filename
+# Checked after prefix routing — first match wins.
 _ROUTES: list[tuple[str | None, set[str], str]] = [
     # MCP tool definitions — matched by content pattern in path
     ("mq-mcp/server.py",  {".py"},  "mcp-tool-review.md"),
@@ -48,14 +57,19 @@ def route_file_for_mode(relative_path: str, mode: str) -> tuple[str, str]:
 
 
 def route_file(relative_path: str) -> tuple[str, str]:
-    """
-    Return (skill_name, skill_content) for the given repo-relative file path.
+    """Return (skill_name, skill_content) for the given repo-relative file path.
 
-    Falls back to ("none", "") if no skill matches.
-
-    Args:
-        relative_path: Repo-relative path to the file being reviewed.
+    Checks path-prefix routes first (_PREFIX_ROUTES), then extension-based
+    routes (_ROUTES). Falls back to ("none", "") if no skill matches.
     """
+    # Path-prefix routes take priority — domain-specific invariants matter more
+    # than generic file-type patterns.
+    for prefix, skill_file in _PREFIX_ROUTES:
+        if relative_path.startswith(prefix):
+            skill_path = SKILLS_DIR / skill_file
+            if skill_path.exists():
+                return skill_file.replace(".md", ""), skill_path.read_text(encoding="utf-8")
+
     suffix = Path(relative_path).suffix.lower()
 
     for path_pattern, extensions, skill_file in _ROUTES:

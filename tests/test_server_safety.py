@@ -151,3 +151,75 @@ def test_detect_security_patterns_one_hit_per_line(server):
     result = server._detect_security_patterns("test.py", content)
     hits = [l for l in result.splitlines() if l.startswith("[")]
     assert len(hits) == 1
+
+
+# ── _detect_type_issues smoke tests ──────────────────────────────────────────
+
+def test_detect_type_issues_clean_file_returns_empty(server):
+    content = "def run(path: str) -> bool:\n    return True\n"
+    assert server._detect_type_issues("test.py", content) == ""
+
+
+def test_detect_type_issues_missing_return(server):
+    content = "def run(path: str):\n    return True\n"
+    result = server._detect_type_issues("test.py", content)
+    assert "WARNING" in result
+    assert "return type" in result
+
+
+def test_detect_type_issues_missing_param(server):
+    content = "def run(path) -> bool:\n    return True\n"
+    result = server._detect_type_issues("test.py", content)
+    assert "WARNING" in result
+    assert "'path'" in result
+
+
+def test_detect_type_issues_skips_private(server):
+    content = "def _private(x) -> None:\n    pass\n"
+    assert server._detect_type_issues("test.py", content) == ""
+
+
+def test_detect_type_issues_skips_self_cls(server):
+    content = "class Foo:\n    def method(self, x: int) -> None:\n        pass\n"
+    assert server._detect_type_issues("test.py", content) == ""
+
+
+def test_detect_type_issues_non_python_returns_empty(server):
+    assert server._detect_type_issues("test.sh", "echo hello") == ""
+
+
+def test_detect_type_issues_prescan_header(server):
+    content = "def run(x):\n    pass\n"
+    result = server._detect_type_issues("test.py", content)
+    assert result.startswith("## Pre-scan: type annotation gaps")
+
+
+# ── review_router path-prefix routing ────────────────────────────────────────
+
+def test_router_prefix_review_engine(server):
+    import importlib, sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(server.__file__).parents[1]))
+    from review_engine.review_router import route_file
+    name, content = route_file("review_engine/severity_engine.py")
+    assert name == "review-engine"
+    assert "severity" in content.lower() or "invariant" in content.lower()
+
+
+def test_router_prefix_semantic_memory(server):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(server.__file__).parents[1]))
+    from review_engine.review_router import route_file
+    name, content = route_file("semantic_memory/semantic_memory.py")
+    assert name == "semantic-memory"
+
+
+def test_router_prefix_does_not_shadow_server_py(server):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(server.__file__).parents[1]))
+    from review_engine.review_router import route_file
+    # server.py is not in a prefix-matched dir — still gets mcp-tool-review
+    name, _ = route_file("mq-mcp/server.py")
+    assert name == "mcp-tool-review"

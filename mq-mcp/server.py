@@ -1546,6 +1546,58 @@ def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: in
     return "\n".join(lines)
 
 
+# ── type annotation pre-scan ─────────────────────────────────────────────────
+
+def _detect_type_issues(file_path: str, content: str) -> str:
+    """AST-based pre-scan for missing type annotations in Python files.
+
+    Checks public functions and methods for missing return type annotations
+    and unannotated parameters (excluding `self` and `cls`).
+    Returns [WARNING] findings text, or empty string if clean.
+    No API call — stdlib ast only.
+    """
+    import ast as _ast
+
+    if not file_path.endswith(".py"):
+        return ""
+
+    try:
+        tree = _ast.parse(content)
+    except SyntaxError:
+        return ""
+
+    lines = content.splitlines()
+    hits: list[str] = []
+
+    for node in _ast.walk(tree):
+        if not isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+            continue
+        # Skip private functions — type annotation style only matters for public API
+        if node.name.startswith("_"):
+            continue
+
+        # Missing return annotation
+        if node.returns is None:
+            hits.append(
+                f"[WARNING] {file_path}:{node.lineno}\n"
+                f"{node.name}() has no return type annotation."
+            )
+
+        # Unannotated parameters (skip self/cls)
+        for arg in node.args.args:
+            if arg.arg in ("self", "cls"):
+                continue
+            if arg.annotation is None:
+                hits.append(
+                    f"[WARNING] {file_path}:{node.lineno}\n"
+                    f"{node.name}(): parameter '{arg.arg}' has no type annotation."
+                )
+
+    if not hits:
+        return ""
+    return "## Pre-scan: type annotation gaps (AST)\n\n" + "\n\n".join(hits)
+
+
 # ── security pre-scan ─────────────────────────────────────────────────────────
 
 _SECURITY_PATTERNS: list[tuple[str, str, str]] = [
@@ -1759,6 +1811,13 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             cross_section = f"\n\n{cross_file_ctx}" if cross_file_ctx else ""
             semantic_section = f"\n\n{semantic_ctx}" if semantic_ctx else ""
 
+            # Type annotation pre-scan for comment mode — prevents false positives
+            # from the model about annotations that are already present.
+            type_prescan = ""
+            if mode == "comment":
+                _type_hits = _detect_type_issues(relative_path, file_content)
+                type_prescan = f"\n\n{_type_hits}" if _type_hits else ""
+
             system = (
                 "You are a code review engine operating under a strict review contract.\n"
                 "Follow the contract exactly. Do not deviate from the output format.\n"
@@ -1767,7 +1826,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             )
             user = (
                 f"Review this file under the contract above.\n\n"
-                f"File: {relative_path}{role_context}{semantic_section}{adr_section}{cross_section}{past_section}\n\n"
+                f"File: {relative_path}{role_context}{type_prescan}{semantic_section}{adr_section}{cross_section}{past_section}\n\n"
                 f"```\n{file_content}\n```"
             )
 
@@ -2201,9 +2260,47 @@ def validate_orchestration_contract() -> str:
             server_mtime = server_path.stat().st_mtime
             contract_mtime = contract_path.stat().st_mtime
             if contract_mtime < server_mtime:
+                # Diff-aware: show tools added to server.py since the contract's last commit
+                new_tools_info = ""
+                try:
+                    import subprocess as _sp
+                    # Find the commit that last touched ORCHESTRATION_CONTRACT.md
+                    _r = _sp.run(
+                        ["git", "log", "--format=%H", "-1", "--",
+                         "docs/ORCHESTRATION_CONTRACT.md"],
+                        capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=5,
+                    )
+                    _contract_commit = _r.stdout.strip()
+                    if _contract_commit:
+                        # Get server.py at that commit
+                        _r2 = _sp.run(
+                            ["git", "show", f"{_contract_commit}:mq-mcp/server.py"],
+                            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=5,
+                        )
+                        if _r2.returncode == 0:
+                            _old_tree = _ast.parse(_r2.stdout)
+                            _old_tools: set[str] = set()
+                            for _n in _ast.walk(_old_tree):
+                                if isinstance(_n, _ast.FunctionDef):
+                                    for _d in _n.decorator_list:
+                                        _attr = _d.func if isinstance(_d, _ast.Call) else _d
+                                        if (isinstance(_attr, _ast.Attribute)
+                                                and _attr.attr == "tool"):
+                                            _old_tools.add(_n.name)
+                            _new_tools = sorted(registered_tools - _old_tools)
+                            if _new_tools:
+                                new_tools_info = (
+                                    f" New tools since last contract update: "
+                                    f"{', '.join(_new_tools[:5])}"
+                                    + (f" (+{len(_new_tools)-5} more)"
+                                       if len(_new_tools) > 5 else "")
+                                )
+                except Exception:
+                    pass
                 findings.append(
                     "[WARN] docs/ORCHESTRATION_CONTRACT.md\n"
-                    "Contract is older than server.py — it may not reflect the current tool set."
+                    f"Contract is older than server.py — it may not reflect the current tool set."
+                    f"{new_tools_info}"
                 )
             else:
                 passes.append("[PASS] ORCHESTRATION_CONTRACT.md is present and fresh")
