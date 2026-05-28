@@ -35,13 +35,13 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.0.0 — stable local MCP platform (done)
-Next:    Runtime Consolidation — self-describing, self-reviewing runtime
+v1.3.0 — orchestration boundary formalization (done)
+Next:    v1.4.0 — Semantic memory layer
 ```
 
 Completed foundation:
 
-- local MCP server with 58 tools across safety classes A–D
+- local MCP server with 66 tools across safety classes A–D and review engine tools
 - OpenAI/MCP bridge
 - repo-scoped file tools with path boundary enforcement
 - system resource tools
@@ -59,9 +59,13 @@ Completed foundation:
 - health, info, report, and troubleshooting bundle commands
 - redacted observability endpoints
 - validated MCP profile templates for common clients and workflows
-- Review engine: contracts, skills, severity engine, review memory, multi-pass
+- review engine: contracts, skills, severity engine, review memory, multi-pass
   reviewer, drift detector, `review_diff`, `review_repo`
+- architecture memory: ADRs, boundaries, rejected patterns, philosophy, coding
+  convention extraction
+- orchestration boundary contract with mq-agent/profile validation
 - `docs/RUNTIME_CONTRACT.md` — authoritative identity and execution contract
+- `docs/ORCHESTRATION_CONTRACT.md` — authoritative orchestration boundary contract
 
 ---
 
@@ -1040,18 +1044,24 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Runtime Consolidation — v1.1.0 Runtime self-inspection
+v1.4.0 — Semantic memory layer
 ```
 
-The system's functional capacity is sufficient. The leverage point is now
-making the runtime self-describing and self-verifying.
+The runtime is now stable, self-inspecting, architecture-memory-aware, and
+orchestration-boundary-aware.
+
+The next leverage point is semantic memory: giving the runtime a durable
+knowledge layer separate from ADRs and per-file review history.
 
 Immediate priorities:
 
-1. `review_runtime_contract` MCP tool — runtime reviews its own contract
-2. Extend `detect_architecture_drift` with RUNTIME_CONTRACT.md coverage check
-3. Cross-file semantic similarity — carry-over from Phase 3
-4. Golden reviews for `.md` and `.json` file types
+1. Add `semantic_memory/` and `SemanticMemory` class
+2. Add `store_semantic_memory`, `search_semantic_memory`, `get_semantic_memory`,
+   and `list_semantic_memory` MCP tools
+3. Bootstrap README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md,
+   and TOOL_SAFETY.md into semantic memory
+4. Inject semantic memory into `review_file` at priority 0 when relevant
+5. Update `docs/ORCHESTRATION_CONTRACT.md` side-effect table for the new tools
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
