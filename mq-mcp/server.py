@@ -1909,6 +1909,7 @@ def build_repo_context() -> str:
 
     # Also build callgraph
     cg_out = ""
+    flat_arch_map: dict = {}
     try:
         from review_engine.callgraph_builder import CallgraphBuilder as _CGB
         builder = _CGB(repo_root=REPO_ROOT)
@@ -1917,7 +1918,33 @@ def build_repo_context() -> str:
     except Exception as exc:
         cg_out = f"\ncallgraph_builder failed: {exc}"
 
-    return (out or "build_repo_context completed with no output.") + cg_out
+    # Load flat arch map built by repo_context_builder for enrichment
+    try:
+        _flat_path = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
+        if _flat_path.exists():
+            flat_arch_map = json.loads(_flat_path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+    # Write generated artifacts: rich architecture_map.v1 and ownership_map.v1
+    gen_out = ""
+    try:
+        from review_engine.generated_artifacts import (
+            build_rich_architecture_map as _build_arch,
+            build_ownership_map as _build_own,
+        )
+        _arch = _build_arch(repo_root=REPO_ROOT, flat_arch_map=flat_arch_map)
+        _own = _build_own(repo_root=REPO_ROOT)
+        gen_out = (
+            f"\ngenerated/architecture/architecture_map.json  "
+            f"[{_arch['schema']}  {_arch['file_count']} files]"
+            f"\ngenerated/architecture/ownership_map.json     "
+            f"[{_own['schema']}  {_own['file_count']} files]"
+        )
+    except Exception as exc:
+        gen_out = f"\ngenerated_artifacts failed: {exc}"
+
+    return (out or "build_repo_context completed with no output.") + cg_out + gen_out
 
 
 @mcp.tool()

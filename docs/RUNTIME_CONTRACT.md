@@ -118,6 +118,18 @@ They are read-only inputs to the review pipeline — the pipeline never writes t
 Rebuild context when: `server.py` is modified, new files are added, or
 `detect_architecture_drift()` reports the map is stale.
 
+### Generated artifacts
+
+`build_repo_context()` also writes two richer files to `generated/architecture/`:
+
+| Artifact | Schema | Contents |
+| --- | --- | --- |
+| `generated/architecture/architecture_map.json` | `architecture_map.v1` | role, public_symbols, last_review_timestamp, hub_score per file |
+| `generated/architecture/ownership_map.json` | `ownership_map.v1` | author, change_frequency, last_modified per file (git log) |
+
+These files are excluded from version control by `generated/.gitignore`.
+They are consumed by downstream tools and callers — not by the review pipeline directly.
+
 ---
 
 ## Review model

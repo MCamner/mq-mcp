@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.8.0 - 2026-05-29
+
+- Completed remaining v1.6.0 items — `generated/architecture/` artifacts:
+- Added `review_engine/generated_artifacts.py` with two builders:
+  - `build_rich_architecture_map()` — writes `generated/architecture/architecture_map.json`
+    (schema `architecture_map.v1`): per-file role, public_symbols, last_review_timestamp,
+    hub_score (from callgraph importers).
+  - `build_ownership_map()` — writes `generated/architecture/ownership_map.json`
+    (schema `ownership_map.v1`): per-file author (most frequent committer),
+    change_frequency (commit count), last_modified (ISO timestamp).
+    Scans last 200 commits via one `git log` call.
+- Extended `build_repo_context` (Class C) to call both builders after the
+  callgraph build. Output now reports both generated files with schemas.
+- Updated `docs/RUNTIME_CONTRACT.md` — added Generated artifacts section
+  under Context model.
+- All v1.6.0 ROADMAP items now marked `[x]`.
+
 ## 1.7.0 - 2026-05-28
 
 - Added `CRITICAL` severity level to `review_engine/severity_engine.py` —

@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.7.0 — risk analysis layer (done)
-Next:    v1.8.0 — TBD
+v1.8.0 — v1.6.0 completion (generated artifacts) + v1.7.0 risk layer (done)
+Next:    v1.9.0 — TBD
 ```
 
 Completed foundation:
@@ -939,11 +939,11 @@ Items:
 
 - [x] `generated/` directory with `.gitkeep` and `generated/.gitignore`
   (exclude snapshots from version control)
-- [ ] `build_repo_context` extended: write `architecture_map.json` to
+- [x] `build_repo_context` extended: write `architecture_map.json` to
   `generated/architecture/` in addition to `callgraph.json`
-- [ ] `architecture_map.json` schema: maps file path → role label, public
+- [x] `architecture_map.json` schema: maps file path → role label, public
   symbols, last review timestamp, hub score
-- [ ] `ownership_map.json` schema: maps file path → author (from git blame),
+- [x] `ownership_map.json` schema: maps file path → author (from git blame),
   change frequency, last modified
 - [x] `export_symbol_index` MCP tool — writes current callgraph symbols to
   `generated/symbols/symbol_index.json` in a format repo-signal can consume
