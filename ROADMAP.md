@@ -161,7 +161,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.2.0  | Architecture memory                         | Done          |
 | v1.3.0  | Orchestration boundary formalization        | Done          |
 | v1.4.0  | Semantic memory layer                       | Done          |
-| v1.5.0  | Risk analysis layer (shipped as v1.7.0)      | Done          |
+| v1.5.0  | Risk analysis layer (shipped as v1.7.0)     | Done          |
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 
 ---
