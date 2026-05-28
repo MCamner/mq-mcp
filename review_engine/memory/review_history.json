@@ -1,0 +1,34 @@
+{
+  "scripts/validate.sh": [
+    {
+      "file_path": "scripts/validate.sh",
+      "mode": "comment",
+      "timestamp": 1779846826.3622751,
+      "timestamp_iso": "2026-05-27T01:53:46Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 13,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 5,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — scripts/validate.sh: 13 total  [MISSING=4  SUGGESTION=5  NOTE=4]\n\n[MISSING] scripts/validate.sh:1\nMissing a script header comment explaining the script's purpose, accepted arguments (if any), and what it modifies.\n\n[MISSING] scripts/validate.sh:7\nThe function section lacks a descriptive comment explaining its purpose and usage in the script.\n\n[MISSING] scripts/validate.sh:11\nThe function ok lacks a descriptive comment explaining its purpose and typical usage context.\n\n[MISSING] scripts/validate.sh:15\nThe function fail lacks a descriptive comment explaining its purpose, side effects on FAILED, and its non-exiting behavior.\n\n[SUGGESTION] scripts/validate.sh:39\nThe pattern of checking executable presence and running external validation scripts could benefit from a generic comment summarizing this repeated block's intention and failure handling.\n\n[SUGGESTION] scripts/validate.sh:64\nThe \"Required files\" loop would be clearer with a preceding comment explaining the importance of these files and that the loop checks their presence.\n\n[SUGGESTION] scripts/validate.sh:88\nExplicitly comment why compiling specific Python files is important here (e.g., to preempt syntax errors before runtime).\n\n[SUGGESTION] scripts/validate.sh:107\nThe Bridget image asset check uses compgen patterns; a comment explaining the rationale for the patterns and why image presence is conditional with a \"local-only\" skip would aid comprehension.\n\n[SUGGESTION] scripts/validate.sh:121\nThe conditional check for OPENAI_API_KEY environment variable gating bridge prompt would benefit from a comment explaining why this condition affects test execution.\n\n[NOTE] scripts/validate.sh:76\nThe find command used to detect debug or backup files is somewhat specialized; clarifying why these particular filenames/extensions are considered unacceptable would improve maintainability.\n\n[NOTE] scripts/validate.sh:93\nThe tool listing check via uv run python bridge.py --tools involves parsing output with multiple grep commands; a summary comment about verifying the presence of expected tools could clarify intent.\n\n[NOTE] scripts/validate.sh:115\nThe call to uv run python bridge.py with a phrase \"hur ser du ut?\" is not self-explanatory; a comment explaining this test's role as a face trigger smoke test would improve clarity.\n\n[NOTE] scripts/validate.sh:129\nThe final \"Done\" section aggregates all fail counts and exits non-zero on failure; though common, a brief comment stating this intent would improve readability for new maintainers.",
+      "skill": "shell-review"
+    },
+    {
+      "file_path": "scripts/validate.sh",
+      "mode": "comment",
+      "timestamp": 1779846791.3579469,
+      "timestamp_iso": "2026-05-27T01:53:11Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 14,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 6,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — scripts/validate.sh: 14 total  [MISSING=4  SUGGESTION=6  NOTE=4]\n\n[MISSING] scripts/validate.sh:1\nMissing a script header comment explaining the script's purpose, accepted arguments (if any), and what it modifies.\n\n[MISSING] scripts/validate.sh:7\nThe function section lacks a descriptive comment explaining its purpose.\n\n[MISSING] scripts/validate.sh:11\nThe function ok lacks a descriptive comment explaining its purpose.\n\n[MISSING] scripts/validate.sh:15\nThe function fail lacks a descriptive comment explaining its purpose and side effects (increments FAILED but does not exit).\n\n[SUGGESTION] scripts/validate.sh:49\nThe loop checking required files could benefit from a preceding comment clarifying it verifies presence of critical project files.\n\n[SUGGESTION] scripts/validate.sh:57\nThe check for debug or backup files should have a comment explaining the intent to prevent shipping unwanted files.\n\n[SUGGESTION] scripts/validate.sh:67\nThe Python compile step would be clearer with a comment explaining it validates Python bytecode compilation.\n\n[SUGGESTION] scripts/validate.sh:76\nThe multiple 'printf | grep -q' lines verifying MCP tools could be grouped with an explanatory comment about verifying core tool presence.\n\n[SUGGESTION] scripts/validate.sh:98\nThe section testing Bridget identity image assets would benefit from a comment explaining what the image check verifies.\n\n[SUGGESTION] scripts/validate.sh:106\nThe bridge face trigger invocation should be annotated to indicate it's a functional test to ensure no crash on trigger phrase.\n\n[NOTE] scripts/validate.sh:24\nThe script sets 'set -uo pipefail' but does not set 'set -e' to exit on errors—unclear if this is intentional given the fail() function increments failure count rather than exiting.\n\n[NOTE] scripts/validate.sh:114\nThe script uses unquoted variable expansion in some places (e.g., tools_output variable) but is likely safe given the context—unclear if intentional or if quoting should be added for robustness.\n\n[NOTE] scripts/validate.sh:118\nThe check for OPENAI_API_KEY environment variable existence before running the bridge prompt is clear and appropriate.\n\n[NOTE] scripts/validate.sh:124\nThe script outputs failure summary and exits with non-zero code when failures are present, which is good error handling practice.",
+      "skill": "shell-review"
+    }
+  ]
+}

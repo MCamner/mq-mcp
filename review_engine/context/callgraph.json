@@ -1,0 +1,381 @@
+{
+  "generated_at": "2026-05-27T19:25:22.043331+00:00",
+  "repo_root": "/Users/mansys/mq-mcp",
+  "file_count": 27,
+  "hub_threshold": 2,
+  "imports": {
+    "mq-mcp/bridge.py": [
+      "mq-mcp/bridget_voice.py",
+      "mq-mcp/ask.py"
+    ],
+    "mq-mcp/server.py": [
+      "review_engine/review_router.py",
+      "review_engine/review_memory.py",
+      "review_engine/drift_detector.py",
+      "review_engine/severity_engine.py",
+      "review_engine/multi_pass_reviewer.py"
+    ],
+    "review_engine/multi_pass_reviewer.py": [
+      "review_engine/severity_engine.py"
+    ],
+    "tests/test_bridget_voice.py": [
+      "mq-mcp/bridget_voice.py"
+    ]
+  },
+  "importers": {
+    "mq-mcp/bridget_voice.py": [
+      "mq-mcp/bridge.py",
+      "tests/test_bridget_voice.py"
+    ],
+    "mq-mcp/ask.py": [
+      "mq-mcp/bridge.py"
+    ],
+    "review_engine/review_router.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/review_memory.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/drift_detector.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/severity_engine.py": [
+      "mq-mcp/server.py",
+      "review_engine/multi_pass_reviewer.py"
+    ],
+    "review_engine/multi_pass_reviewer.py": [
+      "mq-mcp/server.py"
+    ]
+  },
+  "hub_files": [
+    "mq-mcp/bridget_voice.py",
+    "review_engine/severity_engine.py"
+  ],
+  "symbols": {
+    "mq-mcp/ask.py": [
+      "scramble_print",
+      "run_ask",
+      "main"
+    ],
+    "mq-mcp/bridge.py": [
+      "scramble_print",
+      "usage",
+      "parse_prompt",
+      "tool_catalog_text",
+      "to_openai_tools",
+      "content_to_text",
+      "call_mcp_tool",
+      "tool_call_name_and_args",
+      "bridget_image_dirs",
+      "find_bridget_images",
+      "choose_bridget_image",
+      "show_bridget_face",
+      "known_local_repos",
+      "is_goto_repo_prompt",
+      "handle_goto_repo",
+      "is_bridget_face_prompt",
+      "run_bridge"
+    ],
+    "mq-mcp/bridget_voice.py": [
+      "set_voice_enabled",
+      "is_voice_enabled",
+      "set_voice_name",
+      "get_voice_name",
+      "strip_for_speech",
+      "speak_if_enabled",
+      "handle_voice_command"
+    ],
+    "mq-mcp/main.py": [
+      "read_version",
+      "run_command",
+      "capture_command",
+      "safe_git_summary",
+      "redacted_env_summary",
+      "load_contract_summary",
+      "load_profiles",
+      "find_profile",
+      "load_stability",
+      "build_health_payload",
+      "build_report",
+      "print_payload",
+      "doctor",
+      "build_parser",
+      "main"
+    ],
+    "mq-mcp/server.py": [
+      "jsonable",
+      "health_check",
+      "tool_count",
+      "server_info",
+      "diagnostics",
+      "serve_tool_contracts",
+      "list_http_tools",
+      "describe_http_tool",
+      "call_http_tool",
+      "resolve_repo_file",
+      "known_local_repos",
+      "allowed_external_roots",
+      "resolve_allowed_local_file",
+      "get_system_resources",
+      "read_repo_file",
+      "run_mqlaunch",
+      "analyze_guitar_pro",
+      "open_in_app",
+      "analyze_csv",
+      "edit_image",
+      "run_repo_command",
+      "list_repo_files",
+      "search_repo",
+      "git_status",
+      "git_diff",
+      "update_repo_file",
+      "validate_project",
+      "tool_safety_report",
+      "list_local_repos",
+      "open_repo_terminal",
+      "repo_signal_analyze",
+      "repo_signal_checklist",
+      "repo_signal_inspect",
+      "repo_signal_doctor_json",
+      "hal_repo_report",
+      "open_messages",
+      "open_finder",
+      "open_url",
+      "show_notification",
+      "get_clipboard",
+      "set_clipboard",
+      "open_app",
+      "get_wifi_info",
+      "speak_text",
+      "take_screenshot",
+      "open_chrome",
+      "open_spotify",
+      "open_terminal",
+      "open_vscode",
+      "set_volume",
+      "get_battery_status",
+      "toggle_dark_mode",
+      "list_running_apps",
+      "lock_screen",
+      "create_note",
+      "get_todays_events",
+      "set_reminder",
+      "find_large_files",
+      "find_recent_files",
+      "run_tests",
+      "check_port",
+      "set_wallpaper",
+      "get_public_ip",
+      "list_openable_apps",
+      "review_file",
+      "build_repo_context",
+      "list_review_contracts",
+      "list_review_history",
+      "get_last_review",
+      "detect_architecture_drift",
+      "review_runtime_contract",
+      "list_architecture_docs",
+      "review_architecture_doc",
+      "review_diff",
+      "review_repo"
+    ],
+    "review_engine/callgraph_builder.py": [
+      "ImportEdge",
+      "CallgraphBuilder"
+    ],
+    "review_engine/drift_detector.py": [
+      "DriftFinding",
+      "DriftDetector"
+    ],
+    "review_engine/multi_pass_reviewer.py": [
+      "PassResult",
+      "MultiPassReviewer"
+    ],
+    "review_engine/repo_context_builder.py": [
+      "build_context"
+    ],
+    "review_engine/review_memory.py": [
+      "ReviewEntry",
+      "ReviewMemory"
+    ],
+    "review_engine/review_router.py": [
+      "route_file",
+      "list_routes"
+    ],
+    "review_engine/severity_engine.py": [
+      "Severity",
+      "Finding",
+      "parse_findings",
+      "format_summary",
+      "format_findings_text",
+      "severity_counts",
+      "has_blocking_findings"
+    ],
+    "scripts/check-profiles.py": [
+      "fail",
+      "main"
+    ],
+    "scripts/check-stability.py": [
+      "fail",
+      "require_file",
+      "main"
+    ],
+    "scripts/create_vector_store.py": [
+      "update_env",
+      "main"
+    ],
+    "scripts/generate_screenshots.py": [
+      "draw_terminal_header",
+      "render_terminal_screenshot",
+      "render_terminal_image_screenshot",
+      "first_existing_bridget_image",
+      "main"
+    ],
+    "scripts/generate_tool_contracts.py": [
+      "extract_tools",
+      "main"
+    ],
+    "scripts/upload_semantic_memory.py": [
+      "clear_store",
+      "upload_pack",
+      "main"
+    ],
+    "scripts/upload_vector_pack.py": [
+      "pack_files",
+      "clear_store",
+      "upload_pack",
+      "main"
+    ],
+    "scripts/vignette.py": [
+      "make_vignette_mask",
+      "apply_vignette"
+    ],
+    "tests/test_allowed_local_paths.py": [
+      "test_resolve_allowed_local_file_allows_repo_relative",
+      "test_resolve_allowed_local_file_blocks_external_without_allowlist",
+      "test_resolve_allowed_local_file_allows_external_with_allowlist",
+      "test_resolve_allowed_local_file_blocks_sibling_of_allowed_root",
+      "test_allowed_external_roots_empty_without_env",
+      "test_allowed_external_roots_parses_colon_separated_paths",
+      "test_allowed_external_roots_ignores_empty_segments"
+    ],
+    "tests/test_bridget_images.py": [
+      "bridge",
+      "test_find_bridget_images_uses_bridget_jpg_glob",
+      "test_choose_bridget_image_does_not_repeat_when_possible"
+    ],
+    "tests/test_bridget_voice.py": [
+      "test_voice_toggle_state_file",
+      "test_voice_env_override",
+      "test_voice_name_file",
+      "test_strip_for_speech_removes_code_blocks",
+      "test_strip_for_speech_truncates",
+      "test_handle_voice_command_on_off",
+      "test_handle_voice_name_command"
+    ],
+    "tests/test_cli.py": [
+      "load_cli",
+      "test_read_version_matches_version_file",
+      "test_doctor_json_reports_required_status",
+      "test_config_path_command_prints_env_path",
+      "test_health_json_reports_tool_count",
+      "test_report_redacts_secret_environment",
+      "test_profiles_list_includes_expected_templates",
+      "test_profiles_show_returns_profile_json",
+      "test_stability_show_returns_baseline_json"
+    ],
+    "tests/test_profiles.py": [
+      "test_expected_profiles_exist",
+      "test_profiles_have_required_contract"
+    ],
+    "tests/test_server_observability.py": [
+      "server",
+      "test_health_endpoint_reports_version_and_tool_count",
+      "test_redacted_env_hides_api_key"
+    ],
+    "tests/test_server_safety.py": [
+      "server",
+      "test_resolve_repo_file_allows_readme",
+      "test_resolve_repo_file_blocks_parent_escape",
+      "test_resolve_repo_file_blocks_absolute_path",
+      "test_update_repo_file_blocks_secret_files",
+      "test_update_repo_file_blocks_system_dirs",
+      "test_update_repo_file_blocks_unsupported_suffix",
+      "test_update_repo_file_rejects_empty_old_text",
+      "test_update_repo_file_no_match_returns_error",
+      "test_update_repo_file_refuses_ambiguous_match",
+      "test_analyze_csv_blocks_parent_escape",
+      "test_read_repo_file_reads_readme",
+      "test_read_repo_file_missing_file",
+      "test_list_repo_files_includes_readme",
+      "test_list_repo_files_excludes_git_dir"
+    ]
+  },
+  "edges": [
+    {
+      "from": "mq-mcp/bridge.py",
+      "to": "mq-mcp/bridget_voice.py",
+      "import_names": [
+        "handle_voice_command",
+        "speak_if_enabled"
+      ]
+    },
+    {
+      "from": "mq-mcp/bridge.py",
+      "to": "mq-mcp/ask.py",
+      "import_names": [
+        "run_ask"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/review_router.py",
+      "import_names": [
+        "route_file"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/review_memory.py",
+      "import_names": [
+        "ReviewMemory"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/drift_detector.py",
+      "import_names": [
+        "DriftDetector"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/severity_engine.py",
+      "import_names": [
+        "parse_findings",
+        "format_summary"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/multi_pass_reviewer.py",
+      "import_names": [
+        "MultiPassReviewer"
+      ]
+    },
+    {
+      "from": "review_engine/multi_pass_reviewer.py",
+      "to": "review_engine/severity_engine.py",
+      "import_names": [
+        "SEVERITY_ORDER"
+      ]
+    },
+    {
+      "from": "tests/test_bridget_voice.py",
+      "to": "mq-mcp/bridget_voice.py",
+      "import_names": [
+        "bridget_voice"
+      ]
+    }
+  ]
+}
