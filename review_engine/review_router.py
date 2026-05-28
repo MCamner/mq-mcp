@@ -35,7 +35,11 @@ _SECURITY_SKILL_FILE = "security-review.md"
 
 
 def route_file_for_mode(relative_path: str, mode: str) -> tuple[str, str]:
-    """Like route_file but injects the security skill for security and risk modes."""
+    """Return (skill_name, skill_content) with mode-based override.
+
+    For security and risk modes, always injects security-review.md regardless
+    of file type. For other modes, delegates to route_file().
+    """
     if mode in {"security", "risk"}:
         skill_path = SKILLS_DIR / _SECURITY_SKILL_FILE
         if skill_path.exists():

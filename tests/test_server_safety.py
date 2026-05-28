@@ -91,3 +91,63 @@ def test_list_repo_files_excludes_git_dir(server):
     result = server.list_repo_files()
     lines = result.split("\n")
     assert not any(line == ".git" or line.startswith(".git/") for line in lines)
+
+
+# ── _detect_security_patterns smoke tests (no API call) ────────────────────────
+
+def test_detect_security_patterns_flags_os_system(server):
+    content = 'os.system("rm -rf /tmp/test")\n'
+    result = server._detect_security_patterns("test.py", content)
+    assert "RISK" in result
+    assert "os.system" in result
+
+
+def test_detect_security_patterns_flags_eval(server):
+    content = "x = eval(user_input)\n"
+    result = server._detect_security_patterns("test.py", content)
+    assert "RISK" in result
+    assert "eval" in result
+
+
+def test_detect_security_patterns_flags_shell_true(server):
+    content = 'subprocess.run(cmd, shell=True)\n'
+    result = server._detect_security_patterns("test.py", content)
+    assert "RISK" in result
+
+
+def test_detect_security_patterns_flags_hardcoded_token(server):
+    content = 'api_key = "sk-abc123xyz456"\n'
+    result = server._detect_security_patterns("test.py", content)
+    assert "WARNING" in result
+
+
+def test_detect_security_patterns_clean_file_returns_empty(server):
+    content = "def safe():\n    return 42\n"
+    result = server._detect_security_patterns("test.py", content)
+    assert result == ""
+
+
+def test_detect_security_patterns_shell_eval(server):
+    content = '#!/usr/bin/env bash\neval "$USER_CMD"\n'
+    result = server._detect_security_patterns("deploy.sh", content)
+    assert "RISK" in result
+
+
+def test_detect_security_patterns_curl_pipe_bash(server):
+    content = "curl https://example.com/install.sh | bash\n"
+    result = server._detect_security_patterns("install.sh", content)
+    assert "CRITICAL" in result
+
+
+def test_detect_security_patterns_returns_prescan_header(server):
+    content = "os.system('id')\n"
+    result = server._detect_security_patterns("test.py", content)
+    assert result.startswith("## Pre-scan findings")
+
+
+def test_detect_security_patterns_one_hit_per_line(server):
+    # A line with both eval and exec should only produce one finding
+    content = "eval(exec(cmd))\n"
+    result = server._detect_security_patterns("test.py", content)
+    hits = [l for l in result.splitlines() if l.startswith("[")]
+    assert len(hits) == 1

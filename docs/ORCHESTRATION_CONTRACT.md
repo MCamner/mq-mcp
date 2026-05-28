@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-05-28 (v1.3.0).
+Last updated: 2026-05-28 (v1.7.0).
 
 ---
 
@@ -40,12 +40,12 @@ Last updated: 2026-05-28 (v1.3.0).
 
 ### Approval gate model
 
-| Tool class | Caller action required |
-| ---------- | ---------------------- |
-| A          | None — safe to auto-invoke |
-| B          | None — safe to auto-invoke (may make network calls) |
-| C          | Explicit user approval — writes files |
-| D          | Explicit user approval — opens apps or runs subprocesses |
+| Tool class | Caller action required                                    |
+| ---------- | --------------------------------------------------------- |
+| A          | None — safe to auto-invoke                                |
+| B          | None — safe to auto-invoke (may make network calls)       |
+| C          | Explicit user approval — writes files                     |
+| D          | Explicit user approval — opens apps or runs subprocesses  |
 
 ---
 
@@ -61,6 +61,7 @@ A caller that receives output starting with these prefixes must treat the
 call as failed and not parse the remainder as success output.
 
 Structured output that can be machine-parsed:
+
 - `detect_architecture_drift` — `[SEVERITY] location\nbody` blocks
 - `review_file` / `review_diff` / `review_repo` — `[SEVERITY] file:line\nbody` blocks
 - `validate_orchestration_contract` — `[PASS]` / `[FAIL]` / `[WARN]` lines
@@ -70,7 +71,7 @@ Structured output that can be machine-parsed:
 Review tools use a fixed severity vocabulary. Callers that parse review output
 must handle exactly these labels (case-sensitive):
 
-```
+```text
 RISK · ARCHITECTURE · WARNING · MISSING · SUGGESTION · NOTE
 ```
 
@@ -161,6 +162,7 @@ makes them explicit and verifiable.
 ### mq-agent → mq-mcp
 
 mq-agent is the orchestration layer. It may:
+
 - Discover tools via MCP protocol
 - Invoke any Class A/B tool without approval gates
 - Invoke Class C/D tools only after presenting the tool's safety_notes to the user
@@ -168,6 +170,7 @@ mq-agent is the orchestration layer. It may:
 - Route review and architecture analysis requests to mq-mcp tools
 
 mq-agent must not:
+
 - Reimplement review logic locally
 - Construct filesystem paths outside of tool arguments
 - Assume mq-mcp maintains session state between calls
@@ -176,31 +179,34 @@ mq-agent must not:
 ### repo-signal → mq-mcp
 
 repo-signal provides read-only repository intelligence:
+
 - `repo_signal_analyze` / `repo_signal_checklist` / `repo_signal_inspect` /
   `repo_signal_doctor_json` — mq-mcp proxies these as Class B tools
 - Expected output: structured text or JSON from repo-signal CLI
-- Future: when repo-signal writes `callgraph.json`, `symbol_index.json`,
-  `repo_signal_summary.json` to disk, `callgraph_builder._try_merge_repo_signal_packs()`
-  will merge them automatically
+- repo-signal v1.1.0+ writes packs to `.repo-signal/exports/`;
+  `callgraph_builder._try_merge_repo_signal_packs()` merges them automatically
 
 mq-mcp must not: duplicate repo-signal's graph-building logic.
 
 ### mq-hal → mq-mcp
 
 mq-hal provides runtime and model health summaries:
+
 - `hal_repo_report` — mq-mcp proxies as Class D (runs mq-hal CLI)
 - Expected output: text report from mq-hal
 
 ### mq-image-analyze → mq-mcp
 
 mq-image-analyze provides visual analysis:
-- Invoked as an external tool; output is a structured JSON blob
-- mq-mcp does not call mq-image-analyze directly — it is invoked by callers
-  who then pass the result to mq-mcp tools as context
+
+- Invoked as an external tool; output is a structured JSON blob (`visual_architecture_observation.v1`)
+- mq-mcp does not call mq-image-analyze directly — callers invoke it and pass
+  the result as context to mq-mcp review tools
 
 ### mq-mcp → callers (output contract)
 
 mq-mcp guarantees to callers:
+
 - All tool output is a `str`
 - Error output begins with `{tool_name} failed:` or `ERROR:`
 - Review output uses the fixed severity vocabulary

@@ -1603,7 +1603,8 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     Args:
         relative_path: Repo-relative path to the file to review.
         mode: Review mode. Must match a contract in reviews/contracts/.
-              Supported: 'comment', 'architecture', 'security'. Defaults to 'comment'.
+              Supported: 'comment', 'architecture', 'security', 'risk'. Defaults to 'comment'.
+              For security and risk modes with grep pre-scan, prefer risk_review_file.
         deep: If True, runs a two-pass review: Pass 1 produces a structural
               analysis of the file; Pass 2 uses that analysis to ground the
               contract-driven review. Higher quality, ~2x API calls. Defaults to False.
@@ -1880,6 +1881,10 @@ def list_review_contracts() -> str:
         lines.append(f"  mode={mode!r:20s}  contract={f.name}")
     lines.append("")
     lines.append("Usage: review_file(relative_path='...', mode='comment')")
+    lines.append("")
+    lines.append("Risk-analysis tools (add grep pre-scan before AI review):")
+    lines.append("  risk_review_file(relative_path, mode='security'|'risk'|'architecture')")
+    lines.append("  risk_review_diff(mode='security'|'risk'|'architecture')")
     return "\n".join(lines)
 
 

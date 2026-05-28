@@ -259,6 +259,25 @@ class DriftDetector:
                     ),
                 ))
 
+        # 11 — Severity table in RUNTIME_CONTRACT.md includes CRITICAL
+        # When risk_review_file is in server.py, CRITICAL must appear in
+        # RUNTIME_CONTRACT.md's severity ordering section.
+        if self._runtime_contract.exists() and "risk_review_file" in server_set:
+            try:
+                contract_text = self._runtime_contract.read_text(encoding="utf-8")
+                if "CRITICAL" not in contract_text:
+                    findings.append(DriftFinding(
+                        severity="WARNING",
+                        location="docs/RUNTIME_CONTRACT.md",
+                        description=(
+                            "risk_review_file is declared in server.py and uses CRITICAL "
+                            "severity, but CRITICAL does not appear in RUNTIME_CONTRACT.md. "
+                            "Update the severity ordering section."
+                        ),
+                    ))
+            except Exception:
+                pass
+
         return findings
 
     def format_report(self, findings: list[DriftFinding]) -> str:
