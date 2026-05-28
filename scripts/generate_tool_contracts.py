@@ -81,7 +81,7 @@ TOOL_META: dict[str, dict] = {
     "get_last_review":        {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": []},
     "list_review_history":    {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
     "list_review_contracts":  {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
-    "build_repo_context":     {"class": "A", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["context-file-write"]},
+    "build_repo_context":     {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["context-file-write"]},
     "detect_architecture_drift": {"class": "A", "resolver": "none",                     "write": False, "subprocess": False, "side_effects": []},
     "list_architecture_docs": {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
     "review_architecture_doc": {"class": "A", "resolver": "resolve_repo_file",          "write": False, "subprocess": False, "side_effects": ["openai-api"]},

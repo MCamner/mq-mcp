@@ -70,8 +70,8 @@ has no observable side effects outside its return value.
 | --- | --- | --- |
 | A | Read-only, repo-scoped | `read_repo_file`, `review_file`, `git_status` |
 | B | Read-only, system or allowed external paths | `get_system_resources`, `get_clipboard` |
-| C | Write-capable, controlled scope | `update_repo_file`, `edit_image` |
-| D | Subprocess / open-app | `open_in_app`, `run_tests`, `build_repo_context` |
+| C | Write-capable, controlled scope | `update_repo_file`, `edit_image`, `build_repo_context`, `export_symbol_index` |
+| D | Subprocess / open-app | `open_in_app`, `run_tests`, `hal_repo_report` |
 
 ### Path boundaries
 
@@ -169,20 +169,42 @@ location, drops near-duplicate bodies.
 
 ## Memory model
 
-Review history is stored in `review_engine/memory/review_history.json`.
+Three separate memory stores serve different purposes:
+
+### Review history
+
+Stored in `review_engine/memory/review_history.json`.
 
 | Property | Value |
 | --- | --- |
 | Storage format | JSON, local file |
 | Max entries per file | 10 (oldest discarded) |
-| Context injected into future reviews | Top 5 findings from last review |
+| Context injected into future reviews | Top 5 findings from last review (priority 2) |
 | Indexed by | Repo-relative file path |
 
-Memory is append-only from the review pipeline's perspective. It is never
-automatically purged. It is never sent outside the local machine.
+Append-only. Never automatically purged. Never sent outside the local machine.
+Stores findings, severity distribution, mode, model, skill, and timestamp — not file content.
 
-The memory model does not store file content — only findings, severity
-distribution, mode, model, skill, and timestamp.
+### Architecture memory
+
+Stored in `architecture_memory/` (decisions/, boundaries/, philosophy/, rejected/).
+
+| Property | Value |
+| --- | --- |
+| Format | Markdown files with YAML frontmatter |
+| Context injected | Up to 3 relevant ADRs per review (priority 1) |
+| Managed by | `record_architecture_decision`, `extract_coding_conventions` |
+
+### Semantic memory
+
+Stored in `semantic_memory/store.json`.
+
+| Property | Value |
+| --- | --- |
+| Format | JSON key-value store with tags and timestamps |
+| Context injected | Up to 2 matches per review (priority 0 — highest) |
+| Managed by | `store_semantic_memory`, `bootstrap_semantic_memory` |
+| Bootstrapped from | README, ROADMAP, RUNTIME_CONTRACT, ORCHESTRATION_CONTRACT, TOOL_SAFETY |
 
 ---
 

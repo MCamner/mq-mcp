@@ -1,6 +1,6 @@
 {
   "schema_version": "tool-contracts.v1",
-  "mq_mcp_version": "1.4.0",
+  "mq_mcp_version": "1.6.0",
   "tool_count": 73,
   "tools": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "name": "build_repo_context",
-      "class": "A",
+      "class": "C",
       "description": "Rebuild the repo context artifacts used by the review engine.",
       "resolver": "none",
       "write": true,
