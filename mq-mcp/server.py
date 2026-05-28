@@ -25,11 +25,29 @@ _CONTRACTS_PATH = REPO_ROOT / "docs" / "tool_contracts.json"
 _STARTED_AT = time.time()
 
 
+def _contract_class_to_safety(value: object) -> str:
+    """Convert tool contract classes into caller-facing safety labels."""
+    normalized = str(value or "unknown").strip().lower()
+    return {
+        "a": "read-only",
+        "b": "read-only",
+        "c": "write-capable",
+        "d": "subprocess",
+        "read-only": "read-only",
+        "write-capable": "write-capable",
+        "subprocess": "subprocess",
+        "dangerous": "dangerous",
+    }.get(normalized, "unknown")
+
+
 def _load_safety_map() -> dict[str, str]:
     """Build tool_name → safety_class from tool_contracts.json."""
     try:
         data = json.loads(_CONTRACTS_PATH.read_text(encoding="utf-8"))
-        return {t["name"]: t.get("class", "unknown") for t in data.get("tools", [])}
+        return {
+            t["name"]: _contract_class_to_safety(t.get("safety_class") or t.get("class"))
+            for t in data.get("tools", [])
+        }
     except Exception:
         return {}
 
@@ -2804,4 +2822,5 @@ def review_repo(mode: str = "comment", max_files: int = 5) -> str:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
+    mcp.run(transport=transport)  # type: ignore[arg-type]

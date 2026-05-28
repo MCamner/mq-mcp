@@ -339,7 +339,8 @@ def main(argv: list[str] | None = None) -> int:
             env["MQ_MCP_HOST"] = args.host
         if args.port:
             env["MQ_MCP_PORT"] = args.port
-        return run_command(["uv", "run", "mcp", "run", "server.py"], APP_DIR, env)
+        env["MQ_MCP_TRANSPORT"] = "sse"
+        return run_command(["uv", "run", "python", "server.py"], APP_DIR, env)
     if args.command == "validate":
         return run_command([str(REPO_ROOT / "scripts" / "validate.sh")], REPO_ROOT)
     if args.command == "tools":

@@ -35,3 +35,15 @@ def test_redacted_env_hides_api_key(server, monkeypatch):
 
     assert payload["OPENAI_API_KEY"]["value"] == "<redacted>"
     assert "sk-test-secret" not in json.dumps(payload)
+
+
+def test_contract_classes_are_exposed_as_safety_labels(server):
+    assert server._contract_class_to_safety("A") == "read-only"
+    assert server._contract_class_to_safety("B") == "read-only"
+    assert server._contract_class_to_safety("C") == "write-capable"
+    assert server._contract_class_to_safety("D") == "subprocess"
+
+
+def test_enrich_tool_uses_caller_facing_safety_label(server):
+    enriched = server._enrich_tool({"name": "review_diff"})
+    assert enriched["safety_class"] == "read-only"
