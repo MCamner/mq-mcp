@@ -1,6 +1,6 @@
 {
   "schema_version": "tool-contracts.v1",
-  "mq_mcp_version": "1.1.0",
+  "mq_mcp_version": "1.2.0",
   "tool_count": 65,
   "tools": [
     {

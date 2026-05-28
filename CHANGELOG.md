@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.2.0 - 2026-05-28
+
+- Added `architecture_memory/` directory with 8 seed entries across four
+  categories: `decisions/` (ADR-001–005), `rejected/` (REJ-001),
+  `boundaries/` (BND-001–002), `philosophy/` (PHI-001–002). Covers path
+  resolvers, no-auto-commit, safety classes, review contracts, secret handling,
+  cognition ownership, execution vs orchestration, determinism, and context
+  quality.
+- Added `review_engine/architecture_memory.py` — `ArchitectureMemory` class
+  with `list_all()`, `get()`, `relevant_for()`, `format_context_block()`, and
+  `record()`. Area keyword matching injects relevant ADRs into reviews;
+  philosophy entries match all files.
+- Added `list_architecture_decisions` MCP tool — lists all architecture memory
+  entries with ID, status, category, and title (Class A).
+- Added `get_architecture_decision` MCP tool — returns full entry text by ID
+  (Class A).
+- Added `record_architecture_decision` MCP tool — writes a new ADR to
+  `architecture_memory/` with YAML frontmatter (Class C, does not commit).
+- Added `review_engine/convention_extractor.py` — `ConventionExtractor` runs a
+  single model call to extract generalizable coding conventions from review
+  findings. Deduplicates against existing convention titles.
+- Added `extract_coding_conventions` MCP tool — loads last review from
+  ReviewMemory, extracts conventions, saves each to `architecture_memory/decisions/`
+  with `status: convention`. Conventions inject into future reviews via the
+  ADR context mechanism at priority 1 (Class C).
+- ADR injection in `review_file` — up to 3 relevant architecture decisions
+  injected at highest priority in `ContextSelector`, before past findings and
+  cross-file context.
+- Tool count: 64 → 65.
+
 ## 1.1.0 - 2026-05-27
 
 - Added `review_runtime_contract` MCP tool — structural + AI pass that verifies

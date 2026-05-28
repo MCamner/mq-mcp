@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.1.0)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.2.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,9 +9,9 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v1.1.0 — runtime self-inspection and repo-aware review intelligence. 65 tools,
-self-describing architecture contracts, multi-pass review with cross-file context,
-callgraph-backed semantic similarity, and golden reviews for all supported file types.
+v1.2.0 — architecture memory and coding convention extraction. 65 tools,
+ADR-style design decision store, convention injection into reviews, and a
+complete self-describing cognition runtime.
 
 This repository is useful as:
 
