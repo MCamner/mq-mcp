@@ -9,13 +9,13 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v1.3.0 — architecture memory and coding convention extraction. 66 tools,
-ADR-style design decision store, convention injection into reviews, and a
-complete self-describing cognition runtime.
+v1.4.0 — semantic memory layer. 71 tools, durable knowledge store injected
+into reviews at priority 0, bootstrap from key docs, and full search/store/get
+API for cross-repo facts and doc summaries.
 
 This repository is useful as:
 
-- a local MCP server with 66 documented, safety-classified tools
+- a local MCP server with 71 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -31,7 +31,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 66 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 71 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -159,7 +159,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 66 MCP tools with descriptions.
+Expected response lists all 71 MCP tools with descriptions.
 
 ## Integration map
 
@@ -184,7 +184,7 @@ Before using or extending it:
 
 ## Available MCP tools
 
-The local MCP server exposes 66 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 71 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -264,6 +264,11 @@ The local MCP server exposes 66 tools across five safety classes. See [`docs/TOO
 - `get_architecture_decision` — returns the full text of a specific architecture memory entry by ID
 - `record_architecture_decision` — records a new ADR in architecture_memory/ (Class C, writes file, does not commit)
 - `extract_coding_conventions` — extracts generalizable conventions from the last review of a file and persists them to architecture_memory/ (Class C, requires OPENAI_API_KEY)
+- `store_semantic_memory` — stores or updates a knowledge item in semantic memory (Class C, writes semantic_memory/store.json)
+- `search_semantic_memory` — keyword search across semantic memory keys, tags, and content (Class A)
+- `get_semantic_memory` — returns the full content of a semantic memory item by key (Class A)
+- `list_semantic_memory` — lists all semantic memory items with previews (Class A)
+- `bootstrap_semantic_memory` — ingests README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md into semantic memory (Class C)
 - `review_diff` — reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 - `review_repo` — reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
 

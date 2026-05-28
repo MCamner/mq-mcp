@@ -1621,16 +1621,25 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     except Exception:
         pass
 
+    semantic_ctx = ""
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SemMem
+        semantic_ctx = _SemMem().format_context_block(relative_path, max_results=2)
+    except Exception:
+        pass
+
     # Context selection: cap injected context to budget.
-    # Priority: arch decisions (1) > past findings (2) > cross-file context (3).
+    # Priority: semantic memory (0) > arch decisions (1) > past findings (2) > cross-file (3).
     # arch_role is always a single line — not subject to budget.
     try:
         from review_engine.context_selector import ContextSelector as _ContextSelector
         _cs = _ContextSelector()
+        _cs.add("semantic_ctx", semantic_ctx, priority=0)
         _cs.add("arch_decisions_ctx", arch_decisions_ctx, priority=1)
         _cs.add("past_context", past_context, priority=2)
         _cs.add("cross_file_ctx", cross_file_ctx, priority=3)
         _selected = _cs.selected()
+        semantic_ctx = _selected.get("semantic_ctx", "")
         arch_decisions_ctx = _selected.get("arch_decisions_ctx", "")
         past_context = _selected.get("past_context", "")
         cross_file_ctx = _selected.get("cross_file_ctx", "")
@@ -1700,6 +1709,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             adr_section = f"\n\n{arch_decisions_ctx}" if arch_decisions_ctx else ""
             past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
             cross_section = f"\n\n{cross_file_ctx}" if cross_file_ctx else ""
+            semantic_section = f"\n\n{semantic_ctx}" if semantic_ctx else ""
 
             system = (
                 "You are a code review engine operating under a strict review contract.\n"
@@ -1709,7 +1719,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
             )
             user = (
                 f"Review this file under the contract above.\n\n"
-                f"File: {relative_path}{role_context}{adr_section}{cross_section}{past_section}\n\n"
+                f"File: {relative_path}{role_context}{semantic_section}{adr_section}{cross_section}{past_section}\n\n"
                 f"```\n{file_content}\n```"
             )
 
@@ -2769,6 +2779,185 @@ def review_diff(mode: str = "comment", deep: bool = False) -> str:
     if truncated:
         header += f"  [capped at {MAX_FILES}]"
     return header + "\n\n" + "\n\n".join(results)
+
+
+@mcp.tool()
+def store_semantic_memory(key: str, content: str, tags: str = "") -> str:
+    """Store or update a knowledge item in semantic memory.
+
+    Semantic memory is a durable, searchable knowledge layer for long-term
+    reusable context — separate from per-file review history (review_engine/memory/)
+    and architecture decisions (architecture_memory/).
+
+    Items are stored in semantic_memory/store.json and injected into review_file
+    context at priority 0 (above ADRs) when relevant to the file being reviewed.
+
+    Args:
+        key:     Unique identifier for this item (e.g. 'readme-summary', 'api-contract').
+        content: The knowledge to store. Plain text, markdown, or structured notes.
+        tags:    Optional comma-separated tags for search (e.g. 'readme,docs,mq-mcp').
+
+    Safety: Class C — writes to semantic_memory/store.json. Does not commit.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SM
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+        mem = _SM()
+        item = mem.store(key, content, tag_list)
+        tag_str = f"  tags: {', '.join(item.tags)}" if item.tags else ""
+        return (
+            f"store_semantic_memory: saved '{key}'{tag_str}\n"
+            f"Total items: {mem.item_count()}"
+        )
+    except Exception as exc:
+        return f"store_semantic_memory failed: {exc}"
+
+
+@mcp.tool()
+def search_semantic_memory(query: str, max_results: int = 5) -> str:
+    """Search semantic memory by keywords across keys, tags, and content.
+
+    Returns ranked matches with previews. Use this to retrieve cross-repo facts,
+    doc summaries, contracts, and conventions stored via store_semantic_memory.
+
+    Args:
+        query:       Space-separated search terms.
+        max_results: Maximum number of results to return (default 5, max 20).
+
+    Safety: Class A — read-only.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SM
+        cap = min(max(1, max_results), 20)
+        mem = _SM()
+        results = mem.search(query, max_results=cap)
+        if not results:
+            return f"search_semantic_memory: no results for '{query}' ({mem.item_count()} items in store)"
+        lines = [f"search_semantic_memory: {len(results)} result(s) for '{query}'\n"]
+        for item in results:
+            tag_str = f"  [{', '.join(item.tags)}]" if item.tags else ""
+            lines.append(f"### {item.key}{tag_str}\n{item.preview()}\n")
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"search_semantic_memory failed: {exc}"
+
+
+@mcp.tool()
+def get_semantic_memory(key: str) -> str:
+    """Return the full content of a semantic memory item by exact key.
+
+    Args:
+        key: The exact key used when the item was stored.
+
+    Safety: Class A — read-only.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SM
+        mem = _SM()
+        item = mem.get(key)
+        if item is None:
+            return f"get_semantic_memory: no item found for key '{key}'"
+        tag_str = f"\nTags: {', '.join(item.tags)}" if item.tags else ""
+        import datetime as _dt
+        updated = _dt.datetime.fromtimestamp(item.updated_at).strftime("%Y-%m-%d %H:%M")
+        return f"# {item.key}{tag_str}\nUpdated: {updated}\n\n{item.content}"
+    except Exception as exc:
+        return f"get_semantic_memory failed: {exc}"
+
+
+@mcp.tool()
+def list_semantic_memory() -> str:
+    """List all items in semantic memory with key, tags, and content preview.
+
+    Returns a table sorted by most recently updated first.
+
+    Safety: Class A — read-only.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SM
+        import datetime as _dt
+        mem = _SM()
+        items = mem.list_all()
+        if not items:
+            return "list_semantic_memory: store is empty. Use store_semantic_memory to add items."
+        lines = [f"# Semantic memory  ({len(items)} item(s))\n"]
+        lines.append(f"{'Key':<40} {'Tags':<25} Updated")
+        lines.append("-" * 80)
+        for item in items:
+            tags = ", ".join(item.tags) if item.tags else "—"
+            updated = _dt.datetime.fromtimestamp(item.updated_at).strftime("%Y-%m-%d %H:%M")
+            lines.append(f"{item.key:<40} {tags:<25} {updated}")
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"list_semantic_memory failed: {exc}"
+
+
+@mcp.tool()
+def bootstrap_semantic_memory() -> str:
+    """Ingest key mq-mcp docs into semantic memory for use as review context.
+
+    Bootstraps the store with summaries of the five highest-value documents:
+    README.md, ROADMAP.md, docs/RUNTIME_CONTRACT.md,
+    docs/ORCHESTRATION_CONTRACT.md, and docs/TOOL_SAFETY.md.
+
+    Existing items are overwritten if the source doc has changed since last
+    bootstrap (detected by content length difference).
+
+    Safe to run multiple times — idempotent for unchanged docs.
+
+    Safety: Class C — writes to semantic_memory/store.json. Does not commit.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    BOOTSTRAP_DOCS: list[tuple[str, str, list[str]]] = [
+        ("readme-summary", "README.md", ["readme", "overview", "mq-mcp"]),
+        ("roadmap-summary", "ROADMAP.md", ["roadmap", "phases", "mq-mcp"]),
+        ("runtime-contract", "docs/RUNTIME_CONTRACT.md", ["contract", "runtime", "guarantees"]),
+        ("orchestration-contract", "docs/ORCHESTRATION_CONTRACT.md", ["contract", "orchestration", "mq-agent"]),
+        ("tool-safety", "docs/TOOL_SAFETY.md", ["safety", "tools", "classes"]),
+    ]
+
+    try:
+        from semantic_memory.semantic_memory import SemanticMemory as _SM
+        mem = _SM()
+        saved = []
+        skipped = []
+        for key, rel_path, tags in BOOTSTRAP_DOCS:
+            doc_path = REPO_ROOT / rel_path
+            if not doc_path.exists():
+                skipped.append(f"{key}: {rel_path} not found")
+                continue
+            content = doc_path.read_text(encoding="utf-8").strip()
+            existing = mem.get(key)
+            if existing and len(existing.content) == len(content):
+                skipped.append(f"{key}: unchanged")
+                continue
+            mem.store(key, content, tags)
+            saved.append(key)
+
+        lines = [f"bootstrap_semantic_memory: {len(saved)} saved, {len(skipped)} skipped"]
+        if saved:
+            lines.append("Saved: " + ", ".join(saved))
+        if skipped:
+            lines.append("Skipped: " + ", ".join(skipped))
+        lines.append(f"Total items in store: {mem.item_count()}")
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"bootstrap_semantic_memory failed: {exc}"
 
 
 @mcp.tool()

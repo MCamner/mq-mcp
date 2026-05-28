@@ -27,7 +27,7 @@ def test_doctor_json_reports_required_status(capsys):
 
     assert result == 0
     assert payload["name"] == "mq-mcp"
-    assert payload["version"] == "1.3.0"
+    assert payload["version"] == "1.4.0"
     assert payload["status"] == "ok"
     assert any(item["name"] == "validate_script" for item in payload["checks"])
 
@@ -46,9 +46,9 @@ def test_health_json_reports_tool_count(capsys):
     payload = json.loads(capsys.readouterr().out)
 
     assert result == 0
-    assert payload["version"] == "1.3.0"
+    assert payload["version"] == "1.4.0"
     assert payload["status"] == "ok"
-    assert payload["tool_count"] == 66
+    assert payload["tool_count"] == 71
     assert payload["contracts_ok"] is True
 
 
@@ -89,4 +89,4 @@ def test_stability_show_returns_baseline_json(capsys):
 
     assert result == 0
     assert payload["schema_version"] == "mq-mcp.stability.v1"
-    assert payload["version"] == "1.3.0"
+    assert payload["version"] == "1.4.0"

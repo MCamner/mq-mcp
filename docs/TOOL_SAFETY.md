@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 66 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 71 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -45,6 +45,9 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `review_architecture_doc` | Apply architecture review contract to a named architecture document | Write, modify docs; calls OpenAI API |
 | `list_architecture_decisions` | List all architecture memory entries (ADRs, boundaries, philosophy, rejected) | Write, access outside repo |
 | `get_architecture_decision` | Return full text of a specific architecture memory entry by ID | Write, access outside repo |
+| `search_semantic_memory` | Search semantic memory by keywords | Write, modify memory store |
+| `get_semantic_memory` | Return full content of a semantic memory item by key | Write, modify memory store |
+| `list_semantic_memory` | List all semantic memory items with previews | Write, modify memory store |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -88,6 +91,8 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `take_screenshot` | Capture screen to a file (default ~/Desktop/screenshot.png) | Access outside ~/Desktop or given path |
 | `record_architecture_decision` | Append a new ADR entry to architecture_memory/ | Write outside repo, commit, overwrite existing entries |
 | `extract_coding_conventions` | Extract conventions from last review and persist to architecture_memory/ | Write outside repo, commit; requires OPENAI_API_KEY |
+| `store_semantic_memory` | Store or update a knowledge item in semantic_memory/store.json | Write outside repo, commit |
+| `bootstrap_semantic_memory` | Ingest key mq-mcp docs into semantic memory | Write outside repo, commit |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -198,3 +203,8 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `get_architecture_decision` | A | REPO_ROOT/architecture_memory/ | No | No |
 | `record_architecture_decision` | C | REPO_ROOT/architecture_memory/ | Yes | No |
 | `extract_coding_conventions` | C | REPO_ROOT/architecture_memory/ + review memory | Yes | No (OpenAI API) |
+| `search_semantic_memory` | A | REPO_ROOT/semantic_memory/store.json | No | No |
+| `get_semantic_memory` | A | REPO_ROOT/semantic_memory/store.json | No | No |
+| `list_semantic_memory` | A | REPO_ROOT/semantic_memory/store.json | No | No |
+| `store_semantic_memory` | C | REPO_ROOT/semantic_memory/store.json | Yes | No |
+| `bootstrap_semantic_memory` | C | REPO_ROOT/semantic_memory/store.json + docs | Yes | No |

@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
-  "mq_mcp_version": "1.3.0",
-  "tool_count": 66,
+  "mq_mcp_version": "1.4.0",
+  "tool_count": 71,
   "tools": [
     {
       "name": "analyze_csv",
@@ -723,6 +723,56 @@
       "write": true,
       "subprocess": false,
       "side_effects": ["openai_api_call", "file-write"],
+      "examples": []
+    },
+    {
+      "name": "store_semantic_memory",
+      "class": "C",
+      "description": "Store or update a knowledge item in semantic memory (semantic_memory/store.json). Items are injected into review_file context at priority 0 when relevant to the file being reviewed.",
+      "resolver": "REPO_ROOT/semantic_memory/store.json",
+      "write": true,
+      "subprocess": false,
+      "side_effects": ["file-write"],
+      "examples": []
+    },
+    {
+      "name": "search_semantic_memory",
+      "class": "A",
+      "description": "Keyword search across semantic memory keys, tags, and content. Returns ranked matches with previews.",
+      "resolver": "REPO_ROOT/semantic_memory/store.json",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_semantic_memory",
+      "class": "A",
+      "description": "Return the full content of a semantic memory item by exact key.",
+      "resolver": "REPO_ROOT/semantic_memory/store.json",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_semantic_memory",
+      "class": "A",
+      "description": "List all items in semantic memory sorted by most recently updated, with key, tags, and content preview.",
+      "resolver": "REPO_ROOT/semantic_memory/store.json",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "bootstrap_semantic_memory",
+      "class": "C",
+      "description": "Ingest key mq-mcp docs (README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md) into semantic memory. Idempotent — skips unchanged docs.",
+      "resolver": "REPO_ROOT/semantic_memory/store.json + REPO_ROOT docs",
+      "write": true,
+      "subprocess": false,
+      "side_effects": ["file-write"],
       "examples": []
     }
   ]

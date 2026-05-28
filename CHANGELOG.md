@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.4.0 - 2026-05-28
+
+- Added `semantic_memory/` module with `SemanticMemory` class:
+  `store(key, content, tags)`, `get(key)`, `search(query, max)`,
+  `search_for_file(file_path, max)`, `list_all()`, `format_context_block()`,
+  `delete(key)`. Storage: `semantic_memory/store.json`.
+- Added 5 MCP tools (Class A/C) for semantic memory:
+  - `store_semantic_memory` — Class C, writes to store.json
+  - `search_semantic_memory` — Class A, keyword search with ranked results
+  - `get_semantic_memory` — Class A, exact-key retrieval
+  - `list_semantic_memory` — Class A, full index with previews
+  - `bootstrap_semantic_memory` — Class C, ingests README, ROADMAP,
+    RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md;
+    idempotent (skips unchanged docs)
+- Integrated semantic memory into `review_file` context assembly at priority 0
+  (above ADRs at priority 1) via `SemanticMemory.format_context_block()`.
+  Injected as `semantic_section` in single-pass mode user prompt.
+- Updated `docs/ORCHESTRATION_CONTRACT.md` §3 side-effects table:
+  `store_semantic_memory` and `bootstrap_semantic_memory` declared.
+- Tool count: 66 → 71.
+
 ## 1.3.0 - 2026-05-28
 
 - Added `docs/ORCHESTRATION_CONTRACT.md` — formal caller boundary contract with
