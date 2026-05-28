@@ -110,6 +110,7 @@ current state of the repo without running `build_repo_context` first.
 | `set_clipboard` | Modifies clipboard | macOS clipboard |
 | `store_semantic_memory` | Writes knowledge item | `semantic_memory/store.json` |
 | `bootstrap_semantic_memory` | Writes doc summaries | `semantic_memory/store.json` |
+| `export_symbol_index` | Writes symbol map | `generated/symbols/symbol_index.json` |
 
 Any tool not listed here has no persistent side effects.
 

@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.3.0 — orchestration boundary formalization (done)
-Next:    v1.4.0 — Semantic memory layer
+v1.6.0 — generated artifacts + repo-signal merge (done)
+Next:    v1.5.0 — Risk analysis layer (deferred; will follow v1.6.0)
 ```
 
 Completed foundation:
@@ -160,9 +160,9 @@ This is not a problem to solve. It is a tension to design.
 | v1.1.0  | Runtime self-inspection                     | Done          |
 | v1.2.0  | Architecture memory                         | Done          |
 | v1.3.0  | Orchestration boundary formalization        | Done          |
-| v1.4.0  | Semantic memory layer                       | Planned       |
+| v1.4.0  | Semantic memory layer                       | Done          |
 | v1.5.0  | Risk analysis layer                         | Planned       |
-| v1.6.0  | Generated artifacts + repo-signal merge     | Planned       |
+| v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 
 ---
 

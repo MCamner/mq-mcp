@@ -41,6 +41,8 @@ Review engine tools:
 - get_semantic_memory: returns full content of a semantic memory item by key (Class A)
 - list_semantic_memory: lists all semantic memory items with key, tags, preview (Class A)
 - bootstrap_semantic_memory: ingests README, ROADMAP, and key contract docs into semantic memory (Class C)
+- export_symbol_index: writes the callgraph symbol map to generated/symbols/symbol_index.json (Class C)
+- repo_signal_status: reports whether repo-signal export packs are present, their age, and merge status (Class A)
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

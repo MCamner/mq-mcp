@@ -24,8 +24,8 @@ async def test_health_endpoint_reports_version_and_tool_count(server):
     payload = json.loads(response.body)
 
     assert payload["status"] == "ok"
-    assert payload["version"] == "1.4.0"
-    assert payload["tool_count"] == 71
+    assert payload["version"] == "1.6.0"
+    assert payload["tool_count"] == 73
     assert "elapsed_ms" in payload
 
 

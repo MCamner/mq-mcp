@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.6.0 - 2026-05-28
+
+- Activated `_try_merge_repo_signal_packs()` in `review_engine/callgraph_builder.py`:
+  reads from `.repo-signal/exports/` (repo-signal v1.1.0 location), handles
+  `callgraph.v1` (`source/target` → `from/to` conversion), `symbol_index.v1`
+  (flat list → per-file group map), `repo_summary.v1`, and `risk_map.v1` (new).
+  Hub files refreshed from merged importers. No-op when exports directory absent.
+- Added `generated/` directory structure: `symbols/`, `callgraphs/`,
+  `architecture/` with `.gitkeep` files; `generated/.gitignore` excludes JSON
+  snapshots from version control.
+- Added `export_symbol_index` MCP tool (Class C) — writes in-memory callgraph
+  symbol map to `generated/symbols/symbol_index.json`; requires
+  `build_repo_context` to have run first.
+- Added `repo_signal_status` MCP tool (Class A) — reports presence, schema,
+  and age of each `.repo-signal/exports/` pack; reports last merge status from
+  `review_engine/context/callgraph.json`.
+- Updated `scripts/generate_tool_contracts.py`: added metadata for all 23
+  tools added since v1.0.0 (review engine, architecture memory, semantic
+  memory, orchestration contract, and new v1.6.0 tools).
+- Regenerated `docs/tool_contracts.json` — now covers all 73 tools.
+- Tool count: 71 → 73.
+
 ## 1.4.0 - 2026-05-28
 
 - Added `semantic_memory/` module with `SemanticMemory` class:

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-05-27T19:25:22.043331+00:00",
+  "generated_at": "2026-05-28T20:38:01.053720+00:00",
   "repo_root": "/Users/mansys/mq-mcp",
-  "file_count": 27,
+  "file_count": 30,
   "hub_threshold": 2,
   "imports": {
     "mq-mcp/bridge.py": [
@@ -11,9 +11,14 @@
     "mq-mcp/server.py": [
       "review_engine/review_router.py",
       "review_engine/review_memory.py",
+      "review_engine/architecture_memory.py",
+      "review_engine/context_selector.py",
+      "review_engine/callgraph_builder.py",
       "review_engine/drift_detector.py",
       "review_engine/severity_engine.py",
-      "review_engine/multi_pass_reviewer.py"
+      "review_engine/convention_extractor.py",
+      "review_engine/multi_pass_reviewer.py",
+      "semantic_memory/semantic_memory.py"
     ],
     "review_engine/multi_pass_reviewer.py": [
       "review_engine/severity_engine.py"
@@ -36,6 +41,15 @@
     "review_engine/review_memory.py": [
       "mq-mcp/server.py"
     ],
+    "review_engine/architecture_memory.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/context_selector.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/callgraph_builder.py": [
+      "mq-mcp/server.py"
+    ],
     "review_engine/drift_detector.py": [
       "mq-mcp/server.py"
     ],
@@ -43,7 +57,13 @@
       "mq-mcp/server.py",
       "review_engine/multi_pass_reviewer.py"
     ],
+    "review_engine/convention_extractor.py": [
+      "mq-mcp/server.py"
+    ],
     "review_engine/multi_pass_reviewer.py": [
+      "mq-mcp/server.py"
+    ],
+    "semantic_memory/semantic_memory.py": [
       "mq-mcp/server.py"
     ]
   },
@@ -74,7 +94,8 @@
       "is_goto_repo_prompt",
       "handle_goto_repo",
       "is_bridget_face_prompt",
-      "run_bridge"
+      "run_bridge",
+      "_image_line"
     ],
     "mq-mcp/bridget_voice.py": [
       "set_voice_enabled",
@@ -83,7 +104,9 @@
       "get_voice_name",
       "strip_for_speech",
       "speak_if_enabled",
-      "handle_voice_command"
+      "handle_voice_command",
+      "_state_file",
+      "_voice_file"
     ],
     "mq-mcp/main.py": [
       "read_version",
@@ -174,29 +197,120 @@
       "get_last_review",
       "detect_architecture_drift",
       "review_runtime_contract",
+      "validate_orchestration_contract",
       "list_architecture_docs",
       "review_architecture_doc",
+      "list_architecture_decisions",
+      "get_architecture_decision",
+      "record_architecture_decision",
+      "extract_coding_conventions",
       "review_diff",
-      "review_repo"
+      "store_semantic_memory",
+      "search_semantic_memory",
+      "get_semantic_memory",
+      "list_semantic_memory",
+      "bootstrap_semantic_memory",
+      "review_repo",
+      "_contract_class_to_safety",
+      "_load_safety_map",
+      "_version",
+      "_request_logging_enabled",
+      "_log_observability_request",
+      "_redacted_env",
+      "_enrich_tool",
+      "_resolve_signal_repo",
+      "_run_repo_signal",
+      "_load_review_contract",
+      "_load_architecture_role",
+      "_build_rich_cross_file_context",
+      "last_ts"
+    ],
+    "review_engine/architecture_memory.py": [
+      "ArchitectureMemory",
+      "_parse_frontmatter",
+      "__init__",
+      "list_all",
+      "list_by_category",
+      "get",
+      "relevant_for",
+      "format_context_block",
+      "record",
+      "format_list",
+      "_extract_section"
     ],
     "review_engine/callgraph_builder.py": [
       "ImportEdge",
-      "CallgraphBuilder"
+      "CallgraphBuilder",
+      "__init__",
+      "_python_files",
+      "_module_index",
+      "_resolve_module",
+      "_extract_imports",
+      "_extract_symbols",
+      "build",
+      "_try_merge_repo_signal_packs",
+      "_merge_callgraph_v1",
+      "_merge_symbol_index_v1",
+      "format_summary",
+      "cross_file_context"
+    ],
+    "review_engine/context_selector.py": [
+      "ContextSelector",
+      "__init__",
+      "add",
+      "selected"
+    ],
+    "review_engine/convention_extractor.py": [
+      "Convention",
+      "ConventionExtractor",
+      "__init__",
+      "extract",
+      "_parse_conventions"
     ],
     "review_engine/drift_detector.py": [
       "DriftFinding",
-      "DriftDetector"
+      "DriftDetector",
+      "format",
+      "__init__",
+      "_server_tools",
+      "_contracted_tools",
+      "_declared_count_in_file",
+      "_safety_table_count",
+      "detect",
+      "format_report"
     ],
     "review_engine/multi_pass_reviewer.py": [
       "PassResult",
-      "MultiPassReviewer"
+      "MultiPassReviewer",
+      "__init__",
+      "_call",
+      "structure_pass",
+      "review_pass",
+      "consistency_pass",
+      "_deduplicate",
+      "run"
     ],
     "review_engine/repo_context_builder.py": [
-      "build_context"
+      "build_context",
+      "_role_for",
+      "_extract_python_symbols",
+      "_file_summary",
+      "_should_ignore",
+      "_context_summary"
     ],
     "review_engine/review_memory.py": [
       "ReviewEntry",
-      "ReviewMemory"
+      "ReviewMemory",
+      "age_days",
+      "__init__",
+      "_load",
+      "_save",
+      "save",
+      "get_last",
+      "get_history",
+      "format_past_context",
+      "all_files",
+      "summary"
     ],
     "review_engine/review_router.py": [
       "route_file",
@@ -209,7 +323,10 @@
       "format_summary",
       "format_findings_text",
       "severity_counts",
-      "has_blocking_findings"
+      "has_blocking_findings",
+      "file",
+      "line",
+      "format"
     ],
     "scripts/check-profiles.py": [
       "fail",
@@ -291,7 +408,9 @@
     "tests/test_server_observability.py": [
       "server",
       "test_health_endpoint_reports_version_and_tool_count",
-      "test_redacted_env_hides_api_key"
+      "test_redacted_env_hides_api_key",
+      "test_contract_classes_are_exposed_as_safety_labels",
+      "test_enrich_tool_uses_caller_facing_safety_label"
     ],
     "tests/test_server_safety.py": [
       "server",
@@ -309,6 +428,184 @@
       "test_read_repo_file_missing_file",
       "test_list_repo_files_includes_readme",
       "test_list_repo_files_excludes_git_dir"
+    ],
+    "release.sh": [
+      "show_usage",
+      "log_step",
+      "error",
+      "rollback_local_changes",
+      "on_error",
+      "require_clean_tree",
+      "require_file",
+      "require_changelog_version",
+      "update_version_file",
+      "update_readme_badge",
+      "init_changelog_section",
+      "print_summary",
+      "create_release_commit_and_tag",
+      "push_release",
+      "update_wiki_command_ref",
+      "create_github_release"
+    ],
+    "semantic_memory/semantic_memory.py": [
+      "MemoryItem",
+      "SemanticMemory",
+      "preview",
+      "__init__",
+      "_load",
+      "_save",
+      "store",
+      "get",
+      "list_all",
+      "search",
+      "search_for_file",
+      "format_context_block",
+      "delete",
+      "item_count"
+    ],
+    "scripts/validate.sh": [
+      "section",
+      "ok",
+      "fail"
+    ],
+    "scripts/build_semantic_memory_pack.sh": [
+      "add_file",
+      "add_glob"
+    ],
+    "scripts/check-integration-smoke.sh": [
+      "fail",
+      "ok",
+      "require_file",
+      "require_text",
+      "require_tool_everywhere"
+    ],
+    "scripts/release-check.sh": [
+      "pass",
+      "fail",
+      "step"
+    ],
+    "scripts/check-integration-docs.sh": [
+      "fail",
+      "ok",
+      "require_file",
+      "require_text"
+    ],
+    "scripts/check-tool-contracts.sh": [
+      "fail",
+      "ok"
+    ],
+    "scripts/build_vector_pack.sh": [
+      "should_skip",
+      "flatten_path",
+      "add_context_file",
+      "generate_symbol_memory"
+    ],
+    "scripts/check-bridge-tool-discovery.sh": [
+      "fail",
+      "ok",
+      "require_text"
+    ],
+    "mq-mcp/mqlaunch.sh": [
+      "print_header",
+      "open_app",
+      "open_path",
+      "open_folder_screen",
+      "resolve_prompt_dir",
+      "resolve_ai_status",
+      "safe_run_ai",
+      "run_git_screen",
+      "copy_network_info",
+      "open_network_settings",
+      "ping_test",
+      "show_dns_gateway",
+      "show_network_info",
+      "lock_screen",
+      "sleep_display",
+      "restart_finder",
+      "restart_mqlaunch",
+      "show_date_time",
+      "open_repo_browser",
+      "open_terminal_guide",
+      "system_check",
+      "open_downloads_folder",
+      "open_home_folder",
+      "open_utilities_folder",
+      "open_applications_folder",
+      "open_ai_prompts_folder",
+      "show_prompt_files",
+      "edit_mqlaunch",
+      "backup_prompts",
+      "open_base_dir",
+      "open_launcher_folder",
+      "open_tweaks_menu",
+      "show_tweaks_status",
+      "run_tweaks_workstation",
+      "run_tweaks_dev",
+      "run_tweaks_clean",
+      "run_tweaks_fast",
+      "run_tweaks_all",
+      "revert_tweaks_latest",
+      "backup_mqlaunch",
+      "open_themes_menu",
+      "theme_cmd",
+      "theme_current_variant",
+      "theme_source_state",
+      "open_git_menu",
+      "open_release_menu",
+      "run_mqworkflows",
+      "open_tools_menu",
+      "run_github_repo_picker",
+      "get_repo_version",
+      "show_version_info",
+      "run_self_check",
+      "run_debug_bundle",
+      "show_release_notes",
+      "run_mqlogin",
+      "run_mqshortcuts",
+      "show_about_dashboard",
+      "run_command_palette",
+      "run_demo_mode",
+      "legacy_alias_notice",
+      "tweaks_menu_loop",
+      "run_arg_command"
+    ],
+    "backups/scripts/20260525-210809/scripts/build_semantic_memory_pack.sh": [
+      "add_file",
+      "add_glob"
+    ],
+    "backups/scripts/20260525-210809/scripts/check-integration-smoke.sh": [
+      "fail",
+      "ok",
+      "require_file",
+      "require_text",
+      "require_tool_everywhere"
+    ],
+    "backups/scripts/20260525-210809/scripts/release-check.sh": [
+      "pass",
+      "fail",
+      "step"
+    ],
+    "backups/scripts/20260525-210809/scripts/check-integration-docs.sh": [
+      "fail",
+      "ok",
+      "require_file",
+      "require_text"
+    ],
+    "backups/scripts/20260525-210809/scripts/build_vector_pack.sh": [
+      "should_skip",
+      "flatten_path",
+      "add_context_file",
+      "generate_symbol_memory"
+    ],
+    "backups/scripts/20260525-210809/scripts/check-bridge-tool-discovery.sh": [
+      "fail",
+      "ok",
+      "require_text"
+    ],
+    "backups/scripts/20260514-011436/scripts/validate.sh": [
+      "section",
+      "ok",
+      "fail"
     ]
   },
   "edges": [
@@ -343,6 +640,27 @@
     },
     {
       "from": "mq-mcp/server.py",
+      "to": "review_engine/architecture_memory.py",
+      "import_names": [
+        "ArchitectureMemory"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/context_selector.py",
+      "import_names": [
+        "ContextSelector"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/callgraph_builder.py",
+      "import_names": [
+        "CallgraphBuilder"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
       "to": "review_engine/drift_detector.py",
       "import_names": [
         "DriftDetector"
@@ -354,6 +672,13 @@
       "import_names": [
         "parse_findings",
         "format_summary"
+      ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/convention_extractor.py",
+      "import_names": [
+        "ConventionExtractor"
       ]
     },
     {
@@ -376,6 +701,148 @@
       "import_names": [
         "bridget_voice"
       ]
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/architecture_memory.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/callgraph_builder.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/context_selector.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/convention_extractor.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/drift_detector.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/multi_pass_reviewer.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/review_memory.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/review_router.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "review_engine/severity_engine.py",
+      "import_names": []
+    },
+    {
+      "from": "mq-mcp/server.py",
+      "to": "semantic_memory/semantic_memory.py",
+      "import_names": []
+    },
+    {
+      "from": "review_engine/multi_pass_reviewer.py",
+      "to": "review_engine/severity_engine.py",
+      "import_names": []
     }
-  ]
+  ],
+  "repo_signal_summary": {
+    "schema": "repo_summary.v1",
+    "repo_name": "mq-mcp",
+    "generated_at": "2026-05-28T20:37:57.833282+00:00",
+    "version": "1.4.0",
+    "description": "[![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)",
+    "project_type": "GitHub Pages / static web project",
+    "languages": {
+      "Markdown": 67,
+      "Python": 32,
+      "Shell": 21,
+      "JSON": 21,
+      "HTML": 2,
+      "YAML": 2,
+      "TOML": 1
+    },
+    "file_count": 182,
+    "test_summary": "7 test files",
+    "key_files": [
+      "CHANGELOG.md",
+      "README.md",
+      "ROADMAP.md",
+      "VERSION"
+    ],
+    "entrypoints": [
+      "RUNBOOK.md",
+      "backups/scripts/20260514-011436/scripts/validate.sh",
+      "backups/scripts/20260525-210809/scripts/build_semantic_memory_pack.sh",
+      "backups/scripts/20260525-210809/scripts/build_vector_pack.sh",
+      "backups/scripts/20260525-210809/scripts/check-bridge-tool-discovery.sh",
+      "backups/scripts/20260525-210809/scripts/check-integration-docs.sh",
+      "backups/scripts/20260525-210809/scripts/check-integration-smoke.sh",
+      "backups/scripts/20260525-210809/scripts/release-check.sh",
+      "docs/RUNTIME_CONTRACT.md",
+      "docs/clients.md"
+    ],
+    "stable_contracts": [],
+    "top_symbols": [
+      "Convention",
+      "ConventionExtractor",
+      "extract",
+      "ContextSelector",
+      "add",
+      "selected",
+      "Severity",
+      "Finding",
+      "file",
+      "line",
+      "format",
+      "parse_findings",
+      "format_summary",
+      "format_findings_text",
+      "severity_counts",
+      "has_blocking_findings",
+      "DriftFinding",
+      "DriftDetector",
+      "detect",
+      "format_report"
+    ]
+  },
+  "repo_signal_risks": [
+    {
+      "id": "RSK-001",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "review_engine/callgraph_builder.py",
+      "detail": "412 lines — consider splitting into focused modules.",
+      "structural": true
+    },
+    {
+      "id": "RSK-002",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "mq-mcp/server.py",
+      "detail": "3015 lines — consider splitting into focused modules.",
+      "structural": true
+    },
+    {
+      "id": "RSK-003",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "mq-mcp/bridge.py",
+      "detail": "519 lines — consider splitting into focused modules.",
+      "structural": true
+    }
+  ],
+  "repo_signal_status": "repo-signal packs merged: callgraph.v1, symbol_index.v1, repo_summary.v1, risk_map.v1"
 }

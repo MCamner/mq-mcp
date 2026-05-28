@@ -3010,6 +3010,114 @@ def review_repo(mode: str = "comment", max_files: int = 5) -> str:
     return header + "\n\n" + "\n\n".join(results)
 
 
+@mcp.tool()
+def export_symbol_index() -> str:
+    """Write the current callgraph symbol map to generated/symbols/symbol_index.json.
+
+    Exports the in-memory symbol index built by callgraph_builder to a
+    repo-signal-compatible file so downstream tools can consume it without
+    re-running the build.
+
+    Output format: {schema, repo_name, generated_at, symbols{file_path: [name]}}
+
+    Safety: Class C — writes to generated/symbols/symbol_index.json. Does not commit.
+    """
+    import sys as _sys
+    from datetime import datetime as _dt, timezone as _tz
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    cg_path = REPO_ROOT / "review_engine" / "context" / "callgraph.json"
+    if not cg_path.exists():
+        return "export_symbol_index failed: callgraph.json not found — run build_repo_context first."
+
+    try:
+        import json as _json
+        cg = _json.loads(cg_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return f"export_symbol_index failed: could not read callgraph.json: {exc}"
+
+    out_dir = REPO_ROOT / "generated" / "symbols"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "symbol_index.json"
+
+    payload = {
+        "schema": "mq-mcp-symbol-index.v1",
+        "repo_name": REPO_ROOT.name,
+        "generated_at": _dt.now(_tz.utc).isoformat(),
+        "symbols": cg.get("symbols", {}),
+    }
+    out_path.write_text(_json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    sym_count = sum(len(v) for v in payload["symbols"].values())
+    return f"export_symbol_index: wrote {sym_count} symbols across {len(payload['symbols'])} files → generated/symbols/symbol_index.json"
+
+
+@mcp.tool()
+def repo_signal_status() -> str:
+    """Report whether repo-signal export packs are present, their age, and merge status.
+
+    Checks .repo-signal/exports/ for the four symbolic intelligence packs written
+    by `repo-signal export` (callgraph.v1, symbol_index.v1, repo_summary.v1,
+    risk_map.v1). Reports schema version and age of each file found.
+
+    Run `repo-signal export` to generate or refresh packs.
+
+    Safety: Class A — read-only, no side effects.
+    """
+    import json as _json
+    from datetime import datetime as _dt, timezone as _tz
+
+    exports_dir = REPO_ROOT / ".repo-signal" / "exports"
+    if not exports_dir.is_dir():
+        return (
+            "repo_signal_status: .repo-signal/exports/ not found.\n"
+            "Run `repo-signal export` in the repo root to generate packs."
+        )
+
+    now = _dt.now(_tz.utc)
+    pack_files = {
+        "callgraph.json": "callgraph.v1",
+        "symbol_index.json": "symbol_index.v1",
+        "repo_summary.json": "repo_summary.v1",
+        "risk_map.json": "risk_map.v1",
+    }
+
+    lines = [f"repo_signal_status: {exports_dir.relative_to(REPO_ROOT)}"]
+    found_count = 0
+
+    for filename, expected_schema in pack_files.items():
+        fpath = exports_dir / filename
+        if not fpath.exists():
+            lines.append(f"  {filename:<25} NOT FOUND")
+            continue
+        mtime = _dt.fromtimestamp(fpath.stat().st_mtime, tz=_tz.utc)
+        age_min = int((now - mtime).total_seconds() / 60)
+        age_str = f"{age_min}m ago" if age_min < 120 else f"{age_min // 60}h ago"
+        try:
+            schema = _json.loads(fpath.read_text(encoding="utf-8")).get("schema", "?")
+        except Exception:
+            schema = "unreadable"
+        status = "OK" if schema == expected_schema else f"SCHEMA MISMATCH (got {schema!r})"
+        lines.append(f"  {filename:<25} [{schema}]  {age_str}  {status}")
+        if schema == expected_schema:
+            found_count += 1
+
+    cg_path = REPO_ROOT / "review_engine" / "context" / "callgraph.json"
+    if cg_path.exists():
+        try:
+            merged_status = _json.loads(cg_path.read_text(encoding="utf-8")).get(
+                "repo_signal_status", "not recorded"
+            )
+        except Exception:
+            merged_status = "unreadable"
+        lines.append(f"\nLast merge: {merged_status}")
+    else:
+        lines.append("\nMerge: callgraph.json not built yet — run build_repo_context first.")
+
+    lines.append(f"\n{found_count}/{len(pack_files)} packs valid.")
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]

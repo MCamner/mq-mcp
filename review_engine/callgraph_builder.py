@@ -236,68 +236,108 @@ class CallgraphBuilder:
         return result
 
     def _try_merge_repo_signal_packs(self, data: dict) -> str:
-        """Merge repo-signal intelligence packs into callgraph data if present.
+        """Merge repo-signal v1.1.0 symbolic intelligence packs into callgraph data.
 
-        Expected pack files in review_engine/context/:
-          repo_signal_callgraph.json — edges {from, to, import_names}
-          repo_signal_symbols.json  — {file_path: [symbol, ...]}
-          repo_signal_summary.json  — repo-level metadata blob
+        Expected location: .repo-signal/exports/ in repo root
+        (written by `repo-signal export` — repo-signal v1.1.0+)
+
+        Schemas consumed:
+          callgraph.v1      — edges {source, target, relation}, hub_files
+          symbol_index.v1   — flat symbols list {name, kind, file_path, is_public}
+          repo_summary.v1   — compact repo context blob
+          risk_map.v1       — structural risk signals list
 
         Returns a short status string for inclusion in build output.
-        When repo-signal starts writing packs, this hook activates automatically.
         """
-        pack_dir = self._out_dir
+        exports_dir = self._root / ".repo-signal" / "exports"
+        if not exports_dir.is_dir():
+            return "repo-signal packs: not found (run `repo-signal export` to generate)"
+
         found: list[str] = []
 
-        cg_pack = pack_dir / "repo_signal_callgraph.json"
-        if cg_pack.exists():
+        # callgraph.v1
+        cg_file = exports_dir / "callgraph.json"
+        if cg_file.exists():
             try:
-                pack = json.loads(cg_pack.read_text(encoding="utf-8"))
-                for edge in pack.get("edges", []):
-                    from_f = edge.get("from", "")
-                    to_f = edge.get("to", "")
-                    if not from_f or not to_f:
-                        continue
-                    data["imports"].setdefault(from_f, [])
-                    if to_f not in data["imports"][from_f]:
-                        data["imports"][from_f].append(to_f)
-                    data["importers"].setdefault(to_f, [])
-                    if from_f not in data["importers"][to_f]:
-                        data["importers"][to_f].append(from_f)
-                    data["edges"].append(edge)
-                found.append("callgraph")
+                pack = json.loads(cg_file.read_text(encoding="utf-8"))
+                if pack.get("schema") == "callgraph.v1":
+                    self._merge_callgraph_v1(pack, data)
+                    found.append("callgraph.v1")
             except Exception:
                 pass
 
-        sym_pack = pack_dir / "repo_signal_symbols.json"
-        if sym_pack.exists():
+        # symbol_index.v1
+        sym_file = exports_dir / "symbol_index.json"
+        if sym_file.exists():
             try:
-                pack = json.loads(sym_pack.read_text(encoding="utf-8"))
-                for file_path, syms in pack.get("symbols", {}).items():
-                    if file_path not in data["symbols"]:
-                        data["symbols"][file_path] = syms
-                    else:
-                        existing = set(data["symbols"][file_path])
-                        data["symbols"][file_path].extend(
-                            s for s in syms if s not in existing
-                        )
-                found.append("symbols")
+                pack = json.loads(sym_file.read_text(encoding="utf-8"))
+                if pack.get("schema") == "symbol_index.v1":
+                    self._merge_symbol_index_v1(pack, data)
+                    found.append("symbol_index.v1")
             except Exception:
                 pass
 
-        summary_pack = pack_dir / "repo_signal_summary.json"
-        if summary_pack.exists():
+        # repo_summary.v1
+        summary_file = exports_dir / "repo_summary.json"
+        if summary_file.exists():
             try:
-                data["repo_signal_summary"] = json.loads(
-                    summary_pack.read_text(encoding="utf-8")
-                )
-                found.append("summary")
+                pack = json.loads(summary_file.read_text(encoding="utf-8"))
+                if pack.get("schema") == "repo_summary.v1":
+                    data["repo_signal_summary"] = pack
+                    found.append("repo_summary.v1")
+            except Exception:
+                pass
+
+        # risk_map.v1
+        risk_file = exports_dir / "risk_map.json"
+        if risk_file.exists():
+            try:
+                pack = json.loads(risk_file.read_text(encoding="utf-8"))
+                if pack.get("schema") == "risk_map.v1":
+                    data["repo_signal_risks"] = pack.get("risks", [])
+                    found.append("risk_map.v1")
             except Exception:
                 pass
 
         if found:
             return f"repo-signal packs merged: {', '.join(found)}"
-        return "repo-signal packs: not available (repo-signal does not yet write packs to disk)"
+        return "repo-signal packs: exports directory present but no valid v1 schemas found"
+
+    def _merge_callgraph_v1(self, pack: dict, data: dict) -> None:
+        """Convert callgraph.v1 {source, target, relation} edges into internal format."""
+        for edge in pack.get("edges", []):
+            from_f = edge.get("source", "")
+            to_f = edge.get("target", "")
+            if not from_f or not to_f:
+                continue
+            data["imports"].setdefault(from_f, [])
+            if to_f not in data["imports"][from_f]:
+                data["imports"][from_f].append(to_f)
+            data["importers"].setdefault(to_f, [])
+            if from_f not in data["importers"][to_f]:
+                data["importers"][to_f].append(from_f)
+            # Normalize to internal {from, to, import_names} format
+            data["edges"].append({
+                "from": from_f,
+                "to": to_f,
+                "import_names": [],
+            })
+        # Refresh hub_files from updated importers
+        data["hub_files"] = sorted(
+            f for f, imp in data["importers"].items()
+            if len(imp) >= HUB_THRESHOLD
+        )
+
+    def _merge_symbol_index_v1(self, pack: dict, data: dict) -> None:
+        """Convert symbol_index.v1 flat list into internal {file_path: [name]} map."""
+        for sym in pack.get("symbols", []):
+            file_path = sym.get("file_path", "")
+            name = sym.get("name", "")
+            if not file_path or not name:
+                continue
+            data["symbols"].setdefault(file_path, [])
+            if name not in data["symbols"][file_path]:
+                data["symbols"][file_path].append(name)
 
     def format_summary(self, result: dict) -> str:
         n_files = result["file_count"]

@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.4.0",
-  "tool_count": 71,
+  "tool_count": 73,
   "tools": [
     {
       "name": "analyze_csv",
@@ -21,6 +21,30 @@
       "write": false,
       "subprocess": false,
       "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "bootstrap_semantic_memory",
+      "class": "C",
+      "description": "Ingest key mq-mcp docs into semantic memory for use as review context.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "build_repo_context",
+      "class": "A",
+      "description": "Rebuild the repo context artifacts used by the review engine.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": true,
+      "side_effects": [
+        "context-file-write"
+      ],
       "examples": []
     },
     {
@@ -46,6 +70,16 @@
       "examples": []
     },
     {
+      "name": "detect_architecture_drift",
+      "class": "A",
+      "description": "Detect drift between declared documentation and actual runtime state.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "edit_image",
       "class": "C",
       "description": "Redigerar en bild (resize, rotate, grayscale).",
@@ -54,6 +88,31 @@
       "subprocess": false,
       "side_effects": [
         "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "export_symbol_index",
+      "class": "C",
+      "description": "Write the current callgraph symbol map to generated/symbols/symbol_index.json.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "extract_coding_conventions",
+      "class": "C",
+      "description": "Extract generalizable coding conventions from the last review of a file",
+      "resolver": "none",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write",
+        "openai-api"
       ],
       "examples": []
     },
@@ -74,6 +133,16 @@
       "resolver": "none",
       "write": false,
       "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "get_architecture_decision",
+      "class": "A",
+      "description": "Return the full text of a specific architecture memory entry by ID.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
       "side_effects": [],
       "examples": []
     },
@@ -100,6 +169,16 @@
       "examples": []
     },
     {
+      "name": "get_last_review",
+      "class": "A",
+      "description": "Return the most recent review findings for a repo file.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "get_public_ip",
       "class": "B",
       "description": "Return the current public IP address.",
@@ -109,6 +188,16 @@
       "side_effects": [
         "network"
       ],
+      "examples": []
+    },
+    {
+      "name": "get_semantic_memory",
+      "class": "A",
+      "description": "Return the full content of a semantic memory item by exact key.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {
@@ -172,6 +261,26 @@
       "examples": []
     },
     {
+      "name": "list_architecture_decisions",
+      "class": "A",
+      "description": "List all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns).",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_architecture_docs",
+      "class": "A",
+      "description": "List all architecture documents with freshness status relative to server.py.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "list_local_repos",
       "class": "A",
       "description": "List all registered local repositories by name and path. Read-only.",
@@ -202,12 +311,42 @@
       "examples": []
     },
     {
+      "name": "list_review_contracts",
+      "class": "A",
+      "description": "List available review contracts and their modes.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_review_history",
+      "class": "A",
+      "description": "List all files that have review history and their last review summary.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "list_running_apps",
       "class": "B",
       "description": "List all visible macOS applications currently running.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_semantic_memory",
+      "class": "A",
+      "description": "List all items in semantic memory with key, tags, and content preview.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
       "side_effects": [],
       "examples": []
     },
@@ -354,6 +493,18 @@
       "examples": []
     },
     {
+      "name": "record_architecture_decision",
+      "class": "C",
+      "description": "Record a new architecture decision (ADR) in the architecture_memory/ store.",
+      "resolver": "resolve_repo_file",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
       "name": "repo_signal_analyze",
       "class": "B",
       "description": "Run repo-signal analyze on a local repository. Read-only.",
@@ -394,6 +545,78 @@
       "examples": []
     },
     {
+      "name": "repo_signal_status",
+      "class": "A",
+      "description": "Report whether repo-signal export packs are present, their age, and merge status.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "review_architecture_doc",
+      "class": "A",
+      "description": "Review an architecture document against current runtime state.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "review_diff",
+      "class": "A",
+      "description": "Review all files changed in the working tree or staging area.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "review_file",
+      "class": "A",
+      "description": "Run an AI review on a repo file using the configured review contract.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "review-memory-write",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "review_repo",
+      "class": "A",
+      "description": "Review the least-recently-reviewed Python files in the repo.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "review-memory-write",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "review_runtime_contract",
+      "class": "A",
+      "description": "Review docs/RUNTIME_CONTRACT.md against actual runtime state.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
       "name": "run_mqlaunch",
       "class": "D",
       "description": "Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal.",
@@ -425,6 +648,16 @@
       "resolver": "run_repo_command",
       "write": false,
       "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "search_semantic_memory",
+      "class": "A",
+      "description": "Search semantic memory by keywords across keys, tags, and content.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
       "side_effects": [],
       "examples": []
     },
@@ -502,6 +735,18 @@
       "examples": []
     },
     {
+      "name": "store_semantic_memory",
+      "class": "C",
+      "description": "Store or update a knowledge item in semantic memory.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
       "name": "take_screenshot",
       "class": "C",
       "description": "Take a screenshot and save it to a file.",
@@ -549,6 +794,16 @@
       "examples": []
     },
     {
+      "name": "validate_orchestration_contract",
+      "class": "A",
+      "description": "Verify that the current tool set satisfies the orchestration contract.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "validate_project",
       "class": "D",
       "description": "Run the local project validation script if it exists.",
@@ -558,221 +813,6 @@
       "side_effects": [
         "subprocess"
       ],
-      "examples": []
-    },
-    {
-      "name": "list_review_contracts",
-      "class": "A",
-      "description": "List available review contracts and their modes from reviews/contracts/.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "review_file",
-      "class": "A",
-      "description": "Run an AI review on a repo file using the configured review contract. Calls OpenAI API. Read-only on the repo.",
-      "resolver": "resolve_repo_file",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [
-        "external-api"
-      ],
-      "examples": []
-    },
-    {
-      "name": "build_repo_context",
-      "class": "D",
-      "description": "Rebuild architecture_map.json and file_summary_index.json for the review engine by running repo_context_builder.py.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": true,
-      "side_effects": [
-        "subprocess",
-        "writes-review-engine-context"
-      ],
-      "examples": []
-    },
-    {
-      "name": "list_review_history",
-      "class": "A",
-      "description": "List all files with review history and their last review summary from local memory.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "get_last_review",
-      "class": "A",
-      "description": "Return the most recent review findings for a repo file from local review memory.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "detect_architecture_drift",
-      "class": "A",
-      "description": "Detect drift between declared documentation and actual runtime state. Checks tool counts, contract coverage, safety doc coverage, and architecture map freshness.",
-      "resolver": "REPO_ROOT (AST + file reads)",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "review_diff",
-      "class": "A",
-      "description": "Review all git-changed files using the configured review mode. Gets changed paths from git diff, runs review_file on each. Capped at 10 files. Requires OPENAI_API_KEY.",
-      "resolver": "resolve_repo_file (per file)",
-      "write": false,
-      "subprocess": false,
-      "side_effects": ["openai_api_call", "review_memory_write"],
-      "examples": []
-    },
-    {
-      "name": "review_repo",
-      "class": "A",
-      "description": "Review the least-recently-reviewed Python files in the repo. Prioritizes files with no review history. Requires OPENAI_API_KEY.",
-      "resolver": "REPO_ROOT walk + resolve_repo_file",
-      "write": false,
-      "subprocess": false,
-      "side_effects": ["openai_api_call", "review_memory_write"],
-      "examples": []
-    },
-    {
-      "name": "review_runtime_contract",
-      "class": "A",
-      "description": "Verify docs/RUNTIME_CONTRACT.md claims against actual runtime state. Runs structural checks (path resolvers, no-auto-commit, _redacted_env) and an AI architecture pass that injects current tool count and safety class breakdown as context. Structural pass requires no API key.",
-      "resolver": "REPO_ROOT (reads docs/RUNTIME_CONTRACT.md, server.py, docs/TOOL_SAFETY.md)",
-      "write": false,
-      "subprocess": false,
-      "side_effects": ["openai_api_call"],
-      "examples": []
-    },
-    {
-      "name": "validate_orchestration_contract",
-      "class": "A",
-      "description": "Verify that the current tool set satisfies the orchestration contract. Checks that all profile recommended_tools are registered, profiles respect their declared max safety class, write:true tools are Class C, Class D tools have subprocess:true, and error return prefixes are consistent. No API key required.",
-      "resolver": "REPO_ROOT (reads docs/ORCHESTRATION_CONTRACT.md, profiles/*.json, docs/tool_contracts.json, mq-mcp/server.py)",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "list_architecture_docs",
-      "class": "A",
-      "description": "List all .md files in docs/architecture/ with size, last-modified timestamp, and freshness status relative to server.py. Read-only. No API key required.",
-      "resolver": "REPO_ROOT/docs/architecture/",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "review_architecture_doc",
-      "class": "A",
-      "description": "Apply the architecture review contract to a named document in docs/architecture/, injecting current tool count, safety class breakdown, and server.py last-modified as context so the model can detect stale counts, incorrect classifications, and outdated claims. Requires OPENAI_API_KEY.",
-      "resolver": "REPO_ROOT/docs/architecture/ (resolves short name to full path)",
-      "write": false,
-      "subprocess": false,
-      "side_effects": ["openai_api_call"],
-      "examples": []
-    },
-    {
-      "name": "list_architecture_decisions",
-      "class": "A",
-      "description": "List all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns) with ID, status, category, and title. Read-only.",
-      "resolver": "REPO_ROOT/architecture_memory/",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "get_architecture_decision",
-      "class": "A",
-      "description": "Return the full text of a specific architecture memory entry by ID (e.g. ADR-001, BND-001, PHI-001, REJ-001). Case-insensitive. Read-only.",
-      "resolver": "REPO_ROOT/architecture_memory/",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "record_architecture_decision",
-      "class": "C",
-      "description": "Record a new architecture decision (ADR) in architecture_memory/. Writes a Markdown file with YAML frontmatter. Does not commit. Requires explicit user approval.",
-      "resolver": "REPO_ROOT/architecture_memory/",
-      "write": true,
-      "subprocess": false,
-      "side_effects": ["file-write"],
-      "examples": []
-    },
-    {
-      "name": "extract_coding_conventions",
-      "class": "C",
-      "description": "Extract generalizable coding conventions from the last review of a file and persist them into architecture_memory/decisions/ as convention entries. Conventions are injected into future reviews of matching files. Requires OPENAI_API_KEY.",
-      "resolver": "REPO_ROOT/architecture_memory/ + review_engine/memory/",
-      "write": true,
-      "subprocess": false,
-      "side_effects": ["openai_api_call", "file-write"],
-      "examples": []
-    },
-    {
-      "name": "store_semantic_memory",
-      "class": "C",
-      "description": "Store or update a knowledge item in semantic memory (semantic_memory/store.json). Items are injected into review_file context at priority 0 when relevant to the file being reviewed.",
-      "resolver": "REPO_ROOT/semantic_memory/store.json",
-      "write": true,
-      "subprocess": false,
-      "side_effects": ["file-write"],
-      "examples": []
-    },
-    {
-      "name": "search_semantic_memory",
-      "class": "A",
-      "description": "Keyword search across semantic memory keys, tags, and content. Returns ranked matches with previews.",
-      "resolver": "REPO_ROOT/semantic_memory/store.json",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "get_semantic_memory",
-      "class": "A",
-      "description": "Return the full content of a semantic memory item by exact key.",
-      "resolver": "REPO_ROOT/semantic_memory/store.json",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "list_semantic_memory",
-      "class": "A",
-      "description": "List all items in semantic memory sorted by most recently updated, with key, tags, and content preview.",
-      "resolver": "REPO_ROOT/semantic_memory/store.json",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "bootstrap_semantic_memory",
-      "class": "C",
-      "description": "Ingest key mq-mcp docs (README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md) into semantic memory. Idempotent — skips unchanged docs.",
-      "resolver": "REPO_ROOT/semantic_memory/store.json + REPO_ROOT docs",
-      "write": true,
-      "subprocess": false,
-      "side_effects": ["file-write"],
       "examples": []
     }
   ]

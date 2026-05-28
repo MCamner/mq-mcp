@@ -48,6 +48,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `search_semantic_memory` | Search semantic memory by keywords | Write, modify memory store |
 | `get_semantic_memory` | Return full content of a semantic memory item by key | Write, modify memory store |
 | `list_semantic_memory` | List all semantic memory items with previews | Write, modify memory store |
+| `repo_signal_status` | Report whether repo-signal export packs are present and merged | Write, modify packs |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -93,6 +94,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `extract_coding_conventions` | Extract conventions from last review and persist to architecture_memory/ | Write outside repo, commit; requires OPENAI_API_KEY |
 | `store_semantic_memory` | Store or update a knowledge item in semantic_memory/store.json | Write outside repo, commit |
 | `bootstrap_semantic_memory` | Ingest key mq-mcp docs into semantic memory | Write outside repo, commit |
+| `export_symbol_index` | Write callgraph symbol map to generated/symbols/symbol_index.json | Write outside repo, commit |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -208,3 +210,5 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `list_semantic_memory` | A | REPO_ROOT/semantic_memory/store.json | No | No |
 | `store_semantic_memory` | C | REPO_ROOT/semantic_memory/store.json | Yes | No |
 | `bootstrap_semantic_memory` | C | REPO_ROOT/semantic_memory/store.json + docs | Yes | No |
+| `export_symbol_index` | C | REPO_ROOT/generated/symbols/symbol_index.json | Yes | No |
+| `repo_signal_status` | A | REPO_ROOT/.repo-signal/exports/ (read-only) | No | No |

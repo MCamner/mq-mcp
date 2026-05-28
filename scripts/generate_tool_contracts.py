@@ -73,6 +73,37 @@ TOOL_META: dict[str, dict] = {
     "speak_text":             {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["audio"]},
     "toggle_dark_mode":       {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["system"]},
     "validate_project":       {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+
+    # Review engine tools (v1.1.0–v1.4.0)
+    "review_file":            {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
+    "review_diff":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": ["openai-api"]},
+    "review_repo":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
+    "get_last_review":        {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": []},
+    "list_review_history":    {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
+    "list_review_contracts":  {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
+    "build_repo_context":     {"class": "A", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["context-file-write"]},
+    "detect_architecture_drift": {"class": "A", "resolver": "none",                     "write": False, "subprocess": False, "side_effects": []},
+    "list_architecture_docs": {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
+    "review_architecture_doc": {"class": "A", "resolver": "resolve_repo_file",          "write": False, "subprocess": False, "side_effects": ["openai-api"]},
+    "review_runtime_contract": {"class": "A", "resolver": "none",                       "write": False, "subprocess": False, "side_effects": ["openai-api"]},
+    "validate_orchestration_contract": {"class": "A", "resolver": "none",               "write": False, "subprocess": False, "side_effects": []},
+
+    # Architecture memory tools (v1.2.0)
+    "list_architecture_decisions": {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "get_architecture_decision":   {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "record_architecture_decision": {"class": "C", "resolver": "resolve_repo_file",     "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "extract_coding_conventions":  {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write", "openai-api"]},
+
+    # Semantic memory tools (v1.4.0)
+    "store_semantic_memory":       {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "search_semantic_memory":      {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "get_semantic_memory":         {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "list_semantic_memory":        {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "bootstrap_semantic_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+
+    # Generated artifact tools (v1.6.0)
+    "export_symbol_index":         {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "repo_signal_status":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
 }
 
 
