@@ -143,7 +143,17 @@
       "Bash(python -m mypy --version)",
       "Bash(python -c \"import mypy; print\\(mypy.__version__\\)\")",
       "Bash(mq-mcp/.venv/bin/python -m mypy --version)",
-      "Bash(.venv/bin/python -m mypy --version)"
+      "Bash(.venv/bin/python -m mypy --version)",
+      "Bash(python3 -m json.tool /Users/mansys/mq-mcp/review_engine/context/architecture_map.json)",
+      "Bash(sed -i '' 's/v1.7.0 — risk analysis layer \\(done\\)/v1.8.0 — v1.6.0 completion \\(generated artifacts\\) + v1.7.0 risk layer \\(done\\)/' /Users/mansys/mq-mcp/ROADMAP.md)",
+      "Bash(sed -i '' 's/Next:    v1.8.0 — TBD/Next:    v1.9.0 — TBD/' /Users/mansys/mq-mcp/ROADMAP.md)",
+      "Bash(sed -i '' 's/\"version\": \"1\\\\.7\\\\.0\"/\"version\": \"1.8.0\"/' docs/stability.json)",
+      "Bash(sed -i '' 's/\"1\\\\.7\\\\.0\"/\"1.8.0\"/g' tests/test_server_observability.py tests/test_cli.py)",
+      "Bash(sed -i '' 's/75 tools/76 tools/g; s/75 documented/76 documented/g; s/classifies all 75/classifies all 76/g; s/all 75 MCP/all 76 MCP/g; s/exposes 75 tools/exposes 76 tools/g' README.md)",
+      "Bash(sed -i '' 's/\"1\\\\.8\\\\.0\"/\"1.9.0\"/g' tests/test_server_observability.py tests/test_cli.py)",
+      "Bash(sed -i '' 's/tool_count.*== 75/tool_count == 76/' tests/test_server_observability.py tests/test_cli.py)",
+      "Bash(sed -i '' 's/\"version\": \"1\\\\.8\\\\.0\"/\"version\": \"1.9.0\"/' docs/stability.json)",
+      "Bash(awk 'NR>=2963 && NR<=3000' mq-mcp/server.py)"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"

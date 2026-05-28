@@ -23,8 +23,8 @@
   {
     "path": ".claude/settings.json",
     "role": "unknown",
-    "lines": 145,
-    "size_bytes": 12294
+    "lines": 154,
+    "size_bytes": 13165
   },
   {
     "path": ".claude/settings.local.json",
@@ -97,8 +97,8 @@
   {
     "path": "CHANGELOG.md",
     "role": "release changelog",
-    "lines": 316,
-    "size_bytes": 15858,
+    "lines": 345,
+    "size_bytes": 17549,
     "title": "Changelog"
   },
   {
@@ -112,7 +112,7 @@
     "path": "ROADMAP.md",
     "role": "project roadmap",
     "lines": 1068,
-    "size_bytes": 38107,
+    "size_bytes": 38040,
     "title": "mq-mcp Roadmap"
   },
   {
@@ -223,15 +223,15 @@
   {
     "path": "docs/ORCHESTRATION_CONTRACT.md",
     "role": "documentation",
-    "lines": 249,
-    "size_bytes": 9706,
+    "lines": 255,
+    "size_bytes": 9827,
     "title": "mq-mcp Orchestration Contract"
   },
   {
     "path": "docs/RUNTIME_CONTRACT.md",
     "role": "documentation",
-    "lines": 315,
-    "size_bytes": 11115,
+    "lines": 321,
+    "size_bytes": 11479,
     "title": "mq-mcp Runtime Contract"
   },
   {
@@ -530,8 +530,8 @@
   {
     "path": "mq-mcp/server.py",
     "role": "MCP server — tool registry and HTTP endpoints",
-    "lines": 3372,
-    "size_bytes": 123744,
+    "lines": 3501,
+    "size_bytes": 129625,
     "module_docstring": null,
     "public_functions": [
       "jsonable",
@@ -726,20 +726,20 @@
   {
     "path": "review_engine/context/architecture_map.json",
     "role": "review engine — context building and routing",
-    "lines": 171,
-    "size_bytes": 9959
+    "lines": 173,
+    "size_bytes": 10143
   },
   {
     "path": "review_engine/context/callgraph.json",
     "role": "review engine — context building and routing",
-    "lines": 850,
-    "size_bytes": 21942
+    "lines": 853,
+    "size_bytes": 22023
   },
   {
     "path": "review_engine/context/file_summary_index.json",
     "role": "review engine — context building and routing",
-    "lines": 1399,
-    "size_bytes": 43107
+    "lines": 1417,
+    "size_bytes": 43644
   },
   {
     "path": "review_engine/context_selector.py",
@@ -775,8 +775,8 @@
   {
     "path": "review_engine/drift_detector.py",
     "role": "review engine — context building and routing",
-    "lines": 284,
-    "size_bytes": 11443,
+    "lines": 303,
+    "size_bytes": 12429,
     "module_docstring": "Drift Detector — mq-mcp review engine, Phase 5.\n\nDetects architecture drift between declared documentation and actual runtime state.\n\nChecks:\n  1. Tool count — server.py actual count vs README, TOOL_SAFETY.md summary table,\n     and tool_contracts.json tool_count field.\n  2. Contract coverage — all @mcp.tool() functions present in tool_contracts.json.\n  3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.\n  4. Phantom contracts — tools in tool_contracts.json not found in server.py.\n  5. Architecture map freshness — architecture_map.json older than server.py.\n  6. RUNTIME_CONTRACT.md existence — RISK if the identity contract is missing.\n  7. RUNTIME_CONTRACT.md freshness — NOTE/WARNING if server.py is newer.\n  8. Reference document existence — WARNING for each doc listed in the reference\n     table of RUNTIME_CONTRACT.md that is missing on disk.\n\nUsage:\n  from review_engine.drift_detector import DriftDetector\n  detector = DriftDetector()\n  findings = detector.detect()\n  print(detector.format_report(findings))",
     "public_functions": [],
     "public_classes": [
@@ -788,10 +788,28 @@
     ]
   },
   {
+    "path": "review_engine/generated_artifacts.py",
+    "role": "review engine — context building and routing",
+    "lines": 228,
+    "size_bytes": 8160,
+    "module_docstring": "Generated Artifacts Builder — mq-mcp review engine, v1.6.0\n\nWrites two rich JSON files to generated/architecture/ when build_repo_context runs:\n\n  architecture_map.json  — schema architecture_map.v1\n                           file path → {role, public_symbols, last_review_timestamp, hub_score}\n\n  ownership_map.json     — schema ownership_map.v1\n                           file path → {author, change_frequency, last_modified}\n\nBoth files are excluded from version control by generated/.gitignore.\nCallers should not assume these files exist without running build_repo_context first.\n\nUsage:\n  from review_engine.generated_artifacts import build_rich_architecture_map, build_ownership_map\n  build_rich_architecture_map(repo_root, out_dir)\n  build_ownership_map(repo_root, out_dir)",
+    "public_functions": [
+      "build_rich_architecture_map",
+      "build_ownership_map"
+    ],
+    "public_classes": [],
+    "constants": [
+      "REPO_ROOT",
+      "ARCHITECTURE_MAP_SCHEMA",
+      "OWNERSHIP_MAP_SCHEMA",
+      "_GIT_LOG_MAX_COMMITS"
+    ]
+  },
+  {
     "path": "review_engine/memory/review_history.json",
     "role": "review engine — context building and routing",
-    "lines": 110,
-    "size_bytes": 25499
+    "lines": 188,
+    "size_bytes": 48224
   },
   {
     "path": "review_engine/multi_pass_reviewer.py",
@@ -849,8 +867,8 @@
   {
     "path": "review_engine/review_router.py",
     "role": "review engine — context building and routing",
-    "lines": 102,
-    "size_bytes": 3323,
+    "lines": 120,
+    "size_bytes": 4282,
     "module_docstring": "Review Router — mq-mcp review engine, Phase 2.2\n\nRoutes a file to the correct review skill based on extension and path.\nReturns the skill content to inject into a review prompt.\n\nUsage:\n  from review_engine.review_router import route_file\n  skill_text = route_file(\"mq-mcp/server.py\")",
     "public_functions": [
       "route_file_for_mode",
@@ -964,11 +982,25 @@
     "title": "Review Skill: Python — Comment Review"
   },
   {
+    "path": "reviews/skills/review-engine.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 36,
+    "size_bytes": 1564,
+    "title": "Skill: Review Engine Maintainer"
+  },
+  {
     "path": "reviews/skills/security-review.md",
     "role": "review skill — file-type specific review guidance",
     "lines": 69,
     "size_bytes": 2586,
     "title": "Skill: Security Pattern Recognition"
+  },
+  {
+    "path": "reviews/skills/semantic-memory.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 25,
+    "size_bytes": 863,
+    "title": "Skill: Semantic Memory Maintainer"
   },
   {
     "path": "reviews/skills/shell-review.md",
@@ -1388,8 +1420,8 @@
   {
     "path": "tests/test_server_safety.py",
     "role": "test file",
-    "lines": 94,
-    "size_bytes": 2915,
+    "lines": 226,
+    "size_bytes": 7907,
     "module_docstring": null,
     "public_functions": [
       "server",
@@ -1406,7 +1438,26 @@
       "test_read_repo_file_reads_readme",
       "test_read_repo_file_missing_file",
       "test_list_repo_files_includes_readme",
-      "test_list_repo_files_excludes_git_dir"
+      "test_list_repo_files_excludes_git_dir",
+      "test_detect_security_patterns_flags_os_system",
+      "test_detect_security_patterns_flags_eval",
+      "test_detect_security_patterns_flags_shell_true",
+      "test_detect_security_patterns_flags_hardcoded_token",
+      "test_detect_security_patterns_clean_file_returns_empty",
+      "test_detect_security_patterns_shell_eval",
+      "test_detect_security_patterns_curl_pipe_bash",
+      "test_detect_security_patterns_returns_prescan_header",
+      "test_detect_security_patterns_one_hit_per_line",
+      "test_detect_type_issues_clean_file_returns_empty",
+      "test_detect_type_issues_missing_return",
+      "test_detect_type_issues_missing_param",
+      "test_detect_type_issues_skips_private",
+      "test_detect_type_issues_skips_self_cls",
+      "test_detect_type_issues_non_python_returns_empty",
+      "test_detect_type_issues_prescan_header",
+      "test_router_prefix_review_engine",
+      "test_router_prefix_semantic_memory",
+      "test_router_prefix_does_not_shadow_server_py"
     ],
     "public_classes": [],
     "constants": [
