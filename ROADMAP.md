@@ -832,6 +832,7 @@ semantic_memory/      — long-term reusable knowledge (semantic)
 ```
 
 **What semantic memory stores:**
+
 - Summaries of README, ROADMAP, and key architecture docs
 - Contracts and review examples (indexed, not raw text)
 - Extracted conventions (already done via extract_coding_conventions)
@@ -839,6 +840,7 @@ semantic_memory/      — long-term reusable knowledge (semantic)
 - Cross-repo facts (e.g. "repo-signal outputs callgraph.json to disk")
 
 **What it does NOT store:**
+
 - Entire raw repos
 - Generated build artifacts
 - Large binaries or noisy logs
