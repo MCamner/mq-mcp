@@ -9,6 +9,7 @@ CLI_PATH = ROOT / "mq-mcp" / "main.py"
 
 def load_cli():
     spec = importlib.util.spec_from_file_location("mq_mcp_cli", CLI_PATH)
+    assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
