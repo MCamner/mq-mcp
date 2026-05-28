@@ -104,6 +104,10 @@ TOOL_META: dict[str, dict] = {
     # Generated artifact tools (v1.6.0)
     "export_symbol_index":         {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "repo_signal_status":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+
+    # Risk analysis tools (v1.7.0)
+    "risk_review_file":            {"class": "A", "resolver": "resolve_repo_file",      "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
+    "risk_review_diff":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["review-memory-write", "openai-api"]},
 }
 
 

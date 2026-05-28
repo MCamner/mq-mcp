@@ -43,6 +43,8 @@ Review engine tools:
 - bootstrap_semantic_memory: ingests README, ROADMAP, and key contract docs into semantic memory (Class C)
 - export_symbol_index: writes the callgraph symbol map to generated/symbols/symbol_index.json (Class C)
 - repo_signal_status: reports whether repo-signal export packs are present, their age, and merge status (Class A)
+- risk_review_file: targeted risk pass (security/risk/architecture mode) with grep pre-scan + AI review (Class A)
+- risk_review_diff: risk pass over all changed files in working tree or staging area (Class A)
 
 Important safety distinction:
 Read-only tools should be preferred by default. Write-capable tools such as update_repo_file and edit_image require extra care and explicit user approval.

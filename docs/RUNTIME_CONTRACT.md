@@ -142,15 +142,21 @@ Available contracts:
 | `comment` | `comment-review.md` | NOTE, SUGGESTION, WARNING, MISSING |
 | `architecture` | `architecture-review.md` | NOTE, SUGGESTION, WARNING, ARCHITECTURE, RISK |
 | `security` | `security-review.md` | NOTE, WARNING, RISK |
+| `risk` | `risk-review.md` | NOTE, WARNING, RISK, CRITICAL |
+
+`risk_review_file` and `risk_review_diff` also run a grep-based pre-scan
+(`_detect_security_patterns`) before the API call and inject the results as
+context. The security skill (`reviews/skills/security-review.md`) is injected
+for security and risk modes regardless of file type.
 
 ### Severity ordering
 
 ```text
-RISK > ARCHITECTURE > WARNING > MISSING > SUGGESTION > NOTE
+CRITICAL > RISK > ARCHITECTURE > WARNING > MISSING > SUGGESTION > NOTE
 ```
 
 Findings are sorted by severity then line number. Blocking findings
-(WARNING, RISK, ARCHITECTURE) are identified by `has_blocking_findings()`.
+(CRITICAL, WARNING, RISK, ARCHITECTURE) are identified by `has_blocking_findings()`.
 
 ### Review passes (deep mode)
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.7.0 - 2026-05-28
+
+- Added `CRITICAL` severity level to `review_engine/severity_engine.py` —
+  placed above `RISK` in `SEVERITY_ORDER`; `has_blocking_findings` updated to
+  include CRITICAL.
+- Added `reviews/contracts/risk-review.md` — defines the `risk` review mode:
+  covers approval gate gaps, undeclared side effects, contract staleness, and
+  cross-repo boundary drift. Severity labels: CRITICAL, RISK, WARNING, NOTE.
+- Added `reviews/skills/security-review.md` — file-type-aware security pattern
+  guide injected into security and risk mode prompts. Covers Python, shell,
+  JSON, and MCP tool definition patterns.
+- Added `_detect_security_patterns()` internal helper — grep-based pre-scan
+  for 11 Python and 3 shell dangerous patterns (os.system, eval, exec,
+  shell=True, pickle, hardcoded secrets, curl|bash, etc.). Returns
+  `[SEVERITY] file:line\ndescription` blocks, no API call.
+- Added `route_file_for_mode()` to `review_engine/review_router.py` —
+  overrides skill selection to inject `security-review.md` for security and
+  risk modes, regardless of file type.
+- Added `risk_review_file` MCP tool (Class A) — targeted risk pass with
+  declared mode (`security`, `risk`, `architecture`). Runs pre-scan, injects
+  results into model context, calls API under the matching contract, saves to
+  review memory.
+- Added `risk_review_diff` MCP tool (Class A) — risk pass over all changed
+  files in working tree or staging area, delegates per file to `risk_review_file`.
+- Updated `scripts/generate_tool_contracts.py`: added metadata for
+  `risk_review_file` and `risk_review_diff`.
+- Regenerated `docs/tool_contracts.json` — 75 tools.
+- Tool count: 73 → 75.
+
 ## 1.6.0 - 2026-05-28
 
 - Activated `_try_merge_repo_signal_packs()` in `review_engine/callgraph_builder.py`:

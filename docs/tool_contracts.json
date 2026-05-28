@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.6.0",
-  "tool_count": 73,
+  "tool_count": 75,
   "tools": [
     {
       "name": "analyze_csv",
@@ -612,6 +612,32 @@
       "write": false,
       "subprocess": false,
       "side_effects": [
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "risk_review_diff",
+      "class": "A",
+      "description": "Risk pass over all files changed in the working tree or staging area.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "review-memory-write",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "risk_review_file",
+      "class": "A",
+      "description": "Targeted risk pass on a single file with a declared risk mode.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "review-memory-write",
         "openai-api"
       ],
       "examples": []

@@ -23,9 +23,12 @@ class Severity(str, Enum):
     # Architecture-review severities (Phase 2 extension)
     ARCHITECTURE = "ARCHITECTURE"
     RISK = "RISK"
+    # Risk-analysis severity (v1.5.0) — immediate exploitable vulnerability
+    CRITICAL = "CRITICAL"
 
 
 SEVERITY_ORDER = [
+    Severity.CRITICAL,
     Severity.RISK,
     Severity.ARCHITECTURE,
     Severity.WARNING,
@@ -139,8 +142,8 @@ def severity_counts(findings: list[Finding]) -> dict[str, int]:
 
 
 def has_blocking_findings(findings: list[Finding]) -> bool:
-    """Return True if any finding is WARNING, RISK, or ARCHITECTURE severity."""
-    blocking = {Severity.WARNING, Severity.RISK, Severity.ARCHITECTURE}
+    """Return True if any finding is CRITICAL, RISK, ARCHITECTURE, or WARNING severity."""
+    blocking = {Severity.CRITICAL, Severity.RISK, Severity.ARCHITECTURE, Severity.WARNING}
     return any(f.severity in blocking for f in findings)
 
 

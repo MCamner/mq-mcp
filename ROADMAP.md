@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.6.0 — generated artifacts + repo-signal merge (done)
-Next:    v1.5.0 — Risk analysis layer (deferred; will follow v1.6.0)
+v1.7.0 — risk analysis layer (done)
+Next:    v1.8.0 — TBD
 ```
 
 Completed foundation:
@@ -161,7 +161,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.2.0  | Architecture memory                         | Done          |
 | v1.3.0  | Orchestration boundary formalization        | Done          |
 | v1.4.0  | Semantic memory layer                       | Done          |
-| v1.5.0  | Risk analysis layer                         | Planned       |
+| v1.5.0  | Risk analysis layer (shipped as v1.7.0)      | Done          |
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 
 ---
@@ -851,20 +851,20 @@ semantic_memory/      — long-term reusable knowledge (semantic)
 
 Items:
 
-- [ ] `semantic_memory/` directory + `SemanticMemory` class with
+- [x] `semantic_memory/` directory + `SemanticMemory` class with
   `store(key, content, tags)`, `search(query, max=5)`, `get(key)`, `list()`
-- [ ] `store_semantic_memory` MCP tool — writes a named knowledge item with
+- [x] `store_semantic_memory` MCP tool — writes a named knowledge item with
   tags for retrieval (Class C, writes to `semantic_memory/`)
-- [ ] `search_semantic_memory` MCP tool — keyword/tag search over stored items,
+- [x] `search_semantic_memory` MCP tool — keyword/tag search over stored items,
   returns ranked matches (Class A)
-- [ ] `get_semantic_memory` MCP tool — retrieves a specific item by key (Class A)
-- [ ] Bootstrap ingestion: index README, ROADMAP, RUNTIME_CONTRACT.md,
+- [x] `get_semantic_memory` MCP tool — retrieves a specific item by key (Class A)
+- [x] Bootstrap ingestion: index README, ROADMAP, RUNTIME_CONTRACT.md,
   ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md into semantic_memory at startup
   (lazy, on first search)
-- [ ] Integration with `review_file` context: semantic memory injected at
+- [x] Integration with `review_file` context: semantic memory injected at
   priority 0 (above ADRs) when a match is found for the file being reviewed
-- [ ] `list_semantic_memory` MCP tool — inventory of stored items (Class A)
-- [ ] Docs: update ORCHESTRATION_CONTRACT.md §3 declared side effects table
+- [x] `list_semantic_memory` MCP tool — inventory of stored items (Class A)
+- [x] Docs: update ORCHESTRATION_CONTRACT.md §3 declared side effects table
 
 ---
 
@@ -890,21 +890,21 @@ architecture — boundary violations, coupling, responsibility drift,
 
 Items:
 
-- [ ] `risk_review_file` MCP tool — targeted risk pass on a single file with
+- [x] `risk_review_file` MCP tool — targeted risk pass on a single file with
   declared mode (`security`, `risk`, `architecture`). Returns findings using
   the fixed severity vocabulary (CRITICAL/RISK/WARNING). Class A.
-- [ ] `risk_review_diff` MCP tool — risk pass over current git diff. Same
+- [x] `risk_review_diff` MCP tool — risk pass over current git diff. Same
   modes. Class A.
-- [ ] Risk contract in `reviews/contracts/risk-review.md` — defines what the
+- [x] Risk contract in `reviews/contracts/risk-review.md` — defines what the
   security/risk/architecture passes look for and how to format findings
-- [ ] Security skill in `reviews/skills/security-review.md` — file-type-aware
+- [x] Security skill in `reviews/skills/security-review.md` — file-type-aware
   security patterns (Python subprocess, shell, env, path)
-- [ ] Severity engine update: add `CRITICAL` level above `RISK` for findings
+- [x] Severity engine update: add `CRITICAL` level above `RISK` for findings
   that represent immediate exploitable vulnerabilities
-- [ ] `detect_security_patterns` helper — grep-based pre-scan for known
+- [x] `detect_security_patterns` helper — grep-based pre-scan for known
   dangerous patterns (`os.system`, `eval`, `exec`, `shell=True`, hardcoded
   secrets) before API call; injects findings as context
-- [ ] Integration: `review_file(mode="risk")` routes through the risk contract
+- [x] Integration: `review_file(mode="risk")` routes through the risk contract
   rather than the standard comment contract
 
 ---
@@ -937,7 +937,7 @@ generated/
 
 Items:
 
-- [ ] `generated/` directory with `.gitkeep` and `generated/.gitignore`
+- [x] `generated/` directory with `.gitkeep` and `generated/.gitignore`
   (exclude snapshots from version control)
 - [ ] `build_repo_context` extended: write `architecture_map.json` to
   `generated/architecture/` in addition to `callgraph.json`
@@ -945,13 +945,13 @@ Items:
   symbols, last review timestamp, hub score
 - [ ] `ownership_map.json` schema: maps file path → author (from git blame),
   change frequency, last modified
-- [ ] `export_symbol_index` MCP tool — writes current callgraph symbols to
+- [x] `export_symbol_index` MCP tool — writes current callgraph symbols to
   `generated/symbols/symbol_index.json` in a format repo-signal can consume
   (Class C)
-- [ ] Activate `_try_merge_repo_signal_packs()`: once repo-signal publishes
+- [x] Activate `_try_merge_repo_signal_packs()`: once repo-signal publishes
   its packs, the merge hook auto-activates; document the expected file paths
   and schema in `docs/ORCHESTRATION_CONTRACT.md §5`
-- [ ] `repo_signal_status` MCP tool — reports whether repo-signal packs are
+- [x] `repo_signal_status` MCP tool — reports whether repo-signal packs are
   present, their age, and whether they have been merged into the callgraph
   (Class A)
 

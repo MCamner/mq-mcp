@@ -1546,6 +1546,53 @@ def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: in
     return "\n".join(lines)
 
 
+# ── security pre-scan ─────────────────────────────────────────────────────────
+
+_SECURITY_PATTERNS: list[tuple[str, str, str]] = [
+    # (regex_pattern, severity, description)
+    (r"os\.system\s*\(",              "RISK",    "os.system() — shell injection if argument contains user input"),
+    (r"subprocess\.[a-z_]+\(.*shell\s*=\s*True", "RISK", "subprocess with shell=True — shell metacharacters in any arg become injection"),
+    (r"\beval\s*\(",                  "RISK",    "eval() — arbitrary code execution if argument is user-controlled"),
+    (r"\bexec\s*\(",                  "RISK",    "exec() — arbitrary code execution if argument is user-controlled"),
+    (r"os\.popen\s*\(",               "RISK",    "os.popen() — shell execution, same risk as os.system"),
+    (r"pickle\.loads?\s*\(",          "WARNING", "pickle.load(s)() — arbitrary code execution on untrusted data"),
+    (r"yaml\.load\s*\([^)]*(?<!SafeLoader)\)", "WARNING", "yaml.load() without SafeLoader — unsafe deserialization"),
+    (r'api_key\s*=\s*["\'][^"\']{8,}', "WARNING", "Possible hardcoded API key literal"),
+    (r'password\s*=\s*["\'][^"\']{4,}', "WARNING", "Possible hardcoded password literal"),
+    (r'token\s*=\s*["\'][^"\']{8,}',  "WARNING", "Possible hardcoded token literal"),
+    (r"__import__\s*\(",              "WARNING", "Dynamic import — code execution if module name is user-controlled"),
+]
+
+_SHELL_PATTERNS: list[tuple[str, str, str]] = [
+    (r'\beval\s+"?\$',                "RISK",    "eval with variable expansion — arbitrary code execution"),
+    (r"curl\s+.*\|\s*bash",           "CRITICAL", "curl | bash — remote code execution"),
+    (r"rm\s+-rf\s+\$",               "WARNING", "rm -rf with unquoted variable — potential destructive expansion"),
+]
+
+
+def _detect_security_patterns(file_path: str, content: str) -> str:
+    """Grep-based pre-scan for known dangerous patterns. Returns [SEVERITY] findings text."""
+    import re as _re
+
+    suffix = Path(file_path).suffix.lower()
+    is_shell = suffix in {".sh", ".bash", ".zsh"} or content.startswith("#!/")
+    patterns = _SHELL_PATTERNS if is_shell else _SECURITY_PATTERNS
+
+    hits: list[str] = []
+    lines = content.splitlines()
+    for lineno, line in enumerate(lines, start=1):
+        for pattern, severity, description in patterns:
+            if _re.search(pattern, line):
+                hits.append(f"[{severity}] {file_path}:{lineno}\n{description}")
+                break  # one hit per line max
+
+    if not hits:
+        return ""
+    return "## Pre-scan findings (grep-based, no API)\n\n" + "\n\n".join(hits)
+
+
+# ── review_file ───────────────────────────────────────────────────────────────
+
 @mcp.tool()
 def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -> str:
     """Run an AI review on a repo file using the configured review contract.
@@ -2776,6 +2823,207 @@ def review_diff(mode: str = "comment", deep: bool = False) -> str:
         results.append(f"--- {path} ---\n{output}")
 
     header = f"review_diff: {len(files)} file(s) reviewed  mode={mode}  deep={deep}"
+    if truncated:
+        header += f"  [capped at {MAX_FILES}]"
+    return header + "\n\n" + "\n\n".join(results)
+
+
+@mcp.tool()
+def risk_review_file(relative_path: str, mode: str = "security") -> str:
+    """Targeted risk pass on a single file with a declared risk mode.
+
+    Runs a grep-based pre-scan (detect_security_patterns) then an AI review
+    under the matching contract. The pre-scan findings are injected into the
+    model context before the file content so the model can cross-reference.
+
+    Args:
+        relative_path: Repo-relative path to the file.
+        mode: One of 'security', 'risk', 'architecture'. Defaults to 'security'.
+              security    — subprocess safety, injection, secret exposure, path traversal
+              risk        — missing approval gates, undeclared side effects, stale contracts
+              architecture — boundary violations, coupling, responsibility drift
+
+    Returns:
+        Structured findings using CRITICAL/RISK/WARNING/NOTE severity labels.
+
+    Safety: Class A — read-only, no side effects beyond review memory write.
+    """
+    import openai as _openai
+    import sys as _sys
+
+    _VALID_RISK_MODES = {"security", "risk", "architecture"}
+    if mode not in _VALID_RISK_MODES:
+        return f"risk_review_file failed: mode must be one of {sorted(_VALID_RISK_MODES)}, got {mode!r}"
+
+    try:
+        target = resolve_repo_file(relative_path)
+    except ValueError as exc:
+        return f"risk_review_file blocked: {exc}"
+
+    if not target.exists() or not target.is_file():
+        return f"risk_review_file failed: file not found: {relative_path}"
+
+    if target.stat().st_size > 200_000:
+        return f"risk_review_file failed: file too large (> 200 KB): {relative_path}"
+
+    try:
+        file_content = target.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:
+        return f"risk_review_file failed: could not read file: {exc}"
+
+    contract = _load_review_contract(mode)
+    if not contract:
+        return f"risk_review_file failed: no contract for mode {mode!r}. Add reviews/contracts/{mode}-review.md."
+
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return "risk_review_file failed: OPENAI_API_KEY not set."
+
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    # Pre-scan: grep-based pattern detection, no API call
+    pre_scan = _detect_security_patterns(relative_path, file_content)
+
+    # Load security skill for security/risk modes
+    try:
+        from review_engine.review_router import route_file_for_mode as _route_for_mode
+        skill_name, skill_content = _route_for_mode(relative_path, mode)
+    except Exception:
+        skill_name, skill_content = "none", ""
+
+    # Architecture role and past context
+    arch_role = _load_architecture_role(relative_path)
+    past_context = ""
+    _mem = None
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        _mem = _ReviewMemory()
+        past_context = _mem.format_past_context(relative_path)
+    except Exception:
+        pass
+
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+
+    skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
+    role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
+    past_section = f"\n\n## Previous review context\n\n{past_context}" if past_context else ""
+    pre_scan_section = f"\n\n{pre_scan}" if pre_scan else "\n\nPre-scan: no pattern matches."
+
+    system = (
+        "You are a code review engine operating under a strict review contract.\n"
+        "Follow the contract exactly. Do not deviate from the output format.\n"
+        "Do not modify code. Output only structured review findings.\n\n"
+        f"{contract}{skill_section}"
+    )
+    user = (
+        f"Risk review — mode: {mode}\n\n"
+        f"File: {relative_path}{role_context}{pre_scan_section}{past_section}\n\n"
+        f"```\n{file_content}\n```"
+    )
+
+    try:
+        client = _openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+        )
+        raw = response.choices[0].message.content or ""
+    except Exception as exc:
+        return f"risk_review_file failed (API call): {exc}"
+
+    if not raw:
+        return "No review output."
+
+    try:
+        from review_engine.severity_engine import parse_findings, format_summary, severity_counts
+        findings = parse_findings(raw)
+        output = format_summary(findings, relative_path) if findings else raw
+    except Exception:
+        findings, output = [], raw
+
+    try:
+        if _mem is not None:
+            from review_engine.severity_engine import severity_counts
+            scounts = severity_counts(findings) if findings else {}
+            _mem.save(
+                file_path=relative_path,
+                mode=f"risk:{mode}",
+                findings_text=output,
+                finding_count=len(findings),
+                severity_counts=scounts,
+                model=model,
+                skill=skill_name,
+            )
+    except Exception:
+        pass
+
+    return output
+
+
+@mcp.tool()
+def risk_review_diff(mode: str = "security") -> str:
+    """Risk pass over all files changed in the working tree or staging area.
+
+    Runs risk_review_file on each changed file with the given mode. Gets
+    changed files from git diff, filters to reviewable extensions, caps at 10.
+
+    Args:
+        mode: One of 'security', 'risk', 'architecture'. Defaults to 'security'.
+
+    Safety: Class A — read-only, no side effects beyond review memory writes.
+    """
+    import subprocess as _sp
+
+    _VALID_RISK_MODES = {"security", "risk", "architecture"}
+    if mode not in _VALID_RISK_MODES:
+        return f"risk_review_diff failed: mode must be one of {sorted(_VALID_RISK_MODES)}, got {mode!r}"
+
+    try:
+        proc = _sp.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+        )
+        changed = [f.strip() for f in proc.stdout.splitlines() if f.strip()]
+    except Exception as exc:
+        return f"risk_review_diff failed (git diff): {exc}"
+
+    if not changed:
+        try:
+            proc = _sp.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+            )
+            changed = [f.strip() for f in proc.stdout.splitlines() if f.strip()]
+        except Exception:
+            pass
+
+    if not changed:
+        return "risk_review_diff: no changed files in working tree or staging area."
+
+    reviewable_exts = {".py", ".sh", ".md", ".json"}
+    files = [f for f in changed if Path(f).suffix.lower() in reviewable_exts]
+
+    if not files:
+        return (
+            f"risk_review_diff: {len(changed)} changed file(s), none with reviewable "
+            f"extensions ({', '.join(sorted(reviewable_exts))})."
+        )
+
+    MAX_FILES = 10
+    truncated = len(files) > MAX_FILES
+    files = files[:MAX_FILES]
+
+    results = []
+    for path in files:
+        output = risk_review_file(path, mode=mode)
+        results.append(f"--- {path} ---\n{output}")
+
+    header = f"risk_review_diff: {len(files)} file(s) reviewed  mode={mode}"
     if truncated:
         header += f"  [capped at {MAX_FILES}]"
     return header + "\n\n" + "\n\n".join(results)

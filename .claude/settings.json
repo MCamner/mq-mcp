@@ -123,7 +123,22 @@
       "Bash(python3 -m json.tool /tmp/rs-test-export/callgraph.json)",
       "Bash(python3 -m json.tool /tmp/rs-test-export/risk_map.json)",
       "Bash(python -m pytest tests/test_exports.py -v)",
-      "Bash(python -m repo_signal.cli export . --output examples/exports)"
+      "Bash(python -m repo_signal.cli export . --output examples/exports)",
+      "Bash(.venv/bin/mq-image observe-architecture *)",
+      "Bash(python -m repo_signal.cli export . --output .repo-signal/exports)",
+      "Bash(python -m repo_signal.cli export /Users/mansys/mq-mcp --output /Users/mansys/mq-mcp/.repo-signal/exports)",
+      "Bash(python scripts/generate_tool_contracts.py)",
+      "Bash(sed -i '' 's/\"1\\\\.4\\\\.0\"/\"1.6.0\"/g' /Users/mansys/mq-mcp/tests/test_server_observability.py /Users/mansys/mq-mcp/tests/test_cli.py)",
+      "Bash(sed -i '' 's/tool_count.*== 71/tool_count == 73/g' /Users/mansys/mq-mcp/tests/test_server_observability.py /Users/mansys/mq-mcp/tests/test_cli.py)",
+      "Bash(python3 -m json.tool \"/Users/mansys/Library/Application Support/Claude/claude_desktop_config.json\")",
+      "Bash(python -m pytest tests/ -q --tb=no)",
+      "Bash(sed -i '' 's/\"1\\\\.6\\\\.0\"/\"1.7.0\"/g' tests/test_server_observability.py tests/test_cli.py)",
+      "Bash(sed -i '' 's/tool_count.*== 73/tool_count == 75/' tests/test_server_observability.py tests/test_cli.py)",
+      "Bash(sed -i '' 's/tool_count.*== 73/tool_count == 75/' tests/test_cli.py)",
+      "Bash(sed -i '' 's/\"version\": \"1\\\\.6\\\\.0\"/\"version\": \"1.7.0\"/' docs/stability.json)",
+      "Bash(sed -i '' 's/Next:    v1.5.0 — Risk analysis layer \\(deferred; will follow v1.6.0\\)/Next:    v1.8.0 — TBD/' ROADMAP.md)",
+      "Bash(sed -i '' 's/v1.6.0 — generated artifacts + repo-signal merge \\(done\\)/v1.7.0 — risk analysis layer \\(done\\)/' ROADMAP.md)",
+      "Bash(sed -i '' 's/| v1.5.0  | Risk analysis layer                         | Planned       |/| v1.5.0  | Risk analysis layer \\(shipped as v1.7.0\\)      | Done          |/' ROADMAP.md)"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"

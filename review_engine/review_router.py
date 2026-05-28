@@ -30,6 +30,19 @@ _ROUTES: list[tuple[str | None, set[str], str]] = [
 ]
 
 
+# Security-mode skill: always injected for security and risk modes regardless of file type.
+_SECURITY_SKILL_FILE = "security-review.md"
+
+
+def route_file_for_mode(relative_path: str, mode: str) -> tuple[str, str]:
+    """Like route_file but injects the security skill for security and risk modes."""
+    if mode in {"security", "risk"}:
+        skill_path = SKILLS_DIR / _SECURITY_SKILL_FILE
+        if skill_path.exists():
+            return _SECURITY_SKILL_FILE.replace(".md", ""), skill_path.read_text(encoding="utf-8")
+    return route_file(relative_path)
+
+
 def route_file(relative_path: str) -> tuple[str, str]:
     """
     Return (skill_name, skill_content) for the given repo-relative file path.
