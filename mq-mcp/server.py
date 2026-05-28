@@ -1652,7 +1652,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                 output = result.output
                 findings = result.findings
             except Exception as exc:
-                return f"review_file deep mode failed: {exc}"
+                return f"review_file failed (deep mode): {exc}"
 
             if not output:
                 return "No review output."
@@ -1741,7 +1741,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
 
             return output
     except Exception as exc:
-        return f"review_file API call failed: {exc}"
+        return f"review_file failed (API call): {exc}"
 
 
 @mcp.tool()
@@ -2077,6 +2077,204 @@ def review_runtime_contract() -> str:
         ai_section = f"## AI architecture pass\n\nFailed: {exc}"
 
     return f"{structural_section}\n\n{runtime_state}\n\n{ai_section}"
+
+
+@mcp.tool()
+def validate_orchestration_contract() -> str:
+    """Verify that the current tool set satisfies the orchestration contract.
+
+    Runs deterministic checks against docs/ORCHESTRATION_CONTRACT.md,
+    profiles/*.json, and docs/tool_contracts.json. No API key required.
+
+    Checks performed:
+    1. docs/ORCHESTRATION_CONTRACT.md exists and is reasonably fresh
+    2. All recommended_tools in each profile exist as registered tools
+    3. Read-only profiles do not include write-capable (Class C/D) tools
+    4. All write:true tools in tool_contracts.json are Class C
+    5. All Class D tools have subprocess:true in tool_contracts.json
+    6. Error return prefix consistency in server.py (uses 'failed:' pattern)
+    7. Profile max-class constraints from ORCHESTRATION_CONTRACT.md §6
+
+    Returns [PASS], [FAIL], or [WARN] lines followed by a summary.
+    Class A — read-only, no API key required.
+    """
+    import ast as _ast
+    import json as _json
+    import re as _re
+
+    contract_path = REPO_ROOT / "docs" / "ORCHESTRATION_CONTRACT.md"
+    profiles_dir = REPO_ROOT / "profiles"
+    contracts_path = REPO_ROOT / "docs" / "tool_contracts.json"
+    server_path = REPO_ROOT / "mq-mcp" / "server.py"
+
+    findings: list[str] = []
+    passes: list[str] = []
+
+    # — 1. ORCHESTRATION_CONTRACT.md exists and is fresh —
+    if not contract_path.exists():
+        findings.append(
+            "[FAIL] docs/ORCHESTRATION_CONTRACT.md\n"
+            "File does not exist. Create it to define the orchestration boundary."
+        )
+    else:
+        try:
+            server_mtime = server_path.stat().st_mtime
+            contract_mtime = contract_path.stat().st_mtime
+            if contract_mtime < server_mtime:
+                findings.append(
+                    "[WARN] docs/ORCHESTRATION_CONTRACT.md\n"
+                    "Contract is older than server.py — it may not reflect the current tool set."
+                )
+            else:
+                passes.append("[PASS] ORCHESTRATION_CONTRACT.md is present and fresh")
+        except Exception:
+            passes.append("[PASS] ORCHESTRATION_CONTRACT.md exists")
+
+    # — Load tool_contracts.json —
+    try:
+        contracts_data = _json.loads(contracts_path.read_text(encoding="utf-8"))
+        all_tools: dict[str, dict] = {t["name"]: t for t in contracts_data.get("tools", [])}
+    except Exception as exc:
+        return f"validate_orchestration_contract failed: cannot load tool_contracts.json: {exc}"
+
+    # — Collect registered tool names from server.py (AST) —
+    try:
+        server_text = server_path.read_text(encoding="utf-8")
+        tree = _ast.parse(server_text)
+        registered_tools: set[str] = set()
+        for node in _ast.walk(tree):
+            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                for dec in node.decorator_list:
+                    attr = dec.func if isinstance(dec, _ast.Call) else dec
+                    if (
+                        isinstance(attr, _ast.Attribute)
+                        and attr.attr == "tool"
+                        and isinstance(attr.value, _ast.Name)
+                        and attr.value.id == "mcp"
+                    ):
+                        registered_tools.add(node.name)
+    except Exception as exc:
+        return f"validate_orchestration_contract failed: cannot parse server.py: {exc}"
+
+    # — 2 & 7. Profile validation —
+    READONLY_PROFILES = {"read-only", "repo-only", "claude-desktop"}
+    MAX_CLASS: dict[str, set[str]] = {
+        "read-only": {"A"},
+        "repo-only": {"A", "C"},
+        "claude-desktop": {"A", "B"},
+        "codex": {"A", "B"},
+        "openai-bridge": {"A", "B"},
+        "mq-agent": {"A", "B"},
+        "developer": {"A", "B", "C", "D"},
+        "local-macos": {"A", "B", "C", "D"},
+    }
+
+    for profile_path in sorted(profiles_dir.glob("*.json")):
+        try:
+            pdata = _json.loads(profile_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            findings.append(
+                f"[FAIL] profiles/{profile_path.name}\n"
+                f"Cannot parse profile JSON: {exc}"
+            )
+            continue
+
+        pname = pdata.get("name", profile_path.stem)
+        recs: list[str] = pdata.get("recommended_tools", [])
+        allowed_classes = MAX_CLASS.get(pname, {"A", "B", "C", "D"})
+
+        # Check 2: all recommended tools are registered
+        for tool_name in recs:
+            if tool_name not in registered_tools:
+                findings.append(
+                    f"[FAIL] profiles/{profile_path.name}:{tool_name}\n"
+                    f"Tool '{tool_name}' in {pname} recommended_tools is not registered in server.py."
+                )
+
+        # Check 3 & 7: read-only profiles must not exceed their max class
+        if pname in MAX_CLASS and allowed_classes not in ({"A", "B", "C", "D"},):
+            for tool_name in recs:
+                tc = all_tools.get(tool_name, {})
+                tool_class = tc.get("class", "A")
+                if tool_class not in allowed_classes:
+                    findings.append(
+                        f"[FAIL] profiles/{profile_path.name}:{tool_name}\n"
+                        f"Profile '{pname}' is restricted to Class {'/'.join(sorted(allowed_classes))} "
+                        f"but includes '{tool_name}' which is Class {tool_class}."
+                    )
+
+        if not any(f"profiles/{profile_path.name}" in f for f in findings):
+            passes.append(f"[PASS] profiles/{profile_path.name}: all {len(recs)} tools valid")
+
+    # — 4. write:true tools must be Class C —
+    write_class_violations = []
+    for tool_name, tc in all_tools.items():
+        if tc.get("write") and tc.get("class") != "C":
+            write_class_violations.append(
+                f"  {tool_name}: write=true but class={tc.get('class')}"
+            )
+
+    if write_class_violations:
+        findings.append(
+            "[FAIL] docs/tool_contracts.json\n"
+            "write:true tools must be Class C:\n" + "\n".join(write_class_violations)
+        )
+    else:
+        passes.append("[PASS] All write:true tools are Class C")
+
+    # — 5. Class D tools must have subprocess:true —
+    class_d_no_sub = []
+    for tool_name, tc in all_tools.items():
+        if tc.get("class") == "D" and not tc.get("subprocess"):
+            class_d_no_sub.append(f"  {tool_name}")
+
+    if class_d_no_sub:
+        findings.append(
+            "[WARN] docs/tool_contracts.json\n"
+            "Class D tools should have subprocess:true (they open apps or run subprocesses):\n"
+            + "\n".join(class_d_no_sub)
+        )
+    else:
+        passes.append("[PASS] All Class D tools have subprocess:true")
+
+    # — 6. Error prefix consistency —
+    # Accepts: "{tool_name} failed:" OR "{tool_name} failed ({qualifier}):"
+    # Excludes: helper functions like run_repo_command (matched by "Command failed")
+    _VALID_ERR = _re.compile(r"[a-z_]+ failed[\s:(]")
+    _SKIP_ERR = _re.compile(r"^Command failed|validate_orchestration_contract failed")
+    tool_returns = _re.findall(r'return\s+f?"([^"]{5,80})"', server_text)
+    bad_prefixes = [
+        r for r in tool_returns
+        if "failed" in r.lower()
+        and not _VALID_ERR.match(r)
+        and not _SKIP_ERR.match(r)
+    ]
+    if bad_prefixes:
+        findings.append(
+            "[WARN] mq-mcp/server.py\n"
+            f"{len(bad_prefixes)} error return(s) don't use the '{{tool_name}} failed:' prefix pattern."
+        )
+    else:
+        passes.append("[PASS] Error return prefix pattern is consistent")
+
+    # — Summary —
+    pass_count = len(passes)
+    fail_count = sum(1 for f in findings if f.startswith("[FAIL]"))
+    warn_count = sum(1 for f in findings if f.startswith("[WARN]"))
+
+    status = "PASS" if fail_count == 0 else "FAIL"
+    header = (
+        f"## Orchestration contract validation — {status}\n\n"
+        f"Checks: {pass_count} passed, {fail_count} failed, {warn_count} warnings\n"
+    )
+
+    sections = []
+    if passes:
+        sections.append("\n".join(passes))
+    if findings:
+        sections.append("\n\n".join(findings))
+
+    return header + "\n\n" + "\n\n".join(sections)
 
 
 @mcp.tool()
@@ -2515,7 +2713,7 @@ def review_diff(mode: str = "comment", deep: bool = False) -> str:
         )
         changed = [f.strip() for f in proc.stdout.splitlines() if f.strip()]
     except Exception as exc:
-        return f"review_diff: git diff failed: {exc}"
+        return f"review_diff failed (git diff): {exc}"
 
     if not changed:
         try:

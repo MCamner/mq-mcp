@@ -16,7 +16,6 @@
     "search_repo",
     "git_status",
     "git_diff",
-    "validate_project",
     "tool_safety_report",
     "repo_signal_inspect",
     "repo_signal_doctor_json"

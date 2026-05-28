@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 65 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 66 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -40,6 +40,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `review_diff` | Review git-changed files using review_file | Write, modify code; calls git + OpenAI API |
 | `review_repo` | Review least-recently-reviewed repo files using review_file | Write, modify code; calls OpenAI API |
 | `review_runtime_contract` | Verify RUNTIME_CONTRACT.md claims against actual server state | Write, modify server |
+| `validate_orchestration_contract` | Verify tool set satisfies orchestration contract (profiles, classes, error prefixes) | Write, commit, network |
 | `list_architecture_docs` | List docs/architecture/ files with freshness status relative to server.py | Write, access outside repo |
 | `review_architecture_doc` | Apply architecture review contract to a named architecture document | Write, modify docs; calls OpenAI API |
 | `list_architecture_decisions` | List all architecture memory entries (ADRs, boundaries, philosophy, rejected) | Write, access outside repo |
@@ -190,6 +191,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `review_diff` | A | resolve_repo_file (per file) | No | No (git + OpenAI API) |
 | `review_repo` | A | REPO_ROOT walk + resolve_repo_file | No | No (OpenAI API) |
 | `review_runtime_contract` | A | REPO_ROOT (reads contract + server.py) | No | No (OpenAI API) |
+| `validate_orchestration_contract` | A | REPO_ROOT (reads contract, profiles, server.py) | No | No |
 | `list_architecture_docs` | A | REPO_ROOT/docs/architecture/ | No | No |
 | `review_architecture_doc` | A | REPO_ROOT/docs/architecture/ + server.py | No | No (OpenAI API) |
 | `list_architecture_decisions` | A | REPO_ROOT/architecture_memory/ | No | No |

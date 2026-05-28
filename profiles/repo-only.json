@@ -16,7 +16,6 @@
     "search_repo",
     "git_status",
     "git_diff",
-    "validate_project",
     "update_repo_file"
   ],
   "safety_notes": [

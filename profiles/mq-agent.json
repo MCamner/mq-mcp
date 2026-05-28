@@ -16,8 +16,7 @@
     "tool_safety_report",
     "list_local_repos",
     "repo_signal_analyze",
-    "repo_signal_checklist",
-    "hal_repo_report"
+    "repo_signal_checklist"
   ],
   "safety_notes": [
     "mq-agent should read safety metadata before allowing subprocess or write-capable calls.",

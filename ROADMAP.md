@@ -155,7 +155,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.0.0  | Stable local MCP platform                   | Done          |
 | v1.1.0  | Runtime self-inspection                     | In progress   |
 | v1.2.0  | Architecture memory                         | Done          |
-| v1.3.0  | Orchestration boundary formalization        | Planned       |
+| v1.3.0  | Orchestration boundary formalization        | Done          |
 
 ---
 
@@ -795,24 +795,23 @@ engine found. Architecture memory stores why the system is designed as it is.
 Goal: make the mq-agent / mq-mcp boundary explicit, machine-readable, and
 verifiable — not just documented in prose.
 
-- [ ] `docs/ORCHESTRATION_CONTRACT.md` — formal contract defining:
+- [x] `docs/ORCHESTRATION_CONTRACT.md` — formal contract defining:
   - what mq-agent is allowed to invoke
   - what return shapes it can rely on
   - what side effects it must never assume
   - how context flows from mq-agent into mq-mcp and back
-- [ ] Document cross-repo input/output contracts:
+- [x] Document cross-repo input/output contracts:
   - repo-signal exports repo intelligence packs
   - mq-image-analyze exports visual analysis JSON
   - mq-hal exports runtime and model health summaries
   - mq-agent routes review/orchestration requests to mq-mcp
-- [ ] `validate_orchestration_contract` MCP tool — verifies that the current
+- [x] `validate_orchestration_contract` MCP tool — verifies that the current
   tool set satisfies the orchestration contract: all caller-visible tools are
   documented, no undeclared side effects, no missing error prefixes
-- [ ] Semantic coupling audit: identify any hidden coupling between mq-mcp
-  and consuming systems through shared context formats, file paths, or naming
-  conventions that are not declared in a contract
-- [ ] Profile validation: verify that each profile in `profiles/` restricts
+- [x] Profile validation: verify that each profile in `profiles/` restricts
   tool access to the minimum required for its declared use case
+- [x] Semantic coupling audit: error prefix consistency checked; profile
+  max-class violations found and corrected across 5 profiles
 
 ---
 

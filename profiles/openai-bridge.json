@@ -16,8 +16,7 @@
     "list_repo_files",
     "search_repo",
     "tool_safety_report",
-    "repo_signal_analyze",
-    "hal_repo_report"
+    "repo_signal_analyze"
   ],
   "safety_notes": [
     "OPENAI_API_KEY is intentionally not stored in this template.",

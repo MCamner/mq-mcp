@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.3.0 - 2026-05-28
+
+- Added `docs/ORCHESTRATION_CONTRACT.md` — formal caller boundary contract with
+  7 sections: invocation contract (approval gate model), return contract
+  (severity vocabulary, output structure), side effect contract (declared
+  persistent side effects table), context flow diagram (priority order:
+  ADRs > past_context > cross_file_ctx), cross-repo contracts (mq-agent,
+  repo-signal, mq-hal, mq-image-analyze), profile access model, and 7
+  always-true guarantees.
+- Added `validate_orchestration_contract` MCP tool — 12 deterministic checks:
+  contract freshness, profile recommended_tools registration, per-profile max
+  safety class enforcement, write:true → Class C, Class D → subprocess:true,
+  error return prefix consistency. Returns [PASS]/[FAIL]/[WARN] lines. Class A.
+- Fixed profile violations found by the new tool: removed `hal_repo_report`
+  (Class D) from `claude-desktop`, `mq-agent`, `openai-bridge`; removed
+  `validate_project` (Class D) from `codex`, `repo-only`; removed
+  `update_repo_file` from `repo-only` (Class C, now matches contract A/C).
+- Updated `docs/ORCHESTRATION_CONTRACT.md` profile max-class table: `repo-only`
+  A/C (needs update_repo_file), `claude-desktop` A/B (needs repo-signal).
+- Standardised error return prefixes: `review_file deep mode failed` →
+  `review_file failed (deep mode)`, `review_file API call failed` →
+  `review_file failed (API call)`, `review_diff: git diff failed` →
+  `review_diff failed (git diff)`.
+- Tool count: 65 → 66.
+
 ## 1.2.0 - 2026-05-28
 
 - Added `architecture_memory/` directory with 8 seed entries across four

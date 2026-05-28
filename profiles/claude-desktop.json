@@ -25,8 +25,7 @@
     "list_repo_files",
     "search_repo",
     "tool_safety_report",
-    "repo_signal_analyze",
-    "hal_repo_report"
+    "repo_signal_analyze"
   ],
   "safety_notes": [
     "Use absolute local paths when copying this into claude_desktop_config.json.",

@@ -29,6 +29,7 @@ Review engine tools:
 - review_diff: reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 - review_repo: reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
 - review_runtime_contract: verifies RUNTIME_CONTRACT.md claims against actual server state; structural checks + AI architecture pass
+- validate_orchestration_contract: verifies tool set satisfies the orchestration contract; checks profiles, safety classes, error prefixes (Class A)
 - list_architecture_docs: lists docs/architecture/ with freshness status relative to server.py
 - review_architecture_doc: applies architecture review contract to a named architecture document with injected runtime state
 - list_architecture_decisions: lists all architecture memory entries (ADRs, boundaries, philosophy, rejected patterns)
