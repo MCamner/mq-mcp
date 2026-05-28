@@ -1,0 +1,114 @@
+{
+  "schema": "callgraph.v1",
+  "repo_name": "mq-mcp",
+  "generated_at": "2026-05-28T20:37:57.331470+00:00",
+  "edge_count": 11,
+  "hub_files": [],
+  "imports": {
+    "mq-mcp/server.py": [
+      "review_engine/architecture_memory.py",
+      "review_engine/callgraph_builder.py",
+      "review_engine/context_selector.py",
+      "review_engine/convention_extractor.py",
+      "review_engine/drift_detector.py",
+      "review_engine/multi_pass_reviewer.py",
+      "review_engine/review_memory.py",
+      "review_engine/review_router.py",
+      "review_engine/severity_engine.py",
+      "semantic_memory/semantic_memory.py"
+    ],
+    "review_engine/multi_pass_reviewer.py": [
+      "review_engine/severity_engine.py"
+    ]
+  },
+  "importers": {
+    "review_engine/architecture_memory.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/callgraph_builder.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/context_selector.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/convention_extractor.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/drift_detector.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/multi_pass_reviewer.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/review_memory.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/review_router.py": [
+      "mq-mcp/server.py"
+    ],
+    "review_engine/severity_engine.py": [
+      "mq-mcp/server.py",
+      "review_engine/multi_pass_reviewer.py"
+    ],
+    "semantic_memory/semantic_memory.py": [
+      "mq-mcp/server.py"
+    ]
+  },
+  "edges": [
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/architecture_memory.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/callgraph_builder.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/context_selector.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/convention_extractor.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/drift_detector.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/multi_pass_reviewer.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/review_memory.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/review_router.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "review_engine/severity_engine.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "mq-mcp/server.py",
+      "target": "semantic_memory/semantic_memory.py",
+      "relation": "python_import"
+    },
+    {
+      "source": "review_engine/multi_pass_reviewer.py",
+      "target": "review_engine/severity_engine.py",
+      "relation": "python_import"
+    }
+  ]
+}

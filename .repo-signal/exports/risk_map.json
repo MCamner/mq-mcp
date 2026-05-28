@@ -1,0 +1,32 @@
+{
+  "schema": "risk_map.v1",
+  "repo_name": "mq-mcp",
+  "generated_at": "2026-05-28T20:37:58.345025+00:00",
+  "risk_count": 3,
+  "risks": [
+    {
+      "id": "RSK-001",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "review_engine/callgraph_builder.py",
+      "detail": "412 lines \u2014 consider splitting into focused modules.",
+      "structural": true
+    },
+    {
+      "id": "RSK-002",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "mq-mcp/server.py",
+      "detail": "3015 lines \u2014 consider splitting into focused modules.",
+      "structural": true
+    },
+    {
+      "id": "RSK-003",
+      "level": "medium",
+      "kind": "large_file",
+      "file": "mq-mcp/bridge.py",
+      "detail": "519 lines \u2014 consider splitting into focused modules.",
+      "structural": true
+    }
+  ]
+}

@@ -138,7 +138,8 @@
       "Bash(sed -i '' 's/\"version\": \"1\\\\.6\\\\.0\"/\"version\": \"1.7.0\"/' docs/stability.json)",
       "Bash(sed -i '' 's/Next:    v1.5.0 — Risk analysis layer \\(deferred; will follow v1.6.0\\)/Next:    v1.8.0 — TBD/' ROADMAP.md)",
       "Bash(sed -i '' 's/v1.6.0 — generated artifacts + repo-signal merge \\(done\\)/v1.7.0 — risk analysis layer \\(done\\)/' ROADMAP.md)",
-      "Bash(sed -i '' 's/| v1.5.0  | Risk analysis layer                         | Planned       |/| v1.5.0  | Risk analysis layer \\(shipped as v1.7.0\\)      | Done          |/' ROADMAP.md)"
+      "Bash(sed -i '' 's/| v1.5.0  | Risk analysis layer                         | Planned       |/| v1.5.0  | Risk analysis layer \\(shipped as v1.7.0\\)      | Done          |/' ROADMAP.md)",
+      "Bash(python -m pytest tests/test_server_safety.py -q --tb=short)"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"

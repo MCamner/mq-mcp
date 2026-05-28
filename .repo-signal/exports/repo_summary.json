@@ -1,0 +1,60 @@
+{
+  "schema": "repo_summary.v1",
+  "repo_name": "mq-mcp",
+  "generated_at": "2026-05-28T20:37:57.833282+00:00",
+  "version": "1.4.0",
+  "description": "[![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)",
+  "project_type": "GitHub Pages / static web project",
+  "languages": {
+    "Markdown": 67,
+    "Python": 32,
+    "Shell": 21,
+    "JSON": 21,
+    "HTML": 2,
+    "YAML": 2,
+    "TOML": 1
+  },
+  "file_count": 182,
+  "test_summary": "7 test files",
+  "key_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "ROADMAP.md",
+    "VERSION"
+  ],
+  "entrypoints": [
+    "RUNBOOK.md",
+    "backups/scripts/20260514-011436/scripts/validate.sh",
+    "backups/scripts/20260525-210809/scripts/build_semantic_memory_pack.sh",
+    "backups/scripts/20260525-210809/scripts/build_vector_pack.sh",
+    "backups/scripts/20260525-210809/scripts/check-bridge-tool-discovery.sh",
+    "backups/scripts/20260525-210809/scripts/check-integration-docs.sh",
+    "backups/scripts/20260525-210809/scripts/check-integration-smoke.sh",
+    "backups/scripts/20260525-210809/scripts/release-check.sh",
+    "docs/RUNTIME_CONTRACT.md",
+    "docs/clients.md"
+  ],
+  "stable_contracts": [],
+  "top_symbols": [
+    "Convention",
+    "ConventionExtractor",
+    "extract",
+    "ContextSelector",
+    "add",
+    "selected",
+    "Severity",
+    "Finding",
+    "file",
+    "line",
+    "format",
+    "parse_findings",
+    "format_summary",
+    "format_findings_text",
+    "severity_counts",
+    "has_blocking_findings",
+    "DriftFinding",
+    "DriftDetector",
+    "detect",
+    "format_report"
+  ]
+}

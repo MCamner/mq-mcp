@@ -23,8 +23,8 @@
   {
     "path": ".claude/settings.json",
     "role": "unknown",
-    "lines": 62,
-    "size_bytes": 4505
+    "lines": 145,
+    "size_bytes": 12294
   },
   {
     "path": ".claude/settings.local.json",
@@ -65,6 +65,30 @@
     "size_bytes": 58
   },
   {
+    "path": ".repo-signal/exports/callgraph.json",
+    "role": "unknown",
+    "lines": 114,
+    "size_bytes": 3081
+  },
+  {
+    "path": ".repo-signal/exports/repo_summary.json",
+    "role": "unknown",
+    "lines": 60,
+    "size_bytes": 1665
+  },
+  {
+    "path": ".repo-signal/exports/risk_map.json",
+    "role": "unknown",
+    "lines": 32,
+    "size_bytes": 838
+  },
+  {
+    "path": ".repo-signal/exports/symbol_index.json",
+    "role": "unknown",
+    "lines": 4618,
+    "size_bytes": 109768
+  },
+  {
     "path": ".vscode/settings.json",
     "role": "unknown",
     "lines": 8,
@@ -73,22 +97,22 @@
   {
     "path": "CHANGELOG.md",
     "role": "release changelog",
-    "lines": 188,
-    "size_bytes": 8225,
+    "lines": 316,
+    "size_bytes": 15858,
     "title": "Changelog"
   },
   {
     "path": "README.md",
     "role": "project readme",
-    "lines": 325,
-    "size_bytes": 12412,
+    "lines": 342,
+    "size_bytes": 14023,
     "title": "mq-mcp"
   },
   {
     "path": "ROADMAP.md",
     "role": "project roadmap",
-    "lines": 699,
-    "size_bytes": 20272,
+    "lines": 1068,
+    "size_bytes": 38107,
     "title": "mq-mcp Roadmap"
   },
   {
@@ -106,10 +130,17 @@
     "title": "mq-mcp Safety Model"
   },
   {
+    "path": "SKILLS.md",
+    "role": "unknown",
+    "lines": 19,
+    "size_bytes": 1282,
+    "title": "Skills"
+  },
+  {
     "path": "TOOL_INDEX.md",
     "role": "MCP tool index",
-    "lines": 34,
-    "size_bytes": 1795,
+    "lines": 51,
+    "size_bytes": 3704,
     "title": "mq-mcp Tool Index"
   },
   {
@@ -118,6 +149,90 @@
     "lines": 28,
     "size_bytes": 885,
     "title": "mq-mcp Vector Context"
+  },
+  {
+    "path": "architecture_memory/boundaries/BND-001-central-cognition-ownership.md",
+    "role": "unknown",
+    "lines": 40,
+    "size_bytes": 1414,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/boundaries/BND-002-execution-vs-orchestration.md",
+    "role": "unknown",
+    "lines": 35,
+    "size_bytes": 1218,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/decisions/ADR-001-path-resolvers.md",
+    "role": "unknown",
+    "lines": 32,
+    "size_bytes": 1167,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/decisions/ADR-002-no-auto-commit.md",
+    "role": "unknown",
+    "lines": 31,
+    "size_bytes": 1138,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/decisions/ADR-003-safety-classes.md",
+    "role": "unknown",
+    "lines": 36,
+    "size_bytes": 1227,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/decisions/ADR-004-review-contracts-drive-output.md",
+    "role": "unknown",
+    "lines": 31,
+    "size_bytes": 1209,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/decisions/ADR-005-secrets-never-in-output.md",
+    "role": "unknown",
+    "lines": 31,
+    "size_bytes": 1124,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/philosophy/PHI-001-determinism.md",
+    "role": "unknown",
+    "lines": 33,
+    "size_bytes": 1275,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/philosophy/PHI-002-context-quality.md",
+    "role": "unknown",
+    "lines": 34,
+    "size_bytes": 1347,
+    "title": "---"
+  },
+  {
+    "path": "architecture_memory/rejected/REJ-001-arbitrary-subprocess.md",
+    "role": "unknown",
+    "lines": 30,
+    "size_bytes": 1096,
+    "title": "---"
+  },
+  {
+    "path": "docs/ORCHESTRATION_CONTRACT.md",
+    "role": "documentation",
+    "lines": 249,
+    "size_bytes": 9706,
+    "title": "mq-mcp Orchestration Contract"
+  },
+  {
+    "path": "docs/RUNTIME_CONTRACT.md",
+    "role": "documentation",
+    "lines": 315,
+    "size_bytes": 11115,
+    "title": "mq-mcp Runtime Contract"
   },
   {
     "path": "docs/TOOL_INVENTORY.md",
@@ -129,8 +244,8 @@
   {
     "path": "docs/TOOL_SAFETY.md",
     "role": "documentation",
-    "lines": 185,
-    "size_bytes": 12045,
+    "lines": 219,
+    "size_bytes": 15714,
     "title": "MCP Tool Safety Classification"
   },
   {
@@ -268,8 +383,8 @@
   {
     "path": "docs/tool_contracts.json",
     "role": "documentation",
-    "lines": 650,
-    "size_bytes": 17220
+    "lines": 846,
+    "size_bytes": 22031
   },
   {
     "path": "docs/troubleshooting.md",
@@ -366,8 +481,8 @@
   {
     "path": "mq-mcp/main.py",
     "role": "CLI entry point",
-    "lines": 390,
-    "size_bytes": 15731,
+    "lines": 391,
+    "size_bytes": 15767,
     "module_docstring": "Small local CLI for mq-mcp install and runtime workflows.",
     "public_functions": [
       "read_version",
@@ -415,8 +530,8 @@
   {
     "path": "mq-mcp/server.py",
     "role": "MCP server — tool registry and HTTP endpoints",
-    "lines": 1865,
-    "size_bytes": 63967,
+    "lines": 3372,
+    "size_bytes": 123744,
     "module_docstring": null,
     "public_functions": [
       "jsonable",
@@ -489,8 +604,25 @@
       "list_review_history",
       "get_last_review",
       "detect_architecture_drift",
+      "review_runtime_contract",
+      "validate_orchestration_contract",
+      "list_architecture_docs",
+      "review_architecture_doc",
+      "list_architecture_decisions",
+      "get_architecture_decision",
+      "record_architecture_decision",
+      "extract_coding_conventions",
       "review_diff",
-      "review_repo"
+      "risk_review_file",
+      "risk_review_diff",
+      "store_semantic_memory",
+      "search_semantic_memory",
+      "get_semantic_memory",
+      "list_semantic_memory",
+      "bootstrap_semantic_memory",
+      "review_repo",
+      "export_symbol_index",
+      "repo_signal_status"
     ],
     "public_classes": [],
     "constants": [
@@ -504,14 +636,14 @@
   {
     "path": "profiles/claude-desktop.json",
     "role": "MCP client profile template",
-    "lines": 36,
-    "size_bytes": 1153
+    "lines": 35,
+    "size_bytes": 1130
   },
   {
     "path": "profiles/codex.json",
     "role": "MCP client profile template",
-    "lines": 29,
-    "size_bytes": 920
+    "lines": 28,
+    "size_bytes": 896
   },
   {
     "path": "profiles/developer.json",
@@ -528,14 +660,14 @@
   {
     "path": "profiles/mq-agent.json",
     "role": "MCP client profile template",
-    "lines": 27,
-    "size_bytes": 842
+    "lines": 26,
+    "size_bytes": 819
   },
   {
     "path": "profiles/openai-bridge.json",
     "role": "MCP client profile template",
-    "lines": 27,
-    "size_bytes": 870
+    "lines": 26,
+    "size_bytes": 847
   },
   {
     "path": "profiles/read-only.json",
@@ -546,8 +678,8 @@
   {
     "path": "profiles/repo-only.json",
     "role": "MCP client profile template",
-    "lines": 27,
-    "size_bytes": 778
+    "lines": 26,
+    "size_bytes": 754
   },
   {
     "path": "release.sh",
@@ -556,23 +688,96 @@
     "size_bytes": 8459
   },
   {
+    "path": "review_engine/architecture_memory.py",
+    "role": "review engine — context building and routing",
+    "lines": 238,
+    "size_bytes": 8822,
+    "module_docstring": "Architecture Memory — mq-mcp review engine, v1.2.0.\n\nManages structured ADR-style entries that record why the system is designed\nas it is — not just what the review engine found. Complements ReviewMemory\n(which stores review findings) with durable architectural intent.\n\nDirectory layout under architecture_memory/:\n  decisions/   — accepted design decisions (ADR-NNN-slug.md)\n  rejected/    — explicitly rejected patterns (REJ-NNN-slug.md)\n  boundaries/  — system boundary definitions (BND-NNN-slug.md)\n  philosophy/  — stable invariants (PHI-NNN-slug.md)\n\nEach file has a YAML-style frontmatter block:\n  ---\n  id: ADR-001\n  title: ...\n  date: YYYY-MM-DD\n  status: accepted | rejected | stable | superseded\n  area: comma-separated keywords for file-path matching\n  ---\n\nUsage:\n  from review_engine.architecture_memory import ArchitectureMemory\n  mem = ArchitectureMemory()\n  entries = mem.list_all()\n  text = mem.get(\"ADR-001\")\n  relevant = mem.relevant_for(\"mq-mcp/server.py\", max_items=3)\n  new_id = mem.record(category=\"decisions\", title=\"...\", area=\"safety\",\n                      decision=\"...\", rationale=\"...\", consequences=\"...\")",
+    "public_functions": [],
+    "public_classes": [
+      "ArchitectureMemory"
+    ],
+    "constants": [
+      "REPO_ROOT",
+      "MEMORY_ROOT",
+      "_CATEGORIES",
+      "_FM_RE",
+      "_FIELD_RE",
+      "_ID_PREFIX"
+    ]
+  },
+  {
+    "path": "review_engine/callgraph_builder.py",
+    "role": "review engine — context building and routing",
+    "lines": 413,
+    "size_bytes": 16042,
+    "module_docstring": "Callgraph Builder — mq-mcp review engine, Phase 2.2\n\nBuilds a cross-file import graph and symbol index for the repo. This is the\nsymbolic intelligence layer: it answers \"which files depend on which\" and\n\"which files are the most imported (hub files)\" — enabling cross-file context\ninjection during deep reviews.\n\nOutput: review_engine/context/callgraph.json\n\nSchema:\n  imports    — per repo-relative file, list of repo-relative files it imports\n  importers  — reverse index: per file, list of files that import it\n  hub_files  — files with 3+ importers (high-connectivity, review first)\n  symbols    — per file, top-level public function and class names\n  edges      — full edge list: {from, to, import_names}\n\nImport resolution: converts Python dotted module names to repo-relative paths.\nstdlib and third-party modules are excluded (not resolvable to repo files).\nShell and other non-Python files are excluded from the call graph but included\nin the symbol index as name-only entries.\n\nUsage:\n  python review_engine/callgraph_builder.py\n  python review_engine/callgraph_builder.py --repo /path/to/repo",
+    "public_functions": [],
+    "public_classes": [
+      "ImportEdge",
+      "CallgraphBuilder"
+    ],
+    "constants": [
+      "REPO_ROOT",
+      "IGNORED_DIRS",
+      "HUB_THRESHOLD"
+    ]
+  },
+  {
     "path": "review_engine/context/architecture_map.json",
     "role": "review engine — context building and routing",
-    "lines": 131,
-    "size_bytes": 6871
+    "lines": 171,
+    "size_bytes": 9959
+  },
+  {
+    "path": "review_engine/context/callgraph.json",
+    "role": "review engine — context building and routing",
+    "lines": 850,
+    "size_bytes": 21942
   },
   {
     "path": "review_engine/context/file_summary_index.json",
     "role": "review engine — context building and routing",
-    "lines": 1023,
-    "size_bytes": 25661
+    "lines": 1399,
+    "size_bytes": 43107
+  },
+  {
+    "path": "review_engine/context_selector.py",
+    "role": "review engine — context building and routing",
+    "lines": 75,
+    "size_bytes": 3018,
+    "module_docstring": "Context Selector — mq-mcp review engine, Phase 2.\n\nSelects and prioritizes context pieces for injection into review prompts.\nEnforces a character budget so injected context never crowds out file content\nor the system prompt.\n\nPriority order (lower integer = higher priority):\n  1  arch_role      — architecture role string (very short, always include)\n  2  past_context   — previous review findings for this file (tailored, high value)\n  3  cross_file_ctx — related file roles, symbols, last review (rich but larger)\n  99 extra          — any additional context pieces\n\nIf total characters exceed budget, lowest-priority pieces are dropped first.\nIf a single high-priority piece exceeds the remaining budget, it is truncated\nrather than dropped — a partial high-value context is better than none.\n\nUsage:\n  from review_engine.context_selector import ContextSelector\n  cs = ContextSelector()\n  cs.add(\"arch_role\", arch_role, priority=1)\n  cs.add(\"past_context\", past_context, priority=2)\n  cs.add(\"cross_file_ctx\", cross_file_ctx, priority=3)\n  selected = cs.selected()\n  arch_role     = selected.get(\"arch_role\", \"\")\n  past_context  = selected.get(\"past_context\", \"\")\n  cross_file_ctx = selected.get(\"cross_file_ctx\", \"\")",
+    "public_functions": [],
+    "public_classes": [
+      "ContextSelector"
+    ],
+    "constants": [
+      "MAX_CONTEXT_CHARS"
+    ]
+  },
+  {
+    "path": "review_engine/convention_extractor.py",
+    "role": "review engine — context building and routing",
+    "lines": 147,
+    "size_bytes": 4639,
+    "module_docstring": "Convention Extractor — mq-mcp review engine, v1.2.0.\n\nExtracts generalizable coding conventions from review findings and persists\nthem into architecture_memory/decisions/ as convention entries.\n\nConventions differ from one-off review findings: they are rules that apply\nacross multiple files in the codebase, not just the file that was reviewed.\n\nExample convention:\n  CONVENTION: MCP tools that call the OpenAI API must check for OPENAI_API_KEY\n              before constructing the client.\n  AREA: server, review_engine\n  RATIONALE: Several reviews flagged missing API key checks — this is a\n             consistent pre-condition across all AI-powered tools.\n\nUsage:\n  from review_engine.convention_extractor import ConventionExtractor\n  extractor = ConventionExtractor(client, model)\n  conventions = extractor.extract(\n      file_path=\"mq-mcp/server.py\",\n      findings_text=raw_review_output,\n      existing_titles=[\"MCP tools must declare a safety class\"],\n  )\n  for c in conventions:\n      print(c[\"convention\"], c[\"area\"], c[\"rationale\"])",
+    "public_functions": [],
+    "public_classes": [
+      "Convention",
+      "ConventionExtractor"
+    ],
+    "constants": [
+      "EXTRACT_SYSTEM",
+      "EXTRACT_USER",
+      "_CONV_RE"
+    ]
   },
   {
     "path": "review_engine/drift_detector.py",
     "role": "review engine — context building and routing",
-    "lines": 228,
-    "size_bytes": 8913,
-    "module_docstring": "Drift Detector — mq-mcp review engine, Phase 5.\n\nDetects architecture drift between declared documentation and actual runtime state.\n\nChecks:\n  1. Tool count — server.py actual count vs README, TOOL_SAFETY.md summary table,\n     and tool_contracts.json tool_count field.\n  2. Contract coverage — all @mcp.tool() functions present in tool_contracts.json.\n  3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.\n  4. Phantom contracts — tools in tool_contracts.json not found in server.py.\n  5. Architecture map freshness — architecture_map.json older than server.py.\n\nUsage:\n  from review_engine.drift_detector import DriftDetector\n  detector = DriftDetector()\n  findings = detector.detect()\n  print(detector.format_report(findings))",
+    "lines": 284,
+    "size_bytes": 11443,
+    "module_docstring": "Drift Detector — mq-mcp review engine, Phase 5.\n\nDetects architecture drift between declared documentation and actual runtime state.\n\nChecks:\n  1. Tool count — server.py actual count vs README, TOOL_SAFETY.md summary table,\n     and tool_contracts.json tool_count field.\n  2. Contract coverage — all @mcp.tool() functions present in tool_contracts.json.\n  3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.\n  4. Phantom contracts — tools in tool_contracts.json not found in server.py.\n  5. Architecture map freshness — architecture_map.json older than server.py.\n  6. RUNTIME_CONTRACT.md existence — RISK if the identity contract is missing.\n  7. RUNTIME_CONTRACT.md freshness — NOTE/WARNING if server.py is newer.\n  8. Reference document existence — WARNING for each doc listed in the reference\n     table of RUNTIME_CONTRACT.md that is missing on disk.\n\nUsage:\n  from review_engine.drift_detector import DriftDetector\n  detector = DriftDetector()\n  findings = detector.detect()\n  print(detector.format_report(findings))",
     "public_functions": [],
     "public_classes": [
       "DriftFinding",
@@ -583,10 +788,16 @@
     ]
   },
   {
+    "path": "review_engine/memory/review_history.json",
+    "role": "review engine — context building and routing",
+    "lines": 110,
+    "size_bytes": 25499
+  },
+  {
     "path": "review_engine/multi_pass_reviewer.py",
     "role": "review engine — context building and routing",
-    "lines": 280,
-    "size_bytes": 9399,
+    "lines": 284,
+    "size_bytes": 9599,
     "module_docstring": "Multi-Pass Reviewer — mq-mcp review engine, Phase 4.\n\nPass 1 — Structure analysis: compact structural summary of the file.\n          No findings. Output is context for subsequent passes.\nPass 2 — Review pass: contract-driven review enriched with structure context.\nPass 3 — Consistency pass: checks doc vs runtime divergence (docstrings,\n          names, type hints vs actual implementation behavior).\nPass 4 — Deduplication: merges Pass 2 + Pass 3 findings, keeps highest\n          severity per location, drops near-duplicate bodies, re-sorts.\n\nUsage:\n  from review_engine.multi_pass_reviewer import MultiPassReviewer\n  reviewer = MultiPassReviewer(client, model)\n  result = reviewer.run(\n      file_path=relative_path,\n      file_content=content,\n      contract=contract_text,\n      arch_role=arch_role_string,\n      skill_content=skill_text,\n      skill_name=skill_name,\n      past_context=past_findings_text,\n  )\n  print(result.output)     # formatted, deduplicated findings\n  print(result.pass_count) # 3",
     "public_functions": [],
     "public_classes": [
@@ -638,24 +849,26 @@
   {
     "path": "review_engine/review_router.py",
     "role": "review engine — context building and routing",
-    "lines": 89,
-    "size_bytes": 2762,
+    "lines": 102,
+    "size_bytes": 3323,
     "module_docstring": "Review Router — mq-mcp review engine, Phase 2.2\n\nRoutes a file to the correct review skill based on extension and path.\nReturns the skill content to inject into a review prompt.\n\nUsage:\n  from review_engine.review_router import route_file\n  skill_text = route_file(\"mq-mcp/server.py\")",
     "public_functions": [
+      "route_file_for_mode",
       "route_file",
       "list_routes"
     ],
     "public_classes": [],
     "constants": [
       "REPO_ROOT",
-      "SKILLS_DIR"
+      "SKILLS_DIR",
+      "_SECURITY_SKILL_FILE"
     ]
   },
   {
     "path": "review_engine/severity_engine.py",
     "role": "review engine — context building and routing",
-    "lines": 171,
-    "size_bytes": 4902,
+    "lines": 174,
+    "size_bytes": 5058,
     "module_docstring": "Severity Engine — mq-mcp review engine, Phase 2.3\n\nParses, validates, and formats review findings from the review model output.\nEnsures output conforms to the comment-review contract severity schema.\n\nUsage:\n  from review_engine.severity_engine import parse_findings, format_summary\n  findings = parse_findings(raw_review_text)\n  print(format_summary(findings))",
     "public_functions": [
       "parse_findings",
@@ -688,6 +901,13 @@
     "title": "Review Contract: Comment Review"
   },
   {
+    "path": "reviews/contracts/risk-review.md",
+    "role": "review contract — hard rules for review output",
+    "lines": 87,
+    "size_bytes": 2723,
+    "title": "Review Contract: Risk Review"
+  },
+  {
     "path": "reviews/contracts/security-review.md",
     "role": "review contract — hard rules for review output",
     "lines": 137,
@@ -700,6 +920,20 @@
     "lines": 150,
     "size_bytes": 5947,
     "title": "Golden Review: mq-mcp/bridge.py — Comment Mode"
+  },
+  {
+    "path": "reviews/golden/system-overview-md-markdown-review.md",
+    "role": "golden review — high-quality reference example",
+    "lines": 107,
+    "size_bytes": 4905,
+    "title": "Golden Review: docs/architecture/SYSTEM_OVERVIEW.md — Markdown Mode"
+  },
+  {
+    "path": "reviews/golden/tool-contracts-json-review.md",
+    "role": "golden review — high-quality reference example",
+    "lines": 114,
+    "size_bytes": 5477,
+    "title": "Golden Review: docs/tool_contracts.json — JSON Mode"
   },
   {
     "path": "reviews/skills/json-review.md",
@@ -728,6 +962,13 @@
     "lines": 54,
     "size_bytes": 1867,
     "title": "Review Skill: Python — Comment Review"
+  },
+  {
+    "path": "reviews/skills/security-review.md",
+    "role": "review skill — file-type specific review guidance",
+    "lines": 69,
+    "size_bytes": 2586,
+    "title": "Skill: Security Pattern Recognition"
   },
   {
     "path": "reviews/skills/shell-review.md",
@@ -866,8 +1107,8 @@
   {
     "path": "scripts/generate_tool_contracts.py",
     "role": "automation script",
-    "lines": 141,
-    "size_bytes": 10073,
+    "lines": 176,
+    "size_bytes": 14201,
     "module_docstring": "Generate docs/tool_contracts.json from server.py + static metadata.\n\nRun from the repository root:\n    python scripts/generate_tool_contracts.py",
     "public_functions": [
       "extract_tools",
@@ -1008,6 +1249,13 @@
     "title": "---"
   },
   {
+    "path": "skills/review-runtime-maintainer/SKILL.md",
+    "role": "Claude Code subagent skill definition",
+    "lines": 59,
+    "size_bytes": 2045,
+    "title": "---"
+  },
+  {
     "path": "skills/semantic-memory-maintainer/SKILL.md",
     "role": "Claude Code subagent skill definition",
     "lines": 62,
@@ -1082,8 +1330,8 @@
   {
     "path": "tests/test_cli.py",
     "role": "test file",
-    "lines": 92,
-    "size_bytes": 2652,
+    "lines": 93,
+    "size_bytes": 2708,
     "module_docstring": null,
     "public_functions": [
       "load_cli",
@@ -1121,13 +1369,15 @@
   {
     "path": "tests/test_server_observability.py",
     "role": "test file",
-    "lines": 37,
-    "size_bytes": 1011,
+    "lines": 50,
+    "size_bytes": 1569,
     "module_docstring": null,
     "public_functions": [
       "server",
       "test_health_endpoint_reports_version_and_tool_count",
-      "test_redacted_env_hides_api_key"
+      "test_redacted_env_hides_api_key",
+      "test_contract_classes_are_exposed_as_safety_labels",
+      "test_enrich_tool_uses_caller_facing_safety_label"
     ],
     "public_classes": [],
     "constants": [

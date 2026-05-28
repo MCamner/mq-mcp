@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T20:38:01.053720+00:00",
+  "generated_at": "2026-05-28T21:41:29.911213+00:00",
   "repo_root": "/Users/mansys/mq-mcp",
   "file_count": 30,
   "hub_threshold": 2,
@@ -205,12 +205,16 @@
       "record_architecture_decision",
       "extract_coding_conventions",
       "review_diff",
+      "risk_review_file",
+      "risk_review_diff",
       "store_semantic_memory",
       "search_semantic_memory",
       "get_semantic_memory",
       "list_semantic_memory",
       "bootstrap_semantic_memory",
       "review_repo",
+      "export_symbol_index",
+      "repo_signal_status",
       "_contract_class_to_safety",
       "_load_safety_map",
       "_version",
@@ -313,6 +317,7 @@
       "summary"
     ],
     "review_engine/review_router.py": [
+      "route_file_for_mode",
       "route_file",
       "list_routes"
     ],
