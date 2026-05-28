@@ -118,7 +118,12 @@
       "Bash(.venv/bin/python -m pytest -q)",
       "Bash(./release-check.sh)",
       "Bash(.venv/bin/python -m pytest tests/test_version_consistency.py -v)",
-      "Bash(git -C /Users/mansys/mq-image-analyze add CHANGELOG.md ROADMAP.md VERSION mq_image_analyze/mcp/server.py pyproject.toml docs/visual-architecture-schema.md examples/architecture-observation.json mq_image_analyze/pipelines/architecture_pipeline.py mq_image_analyze/vision/architecture/ tests/test_architecture.py)"
+      "Bash(git -C /Users/mansys/mq-image-analyze add CHANGELOG.md ROADMAP.md VERSION mq_image_analyze/mcp/server.py pyproject.toml docs/visual-architecture-schema.md examples/architecture-observation.json mq_image_analyze/pipelines/architecture_pipeline.py mq_image_analyze/vision/architecture/ tests/test_architecture.py)",
+      "Bash(python -m repo_signal.cli export . --output /tmp/rs-test-export)",
+      "Bash(python3 -m json.tool /tmp/rs-test-export/callgraph.json)",
+      "Bash(python3 -m json.tool /tmp/rs-test-export/risk_map.json)",
+      "Bash(python -m pytest tests/test_exports.py -v)",
+      "Bash(python -m repo_signal.cli export . --output examples/exports)"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"
