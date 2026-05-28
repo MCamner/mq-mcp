@@ -153,9 +153,12 @@ This is not a problem to solve. It is a tension to design.
 | v0.7.0  | Local bridge observability                  | Done          |
 | v0.8.0  | Profile templates and client setup polish   | Done          |
 | v1.0.0  | Stable local MCP platform                   | Done          |
-| v1.1.0  | Runtime self-inspection                     | In progress   |
+| v1.1.0  | Runtime self-inspection                     | Done          |
 | v1.2.0  | Architecture memory                         | Done          |
 | v1.3.0  | Orchestration boundary formalization        | Done          |
+| v1.4.0  | Semantic memory layer                       | Planned       |
+| v1.5.0  | Risk analysis layer                         | Planned       |
+| v1.6.0  | Generated artifacts + repo-signal merge     | Planned       |
 
 ---
 
@@ -812,6 +815,139 @@ verifiable — not just documented in prose.
   tool access to the minimum required for its declared use case
 - [x] Semantic coupling audit: error prefix consistency checked; profile
   max-class violations found and corrected across 5 profiles
+
+---
+
+### v1.4.0 — Semantic memory layer
+
+Goal: give the runtime a proper long-term knowledge store that is separate
+from architecture decisions (ADRs) and review history. Blueprint §8.
+
+The distinction matters:
+
+```text
+architecture_memory/  — decisions, boundaries, philosophy (structural)
+review_engine/memory/ — per-file review history (operational)
+semantic_memory/      — long-term reusable knowledge (semantic)
+```
+
+**What semantic memory stores:**
+- Summaries of README, ROADMAP, and key architecture docs
+- Contracts and review examples (indexed, not raw text)
+- Extracted conventions (already done via extract_coding_conventions)
+- Tool docs and safety notes
+- Cross-repo facts (e.g. "repo-signal outputs callgraph.json to disk")
+
+**What it does NOT store:**
+- Entire raw repos
+- Generated build artifacts
+- Large binaries or noisy logs
+
+Items:
+
+- [ ] `semantic_memory/` directory + `SemanticMemory` class with
+  `store(key, content, tags)`, `search(query, max=5)`, `get(key)`, `list()`
+- [ ] `store_semantic_memory` MCP tool — writes a named knowledge item with
+  tags for retrieval (Class C, writes to `semantic_memory/`)
+- [ ] `search_semantic_memory` MCP tool — keyword/tag search over stored items,
+  returns ranked matches (Class A)
+- [ ] `get_semantic_memory` MCP tool — retrieves a specific item by key (Class A)
+- [ ] Bootstrap ingestion: index README, ROADMAP, RUNTIME_CONTRACT.md,
+  ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md into semantic_memory at startup
+  (lazy, on first search)
+- [ ] Integration with `review_file` context: semantic memory injected at
+  priority 0 (above ADRs) when a match is found for the file being reviewed
+- [ ] `list_semantic_memory` MCP tool — inventory of stored items (Class A)
+- [ ] Docs: update ORCHESTRATION_CONTRACT.md §3 declared side effects table
+
+---
+
+### v1.5.0 — Risk analysis layer
+
+Goal: go beyond doc review — give the runtime explicit risk and security
+reasoning modes. Blueprint §10.
+
+The review engine already has severity levels (RISK, ARCHITECTURE, WARNING).
+This phase adds structured risk *modes* so callers can request targeted
+security or architecture analysis without running a full review.
+
+**Risk modes:**
+
+```text
+security  — subprocess safety, shell injection, env leakage, unsafe fs access
+            secret exposure, path traversal, MCP exposure surface
+risk      — class D tools invoked without approval gates, missing contracts,
+            undeclared side effects, stale safety docs
+architecture — boundary violations, coupling, responsibility drift,
+               cross-repo contract gaps
+```
+
+Items:
+
+- [ ] `risk_review_file` MCP tool — targeted risk pass on a single file with
+  declared mode (`security`, `risk`, `architecture`). Returns findings using
+  the fixed severity vocabulary (CRITICAL/RISK/WARNING). Class A.
+- [ ] `risk_review_diff` MCP tool — risk pass over current git diff. Same
+  modes. Class A.
+- [ ] Risk contract in `reviews/contracts/risk-review.md` — defines what the
+  security/risk/architecture passes look for and how to format findings
+- [ ] Security skill in `reviews/skills/security-review.md` — file-type-aware
+  security patterns (Python subprocess, shell, env, path)
+- [ ] Severity engine update: add `CRITICAL` level above `RISK` for findings
+  that represent immediate exploitable vulnerabilities
+- [ ] `detect_security_patterns` helper — grep-based pre-scan for known
+  dangerous patterns (`os.system`, `eval`, `exec`, `shell=True`, hardcoded
+  secrets) before API call; injects findings as context
+- [ ] Integration: `review_file(mode="risk")` routes through the risk contract
+  rather than the standard comment contract
+
+---
+
+### v1.6.0 — Generated artifacts + repo-signal merge
+
+Goal: close the loop between repo-signal's intelligence output and mq-mcp's
+context builder. Blueprint §6.1, §3.3.
+
+repo-signal already has a merge hook in `callgraph_builder._try_merge_repo_signal_packs()`.
+This phase activates it fully by defining the on-disk format and adding the
+generated artifacts directory structure.
+
+**Expected repo-signal output files (when repo-signal writes them):**
+
+```text
+review_engine/context/repo_signal_callgraph.json  — merged into callgraph.json
+review_engine/context/repo_signal_symbols.json    — merged into symbol index
+review_engine/context/repo_signal_summary.json    — repo-level health summary
+```
+
+**Generated artifacts directory:**
+
+```text
+generated/
+├── symbols/          — symbol_index.json, per-file symbol exports
+├── callgraphs/       — callgraph snapshots with timestamps
+└── architecture/     — architecture_map.json, ownership_map.json
+```
+
+Items:
+
+- [ ] `generated/` directory with `.gitkeep` and `generated/.gitignore`
+  (exclude snapshots from version control)
+- [ ] `build_repo_context` extended: write `architecture_map.json` to
+  `generated/architecture/` in addition to `callgraph.json`
+- [ ] `architecture_map.json` schema: maps file path → role label, public
+  symbols, last review timestamp, hub score
+- [ ] `ownership_map.json` schema: maps file path → author (from git blame),
+  change frequency, last modified
+- [ ] `export_symbol_index` MCP tool — writes current callgraph symbols to
+  `generated/symbols/symbol_index.json` in a format repo-signal can consume
+  (Class C)
+- [ ] Activate `_try_merge_repo_signal_packs()`: once repo-signal publishes
+  its packs, the merge hook auto-activates; document the expected file paths
+  and schema in `docs/ORCHESTRATION_CONTRACT.md §5`
+- [ ] `repo_signal_status` MCP tool — reports whether repo-signal packs are
+  present, their age, and whether they have been merged into the callgraph
+  (Class A)
 
 ---
 
