@@ -51,6 +51,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `repo_signal_status` | Report whether repo-signal export packs are present and merged | Write, modify packs |
 | `risk_review_file` | Targeted risk pass (security/risk/architecture) with grep pre-scan + AI review | Write, commit, network |
 | `risk_review_diff` | Risk pass over changed files in working tree or staging area | Write, commit, network |
+| `list_review_skills` | List available review skills, path-prefix routes, and extension routes | Write, commit |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -216,3 +217,4 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `repo_signal_status` | A | REPO_ROOT/.repo-signal/exports/ (read-only) | No | No |
 | `risk_review_file` | A | REPO_ROOT (reads file) + review_engine/memory/ | No | No (OpenAI API) |
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
+| `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |

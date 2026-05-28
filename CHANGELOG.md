@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.9.0 - 2026-05-29
+
+- Fixed `_detect_security_patterns` false positives: Python string literals
+  are now blanked via `tokenize` before pattern matching, preventing matches
+  in description strings that mention the patterns they document. Only strings
+  containing spaces are blanked; short values (API keys, tokens) are preserved.
+  Shell files are scanned as-is. New `_blank_python_strings()` helper added.
+- Added `list_review_skills` MCP tool (Class A): lists path-prefix routes,
+  extension routes, and the security-mode override, with availability status
+  for each skill file.
+- Added `ADR-006`: documents risk analysis tools using pre-scan before API
+  calls, CRITICAL severity reserved for risk/security modes, and string-literal
+  stripping rationale.
+- Added `§8 WARN acceptance policy` to `docs/ORCHESTRATION_CONTRACT.md`:
+  table defining when each WARN is acceptable vs. requires action.
+- Added check 7 to `validate_orchestration_contract`: Class C tools not in
+  any profile and not in `_INTENTIONALLY_PROFILE_FREE` emit WARN. All current
+  Class C tools are intentionally profile-free (require explicit user approval).
+- Fixed `import re` missing at module level in server.py (required by the
+  `_STRIP_STRINGS_RE` constant).
+- Documented subprocess side effects in `build_ownership_map()` docstring
+  and updated `ORCHESTRATION_CONTRACT.md §3` side effects table for
+  `build_repo_context`.
+- Tool count: 75 → 76.
+
 ## 1.8.0 - 2026-05-29
 
 - Completed remaining v1.6.0 items — `generated/architecture/` artifacts:

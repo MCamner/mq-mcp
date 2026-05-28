@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import requests
 import os
 import time
@@ -1622,19 +1623,81 @@ _SHELL_PATTERNS: list[tuple[str, str, str]] = [
 ]
 
 
-def _detect_security_patterns(file_path: str, content: str) -> str:
-    """Grep-based pre-scan for known dangerous patterns. Returns [SEVERITY] findings text."""
-    import re as _re
+def _blank_python_strings(content: str) -> list[str]:
+    """Return lines with Python string literal CONTENT blanked out.
 
+    Uses tokenize for accuracy — correctly handles raw strings, multi-line
+    strings, and adjacent strings without false cross-boundary matches.
+    String delimiters are kept so the line structure is preserved; only the
+    content (which causes false-positive pattern matches) is replaced with spaces.
+    Falls back to the original lines if tokenization fails.
+    """
+    import io
+    import tokenize as _tok
+
+    try:
+        lines = content.splitlines(keepends=True)
+        # Build a mutable list of char lists for surgical blanking
+        chars = [list(line) for line in lines]
+        tokens = list(_tok.generate_tokens(io.StringIO(content).readline))
+        for tok_type, tok_str, (srow, scol), (erow, ecol), _ in tokens:
+            if tok_type != _tok.STRING:
+                continue
+            # Only blank strings whose content contains spaces — keeps short
+            # strings (API keys, variable names) intact for matching.
+            if " " not in tok_str:
+                continue
+            # Blank out the string content character by character, row by row.
+            # We zero out everything INSIDE the quotes (not the delimiters).
+            for row in range(srow, erow + 1):
+                row_idx = row - 1
+                if row_idx >= len(chars):
+                    continue
+                start_col = scol + _quote_prefix_len(tok_str) if row == srow else 0
+                end_col = ecol if row == erow else len(chars[row_idx])
+                for col in range(start_col, end_col):
+                    if col < len(chars[row_idx]):
+                        chars[row_idx][col] = " "
+        return ["".join(line) for line in chars]
+    except Exception:
+        return content.splitlines()
+
+
+def _quote_prefix_len(tok_str: str) -> int:
+    """Return the length of the quote prefix (r\", b\", f\", \"\"\", etc.)."""
+    i = 0
+    while i < len(tok_str) and tok_str[i].lower() in "rRbBfFuU":
+        i += 1
+    # Count quote chars (''' or \"\"\" or ' or ")
+    q = tok_str[i]
+    if tok_str[i:i+3] in ('"""', "'''"):
+        return i + 3
+    return i + 1
+
+
+def _detect_security_patterns(file_path: str, content: str) -> str:
+    """Grep-based pre-scan for known dangerous patterns. Returns [SEVERITY] findings text.
+
+    For Python files, string literal content (with spaces) is blanked out before
+    matching using the tokenizer — prevents false positives from pattern
+    definitions and human-readable descriptions that mention the patterns they
+    document, while keeping short string values (API keys, tokens) intact for
+    detection. Shell files are scanned as-is.
+    """
     suffix = Path(file_path).suffix.lower()
     is_shell = suffix in {".sh", ".bash", ".zsh"} or content.startswith("#!/")
     patterns = _SHELL_PATTERNS if is_shell else _SECURITY_PATTERNS
 
+    # For Python files, pre-process to blank description strings
+    if not is_shell and suffix == ".py":
+        scan_lines = _blank_python_strings(content)
+    else:
+        scan_lines = content.splitlines()
+
     hits: list[str] = []
-    lines = content.splitlines()
-    for lineno, line in enumerate(lines, start=1):
+    for lineno, line in enumerate(scan_lines, start=1):
         for pattern, severity, description in patterns:
-            if _re.search(pattern, line):
+            if re.search(pattern, line):
                 hits.append(f"[{severity}] {file_path}:{lineno}\n{description}")
                 break  # one hit per line max
 
@@ -1971,6 +2034,60 @@ def list_review_contracts() -> str:
     lines.append("Risk-analysis tools (add grep pre-scan before AI review):")
     lines.append("  risk_review_file(relative_path, mode='security'|'risk'|'architecture')")
     lines.append("  risk_review_diff(mode='security'|'risk'|'architecture')")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def list_review_skills() -> str:
+    """List available review skills, their trigger paths, and extensions.
+
+    Shows two routing tiers:
+    1. Path-prefix routes — directory prefix triggers a domain-specific skill
+       regardless of file type (e.g. review_engine/ → review-engine skill).
+    2. Extension routes — file extension triggers a generic skill
+       (e.g. .py → python-comment-review skill).
+
+    Security and risk modes always inject the security-review skill
+    regardless of file type or path.
+
+    Read-only. Class A.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    try:
+        from review_engine.review_router import (
+            _PREFIX_ROUTES,
+            _ROUTES,
+            _SECURITY_SKILL_FILE,
+            SKILLS_DIR,
+        )
+    except Exception as exc:
+        return f"list_review_skills failed: could not load review_router: {exc}"
+
+    lines = ["Available review skills:", ""]
+
+    lines.append("Path-prefix routes (checked first — first match wins):")
+    for prefix, skill_file in _PREFIX_ROUTES:
+        exists = (SKILLS_DIR / skill_file).exists()
+        status = "✓" if exists else "MISSING"
+        lines.append(f"  {prefix:<35} → {skill_file}  [{status}]")
+
+    lines.append("")
+    lines.append("Extension routes (checked after prefix — first match wins):")
+    for path_pattern, extensions, skill_file in _ROUTES:
+        exists = (SKILLS_DIR / skill_file).exists()
+        status = "✓" if exists else "MISSING"
+        ext_str = ", ".join(sorted(extensions))
+        pat_str = f"  path contains {path_pattern!r}" if path_pattern else ""
+        lines.append(f"  {ext_str:<20} {pat_str:<30} → {skill_file}  [{status}]")
+
+    lines.append("")
+    lines.append("Security/risk mode override (always injected for security and risk modes):")
+    exists = (SKILLS_DIR / _SECURITY_SKILL_FILE).exists()
+    lines.append(f"  {_SECURITY_SKILL_FILE}  [{'✓' if exists else 'MISSING'}]")
+
     return "\n".join(lines)
 
 
@@ -2460,6 +2577,40 @@ def validate_orchestration_contract() -> str:
         )
     else:
         passes.append("[PASS] Error return prefix pattern is consistent")
+
+    # — 7. Class C write tools not in any profile — NOTE only (by design for some) —
+    # Some Class C tools (build_repo_context, record_architecture_decision) are
+    # intentionally omitted from profiles; this surfaces unintentional omissions.
+    class_c_tools = {n for n, tc in all_tools.items() if tc.get("class") == "C"}
+    all_profile_tools: set[str] = set()
+    try:
+        for pf in sorted(profiles_dir.glob("*.json")):
+            pd_ = _json.loads(pf.read_text(encoding="utf-8"))
+            all_profile_tools.update(pd_.get("recommended_tools", []))
+    except Exception:
+        pass
+
+    _INTENTIONALLY_PROFILE_FREE = {
+        # All Class C tools require explicit user approval and are called
+        # directly, not via automated profile-based workflows. Profiles list
+        # Class A/B tools for agents; Class C tools are user-invoked.
+        "build_repo_context", "record_architecture_decision",
+        "extract_coding_conventions", "export_symbol_index",
+        "bootstrap_semantic_memory", "store_semantic_memory",
+        "update_repo_file", "edit_image", "take_screenshot", "set_clipboard",
+    }
+    uncovered = sorted(
+        t for t in class_c_tools
+        if t not in all_profile_tools and t not in _INTENTIONALLY_PROFILE_FREE
+    )
+    if uncovered:
+        findings.append(
+            "[WARN] profiles/\n"
+            "Class C tools not in any profile and not in the expected-uncovered set: "
+            + ", ".join(uncovered)
+        )
+    else:
+        passes.append("[PASS] Class C tools covered by profiles or intentionally profile-free")
 
     # — Summary —
     pass_count = len(passes)

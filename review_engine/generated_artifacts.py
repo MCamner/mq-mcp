@@ -207,6 +207,10 @@ def build_ownership_map(
     Per file: most frequent author, commit count (change_frequency), last commit ISO date.
     Reads last _GIT_LOG_MAX_COMMITS commits. Files with no git history are omitted.
 
+    Side effects:
+      - Runs one `git log` subprocess (read-only, no writes to git state).
+      - Writes `generated/architecture/ownership_map.json`.
+
     Returns the built dict.
     """
     out_dir = out_dir or (repo_root / "generated" / "architecture")

@@ -108,6 +108,9 @@ TOOL_META: dict[str, dict] = {
     # Risk analysis tools (v1.7.0)
     "risk_review_file":            {"class": "A", "resolver": "resolve_repo_file",      "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
     "risk_review_diff":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["review-memory-write", "openai-api"]},
+
+    # Skill discovery tool (v1.8.0+)
+    "list_review_skills":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
 }
 
 

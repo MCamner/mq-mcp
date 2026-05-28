@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
-  "mq_mcp_version": "1.6.0",
-  "tool_count": 75,
+  "mq_mcp_version": "1.8.0",
+  "tool_count": 76,
   "tools": [
     {
       "name": "analyze_csv",
@@ -324,6 +324,16 @@
       "name": "list_review_history",
       "class": "A",
       "description": "List all files that have review history and their last review summary.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_review_skills",
+      "class": "A",
+      "description": "List available review skills, their trigger paths, and extensions.",
       "resolver": "none",
       "write": false,
       "subprocess": false,

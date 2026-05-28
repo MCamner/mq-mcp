@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-05-28 (v1.7.0).
+Last updated: 2026-05-29 (v1.8.0).
 
 ---
 
@@ -102,7 +102,7 @@ current state of the repo without running `build_repo_context` first.
 | Tool | Side effect | Location |
 | ---- | ----------- | -------- |
 | `review_file` | Saves findings | `review_engine/memory/review_history.json` |
-| `build_repo_context` | Writes context | `review_engine/context/` |
+| `build_repo_context` | Writes context + generated artifacts | `review_engine/context/`, `generated/architecture/` |
 | `extract_coding_conventions` | Writes ADR file | `architecture_memory/decisions/` |
 | `record_architecture_decision` | Writes ADR file | `architecture_memory/` |
 | `update_repo_file` | Modifies repo file | caller-specified path |
@@ -252,3 +252,27 @@ The following are always true regardless of tool, caller, or configuration:
 
 These guarantees are verified by `validate_orchestration_contract` and
 `detect_architecture_drift`.
+
+---
+
+## 8. WARN acceptance policy
+
+`validate_orchestration_contract` and `detect_architecture_drift` emit `[WARN]`
+findings that do not block a release but signal potential drift.
+
+### When a WARN is acceptable
+
+| WARN | Acceptable when |
+| ---- | --------------- |
+| `ORCHESTRATION_CONTRACT.md older than server.py` | No new `@mcp.tool()` functions were added in the commits since the last contract update. The diff-aware message confirms this by listing no new tools. |
+| `RUNTIME_CONTRACT.md older than server.py` | The changes to `server.py` were internal helpers, refactors, or bug fixes that do not affect the declared guarantees or tool surface. |
+| `architecture_map.json older than server.py` | `build_repo_context()` has not been re-run since the last server.py change. Acceptable in development; run before a review or release. |
+
+### When a WARN requires action
+
+- WARN lists specific tool names as "new tools since last contract update" → update the contract.
+- WARN fires after adding a new tool class or safety boundary → update `RUNTIME_CONTRACT.md`.
+- WARN persists across multiple commits with new tools → treat as FAIL for release purposes.
+
+The release gate (`scripts/release-check.sh`) does not block on WARNs, but
+they should be reviewed and resolved before tagging a release.
