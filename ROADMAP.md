@@ -1065,3 +1065,352 @@ Immediate priorities:
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
+
+---
+
+## Runtime Truth + Safety Governance
+
+Goal: evolve `mq-mcp` from a local MCP lab into a stable, verifiable, and safe local control plane for the MQ ecosystem.
+
+The goal is not more tools first. The goal is better feedback between:
+
+```text
+runtime → tools → safety metadata → docs → validation → release
+```
+
+When that chain is stable, the system can carry more integrations without creating drift between code, documentation, and actual behavior.
+
+**Why this matters now**
+
+The repo has grown quickly and now contains 76 MCP tools, a review engine, semantic memory, safety classes, an OpenAI bridge, profiles for multiple clients, and integration with mq-hal and repo-signal. The following signals can start to drift apart independently:
+
+- README status and version badge
+- VERSION, CHANGELOG, GitHub release
+- docs/stability.json
+- runtime tool count
+- docs/TOOL_SAFETY.md, TOOL_INDEX.md, actual MCP tool discovery
+
+This is a system problem, not a series of isolated documentation errors.
+
+**Guiding principles**
+
+```text
+1.  Runtime is the truth.
+2.  Documentation must be verified against runtime.
+3.  Safety metadata must be machine-readable.
+4.  New tools may not be added without a contract.
+5.  Release may not happen if VERSION, README, CHANGELOG, and docs are out of sync.
+6.  Semantic memory should be curated, not just accumulated.
+7.  The review engine should audit system contracts, not just code style.
+8.  Class C/D tools must always have explicit boundaries.
+9.  Generated docs must be separated from handwritten analysis.
+10. mq-mcp should be local-first, explicit, and verifiable.
+```
+
+---
+
+## Phase 1 — Stop version and documentation drift
+
+Goal: get all public signals to say the same thing.
+
+**Tasks**
+
+- [ ] Verify that `VERSION` matches the intended current release.
+- [ ] Update the README version badge.
+- [ ] Update the README status line.
+- [ ] Verify that `CHANGELOG.md` has an entry for the current version.
+- [ ] Verify that `docs/stability.json` matches the current version.
+- [ ] Verify that the GitHub release/tag matches the current version.
+- [ ] Fix any CI failure before the next release.
+- [ ] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
+
+**Definition of done**
+
+- [ ] `git status` is clean after changes.
+- [ ] `./scripts/validate.sh` passes.
+- [ ] README, VERSION, CHANGELOG, and release status are in sync.
+- [ ] The repo shows a consistent version externally and internally.
+
+---
+
+## Phase 2 — Runtime Truth Gate
+
+Goal: build a check that blocks release when the repo describes itself incorrectly.
+
+**New files**
+
+```text
+scripts/check-runtime-truth.sh
+tests/test_runtime_truth.py
+```
+
+**Checks**
+
+- [ ] `VERSION` exists and is semver-compatible.
+- [ ] README and README badge contain the same version as `VERSION`.
+- [ ] `CHANGELOG.md` and `docs/stability.json` contain the same version.
+- [ ] README tool count matches actual runtime discovery.
+- [ ] All runtime tools are present in `docs/TOOL_SAFETY.md`.
+- [ ] All tools in `docs/TOOL_SAFETY.md` exist in runtime.
+- [ ] All Class C/D tools have explicit safety metadata.
+
+The script must emit clear error messages, for example:
+
+```text
+MQ_MCP_RUNTIME_TRUTH_ERROR: VERSION mismatch between VERSION and README
+MQ_MCP_RUNTIME_TRUTH_ERROR: tool count mismatch between README and runtime
+MQ_MCP_RUNTIME_TRUTH_ERROR: tool missing from docs/TOOL_SAFETY.md
+```
+
+**Definition of done**
+
+- [ ] `scripts/check-runtime-truth.sh` is called by `scripts/validate.sh`.
+- [ ] CI fails if version, tool count, or safety docs drift apart.
+- [ ] Error messages are clear enough to locate and fix drift quickly.
+
+---
+
+## Phase 3 — Tool Registry
+
+Goal: make tool metadata a first-class part of the runtime.
+
+**New file:** `mq-mcp/tool_registry.py`
+
+Each tool must declare:
+
+```python
+{
+    "name": "read_repo_file",
+    "category": "repo",
+    "safety_class": "A",
+    "read_only": True,
+    "writes_files": False,
+    "uses_subprocess": False,
+    "uses_network": False,
+    "requires_api_key": False,
+    "resolver": "resolve_repo_file",
+    "description": "Reads a file inside the repository root",
+}
+```
+
+**New outputs**
+
+```text
+generated/tool-index.json
+generated/tool-safety.json
+generated/runtime-contract.json
+```
+
+**New commands**
+
+```bash
+mq-mcp tools --json
+mq-mcp tools --safety
+mq-mcp tools --markdown
+```
+
+**Definition of done**
+
+- [ ] Tool metadata can be exported as JSON.
+- [ ] Tool safety can be exported in machine-readable form.
+- [ ] `TOOL_INDEX.md` can be generated or validated from runtime.
+- [ ] README no longer needs to be the sole source of tool count.
+
+---
+
+## Phase 4 — Safety Contract Enforcement
+
+Goal: make the safety model stricter and testable.
+
+**New files**
+
+```text
+scripts/check-tool-contracts.sh
+tests/test_tool_contracts.py
+tests/test_safety_classes.py
+```
+
+**Class A — repo-scoped read-only**
+
+- [ ] may only read repo-scoped files/data
+- [ ] may not write, run subprocess, or open apps
+- [ ] does not require an API key
+
+**Class B — external/system read-only**
+
+- [ ] may read system status or external read-only data
+- [ ] may not write files or change system state
+- [ ] external access must be documented
+
+**Class C — controlled write**
+
+- [ ] may write only within a clearly defined scope
+- [ ] may not commit automatically
+- [ ] must return the modified path and document rollback or limitation
+- [ ] must have a test for path safety
+
+**Class D — subprocess/open-app/system effect**
+
+- [ ] must be explicit and document the system effect
+- [ ] must have a clear command boundary
+- [ ] should be avoided in automated workflows
+- [ ] must be identifiable in tool metadata
+
+**Definition of done**
+
+- [ ] A new tool without complete metadata causes validation to fail.
+- [ ] Class C/D tools are easy to locate.
+- [ ] `docs/TOOL_SAFETY.md` can be checked against runtime.
+
+---
+
+## Phase 5 — Review Engine Contracts
+
+Goal: make the review engine a system auditor, not just a code reviewer.
+
+**New contract files**
+
+```text
+review_engine/contracts/runtime_truth.md
+review_engine/contracts/safety_contract.md
+review_engine/contracts/release_readiness.md
+review_engine/contracts/memory_hygiene.md
+review_engine/contracts/orchestration_boundary.md
+```
+
+**New review modes:** `review_runtime_truth`, `review_safety_contract`, `review_release_readiness`, `review_memory_hygiene`, `review_orchestration_boundary`
+
+**The review engine must detect**
+
+- [ ] version drift, tool count drift, missing safety class
+- [ ] docs/runtime mismatch, stale architecture docs, stale semantic memory
+- [ ] unclear Class C/D boundaries, release blockers
+- [ ] skill/docs mismatch, orchestration boundary violations
+
+**Definition of done**
+
+- [ ] `review_repo` can flag system drift.
+- [ ] `review_diff` can detect when a new tool is missing safety metadata.
+- [ ] Review results can be fed into semantic memory without creating noise.
+
+---
+
+## Phase 6 — Semantic Memory Hygiene
+
+Goal: semantic memory should be curated knowledge, not just accumulated text.
+
+**New files**
+
+```text
+semantic_memory/POLICY.md
+semantic_memory/schema.json
+scripts/check-semantic-memory.sh
+tests/test_semantic_memory_policy.py
+```
+
+**Memory item schema**
+
+```json
+{
+  "key": "mq-mcp.tool-safety-model",
+  "type": "fact | decision | convention | summary | warning",
+  "source": "README.md",
+  "version": "1.9.0",
+  "tags": ["safety", "tools"],
+  "created_at": "2026-05-29",
+  "updated_at": "2026-05-29",
+  "confidence": "high",
+  "content": "..."
+}
+```
+
+**Policy must define:** what may/may not be stored, how old entries are marked, how conflicts and replacements are handled, how sources are cited, how facts are distinguished from interpretation, how bootstrap may be used, and how stale memory is detected.
+
+**New command:** `mq-mcp memory audit` — shows stale, duplicate, conflicting, and sourceless items.
+
+**Definition of done**
+
+- [ ] Semantic memory can be audited.
+- [ ] Bootstrap does not overwrite valuable ADRs without a policy rule.
+- [ ] The review engine can use memory without mixing old and new truth.
+
+---
+
+## Phase 7 — Orchestration Boundary
+
+Goal: clarify exactly what `mq-mcp` does compared to other MQ repos.
+
+**Role division**
+
+| Repo               | Role                                                          |
+| ------------------ | ------------------------------------------------------------- |
+| `mq-mcp`           | local tool surface, safety, bridge, memory, review            |
+| `mq-agent`         | planner, orchestrator, routing, and agent flows               |
+| `mq-hal`           | system status, reports, and environment analysis              |
+| `repo-signal`      | repo health, publish readiness, and scoring                   |
+| `mq-image-analyze` | visual perception, screenshots, diagrams, and image reasoning |
+
+**Files to update:** `docs/orchestration-boundary.md`, `docs/integration.md`, `README.md`, `profiles/`
+
+README must answer: when is each repo used, which tools may run automatically, which require an explicit human decision, and where the boundary between orchestration and execution lies.
+
+**Definition of done**
+
+- [ ] A new user understands what `mq-mcp` is.
+- [ ] An agent can decide when to use `mq-mcp`.
+- [ ] Class C/D tools are clearly separated from read-only flows.
+
+---
+
+## Phase 8 — Release Gate v2
+
+Goal: make release a system test, not just a version bump.
+
+**Files to update:** `release.sh`, `scripts/release-check.sh`, `scripts/validate.sh`
+
+The release gate must run `check-runtime-truth.sh`, `check-tool-contracts.sh`, `check-semantic-memory.sh`, and `validate.sh`. Release must be blocked if any of the following are true: version drift, wrong README badge, CHANGELOG missing the version, stale `docs/stability.json`, wrong tool count, safety docs missing a tool, runtime missing a documented tool, absent Class C/D metadata, corrupt semantic memory, out-of-sync generated artifacts, or red CI.
+
+**Definition of done**
+
+- [ ] The release process catches system drift before tagging.
+- [ ] Release output clearly shows what was verified.
+- [ ] Release can be run with `--dry-run`.
+
+---
+
+## Phase 9 — Generated Docs Discipline
+
+Goal: reduce manual documentation drift by separating what is generated from what is handwritten.
+
+```text
+generated docs = what the system actually exposes
+handwritten docs = why the system is designed that way
+```
+
+**Generated:** `generated/tool-index.json`, `generated/tool-safety.json`, `generated/runtime-contract.json`, `generated/release-state.json`, `generated/profile-index.json`
+
+**Handwritten:** `README.md`, `ROADMAP.md`, `SAFETY_MODEL.md`, `docs/security.md`, `docs/integration.md`, `docs/orchestration-boundary.md`
+
+**Definition of done**
+
+- [ ] Generated artifacts can be reproduced deterministically.
+- [ ] Validation fails if generated artifacts are out of sync.
+- [ ] README uses summaries rather than duplicating tool truth.
+
+---
+
+**Priorities**
+
+Do first: fix CI failure → sync VERSION/README/CHANGELOG/GitHub release → add `scripts/check-runtime-truth.sh` → wire it into `scripts/validate.sh` → verify tool count and `docs/TOOL_SAFETY.md` against runtime.
+
+Do next: introduce `tool_registry.py` → generate tool-index from registry → add `check-tool-contracts.sh` → add `semantic_memory/POLICY.md` → add review contracts for runtime, safety, and release → clarify the orchestration boundary.
+
+Defer: more macOS automation tools, more write-capable tools, daemonization, auto-execution, more external integrations, more voice/persona layers, more Class D tools.
+
+---
+
+This repo does not primarily need more power right now. It needs better feedback. The most important chain is:
+
+```text
+runtime → registry → generated docs → safety validation → release gate
+```
