@@ -1120,7 +1120,7 @@ Goal: get all public signals to say the same thing.
 - [x] Update the README status line.
 - [x] Verify that `CHANGELOG.md` has an entry for the current version.
 - [x] Verify that `docs/stability.json` matches the current version.
-- [ ] Verify that the GitHub release/tag matches the current version. *(GitHub release still at v1.4.0 — needs manual release for v1.5.0–v1.9.0)*
+- [x] Verify that the GitHub release/tag matches the current version.
 - [x] Fix any CI failure before the next release.
 - [x] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
 
@@ -1129,7 +1129,7 @@ Goal: get all public signals to say the same thing.
 - [x] `git status` is clean after changes.
 - [x] `./scripts/validate.sh` passes.
 - [x] README, VERSION, CHANGELOG, and release status are in sync.
-- [ ] The repo shows a consistent version externally and internally. *(blocked on GitHub release)*
+- [x] The repo shows a consistent version externally and internally.
 
 ---
 
