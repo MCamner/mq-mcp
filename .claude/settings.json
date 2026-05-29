@@ -153,7 +153,27 @@
       "Bash(sed -i '' 's/\"1\\\\.8\\\\.0\"/\"1.9.0\"/g' tests/test_server_observability.py tests/test_cli.py)",
       "Bash(sed -i '' 's/tool_count.*== 75/tool_count == 76/' tests/test_server_observability.py tests/test_cli.py)",
       "Bash(sed -i '' 's/\"version\": \"1\\\\.8\\\\.0\"/\"version\": \"1.9.0\"/' docs/stability.json)",
-      "Bash(awk 'NR>=2963 && NR<=3000' mq-mcp/server.py)"
+      "Bash(awk 'NR>=2963 && NR<=3000' mq-mcp/server.py)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/Users/mansys/mq-mcp/docs/tool_contracts.json'\\)\\); print\\(d.get\\('version','not found'\\)\\)\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/Users/mansys/mq-mcp/docs/tool_contracts.json'\\)\\); print\\(list\\(d.keys\\(\\)\\)[:5]\\); print\\(d.get\\('schema_version','no schema_version'\\)\\)\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/Users/mansys/mq-mcp/docs/tool_contracts.json'\\)\\); print\\(d['mq_mcp_version'], d['tool_count']\\)\")",
+      "Bash(git -C /Users/mansys/mq-mcp tag --list \"v*\")",
+      "Bash(git -C /Users/mansys/mq-mcp log --oneline)",
+      "Bash(git -C /Users/mansys/mq-mcp tag v1.6.0 e16cdba)",
+      "Bash(git -C /Users/mansys/mq-mcp tag v1.7.0 7822c5e)",
+      "Bash(git -C /Users/mansys/mq-mcp tag v1.8.0 b9f7a21)",
+      "Bash(git -C /Users/mansys/mq-mcp tag v1.9.0 a6e0847)",
+      "Bash(git -C /Users/mansys/mq-mcp push origin v1.6.0 v1.7.0 v1.8.0 v1.9.0)",
+      "Bash(git -C /Users/mansys/mq-hal add ROADMAP.md)",
+      "Bash(git -C /Users/mansys/mq-hal commit -m ' *)",
+      "Bash(git -C /Users/mansys/mq-hal push origin main)",
+      "Bash(git -C /Users/mansys/mq-hal branch --show-current)",
+      "Bash(git -C /Users/mansys/mq-hal log --oneline -3)",
+      "Bash(git -C /Users/mansys/mq-hal push origin docs/roadmap-v0.11-intent-contract)",
+      "Bash(grep -n \"| \\\\`\" /Users/mansys/mq-mcp/docs/TOOL_SAFETY.md)",
+      "Bash(grep -c \"| \\\\`\" /Users/mansys/mq-mcp/docs/TOOL_SAFETY.md)",
+      "Bash(chmod +x /Users/mansys/mq-mcp/scripts/check-runtime-truth.sh)",
+      "Bash(./scripts/check-runtime-truth.sh)"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"
