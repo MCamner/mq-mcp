@@ -3,6 +3,7 @@
 
 # Python
 __pycache__/
+.mypy_cache/
 *.pyc
 .venv/
 venv/

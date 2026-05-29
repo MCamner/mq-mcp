@@ -1115,21 +1115,21 @@ Goal: get all public signals to say the same thing.
 
 **Tasks**
 
-- [ ] Verify that `VERSION` matches the intended current release.
-- [ ] Update the README version badge.
-- [ ] Update the README status line.
-- [ ] Verify that `CHANGELOG.md` has an entry for the current version.
-- [ ] Verify that `docs/stability.json` matches the current version.
-- [ ] Verify that the GitHub release/tag matches the current version.
-- [ ] Fix any CI failure before the next release.
-- [ ] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
+- [x] Verify that `VERSION` matches the intended current release.
+- [x] Update the README version badge.
+- [x] Update the README status line.
+- [x] Verify that `CHANGELOG.md` has an entry for the current version.
+- [x] Verify that `docs/stability.json` matches the current version.
+- [ ] Verify that the GitHub release/tag matches the current version. *(GitHub release still at v1.4.0 — needs manual release for v1.5.0–v1.9.0)*
+- [x] Fix any CI failure before the next release.
+- [x] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
 
 **Definition of done**
 
-- [ ] `git status` is clean after changes.
-- [ ] `./scripts/validate.sh` passes.
-- [ ] README, VERSION, CHANGELOG, and release status are in sync.
-- [ ] The repo shows a consistent version externally and internally.
+- [x] `git status` is clean after changes.
+- [x] `./scripts/validate.sh` passes.
+- [x] README, VERSION, CHANGELOG, and release status are in sync.
+- [ ] The repo shows a consistent version externally and internally. *(blocked on GitHub release)*
 
 ---
 

@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.3.0)
+[![Version](https://img.shields.io/badge/version-1.9.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.9.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -9,9 +9,8 @@ Local MCP server experiments and tooling for macOS.
 
 ## Status
 
-v1.4.0 — semantic memory layer. 76 tools, durable knowledge store injected
-into reviews at priority 0, bootstrap from key docs, and full search/store/get
-API for cross-repo facts and doc summaries.
+v1.9.0 — security pattern false-positive fix, `list_review_skills` tool,
+orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
@@ -206,6 +205,7 @@ The local MCP server exposes 76 tools across five safety classes. See [`docs/TOO
 - `repo_signal_checklist` — runs repo-signal publish checklist on a local repository (read-only)
 - `repo_signal_inspect` — runs repo-signal inspect --json and returns structured inspect.v1 data
 - `repo_signal_doctor_json` — runs repo-signal doctor --json and returns structured doctor.v1 data
+- `repo_signal_status` — reports whether repo-signal export packs are present and merged (Class A, read-only)
 - `get_clipboard` — reads the current macOS clipboard
 - `get_wifi_info` — returns current Wi-Fi network name and signal info
 - `get_battery_status` — returns battery level, charging state, and estimated time remaining
@@ -251,8 +251,11 @@ The local MCP server exposes 76 tools across five safety classes. See [`docs/TOO
 **Review engine tools:**
 
 - `review_file` — runs an AI review on a repo file using a review contract (requires OPENAI_API_KEY)
+- `risk_review_file` — targeted risk pass (security/risk/architecture) with grep pre-scan + AI review (requires OPENAI_API_KEY)
+- `risk_review_diff` — risk pass over changed files in the working tree or staging area (requires OPENAI_API_KEY)
 - `build_repo_context` — rebuilds architecture_map.json and file_summary_index.json for the review engine
 - `list_review_contracts` — lists available review contracts and their modes
+- `list_review_skills` — lists available review skills with path-prefix routes, extension routes, and availability status (Class A)
 - `list_review_history` — lists all files with review history and last review summary
 - `get_last_review` — returns the most recent review findings for a repo file from local memory
 - `detect_architecture_drift` — detects drift between declared documentation and actual runtime state
@@ -269,6 +272,7 @@ The local MCP server exposes 76 tools across five safety classes. See [`docs/TOO
 - `get_semantic_memory` — returns the full content of a semantic memory item by key (Class A)
 - `list_semantic_memory` — lists all semantic memory items with previews (Class A)
 - `bootstrap_semantic_memory` — ingests README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md into semantic memory (Class C)
+- `export_symbol_index` — writes a callgraph symbol map to generated/symbols/symbol_index.json (Class C)
 - `review_diff` — reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 - `review_repo` — reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
 
