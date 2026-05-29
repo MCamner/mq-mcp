@@ -25,6 +25,13 @@ fail() {
   FAILED=$((FAILED + 1))
 }
 
+section "Runtime truth check"
+if [[ -x "$ROOT/scripts/check-runtime-truth.sh" ]]; then
+  "$ROOT/scripts/check-runtime-truth.sh" || fail "check-runtime-truth.sh failed"
+else
+  fail "check-runtime-truth.sh missing or not executable"
+fi
+
 section "MCP tool doc check"
 if [[ -x "$ROOT/scripts/check-mcp-tool-docs.sh" ]]; then
   "$ROOT/scripts/check-mcp-tool-docs.sh" || fail "check-mcp-tool-docs.sh failed"

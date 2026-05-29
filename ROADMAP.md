@@ -1146,13 +1146,13 @@ tests/test_runtime_truth.py
 
 **Checks**
 
-- [ ] `VERSION` exists and is semver-compatible.
-- [ ] README and README badge contain the same version as `VERSION`.
-- [ ] `CHANGELOG.md` and `docs/stability.json` contain the same version.
-- [ ] README tool count matches actual runtime discovery.
-- [ ] All runtime tools are present in `docs/TOOL_SAFETY.md`.
-- [ ] All tools in `docs/TOOL_SAFETY.md` exist in runtime.
-- [ ] All Class C/D tools have explicit safety metadata.
+- [x] `VERSION` exists and is semver-compatible.
+- [x] README and README badge contain the same version as `VERSION`.
+- [x] `CHANGELOG.md` and `docs/stability.json` contain the same version.
+- [x] README tool count matches actual runtime discovery.
+- [x] All runtime tools are present in `docs/TOOL_SAFETY.md`.
+- [x] All tools in `docs/TOOL_SAFETY.md` exist in runtime.
+- [x] All Class C/D tools have explicit safety metadata.
 
 The script must emit clear error messages, for example:
 
@@ -1164,9 +1164,9 @@ MQ_MCP_RUNTIME_TRUTH_ERROR: tool missing from docs/TOOL_SAFETY.md
 
 **Definition of done**
 
-- [ ] `scripts/check-runtime-truth.sh` is called by `scripts/validate.sh`.
-- [ ] CI fails if version, tool count, or safety docs drift apart.
-- [ ] Error messages are clear enough to locate and fix drift quickly.
+- [x] `scripts/check-runtime-truth.sh` is called by `scripts/validate.sh`.
+- [x] CI fails if version, tool count, or safety docs drift apart.
+- [x] Error messages are clear enough to locate and fix drift quickly.
 
 ---
 
