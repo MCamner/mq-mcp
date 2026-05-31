@@ -1462,9 +1462,9 @@ tests/test_semantic_memory_policy.py
 
 **Definition of done**
 
-- [ ] Semantic memory can be audited.
-- [ ] Bootstrap does not overwrite valuable ADRs without a policy rule.
-- [ ] The review engine can use memory without mixing old and new truth.
+- [x] Semantic memory can be audited.
+- [x] Bootstrap does not overwrite valuable ADRs without a policy rule.
+- [x] The review engine can use memory without mixing old and new truth.
 
 ---
 
