@@ -36,7 +36,7 @@ Current project phase:
 
 ```text
 v1.9.0 — semantic memory hygiene + orchestration boundary (done)
-Next:    v1.10.0 — Learning Contract Layer
+Next:    Phase 8 — Release Gate v2
 ```
 
 Completed foundation:
