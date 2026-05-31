@@ -14,7 +14,7 @@ orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
-- a local MCP server with 76 documented, safety-classified tools
+- a local MCP server with 91 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -30,7 +30,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 76 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 91 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -158,7 +158,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 76 MCP tools with descriptions.
+Expected response lists all 91 MCP tools with descriptions.
 
 ## Integration map
 
@@ -183,7 +183,7 @@ Before using or extending it:
 
 ## Available MCP tools
 
-The local MCP server exposes 76 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 91 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -247,6 +247,24 @@ The local MCP server exposes 76 tools across five safety classes. See [`docs/TOO
 - `set_reminder` — creates a reminder in Reminders.app
 - `set_wallpaper` — sets the macOS desktop wallpaper
 - `run_tests` — runs pytest in a registered local repository
+- `run_mqlaunch_doctor` — runs `mqlaunch doctor` (structured PASS/FAIL health report)
+- `run_mqlaunch_selftest` — runs `mqlaunch selftest` (internal smoke checks)
+- `run_mqlaunch_release_check` — runs `mqlaunch release-check` (pre-release gate)
+- `run_mqlaunch_version` — runs `mqlaunch version` (TUI output; version extracted heuristically)
+- `run_mqlaunch_system_check` — runs `mqlaunch system check` (TUI; structured data not available headless)
+- `run_mqlaunch_perf` — runs `mqlaunch perf` (TUI menu; no parseable output headless)
+- `run_mqlaunch_demo` — runs `mqlaunch demo` (interactive TUI; no output headless)
+- `run_mqlaunch_bundle` — runs `mqlaunch bundle` (TUI; bundle NOT created headless)
+- `run_mqlaunch_ask` — asks mqlaunch a natural-language question (requires OPENAI_API_KEY)
+
+**Learn layer tools (Class A/B):**
+
+- `record_learning` — stores a verified engineering lesson locally with secret redaction (Class B, writes lessons.jsonl)
+- `list_learnings` — lists stored lessons with optional repo/source/risk filters (Class A)
+- `get_learning` — returns a single lesson by id prefix (Class A)
+- `search_learnings` — full-text search across lessons (Class A)
+- `summarize_learnings` — summarizes lessons by source and risk (Class A)
+- `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
 
 **Review engine tools:**
 
