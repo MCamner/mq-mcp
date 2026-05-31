@@ -411,7 +411,7 @@
     {
       "name": "open_in_app",
       "class": "D",
-      "description": "\u00d6ppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop).",
+      "description": "Öppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop).",
       "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
@@ -495,7 +495,7 @@
     {
       "name": "read_repo_file",
       "class": "A",
-      "description": "L\u00e4ser inneh\u00e5llet i en fil inom repo-katalogen.",
+      "description": "Läser innehållet i en fil inom repo-katalogen.",
       "resolver": "resolve_repo_file",
       "write": false,
       "subprocess": false,
@@ -655,7 +655,7 @@
     {
       "name": "run_mqlaunch",
       "class": "D",
-      "description": "\u00d6ppnar mqlaunch i ett nytt Terminal-f\u00f6nster. mqlaunch \u00e4r ett interaktivt TUI och kr\u00e4ver en riktig terminal.",
+      "description": "Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
