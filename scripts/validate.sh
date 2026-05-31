@@ -115,14 +115,14 @@ tools_output="$(uv run python bridge.py --tools)" \
   || { fail "bridge.py --tools failed"; tools_output=""; }
 printf '%s\n' "$tools_output"
 
-printf '%s\n' "$tools_output" | grep -q "read_repo_file" || fail "read_repo_file tool missing"
-printf '%s\n' "$tools_output" | grep -q "get_system_resources" || fail "get_system_resources tool missing"
-printf '%s\n' "$tools_output" | grep -q "list_repo_files" || fail "list_repo_files tool missing"
-printf '%s\n' "$tools_output" | grep -q "search_repo" || fail "search_repo tool missing"
-printf '%s\n' "$tools_output" | grep -q "git_status" || fail "git_status tool missing"
-printf '%s\n' "$tools_output" | grep -q "git_diff" || fail "git_diff tool missing"
-printf '%s\n' "$tools_output" | grep -q "validate_project" || fail "validate_project tool missing"
-printf '%s\n' "$tools_output" | grep -q "update_repo_file" || fail "update_repo_file tool missing"
+grep -q "read_repo_file"    <<< "$tools_output" || fail "read_repo_file tool missing"
+grep -q "get_system_resources" <<< "$tools_output" || fail "get_system_resources tool missing"
+grep -q "list_repo_files"  <<< "$tools_output" || fail "list_repo_files tool missing"
+grep -q "search_repo"      <<< "$tools_output" || fail "search_repo tool missing"
+grep -q "git_status"       <<< "$tools_output" || fail "git_status tool missing"
+grep -q "git_diff"         <<< "$tools_output" || fail "git_diff tool missing"
+grep -q "validate_project" <<< "$tools_output" || fail "validate_project tool missing"
+grep -q "update_repo_file" <<< "$tools_output" || fail "update_repo_file tool missing"
 
 ok "Core MCP tools found"
 

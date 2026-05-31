@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcamner.github.io/mq-mcp/schemas/learning.schema.json",
+  "title": "mq-mcp Learning Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "repo",
+    "source",
+    "task",
+    "lesson",
+    "validation",
+    "risk",
+    "promoted_to",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^learn_[0-9]{8}_[0-9]{6}_[0-9]{4}$"
+    },
+    "repo": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "string",
+      "enum": ["codex", "claude", "mq-agent", "mq-hal", "manual", "review", "diff"]
+    },
+    "task": { "type": "string", "minLength": 1 },
+    "lesson": { "type": "string", "minLength": 1 },
+    "problem": { "type": "string" },
+    "solution": { "type": "string" },
+    "files_touched": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "commands_used": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "unknown"]
+    },
+    "promoted_to": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
