@@ -260,7 +260,12 @@ def build_parser() -> argparse.ArgumentParser:
     serve_parser.add_argument("--port", help="Override MQ_MCP_PORT for HTTP/SSE transports.")
 
     sub.add_parser("validate", help="Run scripts/validate.sh from the repository root.")
-    sub.add_parser("tools", help="List tools exposed through bridge.py.")
+
+    tools_parser = sub.add_parser("tools", help="List tools exposed through bridge.py or the registry.")
+    tools_parser.add_argument("--json", action="store_true", help="Print full tool index as JSON.")
+    tools_parser.add_argument("--safety", action="store_true", help="Print safety-focused tool view as JSON.")
+    tools_parser.add_argument("--markdown", action="store_true", help="Print tool index as a Markdown table.")
+    tools_parser.add_argument("--export", action="store_true", help="Write generated/tool-index.json, tool-safety.json, runtime-contract.json.")
 
     profiles_parser = sub.add_parser("profiles", help="Inspect MCP profile templates.")
     profiles_sub = profiles_parser.add_subparsers(dest="profiles_command")
@@ -344,6 +349,37 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate":
         return run_command([str(REPO_ROOT / "scripts" / "validate.sh")], REPO_ROOT)
     if args.command == "tools":
+        if args.json or args.safety or args.markdown or args.export:
+            from tool_registry import (  # noqa: PLC0415
+                as_markdown_table,
+                export_runtime_contract,
+                export_tool_index,
+                export_tool_safety,
+                load_registry,
+                registry_summary,
+            )
+            if args.json:
+                import json as _json
+                summary = registry_summary()
+                payload = {**summary, "tools": load_registry()}
+                print(_json.dumps(payload, indent=2))
+                return 0
+            if args.safety:
+                import json as _json
+                from pathlib import Path as _Path
+                out = export_tool_safety(_Path("/dev/stdout"))
+                return 0
+            if args.markdown:
+                print(as_markdown_table())
+                return 0
+            if args.export:
+                idx = export_tool_index()
+                saf = export_tool_safety()
+                rc = export_runtime_contract()
+                print(f"written: {idx.relative_to(REPO_ROOT)}")
+                print(f"written: {saf.relative_to(REPO_ROOT)}")
+                print(f"written: {rc.relative_to(REPO_ROOT)}")
+                return 0
         return run_command(["uv", "run", "python", "bridge.py", "--tools"], APP_DIR)
     if args.command == "profiles":
         if args.profiles_command == "list":

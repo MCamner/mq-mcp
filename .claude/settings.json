@@ -173,7 +173,9 @@
       "Bash(grep -n \"| \\\\`\" /Users/mansys/mq-mcp/docs/TOOL_SAFETY.md)",
       "Bash(grep -c \"| \\\\`\" /Users/mansys/mq-mcp/docs/TOOL_SAFETY.md)",
       "Bash(chmod +x /Users/mansys/mq-mcp/scripts/check-runtime-truth.sh)",
-      "Bash(./scripts/check-runtime-truth.sh)"
+      "Bash(./scripts/check-runtime-truth.sh)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('tool_count:', d['tool_count']\\); print\\('categories:', list\\(d['categories'].keys\\(\\)\\)[:5]\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('schema:', d['schema']\\); print\\('tools:', d['tool_count']\\); print\\('first:', d['tools'][0]['name'], d['tools'][0]['safety_class']\\)\")"
     ],
     "additionalDirectories": [
       "/Users/mansys/mq-mcp/reviews"
