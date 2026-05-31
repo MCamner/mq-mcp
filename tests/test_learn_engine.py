@@ -6,10 +6,14 @@ import pytest
 
 def _load_engine():
     import importlib.util
+    import sys
 
     module_path = Path(__file__).resolve().parents[1] / "mq-mcp" / "learn_engine.py"
     spec = importlib.util.spec_from_file_location("learn_engine", module_path)
     module = importlib.util.module_from_spec(spec)
+    # Register before exec so dataclasses can resolve cls.__module__ in sys.modules
+    # (required in Python 3.14+).
+    sys.modules["learn_engine"] = module
     assert spec and spec.loader
     spec.loader.exec_module(module)
     return module
