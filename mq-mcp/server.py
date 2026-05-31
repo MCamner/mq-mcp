@@ -3857,6 +3857,216 @@ def promote_learning(learning_id: str, target: str) -> str:
     return eng.promotion_preview(REPO_ROOT, learning_id, target)
 
 
+@mcp.tool()
+def learning_status(repo: str = "") -> str:
+    """Return a summary of the local learn layer: counts by source, risk, and repo.
+
+    Args:
+        repo: Filter to a specific repo name (empty = all repos).
+
+    Safety: Class A — read-only, no writes.
+    """
+    eng = _learn_engine()
+    all_lessons = eng.load_learnings(REPO_ROOT)
+    lessons = [l for l in all_lessons if not repo or l.get("repo") == repo]
+
+    if not lessons:
+        return f"No lessons stored{f' for repo {repo!r}' if repo else ''}."
+
+    by_source: dict[str, int] = {}
+    by_risk: dict[str, int] = {}
+    by_repo: dict[str, int] = {}
+    for l in lessons:
+        s = l.get("source", "unknown")
+        r = l.get("risk", "unknown")
+        rp = l.get("repo") or "(general)"
+        by_source[s] = by_source.get(s, 0) + 1
+        by_risk[r]   = by_risk.get(r, 0) + 1
+        by_repo[rp]  = by_repo.get(rp, 0) + 1
+
+    lines = [f"Learn layer: {len(lessons)} lesson(s)"]
+    if repo:
+        lines[0] += f" for repo '{repo}'"
+    lines += ["", "By source:"]
+    lines += [f"  {k}: {v}" for k, v in sorted(by_source.items())]
+    lines += ["", "By risk:"]
+    lines += [f"  {k}: {v}" for k, v in sorted(by_risk.items())]
+    if not repo:
+        lines += ["", "By repo:"]
+        lines += [f"  {k}: {v}" for k, v in sorted(by_repo.items())]
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def learn_from_review(relative_path: str, task: str = "", risk: str = "low") -> str:
+    """Create a learning record from the last review findings for a file.
+
+    Loads the most recent review from review memory, extracts the first
+    blocking or high-severity finding as the lesson, and stores it in the
+    learn layer. Requires that review_file or risk_review_file has been run
+    on the path first.
+
+    Args:
+        relative_path: Repo-relative path of the reviewed file.
+        task:          What was being worked on (defaults to file name).
+        risk:          low | medium | high | unknown.
+
+    Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
+    """
+    target = resolve_repo_file(relative_path)
+    rel = str(target.relative_to(REPO_ROOT.resolve()))
+
+    try:
+        from review_engine.review_memory import ReviewMemory as _ReviewMemory
+        mem = _ReviewMemory()
+        past = mem.format_past_context(rel)
+    except Exception as exc:
+        return f"learn_from_review failed: could not load review memory: {exc}"
+
+    if not past.strip():
+        return f"No review history found for {rel}. Run review_file first."
+
+    # Extract first non-empty finding line as lesson
+    lesson_lines = [
+        ln.strip() for ln in past.splitlines()
+        if ln.strip() and not ln.startswith("#") and len(ln.strip()) > 10
+    ]
+    lesson = lesson_lines[0] if lesson_lines else f"Review findings for {rel}"
+    task = task or f"review {rel}"
+
+    eng = _learn_engine()
+    record = eng.make_learning(
+        REPO_ROOT,
+        repo="mq-mcp",
+        source="review",
+        task=task,
+        lesson=lesson[:500],
+        validation=f"review_file ran on {rel}",
+        tags=["review", "auto"],
+        risk=risk,
+    )
+    result = eng.record_learning(REPO_ROOT, record)
+    return (
+        f"Saved learning {result['id']} from review of {rel}.\n"
+        f"  lesson: {lesson[:80]}"
+    )
+
+
+@mcp.tool()
+def learn_from_diff(task: str, lesson: str, risk: str = "low", validation: str = "") -> str:
+    """Create a learning record with the current git diff as context.
+
+    Automatically captures the current diff summary (changed files) as part
+    of the validation evidence. Use this after fixing something in a working
+    tree that taught you something worth keeping.
+
+    Args:
+        task:       What was being done (e.g. "fix version drift in CI").
+        lesson:     What was learned (e.g. "pyproject version must match VERSION").
+        risk:       low | medium | high | unknown.
+        validation: How it was verified (diff summary is appended automatically).
+
+    Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
+    """
+    try:
+        diff_proc = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+        )
+        changed = [f.strip() for f in diff_proc.stdout.splitlines() if f.strip()]
+        if not changed:
+            diff_proc2 = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=10,
+            )
+            changed = [f.strip() for f in diff_proc2.stdout.splitlines() if f.strip()]
+        diff_summary = f"changed: {', '.join(changed[:6])}" if changed else "no staged changes"
+    except Exception:
+        diff_summary = "diff unavailable"
+
+    full_validation = f"{validation}; {diff_summary}".strip("; ") if validation else diff_summary
+
+    eng = _learn_engine()
+    record = eng.make_learning(
+        REPO_ROOT,
+        repo="mq-mcp",
+        source="diff",
+        task=task,
+        lesson=lesson,
+        validation=full_validation,
+        tags=["diff", "auto"],
+        risk=risk,
+    )
+    result = eng.record_learning(REPO_ROOT, record)
+    return (
+        f"Saved learning {result['id']} from diff context.\n"
+        f"  task:       {task[:72]}\n"
+        f"  validation: {full_validation[:80]}"
+    )
+
+
+@mcp.tool()
+def bootstrap_learning_memory() -> str:
+    """Seed the learn layer from existing architecture memory ADRs.
+
+    Reads all ADR entries from architecture_memory/decisions/ and creates
+    a learning record for each one that is not already in the learn store.
+    Idempotent: skips entries whose task already exists in the learn layer.
+
+    Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
+    """
+    try:
+        from review_engine.architecture_memory import ArchitectureMemory as _ArchMem
+        arch = _ArchMem()
+        entries = arch.list_all()
+    except Exception as exc:
+        return f"bootstrap_learning_memory failed: could not load architecture memory: {exc}"
+
+    if not entries:
+        return "No architecture memory entries found — nothing to bootstrap."
+
+    eng = _learn_engine()
+    existing = eng.load_learnings(REPO_ROOT)
+    existing_tasks = {l.get("task", "").lower() for l in existing}
+
+    saved, skipped = 0, 0
+    for entry in entries:
+        title = getattr(entry, "title", "") or str(entry)
+        task = f"ADR: {title}"
+        if task.lower() in existing_tasks:
+            skipped += 1
+            continue
+        content = ""
+        try:
+            full = arch.get(getattr(entry, "id", ""))
+            if full:
+                lines = full.content.splitlines()
+                content = next(
+                    (ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")),
+                    title,
+                )
+        except Exception:
+            content = title
+
+        record = eng.make_learning(
+            REPO_ROOT,
+            repo="mq-mcp",
+            source="bootstrap",
+            task=task,
+            lesson=content[:500] if content else title,
+            validation="sourced from architecture_memory ADR",
+            tags=["architecture", "adr", "bootstrap"],
+            risk="low",
+        )
+        eng.record_learning(REPO_ROOT, record)
+        saved += 1
+
+    return (
+        f"bootstrap_learning_memory: {saved} ADR(s) ingested, {skipped} already present.\n"
+        f"Total ADRs available: {len(entries)}"
+    )
+
+
 # ─── mqlaunch ─────────────────────────────────────────────────────────────────
 
 _ANSI_ESC = re.compile(r"\x1b\[[0-9;]*[mABCDEFGHJKSThlrs]|\x1b\[[0-9;]*[a-zA-Z]|\x1b[=>]|\r")

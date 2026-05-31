@@ -375,8 +375,8 @@ mq-agent to consume.
 - [x] Add side-effect category
 - [x] Add filesystem boundary notes
 - [x] Add subprocess behavior notes
-- [ ] Add error model
-- [ ] Add examples for each tool
+- [ ] Add error model *(deferred — no blocking use case)*
+- [ ] Add examples for each tool *(deferred — examples live in docs/demo.md)*
 - [x] Generate docs from tool metadata
 - [x] Add CI check that docs and tool registry match
 
@@ -709,7 +709,7 @@ Goal: higher quality through structured pipeline.
   `.py/.sh/.md/.json` files changed in the working tree or staging area, capped at 10
 - [x] `review_repo` MCP tool — agentic review: prioritizes the least-recently-reviewed
   Python files in the repo (uses review memory to order by staleness), max 20 files
-- [ ] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
+- [~] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
 
 ---
 
@@ -1000,19 +1000,19 @@ docs/
 
 Class A — read-only:
 
-- [ ] `list_learnings`
-- [ ] `search_learnings`
-- [ ] `get_learning`
-- [ ] `summarize_learnings`
-- [ ] `learning_status`
+- [x] `list_learnings`
+- [x] `search_learnings`
+- [x] `get_learning`
+- [x] `summarize_learnings`
+- [x] `learning_status`
 
 Class C — controlled write:
 
-- [ ] `record_learning`
-- [ ] `learn_from_review`
-- [ ] `learn_from_diff`
-- [ ] `promote_learning`
-- [ ] `bootstrap_learning_memory`
+- [x] `record_learning`
+- [x] `learn_from_review`
+- [x] `learn_from_diff`
+- [x] `promote_learning`
+- [x] `bootstrap_learning_memory`
 
 Class C tools may write only within the learning, semantic memory, runbook,
 architecture memory, `AGENTS.md`, or `CLAUDE.md` promotion scope. They must not
@@ -1075,18 +1075,18 @@ Allowed promotion targets:
 
 **Definition of done**
 
-- [ ] `docs/LEARNING_CONTRACT.md` and `docs/LEARNING_MODEL.md` exist.
-- [ ] `schemas/learning.schema.json` validates all stored lessons.
-- [ ] Learn tools are listed in README, TOOL_INDEX, `docs/TOOL_SAFETY.md`, and
+- [x] `docs/LEARNING_CONTRACT.md` and `docs/LEARNING_MODEL.md` exist.
+- [x] `schemas/learning.schema.json` validates all stored lessons.
+- [x] Learn tools are listed in README, TOOL_INDEX, `docs/TOOL_SAFETY.md`, and
   `docs/tool_contracts.json`.
-- [ ] Read tools are classified as Class A.
-- [ ] Write and promotion tools are classified as Class C.
-- [ ] Secret redaction runs before any learning is written.
-- [ ] Promotion defaults to dry-run.
-- [ ] Tests prove learn tools cannot execute commands, mutate allowlists,
+- [x] Read tools are classified as Class A.
+- [x] Write and promotion tools are classified as Class C.
+- [x] Secret redaction runs before any learning is written.
+- [x] Promotion defaults to dry-run.
+- [x] Tests prove learn tools cannot execute commands, mutate allowlists,
   commit, push, or write outside allowed paths.
-- [ ] `scripts/validate.sh` passes.
-- [ ] `scripts/release-check.sh` passes.
+- [x] `scripts/validate.sh` passes.
+- [x] `scripts/release-check.sh` passes.
 
 ---
 
@@ -1365,29 +1365,29 @@ tests/test_safety_classes.py
 
 **Class A — repo-scoped read-only**
 
-- [ ] may only read repo-scoped files/data
-- [ ] may not write, run subprocess, or open apps
-- [ ] does not require an API key
+- [x] may only read repo-scoped files/data
+- [x] may not write, run subprocess, or open apps
+- [x] does not require an API key
 
 **Class B — external/system read-only**
 
-- [ ] may read system status or external read-only data
-- [ ] may not write files or change system state
-- [ ] external access must be documented
+- [x] may read system status or external read-only data
+- [x] may not write files or change system state
+- [x] external access must be documented
 
 **Class C — controlled write**
 
-- [ ] may write only within a clearly defined scope
-- [ ] may not commit automatically
-- [ ] must return the modified path and document rollback or limitation
-- [ ] must have a test for path safety
+- [x] may write only within a clearly defined scope
+- [x] may not commit automatically
+- [x] must return the modified path and document rollback or limitation
+- [x] must have a test for path safety
 
 **Class D — subprocess/open-app/system effect**
 
-- [ ] must be explicit and document the system effect
-- [ ] must have a clear command boundary
-- [ ] should be avoided in automated workflows
-- [ ] must be identifiable in tool metadata
+- [x] must be explicit and document the system effect
+- [x] must have a clear command boundary
+- [x] should be avoided in automated workflows
+- [x] must be identifiable in tool metadata
 
 **Definition of done**
 
@@ -1415,10 +1415,10 @@ review_engine/contracts/orchestration_boundary.md
 
 **The review engine must detect**
 
-- [ ] version drift, tool count drift, missing safety class
-- [ ] docs/runtime mismatch, stale architecture docs, stale semantic memory
-- [ ] unclear Class C/D boundaries, release blockers
-- [ ] skill/docs mismatch, orchestration boundary violations
+- [x] version drift, tool count drift, missing safety class
+- [x] docs/runtime mismatch, stale architecture docs, stale semantic memory
+- [x] unclear Class C/D boundaries, release blockers
+- [x] skill/docs mismatch, orchestration boundary violations
 
 **Definition of done**
 

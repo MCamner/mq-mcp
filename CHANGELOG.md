@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.10.0 - 2026-05-31
+
+- Completed Runtime Truth + Safety Governance roadmap (Phases 1–9):
+  - Phase 1: synced all version signals (VERSION, README badge, stability.json,
+    tool_contracts.json), added GitHub releases v1.6.0–v1.9.0.
+  - Phase 2: `scripts/check-runtime-truth.sh` — 9 deterministic checks wired
+    into `scripts/validate.sh`.
+  - Phase 3: `mq-mcp/tool_registry.py` with 11 tool categories; `mq-mcp tools
+    --json/--safety/--markdown/--export`.
+  - Phase 4: safety class enforcement in `check-tool-contracts.sh`; 30 new
+    tests in `test_tool_contracts.py` and `test_safety_classes.py`.
+  - Phase 5: five review contracts — `runtime-truth`, `safety-contract`,
+    `release-readiness`, `memory-hygiene`, `orchestration-boundary`.
+  - Phase 6: `semantic_memory/POLICY.md`, `schema.json`,
+    `check-semantic-memory.sh`; `mq-mcp memory audit/count/list`.
+  - Phase 7: `docs/orchestration-boundary.md`; Ecosystem section in README.
+  - Phase 8: `scripts/release-check.sh` rewritten with 12 sections, CI check,
+    `--dry-run`; `release.sh` calls gate as first step.
+  - Phase 9: `export_release_state()`, `export_profile_index()`,
+    `check-generated-artifacts.sh` (5 deterministic artifacts).
+- Added `learning_status` MCP tool (Class A): learn layer stats by source,
+  risk, and repo.
+- Added `learn_from_review` MCP tool (Class C): creates a learning record from
+  the last review findings for a file.
+- Added `learn_from_diff` MCP tool (Class C): creates a learning record with
+  current git diff as context.
+- Added `bootstrap_learning_memory` MCP tool (Class C): seeds the learn layer
+  from architecture memory ADRs; idempotent.
+- Tool count: 91 → 95.
+
 ## 1.9.0 - 2026-05-29
 
 - Fixed `_detect_security_patterns` false positives: Python string literals

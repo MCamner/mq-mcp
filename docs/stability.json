@@ -1,86 +1,140 @@
 {
   "schema_version": "mq-mcp.stability.v1",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "requirements": [
     {
       "name": "stable_server_startup",
       "status": "done",
-      "evidence": ["mq-mcp serve", "mq-mcp doctor", "scripts/validate.sh"]
+      "evidence": [
+        "mq-mcp serve",
+        "mq-mcp doctor",
+        "scripts/validate.sh"
+      ]
     },
     {
       "name": "stable_tool_registry",
       "status": "done",
-      "evidence": ["docs/tool_contracts.json", "scripts/check-tool-contracts.sh"]
+      "evidence": [
+        "docs/tool_contracts.json",
+        "scripts/check-tool-contracts.sh"
+      ]
     },
     {
       "name": "stable_tool_metadata_schema",
       "status": "done",
-      "evidence": ["tool-contracts.v1", "docs/tool_contracts.json"]
+      "evidence": [
+        "tool-contracts.v1",
+        "docs/tool_contracts.json"
+      ]
     },
     {
       "name": "stable_safety_classes",
       "status": "done",
-      "evidence": ["docs/TOOL_SAFETY.md", "docs/TOOL_INVENTORY.md"]
+      "evidence": [
+        "docs/TOOL_SAFETY.md",
+        "docs/TOOL_INVENTORY.md"
+      ]
     },
     {
       "name": "stable_filesystem_boundary_model",
       "status": "done",
-      "evidence": ["resolve_repo_file", "resolve_allowed_local_file", "tests/test_server_safety.py"]
+      "evidence": [
+        "resolve_repo_file",
+        "resolve_allowed_local_file",
+        "tests/test_server_safety.py"
+      ]
     },
     {
       "name": "stable_config_format",
       "status": "done",
-      "evidence": ["mq-mcp/.env.example", "profiles/*.json", "mq-mcp profiles validate"]
+      "evidence": [
+        "mq-mcp/.env.example",
+        "profiles/*.json",
+        "mq-mcp profiles validate"
+      ]
     },
     {
       "name": "stable_validation_command",
       "status": "done",
-      "evidence": ["./scripts/validate.sh", "./scripts/release-check.sh"]
+      "evidence": [
+        "./scripts/validate.sh",
+        "./scripts/release-check.sh"
+      ]
     },
     {
       "name": "stable_install_flow",
       "status": "done",
-      "evidence": ["scripts/install.sh", "scripts/upgrade.sh", "scripts/uninstall.sh"]
+      "evidence": [
+        "scripts/install.sh",
+        "scripts/upgrade.sh",
+        "scripts/uninstall.sh"
+      ]
     },
     {
       "name": "complete_tool_docs",
       "status": "done",
-      "evidence": ["README.md", "docs/TOOL_SAFETY.md", "docs/TOOL_INVENTORY.md"]
+      "evidence": [
+        "README.md",
+        "docs/TOOL_SAFETY.md",
+        "docs/TOOL_INVENTORY.md"
+      ]
     },
     {
       "name": "complete_troubleshooting_docs",
       "status": "done",
-      "evidence": ["docs/troubleshooting.md", "mq-mcp report --json", "mq-mcp bundle --validate"]
+      "evidence": [
+        "docs/troubleshooting.md",
+        "mq-mcp report --json",
+        "mq-mcp bundle --validate"
+      ]
     },
     {
       "name": "complete_example_workflows",
       "status": "done",
-      "evidence": ["docs/demo.md", "docs/profiles.md", "docs/integration.md"]
+      "evidence": [
+        "docs/demo.md",
+        "docs/profiles.md",
+        "docs/integration.md"
+      ]
     },
     {
       "name": "green_ci",
       "status": "done",
-      "evidence": [".github/workflows/validate.yml", "scripts/release-check.sh"]
+      "evidence": [
+        ".github/workflows/validate.yml",
+        "scripts/release-check.sh"
+      ]
     },
     {
       "name": "protected_main_branch",
       "status": "done",
-      "evidence": ["GitHub branch protection check after release"]
+      "evidence": [
+        "GitHub branch protection check after release"
+      ]
     },
     {
       "name": "github_release",
       "status": "done",
-      "evidence": ["GitHub Release v1.0.0"]
+      "evidence": [
+        "GitHub Release v1.0.0"
+      ]
     },
     {
       "name": "github_pages_documentation",
       "status": "done",
-      "evidence": ["docs/index.html", "https://mcamner.github.io/mq-mcp/"]
+      "evidence": [
+        "docs/index.html",
+        "https://mcamner.github.io/mq-mcp/"
+      ]
     },
     {
       "name": "no_known_critical_safety_gaps",
       "status": "done",
-      "evidence": ["docs/security.md", "docs/TOOL_SAFETY.md", "tests/test_server_safety.py"]
+      "evidence": [
+        "docs/security.md",
+        "docs/TOOL_SAFETY.md",
+        "tests/test_server_safety.py"
+      ]
     }
   ]
 }

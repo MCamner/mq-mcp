@@ -57,6 +57,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `search_learnings` | Full-text search across stored lessons | Write, network |
 | `summarize_learnings` | Summarize lessons by source and risk | Write, network |
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
+| `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -104,6 +105,9 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `bootstrap_semantic_memory` | Ingest key mq-mcp docs into semantic memory | Write outside repo, commit |
 | `export_symbol_index` | Write callgraph symbol map to generated/symbols/symbol_index.json | Write outside repo, commit |
 | `record_learning` | Append a verified lesson to REPO_ROOT/learn_engine/memory/lessons.jsonl | Write outside repo, commit, execute; secrets are redacted before write |
+| `learn_from_review` | Create a learning record from the last review findings for a file | Write outside repo, commit |
+| `learn_from_diff` | Create a learning record with current git diff as context | Write outside repo, commit |
+| `bootstrap_learning_memory` | Seed the learn layer from architecture memory ADRs | Write outside repo, commit |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -234,11 +238,15 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
 | `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `learn_from_review` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `learn_from_diff` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `bootstrap_learning_memory` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `list_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `get_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `search_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `summarize_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `promote_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
+| `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `run_mqlaunch_doctor` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_selftest` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_release_check` | D | subprocess (mqlaunch) | No | Yes |

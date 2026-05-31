@@ -112,13 +112,17 @@ TOOL_META: dict[str, dict] = {
     # Skill discovery tool (v1.8.0+)
     "list_review_skills":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
 
-    # Learn layer (v1.9.0)
+    # Learn layer (v1.9.0 / v1.10.0)
     "record_learning":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "list_learnings":              {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "get_learning":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "search_learnings":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "summarize_learnings":         {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "promote_learning":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learning_status":             {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_from_review":           {"class": "C", "resolver": "resolve_repo_file",      "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "learn_from_diff":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["file-write"]},
+    "bootstrap_learning_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
 
     # mqlaunch bridge tools (v1.9.0)
     "run_mqlaunch_doctor":         {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
