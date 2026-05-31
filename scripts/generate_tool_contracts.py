@@ -47,12 +47,12 @@ TOOL_META: dict[str, dict] = {
     "repo_signal_inspect":    {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
 
     "edit_image":             {"class": "C", "resolver": "resolve_allowed_local_file",  "write": True,  "subprocess": False, "side_effects": ["file-write"]},
-    "set_clipboard":          {"class": "C", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": ["clipboard-write"]},
+    "set_clipboard":          {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["clipboard-write"]},
     "take_screenshot":        {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["file-write", "screen"]},
     "update_repo_file":       {"class": "C", "resolver": "resolve_repo_file",           "write": True,  "subprocess": False, "side_effects": ["file-write"]},
 
     "create_note":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
-    "hal_repo_report":        {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": []},
+    "hal_repo_report":        {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
     "lock_screen":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["system"]},
     "open_app":               {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "open_chrome":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
@@ -76,7 +76,7 @@ TOOL_META: dict[str, dict] = {
 
     # Review engine tools (v1.1.0–v1.4.0)
     "review_file":            {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
-    "review_diff":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": ["openai-api"]},
+    "review_diff":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": ["openai-api"]},
     "review_repo":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
     "get_last_review":        {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": []},
     "list_review_history":    {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
@@ -107,13 +107,13 @@ TOOL_META: dict[str, dict] = {
 
     # Risk analysis tools (v1.7.0)
     "risk_review_file":            {"class": "A", "resolver": "resolve_repo_file",      "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
-    "risk_review_diff":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["review-memory-write", "openai-api"]},
+    "risk_review_diff":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
 
     # Skill discovery tool (v1.8.0+)
     "list_review_skills":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
 
     # Learn layer (v1.9.0)
-    "record_learning":             {"class": "B", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "record_learning":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "list_learnings":              {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "get_learning":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "search_learnings":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},

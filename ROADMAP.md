@@ -1505,9 +1505,9 @@ The release gate must run `check-runtime-truth.sh`, `check-tool-contracts.sh`, `
 
 **Definition of done**
 
-- [ ] The release process catches system drift before tagging.
-- [ ] Release output clearly shows what was verified.
-- [ ] Release can be run with `--dry-run`.
+- [x] The release process catches system drift before tagging.
+- [x] Release output clearly shows what was verified.
+- [x] Release can be run with `--dry-run`.
 
 ---
 

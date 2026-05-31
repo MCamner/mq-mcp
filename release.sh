@@ -300,6 +300,23 @@ if [[ "${INIT_CHANGELOG}" == true ]]; then
   exit 0
 fi
 
+# ---------------------------------------------------------------------------
+# Pre-flight: run full release-check gate before touching anything
+# ---------------------------------------------------------------------------
+RELEASE_CHECK="${BASH_SOURCE[0]%/*}/scripts/release-check.sh"
+if [[ -x "$RELEASE_CHECK" ]]; then
+  log_step "Running release-check gate"
+  if [[ "${DRY_RUN}" == true ]]; then
+    "$RELEASE_CHECK" --dry-run || { error "Release gate failed — fix issues above."; exit 1; }
+  else
+    "$RELEASE_CHECK" || { error "Release gate failed — fix issues above."; exit 1; }
+  fi
+  printf '\n'
+else
+  error "scripts/release-check.sh missing — cannot verify release readiness"
+  exit 1
+fi
+
 require_clean_tree
 
 print_summary
