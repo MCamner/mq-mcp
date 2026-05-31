@@ -1343,10 +1343,10 @@ mq-mcp tools --markdown
 
 **Definition of done**
 
-- [ ] Tool metadata can be exported as JSON.
-- [ ] Tool safety can be exported in machine-readable form.
-- [ ] `TOOL_INDEX.md` can be generated or validated from runtime.
-- [ ] README no longer needs to be the sole source of tool count.
+- [x] Tool metadata can be exported as JSON.
+- [x] Tool safety can be exported in machine-readable form.
+- [x] `TOOL_INDEX.md` can be generated or validated from runtime.
+- [x] README no longer needs to be the sole source of tool count.
 
 ---
 
