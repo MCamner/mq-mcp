@@ -546,7 +546,7 @@
     },
     {
       "name": "record_learning",
-      "class": "B",
+      "class": "C",
       "description": "Store a verified engineering lesson in the local learn layer.",
       "resolver": "none",
       "write": true,

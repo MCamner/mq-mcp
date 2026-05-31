@@ -2373,7 +2373,7 @@ def validate_orchestration_contract() -> str:
     1. docs/ORCHESTRATION_CONTRACT.md exists and is reasonably fresh
     2. All recommended_tools in each profile exist as registered tools
     3. Read-only profiles do not include write-capable (Class C/D) tools
-    4. All write:true tools in tool_contracts.json are Class C
+    4. All write:true tools in tool_contracts.json are Class C or D
     5. All Class D tools have subprocess:true in tool_contracts.json
     6. Error return prefix consistency in server.py (uses 'failed:' pattern)
     7. Profile max-class constraints from ORCHESTRATION_CONTRACT.md §6
@@ -2527,10 +2527,10 @@ def validate_orchestration_contract() -> str:
         if not any(f"profiles/{profile_path.name}" in f for f in findings):
             passes.append(f"[PASS] profiles/{profile_path.name}: all {len(recs)} tools valid")
 
-    # — 4. write:true tools must be Class C —
+    # — 4. write:true tools must be Class C or D —
     write_class_violations = []
     for tool_name, tc in all_tools.items():
-        if tc.get("write") and tc.get("class") != "C":
+        if tc.get("write") and tc.get("class") not in {"C", "D"}:
             write_class_violations.append(
                 f"  {tool_name}: write=true but class={tc.get('class')}"
             )
@@ -2538,10 +2538,10 @@ def validate_orchestration_contract() -> str:
     if write_class_violations:
         findings.append(
             "[FAIL] docs/tool_contracts.json\n"
-            "write:true tools must be Class C:\n" + "\n".join(write_class_violations)
+            "write:true tools must be Class C or D:\n" + "\n".join(write_class_violations)
         )
     else:
-        passes.append("[PASS] All write:true tools are Class C")
+        passes.append("[PASS] All write:true tools are Class C or D")
 
     # — 5. Class D tools must have subprocess:true —
     class_d_no_sub = []
@@ -2595,7 +2595,7 @@ def validate_orchestration_contract() -> str:
         # directly, not via automated profile-based workflows. Profiles list
         # Class A/B tools for agents; Class C tools are user-invoked.
         "build_repo_context", "record_architecture_decision",
-        "extract_coding_conventions", "export_symbol_index",
+        "extract_coding_conventions", "export_symbol_index", "record_learning",
         "bootstrap_semantic_memory", "store_semantic_memory",
         "update_repo_file", "edit_image", "take_screenshot", "set_clipboard",
     }
@@ -3688,7 +3688,7 @@ def record_learning(
         risk:       low | medium | high | unknown.
         tags:       Comma-separated tags (e.g. "ci,docs,release").
 
-    Safety: Class A — local write to REPO_ROOT/learn_engine/memory/lessons.jsonl,
+    Safety: Class C — local write to REPO_ROOT/learn_engine/memory/lessons.jsonl,
     no command execution, no allowlist mutation.
     """
     eng = _learn_engine()

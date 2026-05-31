@@ -257,9 +257,9 @@ The local MCP server exposes 91 tools across five safety classes. See [`docs/TOO
 - `run_mqlaunch_bundle` — runs `mqlaunch bundle` (TUI; bundle NOT created headless)
 - `run_mqlaunch_ask` — asks mqlaunch a natural-language question (requires OPENAI_API_KEY)
 
-**Learn layer tools (Class A/B):**
+**Learn layer tools (Class A/C):**
 
-- `record_learning` — stores a verified engineering lesson locally with secret redaction (Class B, writes lessons.jsonl)
+- `record_learning` — stores a verified engineering lesson locally with secret redaction (Class C, writes lessons.jsonl)
 - `list_learnings` — lists stored lessons with optional repo/source/risk filters (Class A)
 - `get_learning` — returns a single lesson by id prefix (Class A)
 - `search_learnings` — full-text search across lessons (Class A)

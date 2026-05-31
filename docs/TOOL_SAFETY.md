@@ -233,7 +233,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `risk_review_file` | A | REPO_ROOT (reads file) + review_engine/memory/ | No | No (OpenAI API) |
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
-| `record_learning` | B | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `list_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `get_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `search_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
