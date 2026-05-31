@@ -60,6 +60,92 @@ else
   ok "schema_version: $schema"
 fi
 
+# ---------------------------------------------------------------------------
+# Safety class contract enforcement
+# ---------------------------------------------------------------------------
+printf '\nSAFETY CLASS ENFORCEMENT\n'
+
+python3 - <<'PY'
+import json, sys
+
+d = json.load(open("docs/tool_contracts.json"))
+failed = 0
+
+def fail(msg):
+    global failed
+    print(f"FAIL: {msg}", file=sys.stderr)
+    failed += 1
+
+def ok(msg):
+    print(f"OK: {msg}")
+
+class_counts = {"A": 0, "B": 0, "C": 0, "D": 0}
+
+for t in d["tools"]:
+    name = t["name"]
+    cls  = t.get("class", "")
+    w    = bool(t.get("write", False))
+    sub  = bool(t.get("subprocess", False))
+    desc = t.get("description", "")
+    fx   = t.get("side_effects", [])
+    res  = t.get("resolver", "none")
+
+    # Every tool must have required fields
+    if not cls:
+        fail(f"{name}: missing 'class' field")
+        continue
+    if cls not in ("A", "B", "C", "D"):
+        fail(f"{name}: unknown class '{cls}'")
+        continue
+    if not desc:
+        fail(f"{name}: missing description")
+    if not name:
+        fail(f"{name}: missing name")
+
+    class_counts[cls] = class_counts.get(cls, 0) + 1
+
+    # Class A: no file writes, no arbitrary subprocess (git reads allowed)
+    if cls == "A":
+        if w:
+            fail(f"Class A violation — write=true: {name}")
+        if sub and res != "run_repo_command":
+            fail(f"Class A violation — subprocess=true outside git boundary: {name}")
+
+    # Class B: no file writes
+    elif cls == "B":
+        if w:
+            fail(f"Class B violation — write=true: {name}")
+
+    # Class C: must write, must document side effects
+    elif cls == "C":
+        if not w:
+            fail(f"Class C violation — write=false: {name}")
+        if not fx:
+            fail(f"Class C violation — side_effects empty: {name}")
+
+    # Class D: must use subprocess, must document side effects
+    elif cls == "D":
+        if not sub:
+            fail(f"Class D violation — subprocess=false: {name}")
+        if not fx:
+            fail(f"Class D violation — side_effects empty: {name}")
+
+for cls, count in sorted(class_counts.items()):
+    ok(f"Class {cls}: {count} tools")
+
+if failed == 0:
+    print("OK: all safety class contracts satisfied")
+    sys.exit(0)
+else:
+    print(f"FAIL: {failed} safety class violation(s)", file=sys.stderr)
+    sys.exit(1)
+PY
+
+ENFORCE_EXIT=$?
+if [[ "$ENFORCE_EXIT" -ne 0 ]]; then
+  FAILED=$((FAILED + 1))
+fi
+
 printf '\n'
 if [[ "$FAILED" -eq 0 ]]; then
   printf 'OK: tool contracts check passed\n'

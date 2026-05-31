@@ -1390,9 +1390,9 @@ tests/test_safety_classes.py
 
 **Definition of done**
 
-- [ ] A new tool without complete metadata causes validation to fail.
-- [ ] Class C/D tools are easy to locate.
-- [ ] `docs/TOOL_SAFETY.md` can be checked against runtime.
+- [x] A new tool without complete metadata causes validation to fail.
+- [x] Class C/D tools are easy to locate.
+- [x] `docs/TOOL_SAFETY.md` can be checked against runtime.
 
 ---
 
