@@ -163,6 +163,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.4.0  | Semantic memory layer                       | Done          |
 | v1.5.0  | Risk analysis layer (shipped as v1.7.0)     | Done          |
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
+| v1.10.0 | Learning Contract Layer                     | Planned       |
 
 ---
 
@@ -954,6 +955,137 @@ Items:
 - [x] `repo_signal_status` MCP tool — reports whether repo-signal packs are
   present, their age, and whether they have been merged into the callgraph
   (Class A)
+
+---
+
+### v1.10.0 — Learning Contract Layer
+
+Goal: add a deterministic learning layer that captures verified engineering
+lessons from Codex, Claude, mq-agent, mq-hal and manual operator sessions.
+Learning should improve review context, semantic memory, runbooks and agent
+guidance without weakening mq-mcp safety boundaries.
+
+This is a controlled memory/runtime layer, not a self-learning agent. It should
+capture:
+
+```text
+What worked?
+Why did it work?
+How was it verified?
+When should the same pattern be used again?
+```
+
+**Planned structure**
+
+```text
+learn_engine/
+├── __init__.py
+├── models.py
+├── store.py
+├── redaction.py
+├── summarize.py
+├── promote.py
+└── validators.py
+
+schemas/
+└── learning.schema.json
+
+docs/
+├── LEARNING_CONTRACT.md
+└── LEARNING_MODEL.md
+```
+
+**MCP tools**
+
+Class A — read-only:
+
+- [ ] `list_learnings`
+- [ ] `search_learnings`
+- [ ] `get_learning`
+- [ ] `summarize_learnings`
+- [ ] `learning_status`
+
+Class C — controlled write:
+
+- [ ] `record_learning`
+- [ ] `learn_from_review`
+- [ ] `learn_from_diff`
+- [ ] `promote_learning`
+- [ ] `bootstrap_learning_memory`
+
+Class C tools may write only within the learning, semantic memory, runbook,
+architecture memory, `AGENTS.md`, or `CLAUDE.md` promotion scope. They must not
+commit, push, mutate router policy, mutate safety classes, or approve tool calls.
+
+**Storage model**
+
+```text
+learn_engine/memory/learning_events.jsonl  — raw learning events
+learn_engine/memory/lessons.json           — normalized lessons
+semantic_memory/store.json                 — searchable promoted lessons
+```
+
+Learning must reuse the existing semantic memory layer for searchable knowledge
+instead of creating a competing memory system.
+
+**Safety contract**
+
+Learning may influence future review context, runbooks, summaries, and
+recommendations.
+
+Learning must not:
+
+- execute commands
+- mutate router policy
+- mutate safety classes
+- mutate allowlists
+- approve tool calls
+- write `AGENTS.md` or `CLAUDE.md` without explicit confirmation
+- store secrets
+- store chain-of-thought
+
+**Promotion model**
+
+Promotion must default to dry-run and require explicit confirmation for writes:
+
+```bash
+mq-mcp learn promote <id> --to runbook --dry-run
+mq-mcp learn promote <id> --to agents-md --dry-run
+mq-mcp learn promote <id> --to claude-md --dry-run
+mq-mcp learn promote <id> --to architecture-memory --dry-run
+```
+
+Allowed promotion targets:
+
+- `docs/RUNBOOK.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `architecture_memory/`
+- `semantic_memory/store.json`
+
+**Non-goals**
+
+- No self-training
+- No chain-of-thought storage
+- No hidden uploads
+- No autonomous tool loops
+- No safety policy mutation
+- No router or allowlist changes based on learned content
+
+**Definition of done**
+
+- [ ] `docs/LEARNING_CONTRACT.md` and `docs/LEARNING_MODEL.md` exist.
+- [ ] `schemas/learning.schema.json` validates all stored lessons.
+- [ ] Learn tools are listed in README, TOOL_INDEX, `docs/TOOL_SAFETY.md`, and
+  `docs/tool_contracts.json`.
+- [ ] Read tools are classified as Class A.
+- [ ] Write and promotion tools are classified as Class C.
+- [ ] Secret redaction runs before any learning is written.
+- [ ] Promotion defaults to dry-run.
+- [ ] Tests prove learn tools cannot execute commands, mutate allowlists,
+  commit, push, or write outside allowed paths.
+- [ ] `scripts/validate.sh` passes.
+- [ ] `scripts/release-check.sh` passes.
 
 ---
 
