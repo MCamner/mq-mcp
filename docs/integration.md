@@ -1,43 +1,72 @@
 # mq-mcp Integration Map
 
-This document explains how `mq-mcp`, `mq-hal`, and `repo-signal` fit together.
+This document explains how `mq-mcp` fits into the MQ ecosystem alongside
+`mq-agent`, `mq-hal`, `repo-signal`, and `mq-image-analyze`.
 
-## Goal
+For the full orchestration boundary — which repo owns what and which tools
+require explicit approval — see [`docs/orchestration-boundary.md`](orchestration-boundary.md).
 
-`mq-mcp` acts as the local MCP bridge layer.
+---
 
-Together, the stack becomes:
+## Ecosystem roles
+
+| Repo               | Role                                                              |
+|--------------------|-------------------------------------------------------------------|
+| `mq-mcp`           | Local tool surface, safety enforcement, review engine, memory     |
+| `mq-agent`         | Planning, routing, and multi-step orchestration                   |
+| `mq-hal`           | System status, repo reports, and operator summaries               |
+| `repo-signal`      | Repo health scoring, publish readiness, and quality metrics       |
+| `mq-image-analyze` | Visual perception, screenshots, and image reasoning               |
+| `mqlaunch`         | macOS menu and terminal launcher for local workflows              |
+
+---
+
+## mq-mcp + mq-hal + repo-signal integration
+
+The most common local stack is:
 
 ```text
 mq-mcp + mq-hal + repo-signal
 = local AI assistant + safe repo analysis + publish-quality checks
 ```
 
-## Roles
+### Integration tools
 
-| Project | Role |
-| --- | --- |
-| `mq-mcp` | Local MCP server, bridge, packaged CLI, and safe tool layer |
-| `mq-hal` | Local assistant / operator layer for asking, auditing, and reporting |
-| `repo-signal` | Repository quality, readiness, and publishability checks |
-| `mqlaunch` | macOS menu and terminal launcher for starting local workflows |
+| MCP tool                 | Delegates to  | Purpose                                          | Safety |
+|--------------------------|---------------|--------------------------------------------------|--------|
+| `hal_repo_report`        | mq-hal CLI    | Read-only repo report (audit, brief, ci, status) | D      |
+| `repo_signal_analyze`    | repo-signal   | Repo analysis on a local path                    | B      |
+| `repo_signal_checklist`  | repo-signal   | Publish readiness checklist                      | B      |
+| `repo_signal_inspect`    | repo-signal   | Structured inspect.v1 data                       | B      |
+| `repo_signal_doctor_json`| repo-signal   | Structured doctor.v1 data                        | B      |
+| `repo_signal_status`     | (local)       | Export pack presence and merge status            | A      |
+| `tool_safety_report`     | (local)       | MCP tool safety classifications                  | A      |
+| `list_local_repos`       | (local)       | Registered repos from MQ_MCP_LOCAL_REPOS         | A      |
 
-## Main integration tools
+---
 
-| MCP tool | Purpose | Safety profile |
-| --- | --- | --- |
-| `hal_repo_report` | Runs a read-only mq-hal repo report | Read-only |
-| `repo_signal_analyze` | Runs repo-signal analysis on a local repo | Read-only |
-| `repo_signal_checklist` | Runs repo-signal publish checklist on a local repo | Read-only |
-| `tool_safety_report` | Shows documented MCP tool safety classes | Read-only |
-| `list_local_repos` | Lists registered local repos from `MQ_MCP_LOCAL_REPOS` | Read-only |
-| `open_repo_terminal` | Opens a registered repo in Terminal | Local action |
+## mq-mcp + mq-agent integration
 
-## Recommended local repo registration
+`mq-agent` calls `mq-mcp` as its execution runtime. The division is:
 
-Use `MQ_MCP_LOCAL_REPOS` to register known repos by name.
+```text
+mq-agent decides what to do.
+mq-mcp does it.
+```
 
-Example:
+mq-mcp exposes `tool_safety_report` and `validate_orchestration_contract`
+so mq-agent can inspect the available tool surface before invoking anything.
+
+The `mq-agent` profile (`profiles/mq-agent.json`) limits auto-invocation to
+Class A/B tools. Class C/D tools require explicit user approval from within
+the calling orchestration layer.
+
+---
+
+## Local repo registration
+
+Register known repos with `MQ_MCP_LOCAL_REPOS` so integration tools can
+reference them by name:
 
 ```bash
 export MQ_MCP_LOCAL_REPOS="/Users/mansys/repo-signal,/Users/mansys/mq-hal,/Users/mansys/macos-scripts"
@@ -45,92 +74,70 @@ export MQ_MCP_LOCAL_REPOS="/Users/mansys/repo-signal,/Users/mansys/mq-hal,/Users
 
 Do not use this for arbitrary system paths.
 
+---
+
 ## Example prompts
 
-### Ask Bridget for repo status
+**Ask for repo status via mq-hal:**
 
 ```bash
 bridget "run hal repo report for mq-mcp"
 ```
 
-### Ask for repo-signal analysis
+**Ask for repo-signal analysis:**
 
 ```bash
 bridget "run repo signal analyze for mq-mcp"
 ```
 
-### Ask for publish checklist
+**Ask for publish checklist:**
 
 ```bash
 bridget "run repo signal checklist for mq-mcp"
 ```
 
-### Ask for safety map
+**Check tool safety map:**
 
 ```bash
 bridget "show tool safety report"
 ```
 
-### Start from mqlaunch
+**Start from mqlaunch:**
 
 ```bash
 mqlaunch agent mcp-status
 mqlaunch agent mcp-tools
 ```
 
-Target flow:
+Target invocation flow:
 
 ```text
 mqlaunch
-  -> mq-agent
-  -> mq-mcp
-  -> safe local tool execution
+  → mq-agent (plans and routes)
+  → mq-mcp (executes declared tools)
+  → mq-hal / repo-signal (external reads)
 ```
+
+---
 
 ## Safety rules
 
-The integration should stay local-first and explicit.
-
-1. Default to read-only tools.
+1. Default to Class A/B (read-only) tools.
 2. Keep repo access scoped through registered local repositories.
-3. Do not run destructive commands without explicit user approval.
+3. Do not auto-invoke Class C/D tools — they require explicit user approval.
 4. Do not commit secrets, tokens, private machine paths, or `.env` files.
 5. Keep write-capable tools documented in `docs/TOOL_SAFETY.md`.
 6. Validate documentation whenever a new MCP tool is added.
 
-## Integration smoke test
+---
 
-Run from the repository root:
+## Integration smoke test
 
 ```bash
 ./scripts/check-integration-smoke.sh
 ./scripts/check-bridge-tool-discovery.sh
 ```
 
-The smoke test verifies that the main integration tools are present in:
-
-- `mq-mcp/server.py`
-- `README.md`
-- `docs/integration.md`
-- `docs/TOOL_SAFETY.md`
-- `scripts/validate.sh`
-
-This protects the public integration story from drifting away from the actual MCP server implementation.
-
-The bridge tool discovery check also verifies that `bridge.py --tools` exposes the same integration tools to Bridget before any OpenAI prompt is needed.
-
-## v0.3.0 direction
-
-A good v0.3.0 theme:
-
-```text
-safer local assistant workflows
-```
-
-Recommended release contents:
-
-- documented `mq-mcp + mq-hal + repo-signal` integration
-- validation guard for integration docs
-- safety map for all MCP tools
-- demo prompts for Bridget
-- clearer repo registration examples
+The smoke test verifies that the main integration tools are present in
+`server.py`, `README.md`, `docs/integration.md`, `docs/TOOL_SAFETY.md`,
+and `scripts/validate.sh`.

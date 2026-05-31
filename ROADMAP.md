@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.8.0 — v1.6.0 completion (generated artifacts) + v1.7.0 risk layer (done)
-Next:    v1.9.0 — TBD
+v1.9.0 — semantic memory hygiene + orchestration boundary (done)
+Next:    v1.10.0 — Learning Contract Layer
 ```
 
 Completed foundation:
@@ -163,6 +163,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.4.0  | Semantic memory layer                       | Done          |
 | v1.5.0  | Risk analysis layer (shipped as v1.7.0)     | Done          |
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
+| v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
 | v1.10.0 | Learning Contract Layer                     | Planned       |
 
 ---
@@ -1488,9 +1489,9 @@ README must answer: when is each repo used, which tools may run automatically, w
 
 **Definition of done**
 
-- [ ] A new user understands what `mq-mcp` is.
-- [ ] An agent can decide when to use `mq-mcp`.
-- [ ] Class C/D tools are clearly separated from read-only flows.
+- [x] A new user understands what `mq-mcp` is.
+- [x] An agent can decide when to use `mq-mcp`.
+- [x] Class C/D tools are clearly separated from read-only flows.
 
 ---
 

@@ -7,6 +7,11 @@ Local MCP server experiments and tooling for macOS.
 
 `mq-mcp` is a small local-first lab for building, testing, and documenting MCP-related workflows on macOS. The goal is to make local MCP setup easier to understand, repeat, validate, and publish safely.
 
+In the MQ stack, `mq-mcp` is the execution runtime: it exposes bounded tools,
+safety metadata, review, memory, and bridge calls. Planning, routing, dry-runs,
+and approval UX belong in `mq-agent`; repo health scoring belongs in
+`repo-signal`; operator reports belong in `mq-hal`.
+
 ## Status
 
 v1.9.0 — security pattern false-positive fix, `list_review_skills` tool,
@@ -164,11 +169,34 @@ Expected response lists all 91 MCP tools with descriptions.
 
 See [`docs/integration.md`](docs/integration.md) for how `mq-mcp`, `mq-hal`, and `repo-signal` work together as a local assistant and repo-quality stack.
 
+See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the
+practical boundary between `mq-mcp`, `mq-agent`, `mq-hal`, `repo-signal`, and
+`mq-image-analyze`.
+
 GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integration.html)
+
+## Ecosystem
+
+`mq-mcp` is the execution runtime in the MQ ecosystem — it exposes tools and enforces safety boundaries. It does not plan or orchestrate.
+
+| Repo               | Use when you need to…                                                  |
+|--------------------|------------------------------------------------------------------------|
+| `mq-mcp`           | Execute a tool, run a review, read a file, check safety metadata       |
+| `mq-agent`         | Plan a multi-step workflow or route a request across repos             |
+| `mq-hal`           | Get a system status report, release brief, or operator summary         |
+| `repo-signal`      | Score a repo's publish readiness or run a documentation quality check  |
+| `mq-image-analyze` | Analyze a screenshot, diagram, or visual render                        |
+
+**Which tools run automatically (no approval needed):** Class A and B — all read-only tools. Examples: `read_repo_file`, `git_status`, `repo_signal_analyze`, `get_system_resources`.
+
+**Which tools require explicit human approval:** Class C (writes files) and Class D (opens apps or runs subprocesses). Examples: `update_repo_file`, `run_tests`, `open_terminal`, `set_reminder`.
+
+See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the full boundary definition and profile-to-class mapping.
 
 ## Safety notes
 
 See [`docs/security.md`](docs/security.md) for the MCP safety policy.
+See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full tool class map.
 
 This project is local-first and experimental.
 
@@ -180,6 +208,15 @@ Before using or extending it:
 - avoid hardcoded machine-specific paths where possible
 - prefer read-only tools until validation is solid
 - document every command that touches local files or credentials
+
+Automation rule of thumb:
+
+- Class A/B tools may be used automatically when the caller accepts the
+  documented read-only or external-access behavior.
+- Class C/D tools require an explicit human approval gate because they write
+  files, open apps, or run subprocesses.
+- Review tools should be treated as explicit review actions when they call
+  OpenAI, even if their local filesystem behavior is read-only.
 
 ## Available MCP tools
 

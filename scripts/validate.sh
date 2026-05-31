@@ -99,7 +99,7 @@ git status --short --branch
 ok "Git status checked"
 
 section "Required files"
-for file in README.md ROADMAP.md CHANGELOG.md VERSION LICENSE mq-mcp/server.py mq-mcp/bridge.py mq-mcp/pyproject.toml; do
+for file in README.md ROADMAP.md CHANGELOG.md VERSION LICENSE mq-mcp/server.py mq-mcp/bridge.py mq-mcp/pyproject.toml docs/orchestration-boundary.md docs/ORCHESTRATION_CONTRACT.md docs/integration.md; do
   [[ -f "$ROOT/$file" ]] || fail "Missing $file"
   ok "$file exists"
 done

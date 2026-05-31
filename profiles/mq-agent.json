@@ -14,12 +14,15 @@
   },
   "recommended_tools": [
     "tool_safety_report",
+    "validate_orchestration_contract",
     "list_local_repos",
     "repo_signal_analyze",
     "repo_signal_checklist"
   ],
   "safety_notes": [
     "mq-agent should read safety metadata before allowing subprocess or write-capable calls.",
-    "Unsafe tool execution should remain approval-gated by the client."
+    "Class A/B tools may be routed automatically when the user intent is clear.",
+    "Class C/D tools must remain approval-gated by the client.",
+    "mq-agent must not reimplement mq-mcp review logic, severity scoring, architecture reasoning, risk classification, semantic retrieval, review heuristics, or drift detection."
   ]
 }

@@ -94,6 +94,7 @@ The `mq-agent` profile is designed for:
 
 - tool discovery
 - safety class display
+- orchestration contract validation
 - dry-run behavior
 - mq-hal and repo-signal integration
 
@@ -101,8 +102,10 @@ The `mq-agent` profile is designed for:
 mq-mcp profiles show mq-agent
 ```
 
-mq-agent should continue to approval-gate unsafe subprocess and write-capable
-tool calls.
+mq-agent may route Class A/B tools automatically when user intent is clear. It
+must continue to approval-gate Class C/D tools and must not reimplement
+`mq-mcp` review logic, severity scoring, architecture reasoning, risk
+classification, semantic retrieval, review heuristics, or drift detection.
 
 ## OpenAI Bridge
 
