@@ -1421,9 +1421,9 @@ review_engine/contracts/orchestration_boundary.md
 
 **Definition of done**
 
-- [ ] `review_repo` can flag system drift.
-- [ ] `review_diff` can detect when a new tool is missing safety metadata.
-- [ ] Review results can be fed into semantic memory without creating noise.
+- [x] `review_repo` can flag system drift.
+- [x] `review_diff` can detect when a new tool is missing safety metadata.
+- [x] Review results can be fed into semantic memory without creating noise.
 
 ---
 
