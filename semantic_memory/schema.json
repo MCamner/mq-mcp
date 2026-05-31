@@ -1,0 +1,75 @@
+{
+  "schema": "semantic-memory.v2",
+  "description": "Schema for mq-mcp semantic memory entries in store.json",
+  "fields": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "description": "Kebab-case unique identifier, e.g. mq-mcp.tool-count",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "content": {
+      "type": "string",
+      "required": true,
+      "description": "Plain text describing the fact, decision, convention, or summary",
+      "min_length": 10
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "enum": ["fact", "decision", "convention", "summary", "warning"],
+      "description": "Entry classification used for routing and audit"
+    },
+    "source": {
+      "type": "string",
+      "required": true,
+      "description": "Where this entry was derived from (file path or doc name)",
+      "forbidden_values": ["", "unknown"]
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "required": false,
+      "description": "Keywords for search routing, e.g. [\"safety\", \"tools\"]"
+    },
+    "version": {
+      "type": "string",
+      "required": false,
+      "description": "mq-mcp version when this entry was created or last verified (semver)",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "confidence": {
+      "type": "string",
+      "required": false,
+      "enum": ["high", "medium", "low"],
+      "description": "How confident we are that this entry is accurate and current"
+    },
+    "created_at": {
+      "type": "number",
+      "required": true,
+      "description": "Unix timestamp (seconds) when the entry was first created"
+    },
+    "updated_at": {
+      "type": "number",
+      "required": true,
+      "description": "Unix timestamp (seconds) when the entry was last updated"
+    }
+  },
+  "store_format": {
+    "description": "store.json is a JSON object mapping key → entry dict",
+    "example": {
+      "mq-mcp.tool-count": {
+        "key": "mq-mcp.tool-count",
+        "content": "mq-mcp exposes 91 MCP tools across safety classes A-D.",
+        "type": "fact",
+        "source": "README.md",
+        "version": "1.9.0",
+        "tags": ["tools", "count", "mcp"],
+        "confidence": "high",
+        "created_at": 1748477200.0,
+        "updated_at": 1748477200.0
+      }
+    }
+  },
+  "policy_ref": "semantic_memory/POLICY.md"
+}

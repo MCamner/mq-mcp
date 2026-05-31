@@ -61,6 +61,14 @@ else
   fail "check-bridge-tool-discovery.sh missing or not executable"
 fi
 
+section "Semantic memory audit"
+if [[ -x "$ROOT/scripts/check-semantic-memory.sh" ]]; then
+  "$ROOT/scripts/check-semantic-memory.sh" \
+    || fail "check-semantic-memory.sh failed"
+else
+  fail "check-semantic-memory.sh missing or not executable"
+fi
+
 section "Tool contracts check"
 if [[ -x "$ROOT/scripts/check-tool-contracts.sh" ]]; then
   "$ROOT/scripts/check-tool-contracts.sh" \

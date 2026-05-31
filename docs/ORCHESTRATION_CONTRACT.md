@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-05-29 (v1.8.0).
+Last updated: 2026-05-31 (v1.9.0).
 
 ---
 
@@ -248,6 +248,7 @@ The following are always true regardless of tool, caller, or configuration:
 5. All tool names registered in `@mcp.tool()` appear in `docs/TOOL_SAFETY.md`
 6. All tools with `write: true` or `subprocess: true` in `tool_contracts.json`
    are classified Class C or D respectively
+   (`write: true` is allowed for Class D subprocess tools that may create local artifacts)
 7. Every tool call is stateless with respect to prior calls — no implicit session
 
 These guarantees are verified by `validate_orchestration_contract` and

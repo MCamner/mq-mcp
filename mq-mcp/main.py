@@ -286,6 +286,13 @@ def build_parser() -> argparse.ArgumentParser:
     config_sub.add_parser("example", help="Print the .env.example path.")
     config_sub.add_parser("root", help="Print the repository root path.")
 
+    memory_parser = sub.add_parser("memory", help="Inspect and audit semantic memory.")
+    memory_sub = memory_parser.add_subparsers(dest="memory_command")
+    memory_sub.add_parser("audit", help="Audit semantic memory for policy compliance.")
+    memory_sub.add_parser("count", help="Print number of entries in the store.")
+    memory_list = memory_sub.add_parser("list", help="List all semantic memory entries.")
+    memory_list.add_argument("--json", action="store_true", help="Output as JSON.")
+
     return parser
 
 
@@ -417,6 +424,38 @@ def main(argv: list[str] | None = None) -> int:
             print(REPO_ROOT)
             return 0
         parser.error("config requires one of: path, example, root")
+    if args.command == "memory":
+        store_path = REPO_ROOT / "semantic_memory" / "store.json"
+        if args.memory_command == "audit":
+            return run_command(
+                [str(REPO_ROOT / "scripts" / "check-semantic-memory.sh")], REPO_ROOT
+            )
+        if args.memory_command == "count":
+            if not store_path.exists():
+                print("0")
+                return 0
+            data = json.loads(store_path.read_text(encoding="utf-8"))
+            print(len(data))
+            return 0
+        if args.memory_command == "list":
+            if not store_path.exists():
+                print("No semantic memory store found.")
+                return 0
+            data = json.loads(store_path.read_text(encoding="utf-8"))
+            if args.json:
+                print(json.dumps(data, indent=2))
+                return 0
+            for key, entry in sorted(data.items()):
+                typ = entry.get("type", "?")
+                src = entry.get("source", "?")
+                tags = ", ".join(entry.get("tags", [])) or "—"
+                preview = entry.get("content", "")[:60].replace("\n", " ")
+                print(f"{key}")
+                print(f"  type={typ}  source={src}  tags={tags}")
+                print(f"  {preview}…")
+                print()
+            return 0
+        parser.error("memory requires one of: audit, count, list")
 
     parser.print_help()
     return 0
