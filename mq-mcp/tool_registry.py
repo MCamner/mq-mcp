@@ -320,3 +320,60 @@ def export_runtime_contract(path: Path | None = None) -> Path:
     }
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return out
+
+
+def export_release_state(path: Path | None = None) -> Path:
+    """Write generated/release-state.json with current version and tool state snapshot."""
+    import time as _time
+    _ensure_generated()
+    out = path or _GENERATED_DIR / "release-state.json"
+    summary = registry_summary()
+    version = (_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    payload = {
+        "schema": "release-state.v1",
+        "generated_at": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
+        "mq_mcp_version": version,
+        "tool_count": summary["tool_count"],
+        "safety_classes": summary["safety_classes"],
+        "categories": summary["categories"],
+        "write_capable": summary["write_capable"],
+        "subprocess_capable": summary["subprocess_capable"],
+        "api_key_required": summary["api_key_required"],
+        "source_files": {
+            "VERSION": version,
+            "tool_contracts": str(_CONTRACTS_PATH.relative_to(_ROOT)),
+            "server": str(_SERVER_PATH.relative_to(_ROOT)),
+        },
+    }
+    out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return out
+
+
+def export_profile_index(path: Path | None = None) -> Path:
+    """Write generated/profile-index.json with all profile metadata."""
+    _ensure_generated()
+    out = path or _GENERATED_DIR / "profile-index.json"
+    profiles_dir = _ROOT / "profiles"
+    profiles = []
+    for p in sorted(profiles_dir.glob("*.json")):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            profiles.append({
+                "name": data.get("name", p.stem),
+                "title": data.get("title", ""),
+                "client": data.get("client", ""),
+                "summary": data.get("summary", ""),
+                "recommended_tools": data.get("recommended_tools", []),
+                "safety_notes": data.get("safety_notes", []),
+                "source_file": f"profiles/{p.name}",
+            })
+        except Exception:
+            pass
+    payload = {
+        "schema": "profile-index.v1",
+        "generated_from": "profiles/",
+        "profile_count": len(profiles),
+        "profiles": profiles,
+    }
+    out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return out

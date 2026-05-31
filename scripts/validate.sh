@@ -61,6 +61,14 @@ else
   fail "check-bridge-tool-discovery.sh missing or not executable"
 fi
 
+section "Generated artifacts check"
+if [[ -x "$ROOT/scripts/check-generated-artifacts.sh" ]]; then
+  "$ROOT/scripts/check-generated-artifacts.sh" \
+    || fail "check-generated-artifacts.sh failed"
+else
+  fail "check-generated-artifacts.sh missing or not executable"
+fi
+
 section "Semantic memory audit"
 if [[ -x "$ROOT/scripts/check-semantic-memory.sh" ]]; then
   "$ROOT/scripts/check-semantic-memory.sh" \

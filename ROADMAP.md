@@ -1526,9 +1526,9 @@ handwritten docs = why the system is designed that way
 
 **Definition of done**
 
-- [ ] Generated artifacts can be reproduced deterministically.
-- [ ] Validation fails if generated artifacts are out of sync.
-- [ ] README uses summaries rather than duplicating tool truth.
+- [x] Generated artifacts can be reproduced deterministically.
+- [x] Validation fails if generated artifacts are out of sync.
+- [x] README uses summaries rather than duplicating tool truth.
 
 ---
 

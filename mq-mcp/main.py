@@ -380,12 +380,17 @@ def main(argv: list[str] | None = None) -> int:
                 print(as_markdown_table())
                 return 0
             if args.export:
+                from tool_registry import (  # noqa: PLC0415
+                    export_profile_index,
+                    export_release_state,
+                )
                 idx = export_tool_index()
                 saf = export_tool_safety()
                 rc = export_runtime_contract()
-                print(f"written: {idx.relative_to(REPO_ROOT)}")
-                print(f"written: {saf.relative_to(REPO_ROOT)}")
-                print(f"written: {rc.relative_to(REPO_ROOT)}")
+                rs = export_release_state()
+                pi = export_profile_index()
+                for p in (idx, saf, rc, rs, pi):
+                    print(f"written: {p.relative_to(REPO_ROOT)}")
                 return 0
         return run_command(["uv", "run", "python", "bridge.py", "--tools"], APP_DIR)
     if args.command == "profiles":
