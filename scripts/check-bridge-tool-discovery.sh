@@ -16,7 +16,7 @@ ok() { echo "OK: $*"; }
 require_text() {
   local text="$1"
   local pattern="$2"
-  printf '%s\n' "$text" | grep -Fq -- "$pattern" || fail "Bridge tool catalog missing: $pattern"
+  grep -Fq -- "$pattern" <<< "$text" || fail "Bridge tool catalog missing: $pattern"
   ok "Bridge tool catalog includes $pattern"
 }
 

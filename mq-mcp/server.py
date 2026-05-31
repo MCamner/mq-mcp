@@ -3646,6 +3646,457 @@ def repo_signal_status() -> str:
     return "\n".join(lines)
 
 
+# ─── Learn Layer ──────────────────────────────────────────────────────────────
+
+def _learn_engine():
+    """Lazy-import learn_engine so server still starts if file is missing."""
+    import importlib.util, sys as _sys
+    mod_path = Path(__file__).parent / "learn_engine.py"
+    if not mod_path.exists():
+        raise RuntimeError("learn_engine.py not found")
+    if "learn_engine" in _sys.modules:
+        return _sys.modules["learn_engine"]
+    spec = importlib.util.spec_from_file_location("learn_engine", mod_path)
+    mod = importlib.util.module_from_spec(spec)
+    _sys.modules["learn_engine"] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@mcp.tool()
+def record_learning(
+    task: str,
+    lesson: str,
+    validation: str,
+    source: str = "manual",
+    repo: str = "",
+    risk: str = "low",
+    tags: str = "",
+) -> str:
+    """Store a verified engineering lesson in the local learn layer.
+
+    Secrets are redacted before storage. The lesson is never automatically
+    promoted to AGENTS.md, CLAUDE.md, or any config file.
+
+    Args:
+        task:       What was being done (e.g. "fix version drift in CI").
+        lesson:     What was learned (e.g. "pyproject.toml must match VERSION").
+        validation: How the lesson was verified (e.g. "CI green after fix").
+        source:     Origin — codex | claude | mq-agent | mq-hal | manual |
+                    review | diff.
+        repo:       Repo name this applies to (empty = general).
+        risk:       low | medium | high | unknown.
+        tags:       Comma-separated tags (e.g. "ci,docs,release").
+
+    Safety: Class A — local write to REPO_ROOT/learn_engine/memory/lessons.jsonl,
+    no command execution, no allowlist mutation.
+    """
+    eng = _learn_engine()
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    record = eng.make_learning(
+        REPO_ROOT,
+        repo=repo or "",
+        source=source,
+        task=task,
+        lesson=lesson,
+        validation=validation,
+        tags=tag_list,
+        risk=risk,
+    )
+    result = eng.record_learning(REPO_ROOT, record)
+    return (
+        f"Saved lesson {result['id']}.\n"
+        f"  repo:   {result['repo'] or '(general)'}\n"
+        f"  source: {result['source']}\n"
+        f"  risk:   {result['risk']}\n"
+        f"  task:   {result['task'][:72]}"
+    )
+
+
+@mcp.tool()
+def list_learnings(repo: str = "", source: str = "", risk: str = "") -> str:
+    """List stored engineering lessons, with optional filters.
+
+    Args:
+        repo:   Filter by repo name (empty = all).
+        source: Filter by source (empty = all).
+        risk:   Filter by risk level — low | medium | high | unknown (empty = all).
+
+    Safety: Class A — read-only.
+    """
+    eng = _learn_engine()
+    lessons = eng.load_learnings(REPO_ROOT)
+
+    if repo:
+        lessons = [l for l in lessons if l.get("repo") == repo]
+    if source:
+        lessons = [l for l in lessons if l.get("source") == source]
+    if risk:
+        lessons = [l for l in lessons if l.get("risk") == risk]
+
+    if not lessons:
+        return "No lessons found."
+
+    lines = [f"Found {len(lessons)} lesson(s):\n"]
+    for l in lessons:
+        ts = str(l.get("created_at", ""))[:16]
+        lid = l.get("id", "?")
+        repo_name = (l.get("repo") or "(general)")[:16]
+        src = (l.get("source") or "-")[:8]
+        task = str(l.get("task", ""))[:60]
+        lines.append(f"[{lid}]  {ts}  {src:8}  {repo_name:16}  {task}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def get_learning(learning_id: str) -> str:
+    """Show a single stored lesson by id (prefix match).
+
+    Args:
+        learning_id: Full id or unique prefix (e.g. "learn_20260531_0001").
+
+    Safety: Class A — read-only.
+    """
+    eng = _learn_engine()
+    lessons = eng.load_learnings(REPO_ROOT)
+    matches = [l for l in lessons if l.get("id", "").startswith(learning_id)]
+
+    if not matches:
+        return f"No lesson found with id starting with {learning_id!r}."
+    if len(matches) > 1:
+        ids = ", ".join(l["id"] for l in matches)
+        return f"Ambiguous prefix {learning_id!r} — matches: {ids}"
+
+    l = matches[0]
+    lines = [
+        f"Lesson: {l.get('id')}",
+        f"Created:    {l.get('created_at', '-')}",
+        f"Repo:       {l.get('repo') or '(general)'}",
+        f"Source:     {l.get('source', '-')}",
+        f"Risk:       {l.get('risk', '-')}",
+        "",
+        "Task",
+        "----",
+        str(l.get("task", "")),
+        "",
+        "Lesson",
+        "------",
+        str(l.get("lesson", "")),
+    ]
+    if l.get("validation"):
+        val = l["validation"]
+        if isinstance(val, list):
+            val = "; ".join(val)
+        lines += ["", "Validation", "----------", str(val)]
+    if l.get("tags"):
+        lines.append(f"\nTags: {', '.join(l['tags'])}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def search_learnings(query: str, repo: str = "") -> str:
+    """Full-text search across stored lessons (task, lesson, validation, repo).
+
+    Args:
+        query: Search term (case-insensitive).
+        repo:  Limit to a specific repo (empty = all).
+
+    Safety: Class A — read-only.
+    """
+    eng = _learn_engine()
+    results = eng.search_learnings(REPO_ROOT, query)
+
+    if repo:
+        results = [l for l in results if l.get("repo") == repo]
+
+    if not results:
+        return f"No lessons matched {query!r}."
+
+    lines = [f"Found {len(results)} match(es) for {query!r}:\n"]
+    for l in results:
+        lid = l.get("id", "?")
+        src = (l.get("source") or "-")[:8]
+        repo_name = (l.get("repo") or "(general)")[:16]
+        task = str(l.get("task", ""))[:60]
+        lines.append(f"[{lid}]  {src:8}  {repo_name:16}  {task}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def summarize_learnings(repo: str = "", limit: int = 20) -> str:
+    """Summarize stored lessons — counts by source and risk, recent entries.
+
+    Args:
+        repo:  Limit to a specific repo (empty = all).
+        limit: Max number of recent lessons to show in the summary (default 20).
+
+    Safety: Class A — read-only.
+    """
+    eng = _learn_engine()
+    return eng.summarize_learnings(REPO_ROOT, limit=limit)
+
+
+@mcp.tool()
+def promote_learning(learning_id: str, target: str) -> str:
+    """Preview how a lesson would look if promoted to a target document.
+
+    Does NOT write any files. Returns a formatted preview of the content
+    that could be manually copied to the target.
+
+    Args:
+        learning_id: Lesson id (full or prefix).
+        target:      Destination — runbook | agents-md | claude-md |
+                     architecture-memory.
+
+    Safety: Class A — read-only preview, no file writes.
+    """
+    eng = _learn_engine()
+    return eng.promotion_preview(REPO_ROOT, learning_id, target)
+
+
+# ─── mqlaunch ─────────────────────────────────────────────────────────────────
+
+_ANSI_ESC = re.compile(r"\x1b\[[0-9;]*[mABCDEFGHJKSThlrs]|\x1b\[[0-9;]*[a-zA-Z]|\x1b[=>]|\r")
+_TUI_SPLASH = re.compile(r"PHOSPHOR GRID|███|╔═|╚═|═══")
+
+
+def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
+    """Run a mqlaunch command headless. Returns (clean_output, returncode)."""
+    env = {**os.environ, "TERM": "xterm", "COLUMNS": "120", "LINES": "40"}
+    try:
+        result = subprocess.run(
+            ["mqlaunch", *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env,
+        )
+        raw = result.stdout + result.stderr
+        clean = _ANSI_ESC.sub("", raw)
+        return clean.strip(), result.returncode
+    except FileNotFoundError:
+        return "ERROR: mqlaunch not found on PATH.", 127
+    except subprocess.TimeoutExpired:
+        return f"ERROR: mqlaunch {' '.join(args)} timed out after {timeout}s.", 1
+
+
+def _is_tui_output(text: str) -> bool:
+    return bool(_TUI_SPLASH.search(text))
+
+
+@mcp.tool()
+def run_mqlaunch_doctor() -> str:
+    """Run mqlaunch doctor — environment and dependency health check.
+
+    Returns a structured pass/fail report of all tool dependencies, PATH
+    entries, and runtime prerequisites.
+
+    Output quality: GOOD — structured PASS/FAIL/WARN lines, machine-readable.
+    No limitations in headless mode.
+
+    Safety: Class A — read-only diagnostic, no side effects.
+    """
+    output, rc = _run_mqlaunch("doctor")
+    status = "exit 0 (healthy)" if rc == 0 else f"exit {rc} (issues found)"
+    return f"mqlaunch doctor [{status}]\n\n{output}"
+
+
+@mcp.tool()
+def run_mqlaunch_selftest() -> str:
+    """Run mqlaunch selftest — internal smoke tests for mqlaunch itself.
+
+    Verifies that mqlaunch's internal bridges, legacy launchers, and tool
+    routes are intact.
+
+    Output quality: GOOD — [PASS]/[FAIL] lines, clean in headless mode.
+    No limitations.
+
+    Safety: Class A — read-only smoke checks.
+    """
+    output, rc = _run_mqlaunch("selftest")
+    status = "exit 0 (all pass)" if rc == 0 else f"exit {rc} (failures)"
+    return f"mqlaunch selftest [{status}]\n\n{output}"
+
+
+@mcp.tool()
+def run_mqlaunch_release_check() -> str:
+    """Run mqlaunch release-check — pre-release gate for macos-scripts.
+
+    Checks release readiness: version sync, changelog, CI status, doctor.
+
+    Output quality: GOOD — structured PASS/FAIL per check.
+    No limitations in headless mode.
+
+    Safety: Class A — read-only checks, no commits or pushes.
+    """
+    output, rc = _run_mqlaunch("release-check")
+    status = "exit 0 (ready)" if rc == 0 else f"exit {rc} (not ready)"
+    return f"mqlaunch release-check [{status}]\n\n{output}"
+
+
+@mcp.tool()
+def run_mqlaunch_version() -> str:
+    """Run mqlaunch version — show mqlaunch version information.
+
+    Output quality: LIMITED — outputs large ASCII-art splash screen. The
+    version string is buried inside TUI output and not cleanly parseable.
+
+    Limitation: mqlaunch version has no --plain or --json flag.
+    Fix: add `mqlaunch version --plain` that outputs a bare version string,
+    e.g. `mqlaunch 2.4.1`.
+
+    Safety: Class A — read-only.
+    """
+    output, rc = _run_mqlaunch("version")
+    if _is_tui_output(output):
+        version_line = next(
+            (l for l in output.splitlines() if re.search(r"\d+\.\d+\.\d+", l)),
+            None,
+        )
+        note = (
+            f"NOTE: Output is TUI splash — version extracted heuristically.\n"
+            f"Fix: add `mqlaunch version --plain` for a bare version string.\n\n"
+        )
+        return note + (version_line or output[:400])
+    return output
+
+
+@mcp.tool()
+def run_mqlaunch_system_check() -> str:
+    """Run mqlaunch system check — system health and environment overview.
+
+    Output quality: LIMITED — launches a TUI login/boot screen with ANSI
+    graphics. Useful status info (MEM, BAT, HOST, USER) is embedded in the
+    splash but not cleanly separable.
+
+    Limitation: no `--no-tui` or `--json` flag. Command opens an interactive
+    screen rather than printing a parseable report.
+    Fix: add `mqlaunch system check --json` returning a JSON object with
+    {user, host, mem_pct, bat_pct, state, severity} fields.
+
+    Safety: Class A — read-only.
+    """
+    output, rc = _run_mqlaunch("system", "check")
+    if _is_tui_output(output):
+        lines = [l for l in output.splitlines() if l.strip() and not _TUI_SPLASH.search(l)]
+        return (
+            "NOTE: Output is TUI splash — structured data not available headless.\n"
+            "Fix: add `mqlaunch system check --json` for machine-readable output.\n\n"
+            + "\n".join(lines[:30])
+        )
+    return output
+
+
+@mcp.tool()
+def run_mqlaunch_perf() -> str:
+    """Run mqlaunch perf — performance monitoring menu.
+
+    Output quality: LIMITED — opens an interactive TUI performance menu.
+    No parseable output is produced in headless mode.
+
+    Limitation: `mqlaunch perf` is a TUI entry point, not a non-interactive
+    report command. It requires a real terminal to display CPU/MEM/disk graphs.
+    Fix: add `mqlaunch perf --report` that outputs a plain-text or JSON
+    snapshot of current CPU, memory, disk and network usage without the TUI.
+
+    Safety: Class A — read-only performance sampling.
+    """
+    output, rc = _run_mqlaunch("perf")
+    if _is_tui_output(output):
+        lines = [l for l in output.splitlines() if l.strip() and not _TUI_SPLASH.search(l)]
+        return (
+            "NOTE: `mqlaunch perf` is a TUI menu — no parseable output in headless mode.\n"
+            "Fix: add `mqlaunch perf --report` for a non-interactive performance snapshot.\n\n"
+            + ("\n".join(lines[:20]) if lines else "(no readable content captured)")
+        )
+    return output
+
+
+@mcp.tool()
+def run_mqlaunch_demo() -> str:
+    """Run mqlaunch demo — guided demo of mqlaunch features.
+
+    Output quality: LIMITED — outputs TUI splash and then waits for
+    interactive input. In headless mode it times out after a short wait.
+
+    Limitation: demo mode is interactive by design. No headless equivalent.
+    Fix: add `mqlaunch demo --script` that runs the demo non-interactively
+    and prints a transcript, useful for CI and MCP contexts.
+
+    Safety: Class A — read-only demonstration.
+    """
+    output, rc = _run_mqlaunch("demo", timeout=6)
+    if _is_tui_output(output) or not output.strip():
+        return (
+            "NOTE: `mqlaunch demo` is an interactive TUI — no parseable output headless.\n"
+            "Fix: add `mqlaunch demo --script` for a non-interactive demo transcript."
+        )
+    return output
+
+
+@mcp.tool()
+def run_mqlaunch_bundle() -> str:
+    """Run mqlaunch bundle — create a debug bundle for support/diagnostics.
+
+    Output quality: LIMITED — launches TUI. In a real terminal this would
+    create a `.tar.gz` debug bundle; headless it only shows the splash screen.
+
+    Limitation: bundle creation is TUI-gated. The output path is not reported
+    to stdout in headless mode.
+    Fix: add `mqlaunch bundle --out <path>` that writes the bundle to a
+    specified path and prints the path on stdout for programmatic use.
+
+    Safety: Class B — creates a local file, no network calls.
+    """
+    output, rc = _run_mqlaunch("bundle", timeout=10)
+    if _is_tui_output(output):
+        return (
+            "NOTE: `mqlaunch bundle` is TUI-gated — bundle was NOT created headless.\n"
+            "Fix: add `mqlaunch bundle --out <path>` for non-interactive bundle creation."
+        )
+    return output
+
+
+@mcp.tool()
+def run_mqlaunch_ask(question: str) -> str:
+    """Ask mqlaunch a natural-language question about the current repo.
+
+    Output quality: BROKEN headless — without OPENAI_API_KEY set, mqlaunch
+    copies a prompt to the clipboard instead of answering. With the key set
+    it calls the OpenAI API and returns a direct answer.
+
+    Limitation: requires `OPENAI_API_KEY` env var. Without it, the command
+    silently routes to a clipboard-copy fallback that is useless in MCP context.
+    Fix 1: set OPENAI_API_KEY in the environment before calling this tool.
+    Fix 2: add `mqlaunch ask --no-clipboard` that errors explicitly instead
+    of silently falling back to clipboard.
+
+    Args:
+        question: Natural-language question about the repo.
+
+    Safety: Class C — reads local files, calls OpenAI API if key is set.
+    """
+    if not os.environ.get("OPENAI_API_KEY"):
+        return (
+            "ERROR: OPENAI_API_KEY is not set.\n"
+            "`mqlaunch ask` requires the OpenAI API key to answer questions.\n"
+            "Without it, mqlaunch silently copies a prompt to the clipboard.\n\n"
+            "Fix 1: set OPENAI_API_KEY in the environment.\n"
+            "Fix 2: use `search_repo` or `read_repo_file` for local repo queries."
+        )
+    output, rc = _run_mqlaunch("ask", question, timeout=30)
+    if "Copied" in output and "clipboard" in output:
+        return (
+            "ERROR: mqlaunch routed to clipboard-copy fallback.\n"
+            "This typically means OPENAI_API_KEY is missing or not visible to mqlaunch.\n"
+            f"Raw output: {output}"
+        )
+    return output
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]

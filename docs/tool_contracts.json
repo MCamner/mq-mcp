@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.9.0",
-  "tool_count": 76,
+  "tool_count": 91,
   "tools": [
     {
       "name": "analyze_csv",
@@ -179,6 +179,16 @@
       "examples": []
     },
     {
+      "name": "get_learning",
+      "class": "A",
+      "description": "Show a single stored lesson by id (prefix match).",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "get_public_ip",
       "class": "B",
       "description": "Return the current public IP address.",
@@ -274,6 +284,16 @@
       "name": "list_architecture_docs",
       "class": "A",
       "description": "List all architecture documents with freshness status relative to server.py.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_learnings",
+      "class": "A",
+      "description": "List stored engineering lessons, with optional filters.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -493,6 +513,16 @@
       "examples": []
     },
     {
+      "name": "promote_learning",
+      "class": "A",
+      "description": "Preview how a lesson would look if promoted to a target document.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "read_repo_file",
       "class": "A",
       "description": "Läser innehållet i en fil inom repo-katalogen.",
@@ -507,6 +537,18 @@
       "class": "C",
       "description": "Record a new architecture decision (ADR) in the architecture_memory/ store.",
       "resolver": "resolve_repo_file",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "record_learning",
+      "class": "B",
+      "description": "Store a verified engineering lesson in the local learn layer.",
+      "resolver": "none",
       "write": true,
       "subprocess": false,
       "side_effects": [
@@ -666,6 +708,116 @@
       "examples": []
     },
     {
+      "name": "run_mqlaunch_ask",
+      "class": "D",
+      "description": "Ask mqlaunch a natural-language question about the current repo.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_bundle",
+      "class": "D",
+      "description": "Run mqlaunch bundle — create a debug bundle for support/diagnostics.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess",
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_demo",
+      "class": "D",
+      "description": "Run mqlaunch demo — guided demo of mqlaunch features.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_doctor",
+      "class": "D",
+      "description": "Run mqlaunch doctor — environment and dependency health check.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_perf",
+      "class": "D",
+      "description": "Run mqlaunch perf — performance monitoring menu.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_release_check",
+      "class": "D",
+      "description": "Run mqlaunch release-check — pre-release gate for macos-scripts.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_selftest",
+      "class": "D",
+      "description": "Run mqlaunch selftest — internal smoke tests for mqlaunch itself.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_system_check",
+      "class": "D",
+      "description": "Run mqlaunch system check — system health and environment overview.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
+      "name": "run_mqlaunch_version",
+      "class": "D",
+      "description": "Run mqlaunch version — show mqlaunch version information.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
+    },
+    {
       "name": "run_tests",
       "class": "D",
       "description": "Run pytest in a registered local repository.",
@@ -675,6 +827,16 @@
       "side_effects": [
         "subprocess"
       ],
+      "examples": []
+    },
+    {
+      "name": "search_learnings",
+      "class": "A",
+      "description": "Full-text search across stored lessons (task, lesson, validation, repo).",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {
@@ -780,6 +942,16 @@
       "side_effects": [
         "file-write"
       ],
+      "examples": []
+    },
+    {
+      "name": "summarize_learnings",
+      "class": "A",
+      "description": "Summarize stored lessons — counts by source and risk, recent entries.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {

@@ -52,6 +52,11 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `risk_review_file` | Targeted risk pass (security/risk/architecture) with grep pre-scan + AI review | Write, commit, network |
 | `risk_review_diff` | Risk pass over changed files in working tree or staging area | Write, commit, network |
 | `list_review_skills` | List available review skills, path-prefix routes, and extension routes | Write, commit |
+| `list_learnings` | List stored engineering lessons with optional filters | Write, network |
+| `get_learning` | Return a single lesson by id prefix | Write, network |
+| `search_learnings` | Full-text search across stored lessons | Write, network |
+| `summarize_learnings` | Summarize lessons by source and risk | Write, network |
+| `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -98,6 +103,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `store_semantic_memory` | Store or update a knowledge item in semantic_memory/store.json | Write outside repo, commit |
 | `bootstrap_semantic_memory` | Ingest key mq-mcp docs into semantic memory | Write outside repo, commit |
 | `export_symbol_index` | Write callgraph symbol map to generated/symbols/symbol_index.json | Write outside repo, commit |
+| `record_learning` | Append a verified lesson to REPO_ROOT/learn_engine/memory/lessons.jsonl | Write outside repo, commit, execute; secrets are redacted before write |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -133,6 +139,15 @@ These tools invoke external processes or open applications. Review carefully bef
 | `set_reminder` | Create a reminder in Reminders.app via osascript | Arbitrary reminder content |
 | `set_wallpaper` | Set macOS desktop wallpaper via osascript | Accepts any absolute image path |
 | `run_tests` | Run pytest in a registered local repository | Execute code in registered repo |
+| `run_mqlaunch_doctor` | Run `mqlaunch doctor` — env/dependency health report | Write files, network |
+| `run_mqlaunch_selftest` | Run `mqlaunch selftest` — internal smoke tests | Write files, network |
+| `run_mqlaunch_release_check` | Run `mqlaunch release-check` — pre-release gate | Write files, network |
+| `run_mqlaunch_version` | Run `mqlaunch version` — version info (TUI; limited headless) | Write files |
+| `run_mqlaunch_system_check` | Run `mqlaunch system check` — system overview (TUI; limited headless) | Write files |
+| `run_mqlaunch_perf` | Run `mqlaunch perf` — performance menu (TUI; no parseable output headless) | Write files |
+| `run_mqlaunch_demo` | Run `mqlaunch demo` — guided demo (TUI; interactive; no output headless) | Write files |
+| `run_mqlaunch_bundle` | Run `mqlaunch bundle` — debug bundle (TUI; bundle NOT created headless) | Arbitrary file writes |
+| `run_mqlaunch_ask` | Ask mqlaunch a question (requires OPENAI_API_KEY; clipboard fallback otherwise) | Write files; falls back silently without API key |
 
 Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal, run_tests), fixed allowlist (hal_repo_report), validated URL prefix (open_url, open_chrome), validated app name (open_app), no resolver (open_messages, show_notification, speak_text, set_volume, toggle_dark_mode, lock_screen, create_note, set_reminder, set_wallpaper), open path (open_terminal, open_vscode, open_finder, take_screenshot, find_large_files, find_recent_files, get_public_ip)
 
@@ -218,3 +233,18 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `risk_review_file` | A | REPO_ROOT (reads file) + review_engine/memory/ | No | No (OpenAI API) |
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
+| `record_learning` | B | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `list_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `get_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `search_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `summarize_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `promote_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
+| `run_mqlaunch_doctor` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_selftest` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_release_check` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_version` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_system_check` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_perf` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_demo` | D | subprocess (mqlaunch) | No | Yes |
+| `run_mqlaunch_bundle` | D | subprocess (mqlaunch) | Yes | Yes |
+| `run_mqlaunch_ask` | D | subprocess (mqlaunch) + OpenAI API | No | Yes |

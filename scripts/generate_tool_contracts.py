@@ -111,6 +111,25 @@ TOOL_META: dict[str, dict] = {
 
     # Skill discovery tool (v1.8.0+)
     "list_review_skills":          {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+
+    # Learn layer (v1.9.0)
+    "record_learning":             {"class": "B", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "list_learnings":              {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "get_learning":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "search_learnings":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "summarize_learnings":         {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "promote_learning":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+
+    # mqlaunch bridge tools (v1.9.0)
+    "run_mqlaunch_doctor":         {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_selftest":       {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_release_check":  {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_version":        {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_system_check":   {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_perf":           {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_demo":           {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
+    "run_mqlaunch_bundle":         {"class": "D", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["subprocess", "file-write"]},
+    "run_mqlaunch_ask":            {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess", "openai-api"]},
 }
 
 
