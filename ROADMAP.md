@@ -99,6 +99,31 @@ mq-mcp must not absorb heavy UI, duplicated repository indexing, repo metrics
 dashboards, or workflow automation logic. Those belong to mq-agent,
 repo-signal, macos-scripts and mq-hal.
 
+### Next phase — Ollama-backed learn extraction hardening
+
+Goal:
+
+Use Ollama only as an optional local provider for deterministic learn pattern
+extraction. mq-mcp remains the source of truth for contracts, validation, safety
+classes, review logic, and memory storage.
+
+Planned scope:
+
+- validate learn extraction records before storage
+- default extraction to dry-run/read-only behavior
+- require explicit approval for storage
+- reject prompt-injection text inside reviewed content as instructions
+- handle missing Ollama or missing `mq-learn` model as an optional-provider
+  error
+
+Non-goals:
+
+- no autonomous learning
+- no repo mutation from Ollama output
+- no command execution from Ollama output
+- no final risk scoring by Ollama
+- no replacement of mq-mcp review logic
+
 ---
 
 ## System feedback loops
@@ -165,6 +190,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 | v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
 | v1.10.0 | Learning Contract Layer                     | Planned       |
+| v1.11.0 | Ollama-backed learn extraction hardening    | Planned       |
 
 ---
 

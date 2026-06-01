@@ -26,6 +26,8 @@ This repository is useful as:
 - a validation baseline with `scripts/validate.sh` and `scripts/release-check.sh`
 - a repo-aware and macOS-aware MCP surface for mq-agent and local workflows
 - a documented integration point for mq-hal and repo-signal
+- an optional local-first Ollama learn extraction policy where mq-mcp remains
+  the source of truth for validation, safety, and memory
 
 It is **not yet** a production-ready MCP distribution or hidden daemon.
 
@@ -172,6 +174,11 @@ See [`docs/integration.md`](docs/integration.md) for how `mq-mcp`, `mq-hal`, and
 See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the
 practical boundary between `mq-mcp`, `mq-agent`, `mq-hal`, `repo-signal`, and
 `mq-image-analyze`.
+
+See [`docs/LEARN_OLLAMA.md`](docs/LEARN_OLLAMA.md) for the optional
+Ollama-backed learn extraction policy. Ollama may be used only for local pattern
+extraction; mq-mcp owns the learn contract, validation, safety classes, review
+logic, and memory writes.
 
 GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integration.html)
 

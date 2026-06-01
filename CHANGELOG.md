@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added docs/contract policy for optional Ollama-backed learn extraction:
+  `docs/LEARN_OLLAMA.md`, `docs/LEARN_CONTRACT.md`, and
+  `models/ollama/Modelfile.mq-learn`.
+- Documented that mq-mcp remains the source of truth for learn validation,
+  safety classes, review logic, and memory storage.
+
 ## 1.10.0 - 2026-05-31
 
 - Completed Runtime Truth + Safety Governance roadmap (Phases 1–9):
