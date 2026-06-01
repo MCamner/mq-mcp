@@ -12,7 +12,9 @@ printf '====================\n'
 
 FAILED=0
 
+# Handles fail.
 fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=$((FAILED + 1)); }
+# Handles ok.
 ok()   { printf 'OK: %s\n' "$1"; }
 
 if [[ ! -f "$CONTRACT" ]]; then

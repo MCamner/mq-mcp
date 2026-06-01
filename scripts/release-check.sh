@@ -21,10 +21,15 @@ WARNED=0
 
 RED='\033[1;31m'; GREEN='\033[1;32m'; BLUE='\033[1;34m'; YELLOW='\033[0;33m'; RESET='\033[0m'
 
+# Handles pass.
 pass()    { printf "${GREEN}[PASS]${RESET} %s\n"   "$*"; }
+# Handles fail.
 fail()    { printf "${RED}[FAIL]${RESET} %s\n"     "$*" >&2; FAILED=$((FAILED + 1)); }
+# Handles warn.
 warn()    { printf "${YELLOW}[WARN]${RESET} %s\n"  "$*"; WARNED=$((WARNED + 1)); }
+# Handles skip.
 skip()    { printf "${BLUE}[SKIP]${RESET} %s\n"    "$*"; }
+# Handles section.
 section() { printf "\n${BLUE}=== %s ===${RESET}\n" "$*"; }
 
 VERSION="$(cat VERSION)"
