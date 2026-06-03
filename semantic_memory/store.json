@@ -53,5 +53,54 @@
     ],
     "created_at": 1779995988.846973,
     "updated_at": 1779995988.846973
+  },
+  "repo-signal.version": {
+    "key": "repo-signal.version",
+    "content": "repo-signal is currently at v1.3.0. It provides static analysis, publish checklist, risk map, suggestions, and the new brief command. Install: pip install ./repo-signal from the local repo.",
+    "tags": [
+      "repo-signal",
+      "version",
+      "integration"
+    ],
+    "created_at": 1780446401.580257,
+    "updated_at": 1780446401.580257
+  },
+  "repo-signal.export-packs": {
+    "key": "repo-signal.export-packs",
+    "content": "repo-signal export produces 4 pack schemas consumed by mq-mcp callgraph_builder._try_merge_repo_signal_packs():\n- callgraph.v1: edges with source/target fields\n- symbol_index.v1: symbols with name/file_path fields\n- repo_summary.v1: summary with repo_name/language/file_count/top_files fields\n- risk_map.v1: risks list with severity/description fields\nGraceful degradation: if exports/ dir is missing or no valid schemas, repo_signal_status = \"not found\" or \"no valid schemas\".",
+    "tags": [
+      "repo-signal",
+      "export",
+      "callgraph",
+      "mq-mcp",
+      "integration",
+      "schema"
+    ],
+    "created_at": 1780446401.580808,
+    "updated_at": 1780446401.580808
+  },
+  "repo-signal.brief": {
+    "key": "repo-signal.brief",
+    "content": "repo-signal brief <path> produces a brief.v1 JSON schema with fields: schema, repo, path, generated_at, last_commit, health (label + score + total), risks (list, max 4), suggestions (list, max 4). Formats: text (default), markdown, json. Health labels: good >=90%, fair >=70%, needs work <70%, unknown if total==0.",
+    "tags": [
+      "repo-signal",
+      "brief",
+      "health",
+      "schema"
+    ],
+    "created_at": 1780446401.581153,
+    "updated_at": 1780446401.581153
+  },
+  "mq-agent.read-file-kwargs": {
+    "key": "mq-agent.read-file-kwargs",
+    "content": "mq_agent/tools/repo_tools.py read_file() accepts both path= and file_path= keyword args (PR #40, merged). The LLM planner commonly generates file_path= naturally; the function resolves whichever is provided. Error returned if neither is given.",
+    "tags": [
+      "mq-agent",
+      "read-file",
+      "tool",
+      "bug-fix"
+    ],
+    "created_at": 1780446401.58147,
+    "updated_at": 1780446401.58147
   }
 }
