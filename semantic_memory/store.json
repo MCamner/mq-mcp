@@ -102,5 +102,44 @@
     ],
     "created_at": 1780446401.58147,
     "updated_at": 1780446401.58147
+  },
+  "zephyr.result-envelope": {
+    "key": "zephyr.result-envelope",
+    "content": "zephyr-result.v1 is the stable JSON envelope returned by all `zephyr --json` commands.\nSchema:\n  status: \"ok\" | \"warning\" | \"error\"\n  errors: list[str]\n  warnings: list[str]\n  data: dict\n  artifacts: list[dict]       # diagram content/path for diagram command\n  metadata: {command, source, schema_version: \"zephyr-result.v1\"}\n\nPython type: ZephyrResult in zephyr/result.py\n  .ok    -> True if status in (\"ok\", \"warning\")\n  .failed -> True if status == \"error\"\n  .to_dict() -> produces the envelope dict\n\nExit codes: 0 = ok/warning, 1 = error or diff has changes.",
+    "tags": [
+      "zephyr",
+      "result",
+      "schema",
+      "contract",
+      "json"
+    ],
+    "created_at": 1780475849.431298,
+    "updated_at": 1780475869.055691
+  },
+  "zephyr.runtime-api": {
+    "key": "zephyr.runtime-api",
+    "content": "zephyr/runtime.py exposes a stable Python API. All functions return ZephyrResult.\nImport: from zephyr.runtime import validate_model, summary_model, diagram_model, diff_models, search_model\n\nvalidate_model(path) -> ZephyrResult\n  status=error if invalid, warning if warnings, ok if clean.\n  data: {name, valid, summary: {components, flows, risks, ...}}\n\nsummary_model(path) -> ZephyrResult\n  data = full summarize_architecture_data() dict.\n  Does NOT surface validation warnings — call validate_model first.\n\ndiagram_model(path, format=\"mermaid\", output=None) -> ZephyrResult\n  format: \"mermaid\" or \"html\". output=None -> artifact[\"content\"].\n  output=path -> writes file, artifact[\"path\"] (write-creating).\n\ndiff_models(path_a, path_b) -> ZephyrResult\n  status=warning if changed, ok if identical. data[\"changed\"] bool.\n  Each change: {status: added|removed|modified, label, fields: [{field, old, new}]}\n\nsearch_model(path, query) -> ZephyrResult\n  data: {query, total, components, flows, risks, controls, stakeholders}\n\nSafe call pattern — always validate first:\n  result = validate_model(path)\n  if result.failed: return result",
+    "tags": [
+      "zephyr",
+      "runtime",
+      "api",
+      "python",
+      "ZephyrResult"
+    ],
+    "created_at": 1780475849.43231,
+    "updated_at": 1780475869.0563462
+  },
+  "zephyr.contracts": {
+    "key": "zephyr.contracts",
+    "content": "zephyr/contracts.py classifies Zephyr tools by safety for mq-mcp and agents.\nSafety: \"read-only\" | \"write-creating\" | \"forbidden\"\n\nTOOLS dict keys and safety class:\n  read-only:      validate, summary, diagram_stdout, diff, search\n  write-creating: diagram_file (writes one file), run (writes to dir)\n  forbidden:      init, add (interactive — never call autonomously)\n\nHelpers:\n  is_safe_for_agents(tool_name) -> bool  (True if read-only or write-creating)\n  requires_write_intent(tool_name) -> bool  (True if write-creating)\n\nREAD_ONLY, WRITE_CREATING, FORBIDDEN dicts available for filtered iteration.",
+    "tags": [
+      "zephyr",
+      "contracts",
+      "safety",
+      "tools",
+      "agent"
+    ],
+    "created_at": 1780475849.432827,
+    "updated_at": 1780475869.056821
   }
 }
