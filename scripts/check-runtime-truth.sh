@@ -20,7 +20,9 @@ FAILED=0
 printf 'RUNTIME TRUTH CHECK\n'
 printf '===================\n'
 
+# Handles fail.
 fail() { printf 'MQ_MCP_RUNTIME_TRUTH_ERROR: %s\n' "$1" >&2; FAILED=$((FAILED + 1)); }
+# Handles ok.
 ok()   { printf 'OK: %s\n' "$1"; }
 
 # ---------------------------------------------------------------------------

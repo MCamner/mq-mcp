@@ -247,9 +247,12 @@ The following are always true regardless of tool, caller, or configuration:
 4. No tool output contains redactable secrets in cleartext
 5. All tool names registered in `@mcp.tool()` appear in `docs/TOOL_SAFETY.md`
 6. All tools with `write: true` or `subprocess: true` in `tool_contracts.json`
-   are classified Class C or D respectively
-   (`write: true` is allowed for Class D subprocess tools that may create local artifacts)
-7. Every tool call is stateless with respect to prior calls — no implicit session
+   are classified Class C or D. `write: true` is allowed for Class D subprocess
+   tools when the subprocess may create local artifacts, such as diagnostic
+   bundles.
+7. Class C learn/bootstrap tools may be intentionally profile-free because they
+   are user-invoked write operations, not automated profile defaults.
+8. Every tool call is stateless with respect to prior calls — no implicit session
 
 These guarantees are verified by `validate_orchestration_contract` and
 `detect_architecture_drift`.

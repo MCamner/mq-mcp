@@ -19,8 +19,11 @@ WARNED=0
 printf 'SEMANTIC MEMORY AUDIT\n'
 printf '=====================\n'
 
+# Handles fail.
 fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=$((FAILED + 1)); }
+# Handles warn.
 warn() { printf 'WARN: %s\n' "$1"; WARNED=$((WARNED + 1)); }
+# Handles ok.
 ok()   { printf 'OK: %s\n' "$1"; }
 
 # ---------------------------------------------------------------------------

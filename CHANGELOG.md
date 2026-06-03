@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added optional Ollama learn extraction provider helpers:
+  `learn_extract_pattern`, `validate_learn_record`, and `store_learn_record`.
+  Extraction defaults to read-only validation and storage still requires
+  explicit approval.
 - Added docs/contract policy for optional Ollama-backed learn extraction:
   `docs/LEARN_OLLAMA.md`, `docs/LEARN_CONTRACT.md`, and
   `models/ollama/Modelfile.mq-learn`.

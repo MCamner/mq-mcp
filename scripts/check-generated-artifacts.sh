@@ -12,7 +12,9 @@ FAILED=0
 printf 'GENERATED ARTIFACTS CHECK\n'
 printf '=========================\n'
 
+# Handles fail.
 fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=$((FAILED + 1)); }
+# Handles ok.
 ok()   { printf 'OK: %s\n' "$1"; }
 
 # ---------------------------------------------------------------------------

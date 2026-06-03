@@ -2596,6 +2596,7 @@ def validate_orchestration_contract() -> str:
         # Class A/B tools for agents; Class C tools are user-invoked.
         "build_repo_context", "record_architecture_decision",
         "extract_coding_conventions", "export_symbol_index", "record_learning",
+        "bootstrap_learning_memory", "learn_from_diff", "learn_from_review",
         "bootstrap_semantic_memory", "store_semantic_memory",
         "update_repo_file", "edit_image", "take_screenshot", "set_clipboard",
     }
@@ -4259,7 +4260,7 @@ def run_mqlaunch_bundle() -> str:
     Fix: add `mqlaunch bundle --out <path>` that writes the bundle to a
     specified path and prints the path on stdout for programmatic use.
 
-    Safety: Class B — creates a local file, no network calls.
+    Safety: Class D — runs mqlaunch and may create a local debug bundle.
     """
     output, rc = _run_mqlaunch("bundle", timeout=10)
     if _is_tui_output(output):
