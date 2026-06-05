@@ -191,6 +191,58 @@ This is not a problem to solve. It is a tension to design.
 | v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Planned       |
+| v2.0.0  | Release Gate v2 + deterministic readiness   | Planned       |
+
+---
+
+## Planned: v2.0.0 — Release Gate v2 + deterministic readiness
+
+Goal:
+
+Make mq-mcp the deterministic release validator for the MQ stack. Release Gate
+v2 should be a contract with stable inputs, predictable output shape and clear
+blocker/warning classification, not a loose release checklist.
+
+Release Gate v2 must answer:
+
+```text
+Can this repo be released safely right now?
+Why / why not?
+What blocks release?
+What should be fixed first?
+```
+
+Planned scope:
+
+- [ ] Add `docs/RELEASE_GATE_V2.md` as the authoritative gate contract
+- [ ] Add `contracts/release_gate_v2.schema.json`
+- [ ] Add `mq-mcp release-gate run --repo . --profile v2`
+- [ ] Return stable JSON with `status`, `score`, `blockers`, `warnings` and
+  `next_actions`
+- [ ] Add human-readable release status output for mq-agent/operator workflows
+- [ ] Validate tests, lint/type, docs, contracts, safety classes, versioning,
+  perception artifacts, repo quality and release notes
+- [ ] Add read-only perception review support for mq-image-analyze output
+- [ ] Add perception contract checks for normalized screenshot/OCR/diagram
+  payloads
+- [ ] Add schema tests, blocker/warning classification tests, contract drift
+  tests and unsafe command detection tests
+
+Boundary:
+
+```text
+mq-agent orchestrates workflows.
+mq-mcp validates release readiness deterministically.
+mq-image-analyze performs visual extraction.
+repo-signal provides repo intelligence exports.
+```
+
+Non-goals:
+
+- no browser UI ownership
+- no mq-agent workflow orchestration logic inside mq-mcp
+- no visual OCR or screenshot analysis logic inside mq-mcp
+- no autonomous fix branches or repo mutation
 
 ---
 
