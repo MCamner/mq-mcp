@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.9.0 — semantic memory hygiene + orchestration boundary (done)
-Next:    Phase 8 — Release Gate v2
+v1.10.0 - Learning Contract Layer (done)
+Next:    v1.11.0 - Ollama-backed learn extraction hardening
 ```
 
 Completed foundation:
@@ -189,7 +189,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.5.0  | Risk analysis layer (shipped as v1.7.0)     | Done          |
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 | v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
-| v1.10.0 | Learning Contract Layer                     | Planned       |
+| v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Planned       |
 
 ---
@@ -1203,24 +1203,13 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v1.4.0 — Semantic memory layer
+v1.11.0 - Ollama-backed learn extraction hardening
 ```
 
-The runtime is now stable, self-inspecting, architecture-memory-aware, and
-orchestration-boundary-aware.
-
-The next leverage point is semantic memory: giving the runtime a durable
-knowledge layer separate from ADRs and per-file review history.
-
-Immediate priorities:
-
-1. Add `semantic_memory/` and `SemanticMemory` class
-2. Add `store_semantic_memory`, `search_semantic_memory`, `get_semantic_memory`,
-   and `list_semantic_memory` MCP tools
-3. Bootstrap README, ROADMAP, RUNTIME_CONTRACT.md, ORCHESTRATION_CONTRACT.md,
-   and TOOL_SAFETY.md into semantic memory
-4. Inject semantic memory into `review_file` at priority 0 when relevant
-5. Update `docs/ORCHESTRATION_CONTRACT.md` side-effect table for the new tools
+Keep v1.11.0 limited to optional local-provider hardening for learn extraction.
+The learning contract is already complete; the next work is validation,
+dry-run behavior, approval boundaries, and safe failure when Ollama or the
+local learn model is unavailable.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
