@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added mq-agent learn compatibility aliases:
+  `learn_status`, `search_learned_patterns`, and `explain_learned_pattern`.
+- Added `learn_hygiene` and Release Gate v2 `learn_hygiene_pass` coverage so
+  duplicate, invalid, low-confidence, and unvalidated learn records are visible
+  before release.
+- Added tests that lock learn aliases and hygiene behavior.
 - Added optional Ollama learn extraction provider helpers:
   `learn_extract_pattern`, `validate_learn_record`, and `store_learn_record`.
   Extraction defaults to read-only validation and storage still requires

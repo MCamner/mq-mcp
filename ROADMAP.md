@@ -1086,6 +1086,10 @@ Class A — read-only:
 - [x] `get_learning`
 - [x] `summarize_learnings`
 - [x] `learning_status`
+- [x] mq-agent compatibility aliases: `learn_status`,
+  `search_learned_patterns`, `explain_learned_pattern`
+- [x] `learn_hygiene` report for duplicates, invalid records,
+  low-confidence storage, missing validation, and hygiene status
 
 Class C — controlled write:
 
@@ -1166,6 +1170,10 @@ Allowed promotion targets:
 - [x] Promotion defaults to dry-run.
 - [x] Tests prove learn tools cannot execute commands, mutate allowlists,
   commit, push, or write outside allowed paths.
+- [x] Compatibility alias tests lock `mq-agent learn status/search/explain`
+  tool names.
+- [x] Release Gate v2 includes `learn_hygiene_pass` so learn memory hygiene is
+  visible before release.
 - [x] `scripts/validate.sh` passes.
 - [x] `scripts/release-check.sh` passes.
 
