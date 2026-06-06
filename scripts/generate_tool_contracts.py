@@ -128,6 +128,9 @@ TOOL_META: dict[str, dict] = {
     "learn_from_review":           {"class": "C", "resolver": "resolve_repo_file",      "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "learn_from_diff":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["file-write"]},
     "bootstrap_learning_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "ollama_learn_status":         {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "ollama_learn_extract":        {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_extract_from_last_review": {"class": "B", "resolver": "resolve_repo_file",  "write": False, "subprocess": False, "side_effects": []},
 
     # mqlaunch bridge tools (v1.9.0)
     "run_mqlaunch_doctor":         {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},

@@ -295,6 +295,16 @@
       "examples": []
     },
     {
+      "name": "learn_extract_from_last_review",
+      "class": "B",
+      "description": "Dry-run extraction of a learn pattern from the last review for a file.",
+      "resolver": "resolve_repo_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "learn_from_diff",
       "class": "C",
       "description": "Create a learning record with the current git diff as context.",
@@ -336,42 +346,6 @@
       "write": false,
       "subprocess": false,
       "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "ollama_learn_status",
-      "class": "B",
-      "description": "Report optional local Ollama learn provider availability.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [
-        "local-http"
-      ],
-      "examples": []
-    },
-    {
-      "name": "ollama_learn_extract",
-      "class": "B",
-      "description": "Dry-run extraction of a learn pattern from review findings via local Ollama.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [
-        "local-http"
-      ],
-      "examples": []
-    },
-    {
-      "name": "learn_extract_from_last_review",
-      "class": "B",
-      "description": "Dry-run extraction of a learn pattern from the last stored review for a file.",
-      "resolver": "review_memory",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [
-        "local-http"
-      ],
       "examples": []
     },
     {
@@ -504,6 +478,26 @@
       "side_effects": [
         "system"
       ],
+      "examples": []
+    },
+    {
+      "name": "ollama_learn_extract",
+      "class": "B",
+      "description": "Dry-run extraction of a learn pattern from review findings via Ollama.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "ollama_learn_status",
+      "class": "B",
+      "description": "Report optional Ollama learn provider availability.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {
