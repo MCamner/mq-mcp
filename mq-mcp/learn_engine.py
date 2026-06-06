@@ -246,6 +246,38 @@ def ollama_learn_status(
     }
 
 
+def learn_extract_from_last_review(
+    relative_path: str,
+    *,
+    review_loader: Callable[[str], str | None],
+    model: str = "mq-learn",
+    endpoint: str = "http://localhost:11434/api/generate",
+    timeout: int = 30,
+    http_post: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Dry-run extraction of a learn pattern from the last stored review for a file.
+
+    Loads review findings from review memory via review_loader, then calls
+    ollama_learn_extract. Always dry-run — no storage, no mutations.
+    """
+    findings = review_loader(relative_path)
+    if findings is None:
+        return {
+            "status": "no_review",
+            "reason": f"no review history for: {relative_path}",
+            "file": relative_path,
+        }
+    result = ollama_learn_extract(
+        findings,
+        model=model,
+        endpoint=endpoint,
+        timeout=timeout,
+        http_post=http_post,
+    )
+    result["file"] = relative_path
+    return result
+
+
 def ollama_learn_extract(
     review_findings: str,
     *,
