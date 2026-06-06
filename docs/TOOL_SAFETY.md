@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 71 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 99 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -27,6 +27,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `search_repo` | Run `git grep -n` inside repo | Write, access outside repo |
 | `git_status` | Show branch, status, last 5 commits | Modify git state |
 | `git_diff` | Show diff for repo or a specific file | Modify git state |
+| `release_gate_run` | Run Release Gate v2 deterministic validation | Write, modify repo |
 | `analyze_csv` | Read and summarize a CSV inside repo | Write, access outside repo |
 | `tool_safety_report` | Return contents of docs/TOOL_SAFETY.md | Write, access outside repo |
 | `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
@@ -54,10 +55,13 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `list_review_skills` | List available review skills, path-prefix routes, and extension routes | Write, commit |
 | `list_learnings` | List stored engineering lessons with optional filters | Write, network |
 | `get_learning` | Return a single lesson by id prefix | Write, network |
+| `explain_learned_pattern` | Compatibility alias for `get_learning` | Write, network |
 | `search_learnings` | Full-text search across stored lessons | Write, network |
+| `search_learned_patterns` | Compatibility alias for `search_learnings` | Write, network |
 | `summarize_learnings` | Summarize lessons by source and risk | Write, network |
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
+| `learn_status` | Compatibility alias for `learning_status` | Write, network |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -236,6 +240,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `repo_signal_status` | A | REPO_ROOT/.repo-signal/exports/ (read-only) | No | No |
 | `risk_review_file` | A | REPO_ROOT (reads file) + review_engine/memory/ | No | No (OpenAI API) |
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
+| `release_gate_run` | A | REPO_ROOT (release gate checks) | No | No |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
 | `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `learn_from_review` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
@@ -243,10 +248,13 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `bootstrap_learning_memory` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `list_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `get_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `explain_learned_pattern` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `search_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `search_learned_patterns` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `summarize_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `promote_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
+| `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `run_mqlaunch_doctor` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_selftest` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_release_check` | D | subprocess (mqlaunch) | No | Yes |
