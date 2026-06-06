@@ -27,7 +27,7 @@ def _mcp_tool_names() -> set[str]:
     return names
 
 
-def test_mq_agent_learn_alias_tools_exist():
+def test_learn_alias_tools_are_registered_in_server():
     names = _mcp_tool_names()
 
     assert "learn_status" in names
@@ -35,7 +35,7 @@ def test_mq_agent_learn_alias_tools_exist():
     assert "explain_learned_pattern" in names
 
 
-def test_learn_alias_tools_are_class_a_contracts():
+def test_learn_alias_tools_are_in_tool_contracts():
     data = json.loads(CONTRACTS_PATH.read_text(encoding="utf-8"))
     contracts = {item["name"]: item for item in data["tools"]}
 
