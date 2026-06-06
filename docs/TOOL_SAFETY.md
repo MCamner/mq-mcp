@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 99 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 100 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -59,6 +59,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `search_learnings` | Full-text search across stored lessons | Write, network |
 | `search_learned_patterns` | Compatibility alias for `search_learnings` | Write, network |
 | `summarize_learnings` | Summarize lessons by source and risk | Write, network |
+| `learn_hygiene` | Report learn memory hygiene | Write, network |
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
@@ -252,6 +253,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `search_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `search_learned_patterns` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
 | `summarize_learnings` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl | No | No |
+| `learn_hygiene` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `promote_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |

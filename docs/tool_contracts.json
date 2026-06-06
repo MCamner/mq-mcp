@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.10.0",
-  "tool_count": 99,
+  "tool_count": 100,
   "tools": [
     {
       "name": "analyze_csv",
@@ -104,6 +104,16 @@
       "examples": []
     },
     {
+      "name": "explain_learned_pattern",
+      "class": "A",
+      "description": "Alias for get_learning used by mq-agent learn explain.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "export_symbol_index",
       "class": "C",
       "description": "Write the current callgraph symbol map to generated/symbols/symbol_index.json.",
@@ -194,16 +204,6 @@
       "name": "get_learning",
       "class": "A",
       "description": "Show a single stored lesson by id (prefix match).",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
-      "examples": []
-    },
-    {
-      "name": "explain_learned_pattern",
-      "class": "A",
-      "description": "Compatibility alias for get_learning used by mq-agent learn explain.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -319,9 +319,9 @@
       "examples": []
     },
     {
-      "name": "learning_status",
+      "name": "learn_hygiene",
       "class": "A",
-      "description": "Return a summary of the local learn layer: counts by source, risk, and repo.",
+      "description": "Report learn memory hygiene.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -331,7 +331,17 @@
     {
       "name": "learn_status",
       "class": "A",
-      "description": "Compatibility alias for learning_status used by mq-agent learn status.",
+      "description": "Alias for learning_status used by mq-agent learn status.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "learning_status",
+      "class": "A",
+      "description": "Return a summary of the local learn layer: counts by source, risk, and repo.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -625,6 +635,16 @@
       "examples": []
     },
     {
+      "name": "release_gate_run",
+      "class": "A",
+      "description": "Run Release Gate v2 for a repo. Read-only deterministic validation.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "repo_signal_analyze",
       "class": "B",
       "description": "Run repo-signal analyze on a local repository. Read-only.",
@@ -734,16 +754,6 @@
       "side_effects": [
         "openai-api"
       ],
-      "examples": []
-    },
-    {
-      "name": "release_gate_run",
-      "class": "A",
-      "description": "Run Release Gate v2 for a repo. Read-only deterministic validation.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
       "examples": []
     },
     {
@@ -908,9 +918,9 @@
       "examples": []
     },
     {
-      "name": "search_learnings",
+      "name": "search_learned_patterns",
       "class": "A",
-      "description": "Full-text search across stored lessons (task, lesson, validation, repo).",
+      "description": "Alias for search_learnings used by mq-agent learn search.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -918,9 +928,9 @@
       "examples": []
     },
     {
-      "name": "search_learned_patterns",
+      "name": "search_learnings",
       "class": "A",
-      "description": "Compatibility alias for search_learnings used by mq-agent learn search.",
+      "description": "Full-text search across stored lessons (task, lesson, validation, repo).",
       "resolver": "none",
       "write": false,
       "subprocess": false,

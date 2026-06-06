@@ -3890,6 +3890,47 @@ def summarize_learnings(repo: str = "", limit: int = 20) -> str:
 
 
 @mcp.tool()
+def learn_hygiene() -> str:
+    """Report learn memory hygiene.
+
+    Checks duplicate lessons, missing validation, invalid records, and unsafe
+    low-confidence stored extraction records.
+
+    Safety: Class A — read-only.
+    """
+    eng = _learn_engine()
+    report = eng.hygiene_report(REPO_ROOT)
+
+    lines = [
+        f"Learn hygiene: {report['status'].upper()}",
+        "",
+        f"records: {report['records']}",
+        f"duplicates: {len(report['duplicates'])}",
+        f"invalid records: {len(report['invalid_records'])}",
+        f"low-confidence stored: {len(report['low_confidence_stored'])}",
+        f"missing validation: {len(report['missing_validation'])}",
+    ]
+
+    if report["duplicates"]:
+        lines += ["", "Duplicates:"]
+        lines += [f"  - {item}" for item in report["duplicates"]]
+
+    if report["invalid_records"]:
+        lines += ["", "Invalid records:"]
+        lines += [f"  - {item}" for item in report["invalid_records"]]
+
+    if report["low_confidence_stored"]:
+        lines += ["", "Low-confidence stored:"]
+        lines += [f"  - {item}" for item in report["low_confidence_stored"]]
+
+    if report["missing_validation"]:
+        lines += ["", "Missing validation:"]
+        lines += [f"  - {item}" for item in report["missing_validation"]]
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
 def promote_learning(learning_id: str, target: str) -> str:
     """Preview how a lesson would look if promoted to a target document.
 

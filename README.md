@@ -14,12 +14,12 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v1.10.0 — learning contract layer complete: 4 new learn tools, governance roadmap (Phases 1-9) done.
+v1.10.0 — learning contract layer complete: learn hygiene report, compatibility aliases, and governance roadmap (Phases 1-9) done.
 orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
-- a local MCP server with 99 documented, safety-classified tools
+- a local MCP server with 100 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -37,7 +37,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 99 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 100 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -165,7 +165,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 99 MCP tools with descriptions.
+Expected response lists all 100 MCP tools with descriptions.
 
 ## Integration map
 
@@ -227,7 +227,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 99 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 100 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -314,6 +314,7 @@ The local MCP server exposes 99 tools across five safety classes. See [`docs/TOO
 - `search_learnings` — full-text search across lessons (Class A)
 - `search_learned_patterns` — mq-agent-compatible alias for `search_learnings` (Class A)
 - `summarize_learnings` — summarizes lessons by source and risk (Class A)
+- `learn_hygiene` — reports learn memory hygiene: duplicates, invalid records, low-confidence storage, and missing validation (Class A)
 - `learning_status` — returns learn layer stats: counts by source, risk, and repo (Class A)
 - `learn_status` — mq-agent-compatible alias for `learning_status` (Class A)
 - `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)

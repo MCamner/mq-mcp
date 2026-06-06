@@ -395,6 +395,58 @@ def load_learnings(repo_root: Path) -> list[dict[str, Any]]:
     return records
 
 
+def hygiene_report(repo_root: Path) -> dict[str, Any]:
+    """Return read-only hygiene metrics for the local learn store."""
+    records = load_learnings(repo_root)
+
+    fingerprints: dict[tuple[str, str, str, str], str] = {}
+    duplicates: list[str] = []
+    invalid_records: list[str] = []
+    low_confidence_stored: list[str] = []
+    missing_validation: list[str] = []
+
+    for index, record in enumerate(records, start=1):
+        record_id = str(record.get("id") or f"record-{index}")
+
+        required_strings = ("id", "repo", "source", "task", "lesson", "risk")
+        if any(not isinstance(record.get(field_name), str) or not record.get(field_name, "").strip() for field_name in required_strings):
+            invalid_records.append(record_id)
+
+        validation = record.get("validation")
+        if not validation or (isinstance(validation, list) and not any(str(item).strip() for item in validation)):
+            missing_validation.append(record_id)
+
+        key = (
+            str(record.get("repo", "")),
+            str(record.get("source", "")),
+            str(record.get("task", "")),
+            str(record.get("lesson", "")),
+        )
+        if key in fingerprints:
+            duplicates.append(record_id)
+        else:
+            fingerprints[key] = record_id
+
+        tags = record.get("tags") or []
+        if isinstance(tags, list) and "low" in tags and "ollama-learn" in tags:
+            low_confidence_stored.append(record_id)
+
+    status = "pass"
+    if invalid_records or low_confidence_stored:
+        status = "blocked"
+    elif duplicates or missing_validation:
+        status = "warning"
+
+    return {
+        "status": status,
+        "records": len(records),
+        "duplicates": duplicates,
+        "invalid_records": invalid_records,
+        "low_confidence_stored": low_confidence_stored,
+        "missing_validation": missing_validation,
+    }
+
+
 def get_learning(repo_root: Path, learning_id: str) -> dict[str, Any] | None:
     for record in load_learnings(repo_root):
         if record.get("id") == learning_id:

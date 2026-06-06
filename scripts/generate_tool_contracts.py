@@ -87,6 +87,7 @@ TOOL_META: dict[str, dict] = {
     "review_architecture_doc": {"class": "A", "resolver": "resolve_repo_file",          "write": False, "subprocess": False, "side_effects": ["openai-api"]},
     "review_runtime_contract": {"class": "A", "resolver": "none",                       "write": False, "subprocess": False, "side_effects": ["openai-api"]},
     "validate_orchestration_contract": {"class": "A", "resolver": "none",               "write": False, "subprocess": False, "side_effects": []},
+    "release_gate_run":          {"class": "A", "resolver": "none",                     "write": False, "subprocess": False, "side_effects": []},
 
     # Architecture memory tools (v1.2.0)
     "list_architecture_decisions": {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
@@ -116,10 +117,14 @@ TOOL_META: dict[str, dict] = {
     "record_learning":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "list_learnings":              {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "get_learning":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "explain_learned_pattern":     {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "search_learnings":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "search_learned_patterns":     {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "summarize_learnings":         {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_hygiene":               {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "promote_learning":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learning_status":             {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_status":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_from_review":           {"class": "C", "resolver": "resolve_repo_file",      "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "learn_from_diff":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["file-write"]},
     "bootstrap_learning_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
