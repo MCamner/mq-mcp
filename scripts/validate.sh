@@ -161,6 +161,13 @@ else
   echo "SKIP: OPENAI_API_KEY is not set, skipping OpenAI bridge prompt"
 fi
 
+section "Tests"
+if uv --directory "$ROOT/mq-mcp" run pytest "$ROOT/tests/" -q --tb=short 2>&1; then
+  ok "All tests passed"
+else
+  fail "Tests failed"
+fi
+
 section "Done"
 if [[ "$FAILED" -eq 0 ]]; then
   ok "mq-mcp validation completed"

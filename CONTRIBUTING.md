@@ -10,13 +10,15 @@
 ```bash
 git clone https://github.com/MCamner/mq-mcp.git
 cd mq-mcp
-uv sync
+uv --directory mq-mcp sync
 ```
 
 ## Running tests
 
+The test suite lives in `tests/` but depends on the `mq-mcp/` project environment:
+
 ```bash
-uv run pytest tests/ -q
+uv --directory mq-mcp run pytest ../tests/ -q
 ```
 
 ## Full validation
@@ -25,7 +27,8 @@ uv run pytest tests/ -q
 bash scripts/validate.sh
 ```
 
-This runs type checks, contract validation, and the full test suite.
+This runs contract checks, Bridget identity checks, and tool surface validation.
+CI also runs the test suite as a separate step after `validate.sh`.
 
 ## Conventions
 
