@@ -48,7 +48,7 @@ def test_health_json_reports_tool_count(capsys):
     assert result == 0
     assert payload["version"] == "1.10.0"
     assert payload["status"] == "ok"
-    assert payload["tool_count"] == 96
+    assert payload["tool_count"] == 99
     assert payload["contracts_ok"] is True
 
 

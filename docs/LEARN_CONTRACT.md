@@ -6,6 +6,10 @@ It is separate from the persistent learning record schema in
 `schemas/learning.schema.json`. Extraction records are proposed intermediate
 records. They must be validated and explicitly approved before any memory write.
 
+The machine-readable extraction schema lives in
+`schemas/learn_extraction.schema.json`. `mq-mcp/learn_engine.py`, tests, and
+docs should use that file as the source of truth to avoid contract drift.
+
 ## Input
 
 The input is mq-mcp review findings, such as output from:

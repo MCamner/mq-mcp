@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.10.0",
-  "tool_count": 96,
+  "tool_count": 99,
   "tools": [
     {
       "name": "analyze_csv",
@@ -201,6 +201,16 @@
       "examples": []
     },
     {
+      "name": "explain_learned_pattern",
+      "class": "A",
+      "description": "Compatibility alias for get_learning used by mq-agent learn explain.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "get_public_ip",
       "class": "B",
       "description": "Return the current public IP address.",
@@ -312,6 +322,16 @@
       "name": "learning_status",
       "class": "A",
       "description": "Return a summary of the local learn layer: counts by source, risk, and repo.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "learn_status",
+      "class": "A",
+      "description": "Compatibility alias for learning_status used by mq-agent learn status.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -891,6 +911,16 @@
       "name": "search_learnings",
       "class": "A",
       "description": "Full-text search across stored lessons (task, lesson, validation, repo).",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "search_learned_patterns",
+      "class": "A",
+      "description": "Compatibility alias for search_learnings used by mq-agent learn search.",
       "resolver": "none",
       "write": false,
       "subprocess": false,

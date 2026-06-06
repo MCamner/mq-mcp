@@ -3821,6 +3821,18 @@ def get_learning(learning_id: str) -> str:
 
 
 @mcp.tool()
+def explain_learned_pattern(id: str) -> str:
+    """Alias for get_learning used by mq-agent learn explain.
+
+    Args:
+        id: Full learning id or unique prefix.
+
+    Safety: Class A — read-only compatibility alias.
+    """
+    return get_learning(id)
+
+
+@mcp.tool()
 def search_learnings(query: str, repo: str = "") -> str:
     """Full-text search across stored lessons (task, lesson, validation, repo).
 
@@ -3848,6 +3860,19 @@ def search_learnings(query: str, repo: str = "") -> str:
         lines.append(f"[{lid}]  {src:8}  {repo_name:16}  {task}")
 
     return "\n".join(lines)
+
+
+@mcp.tool()
+def search_learned_patterns(query: str, repo: str = "") -> str:
+    """Alias for search_learnings used by mq-agent learn search.
+
+    Args:
+        query: Search term (case-insensitive).
+        repo:  Limit to a specific repo (empty = all).
+
+    Safety: Class A — read-only compatibility alias.
+    """
+    return search_learnings(query=query, repo=repo)
 
 
 @mcp.tool()
@@ -3920,6 +3945,18 @@ def learning_status(repo: str = "") -> str:
         lines += ["", "By repo:"]
         lines += [f"  {k}: {v}" for k, v in sorted(by_repo.items())]
     return "\n".join(lines)
+
+
+@mcp.tool()
+def learn_status(repo: str = "") -> str:
+    """Alias for learning_status used by mq-agent learn status.
+
+    Args:
+        repo: Filter to a specific repo name (empty = all repos).
+
+    Safety: Class A — read-only compatibility alias.
+    """
+    return learning_status(repo=repo)
 
 
 @mcp.tool()

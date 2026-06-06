@@ -16,6 +16,8 @@ from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 VERSION_FILE = REPO_ROOT / "VERSION"
 PYPROJECT_FILE = APP_DIR / "pyproject.toml"
 ENV_FILE = APP_DIR / ".env"

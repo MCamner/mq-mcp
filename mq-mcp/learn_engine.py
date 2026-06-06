@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import json
 import re
+import hashlib
 import time
+import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -45,29 +47,29 @@ _LEARN_RECORD_KEYS = {
     "should_store",
 }
 
-LEARN_EXTRACTION_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": sorted(_LEARN_RECORD_KEYS),
-    "properties": {
-        "pattern_name": {"type": "string"},
-        "pattern_type": {
-            "type": "string",
-            "enum": sorted(_LEARN_PATTERN_TYPES),
-        },
-        "summary": {"type": "string"},
-        "evidence": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "recommended_action": {"type": "string"},
-        "confidence": {
-            "type": "string",
-            "enum": ["high", "medium", "low"],
-        },
-        "should_store": {"type": "boolean"},
-    },
-}
+
+def _load_learn_extraction_schema() -> dict[str, Any]:
+    schema_path = Path(__file__).resolve().parents[1] / "schemas" / "learn_extraction.schema.json"
+    try:
+        return json.loads(schema_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": sorted(_LEARN_RECORD_KEYS),
+            "properties": {
+                "pattern_name": {"type": "string"},
+                "pattern_type": {"type": "string", "enum": sorted(_LEARN_PATTERN_TYPES)},
+                "summary": {"type": "string"},
+                "evidence": {"type": "array", "items": {"type": "string"}},
+                "recommended_action": {"type": "string"},
+                "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+                "should_store": {"type": "boolean"},
+            },
+        }
+
+
+LEARN_EXTRACTION_SCHEMA: dict[str, Any] = _load_learn_extraction_schema()
 
 
 @dataclass
@@ -87,6 +89,9 @@ class LearningRecord:
     tags: list[str] = field(default_factory=list)
     risk: str = "unknown"
     promoted_to: list[str] = field(default_factory=list)
+    fingerprint: str = ""
+    seen_count: int = 1
+    last_seen_at: str = ""
     created_at: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -293,9 +298,20 @@ def _as_list(value: str | list[str] | None) -> list[str]:
 
 
 def _next_id(repo_root: Path) -> str:
-    existing = load_learnings(repo_root)
     ts = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-    return f"learn_{ts}_{len(existing) + 1:04d}"
+    return f"learn_{ts}_{uuid.uuid4().hex[:4]}"
+
+
+def learning_fingerprint(
+    repo: str,
+    source: str,
+    task: str,
+    lesson: str,
+    validation: str | list[str],
+) -> str:
+    validation_text = ";".join(_as_list(validation))
+    raw = "\n".join([repo.strip(), source.strip(), task.strip(), lesson.strip(), validation_text])
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
 
 
 def make_learning(
@@ -326,6 +342,7 @@ def make_learning(
     if not lesson.strip():
         raise ValueError("lesson is required")
 
+    created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     record = LearningRecord(
         id=_next_id(repo_root),
         repo=repo.strip(),
@@ -339,7 +356,9 @@ def make_learning(
         commands_used=_as_list(commands_used),
         tags=_as_list(tags),
         risk=risk,
-        created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        fingerprint=learning_fingerprint(repo, source, task, lesson, validation),
+        last_seen_at=created_at,
+        created_at=created_at,
     )
     return LearningRecord(**redact_secrets(record.to_dict()))
 
@@ -349,12 +368,18 @@ def record_learning(repo_root: Path, record: LearningRecord) -> dict[str, Any]:
     path = learning_store_path(repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = record.to_dict()
-    path.write_text(
-        path.read_text(encoding="utf-8") + json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
-        if path.exists()
-        else json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    existing = load_learnings(repo_root)
+    for item in existing:
+        if item.get("fingerprint") == payload.get("fingerprint"):
+            return {
+                "status": "duplicate",
+                "stored": False,
+                "id": item.get("id"),
+                "fingerprint": item.get("fingerprint"),
+                "path": str(path),
+            }
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
     return {"status": "ok", "id": record.id, "path": str(path)}
 
 

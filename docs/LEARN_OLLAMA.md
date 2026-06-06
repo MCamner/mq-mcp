@@ -123,6 +123,10 @@ contract:
 }
 ```
 
+The `format` object is loaded from `schemas/learn_extraction.schema.json`.
+Keep that schema aligned with `docs/LEARN_CONTRACT.md` and
+`mq-mcp/learn_engine.py`.
+
 Even when structured output is enabled, the prompt must explicitly instruct the
 model to respond in JSON. This avoids malformed or whitespace-heavy output and
 keeps the response suitable for schema validation.

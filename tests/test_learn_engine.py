@@ -44,6 +44,37 @@ def test_record_and_search_learning(tmp_path):
     assert "Keep tool docs" in summary
 
 
+def test_record_learning_skips_duplicate_fingerprint(tmp_path):
+    engine = _load_engine()
+    first = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source="codex",
+        task="Fix docs drift",
+        lesson="Keep tool docs and runtime tool count in sync.",
+        validation=["validate passes"],
+        tags=["docs"],
+        risk="low",
+    )
+    duplicate = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source="codex",
+        task="Fix docs drift",
+        lesson="Keep tool docs and runtime tool count in sync.",
+        validation=["validate passes"],
+        tags=["docs"],
+        risk="low",
+    )
+
+    assert engine.record_learning(tmp_path, first)["status"] == "ok"
+    result = engine.record_learning(tmp_path, duplicate)
+
+    assert result["status"] == "duplicate"
+    assert result["stored"] is False
+    assert len(engine.load_learnings(tmp_path)) == 1
+
+
 def test_learning_redacts_secrets_before_storage(tmp_path):
     engine = _load_engine()
     record = engine.make_learning(
@@ -121,7 +152,17 @@ def test_learning_schema_accepts_example_shape(tmp_path):
     payload = record.to_dict()
     serialized = json.dumps(payload)
     assert payload["id"].startswith("learn_")
+    assert payload["fingerprint"]
     assert "Learning records" in serialized
+
+
+def test_learn_extraction_schema_loaded_from_schema_file():
+    engine = _load_engine()
+    schema_path = Path(__file__).resolve().parents[1] / "schemas" / "learn_extraction.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    assert engine.LEARN_EXTRACTION_SCHEMA == schema
+    assert schema["additionalProperties"] is False
 
 
 def _valid_extraction(**overrides):

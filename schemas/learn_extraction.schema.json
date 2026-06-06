@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcamner.github.io/mq-mcp/schemas/learn_extraction.schema.json",
+  "title": "MQ Learn Extraction Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "confidence",
+    "evidence",
+    "pattern_name",
+    "pattern_type",
+    "recommended_action",
+    "should_store",
+    "summary"
+  ],
+  "properties": {
+    "pattern_name": {
+      "type": "string"
+    },
+    "pattern_type": {
+      "type": "string",
+      "enum": [
+        "architecture",
+        "docs",
+        "integration",
+        "release",
+        "safety",
+        "testing",
+        "unknown"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_action": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "should_store": {
+      "type": "boolean"
+    }
+  }
+}
