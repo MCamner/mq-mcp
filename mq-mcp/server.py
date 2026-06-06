@@ -2418,6 +2418,25 @@ def validate_orchestration_contract() -> str:
     findings: list[str] = []
     passes: list[str] = []
 
+    # — Collect registered tool names from server.py (AST) — needed by multiple checks below —
+    try:
+        server_text = server_path.read_text(encoding="utf-8")
+        tree = _ast.parse(server_text)
+        registered_tools: set[str] = set()
+        for node in _ast.walk(tree):
+            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                for dec in node.decorator_list:
+                    attr = dec.func if isinstance(dec, _ast.Call) else dec
+                    if (
+                        isinstance(attr, _ast.Attribute)
+                        and attr.attr == "tool"
+                        and isinstance(attr.value, _ast.Name)
+                        and attr.value.id == "mcp"
+                    ):
+                        registered_tools.add(node.name)
+    except Exception as exc:
+        return f"validate_orchestration_contract failed: cannot parse server.py: {exc}"
+
     # — 1. ORCHESTRATION_CONTRACT.md exists and is fresh —
     if not contract_path.exists():
         findings.append(
@@ -2482,25 +2501,6 @@ def validate_orchestration_contract() -> str:
         all_tools: dict[str, dict] = {t["name"]: t for t in contracts_data.get("tools", [])}
     except Exception as exc:
         return f"validate_orchestration_contract failed: cannot load tool_contracts.json: {exc}"
-
-    # — Collect registered tool names from server.py (AST) —
-    try:
-        server_text = server_path.read_text(encoding="utf-8")
-        tree = _ast.parse(server_text)
-        registered_tools: set[str] = set()
-        for node in _ast.walk(tree):
-            if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
-                for dec in node.decorator_list:
-                    attr = dec.func if isinstance(dec, _ast.Call) else dec
-                    if (
-                        isinstance(attr, _ast.Attribute)
-                        and attr.attr == "tool"
-                        and isinstance(attr.value, _ast.Name)
-                        and attr.value.id == "mcp"
-                    ):
-                        registered_tools.add(node.name)
-    except Exception as exc:
-        return f"validate_orchestration_contract failed: cannot parse server.py: {exc}"
 
     # — 2 & 7. Profile validation —
     READONLY_PROFILES = {"read-only", "repo-only", "claude-desktop"}
@@ -3020,6 +3020,7 @@ def extract_coding_conventions(relative_path: str) -> str:
         if not api_key:
             return "extract_coding_conventions requires OPENAI_API_KEY to be set."
 
+        import openai as _openai
         model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
         client = _openai.OpenAI(api_key=api_key)
 
@@ -3683,9 +3684,11 @@ def _learn_engine():
     if "learn_engine" in _sys.modules:
         return _sys.modules["learn_engine"]
     spec = importlib.util.spec_from_file_location("learn_engine", mod_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not create module spec for learn_engine")
     mod = importlib.util.module_from_spec(spec)
     _sys.modules["learn_engine"] = mod
-    spec.loader.exec_module(mod)
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
     return mod
 
 
@@ -4302,7 +4305,7 @@ def bootstrap_learning_memory() -> str:
         try:
             full = arch.get(getattr(entry, "id", ""))
             if full:
-                lines = full.content.splitlines()
+                lines = full.splitlines()
                 content = next(
                     (ln.strip() for ln in lines if ln.strip() and not ln.startswith("#")),
                     title,
