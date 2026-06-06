@@ -43,6 +43,8 @@ readme_current
 roadmap_current
 contracts_valid
 safety_classes_valid
+learn_contract_valid
+learn_alias_tools_present
 learn_hygiene_pass
 perception_artifacts_valid
 repo_signal_readiness_export

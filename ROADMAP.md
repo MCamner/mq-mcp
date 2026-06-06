@@ -1172,8 +1172,9 @@ Allowed promotion targets:
   commit, push, or write outside allowed paths.
 - [x] Compatibility alias tests lock `mq-agent learn status/search/explain`
   tool names.
-- [x] Release Gate v2 includes `learn_hygiene_pass` so learn memory hygiene is
-  visible before release.
+- [x] Release Gate v2 includes `learn_contract_valid`,
+  `learn_alias_tools_present`, and `learn_hygiene_pass` so the learn contract,
+  mq-agent aliases, and memory hygiene are visible before release.
 - [x] `scripts/validate.sh` passes.
 - [x] `scripts/release-check.sh` passes.
 

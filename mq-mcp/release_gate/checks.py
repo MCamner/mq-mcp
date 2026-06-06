@@ -152,6 +152,98 @@ def check_safety_classes_valid(repo: Path) -> GateCheck:
     return GateCheck("safety_classes_valid", "pass", "Tool safety classes are present.")
 
 
+def check_learn_contract_valid(repo: Path) -> GateCheck:
+    required = [
+        repo / "docs" / "LEARNING_CONTRACT.md",
+        repo / "docs" / "LEARNING_MODEL.md",
+        repo / "schemas" / "learning.schema.json",
+    ]
+    missing = [str(path.relative_to(repo)) for path in required if not path.is_file()]
+    if missing:
+        return GateCheck(
+            "learn_contract_valid",
+            "blocked",
+            f"Learn contract files are missing: {', '.join(missing)}.",
+            blocker=True,
+            next_action="Restore learning contract docs and schema before release.",
+        )
+
+    try:
+        schema = json.loads((repo / "schemas" / "learning.schema.json").read_text(encoding="utf-8"))
+    except Exception as exc:
+        return GateCheck(
+            "learn_contract_valid",
+            "blocked",
+            f"Learning schema is invalid JSON: {exc}",
+            blocker=True,
+            next_action="Fix schemas/learning.schema.json.",
+        )
+
+    required_schema_keys = {"$schema", "type", "required", "properties"}
+    missing_keys = sorted(required_schema_keys - set(schema))
+    if missing_keys:
+        return GateCheck(
+            "learn_contract_valid",
+            "blocked",
+            f"Learning schema missing keys: {', '.join(missing_keys)}.",
+            blocker=True,
+            next_action="Restore the learning schema contract shape.",
+        )
+    return GateCheck("learn_contract_valid", "pass", "Learn contract docs and schema are valid.")
+
+
+def check_learn_alias_tools_present(repo: Path) -> GateCheck:
+    server = repo / "mq-mcp" / "server.py"
+    contracts = repo / "docs" / "tool_contracts.json"
+    aliases = ("learn_status", "search_learned_patterns", "explain_learned_pattern")
+
+    if not server.is_file() or not contracts.is_file():
+        return GateCheck(
+            "learn_alias_tools_present",
+            "blocked",
+            "server.py or docs/tool_contracts.json is missing.",
+            blocker=True,
+            next_action="Restore server and tool contract metadata before release.",
+        )
+
+    server_text = server.read_text(encoding="utf-8", errors="replace")
+    missing_server = [name for name in aliases if f"def {name}" not in server_text]
+    try:
+        data = json.loads(contracts.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return GateCheck(
+            "learn_alias_tools_present",
+            "blocked",
+            f"Cannot parse tool contracts: {exc}",
+            blocker=True,
+            next_action="Fix docs/tool_contracts.json.",
+        )
+    tools = {str(tool.get("name")): tool for tool in data.get("tools", []) if isinstance(tool, dict)}
+    missing_contracts = [name for name in aliases if name not in tools]
+    unsafe_aliases = [
+        name
+        for name in aliases
+        if name in tools and (tools[name].get("class") != "A" or tools[name].get("write") is not False)
+    ]
+
+    problems = []
+    if missing_server:
+        problems.append(f"missing server aliases: {', '.join(missing_server)}")
+    if missing_contracts:
+        problems.append(f"missing contract aliases: {', '.join(missing_contracts)}")
+    if unsafe_aliases:
+        problems.append(f"aliases not Class A/read-only: {', '.join(unsafe_aliases)}")
+    if problems:
+        return GateCheck(
+            "learn_alias_tools_present",
+            "blocked",
+            f"Learn alias tools are not release-ready: {'; '.join(problems)}.",
+            blocker=True,
+            next_action="Restore mq-agent learn compatibility aliases and regenerate tool contracts.",
+        )
+    return GateCheck("learn_alias_tools_present", "pass", "mq-agent learn compatibility aliases are present and read-only.")
+
+
 def check_learn_hygiene_pass(repo: Path) -> GateCheck:
     try:
         import learn_engine
@@ -345,6 +437,8 @@ def run_p0_checks(repo: Path, target: str, test_command: list[str] | None = None
         check_file_mentions_target(repo, "ROADMAP.md", target, blocker=False),
         check_contracts_valid(repo),
         check_safety_classes_valid(repo),
+        check_learn_contract_valid(repo),
+        check_learn_alias_tools_present(repo),
         check_learn_hygiene_pass(repo),
         check_perception_artifacts_valid(repo),
         check_repo_signal_readiness_export(repo),

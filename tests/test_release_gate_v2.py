@@ -24,7 +24,30 @@ def write_repo(tmp_path: Path, version: str = "1.4.0") -> Path:
     docs = repo / "docs"
     docs.mkdir()
     (docs / "tool_contracts.json").write_text(
-        json.dumps({"tools": [{"name": "read_repo_file", "class": "A"}]}),
+        json.dumps({
+            "tools": [
+                {"name": "read_repo_file", "class": "A", "write": False},
+                {"name": "learn_status", "class": "A", "write": False},
+                {"name": "search_learned_patterns", "class": "A", "write": False},
+                {"name": "explain_learned_pattern", "class": "A", "write": False},
+            ]
+        }),
+        encoding="utf-8",
+    )
+    (docs / "LEARNING_CONTRACT.md").write_text("# Learning Contract\n", encoding="utf-8")
+    (docs / "LEARNING_MODEL.md").write_text("# Learning Model\n", encoding="utf-8")
+    schemas = repo / "schemas"
+    schemas.mkdir()
+    (schemas / "learning.schema.json").write_text(
+        json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}),
+        encoding="utf-8",
+    )
+    package = repo / "mq-mcp"
+    package.mkdir()
+    (package / "server.py").write_text(
+        "def learn_status(): pass\n"
+        "def search_learned_patterns(): pass\n"
+        "def explain_learned_pattern(): pass\n",
         encoding="utf-8",
     )
     write_repo_signal_export(repo)
@@ -52,6 +75,8 @@ def test_release_gate_can_return_pass(tmp_path):
 
     assert result.status == "pass"
     assert result.blockers == []
+    assert any(check.name == "learn_contract_valid" and check.status == "pass" for check in result.checks)
+    assert any(check.name == "learn_alias_tools_present" and check.status == "pass" for check in result.checks)
     assert any(check.name == "learn_hygiene_pass" and check.status == "pass" for check in result.checks)
     assert any(check.name == "repo_signal_readiness_export" and check.status == "pass" for check in result.checks)
     assert result.to_dict()["repo"] == "sample"
@@ -105,6 +130,30 @@ def test_release_gate_blocks_unsafe_learn_hygiene(tmp_path):
     assert result.status == "blocked"
     assert any("Learn hygiene blocked" in blocker for blocker in result.blockers)
     assert any(check.name == "learn_hygiene_pass" and check.status == "blocked" for check in result.checks)
+
+
+def test_release_gate_blocks_invalid_learn_contract(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    (repo / "schemas" / "learning.schema.json").write_text(json.dumps({"type": "object"}), encoding="utf-8")
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "blocked"
+    assert any("Learning schema missing keys" in blocker for blocker in result.blockers)
+    assert any(check.name == "learn_contract_valid" and check.status == "blocked" for check in result.checks)
+
+
+def test_release_gate_blocks_missing_learn_alias_tools(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text("def learn_status(): pass\n", encoding="utf-8")
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "blocked"
+    assert any("Learn alias tools are not release-ready" in blocker for blocker in result.blockers)
+    assert any(check.name == "learn_alias_tools_present" and check.status == "blocked" for check in result.checks)
 
 
 def test_release_gate_validates_perception_artifacts(tmp_path):
