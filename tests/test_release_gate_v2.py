@@ -27,7 +27,21 @@ def write_repo(tmp_path: Path, version: str = "1.4.0") -> Path:
         json.dumps({"tools": [{"name": "read_repo_file", "class": "A"}]}),
         encoding="utf-8",
     )
+    write_repo_signal_export(repo)
     return repo
+
+
+def write_repo_signal_export(repo: Path) -> Path:
+    exports = repo / ".repo-signal" / "exports"
+    exports.mkdir(parents=True)
+    for filename, schema in {
+        "callgraph.json": "callgraph.v1",
+        "symbol_index.json": "symbol_index.v1",
+        "repo_summary.json": "repo_summary.v1",
+        "risk_map.json": "risk_map.v1",
+    }.items():
+        (exports / filename).write_text(json.dumps({"schema": schema}), encoding="utf-8")
+    return exports
 
 
 def test_release_gate_can_return_pass(tmp_path):
@@ -39,6 +53,7 @@ def test_release_gate_can_return_pass(tmp_path):
     assert result.status == "pass"
     assert result.blockers == []
     assert any(check.name == "learn_hygiene_pass" and check.status == "pass" for check in result.checks)
+    assert any(check.name == "repo_signal_readiness_export" and check.status == "pass" for check in result.checks)
     assert result.to_dict()["repo"] == "sample"
 
 
@@ -146,6 +161,22 @@ def test_release_gate_blocks_invalid_perception_artifacts(tmp_path):
     assert any("Invalid perception artifact" in blocker for blocker in result.blockers)
     assert any(
         check.name == "perception_artifacts_valid" and check.status == "blocked"
+        for check in result.checks
+    )
+
+
+def test_release_gate_blocks_invalid_repo_signal_export(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    export = repo / ".repo-signal" / "exports" / "repo_summary.json"
+    export.write_text(json.dumps({"schema": "repo_summary.v0"}), encoding="utf-8")
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "blocked"
+    assert any("Invalid repo-signal readiness export" in blocker for blocker in result.blockers)
+    assert any(
+        check.name == "repo_signal_readiness_export" and check.status == "blocked"
         for check in result.checks
     )
 

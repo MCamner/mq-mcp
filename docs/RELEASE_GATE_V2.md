@@ -45,6 +45,7 @@ contracts_valid
 safety_classes_valid
 learn_hygiene_pass
 perception_artifacts_valid
+repo_signal_readiness_export
 release_notes_present
 ```
 

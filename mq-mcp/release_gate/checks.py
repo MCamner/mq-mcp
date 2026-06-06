@@ -259,6 +259,60 @@ def _validate_perception_artifact(path: Path) -> list[str]:
     return errors
 
 
+def check_repo_signal_readiness_export(repo: Path) -> GateCheck:
+    exports_dir = repo / ".repo-signal" / "exports"
+    if not exports_dir.is_dir():
+        return GateCheck(
+            "repo_signal_readiness_export",
+            "warning",
+            ".repo-signal/exports/ not found; repo-signal readiness export was not checked.",
+            next_action="Run `repo-signal export` before final release.",
+        )
+
+    expected = {
+        "callgraph.json": "callgraph.v1",
+        "symbol_index.json": "symbol_index.v1",
+        "repo_summary.json": "repo_summary.v1",
+        "risk_map.json": "risk_map.v1",
+    }
+    missing: list[str] = []
+    invalid: list[str] = []
+    for filename, schema in expected.items():
+        path = exports_dir / filename
+        if not path.is_file():
+            missing.append(filename)
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            invalid.append(f"{filename} unreadable ({exc})")
+            continue
+        actual_schema = payload.get("schema") if isinstance(payload, dict) else None
+        if actual_schema != schema:
+            invalid.append(f"{filename} schema {actual_schema!r}, expected {schema!r}")
+
+    if invalid:
+        return GateCheck(
+            "repo_signal_readiness_export",
+            "blocked",
+            f"Invalid repo-signal readiness export: {', '.join(invalid[:3])}",
+            blocker=True,
+            next_action="Regenerate repo-signal exports and rerun Release Gate v2.",
+        )
+    if missing:
+        return GateCheck(
+            "repo_signal_readiness_export",
+            "warning",
+            f"repo-signal readiness export is incomplete: missing {', '.join(missing)}.",
+            next_action="Run `repo-signal export` before final release.",
+        )
+    return GateCheck(
+        "repo_signal_readiness_export",
+        "pass",
+        "repo-signal readiness export packs are present and schema-valid.",
+    )
+
+
 def check_release_notes_present(repo: Path, target: str) -> GateCheck:
     release_notes = repo / "docs" / "RELEASE_NOTES.md"
     changelog = repo / "CHANGELOG.md"
@@ -293,5 +347,6 @@ def run_p0_checks(repo: Path, target: str, test_command: list[str] | None = None
         check_safety_classes_valid(repo),
         check_learn_hygiene_pass(repo),
         check_perception_artifacts_valid(repo),
+        check_repo_signal_readiness_export(repo),
         check_release_notes_present(repo, target),
     ]

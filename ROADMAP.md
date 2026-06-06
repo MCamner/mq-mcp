@@ -223,6 +223,7 @@ Planned scope:
 - [x] Validate tests, docs, contracts, safety classes, versioning and release
   notes
 - [ ] Validate lint/type and repo quality
+- [x] Validate repo-signal readiness exports
 - [x] Validate perception artifacts
 - [ ] Add read-only perception review support for mq-image-analyze output
 - [x] Add perception contract checks for normalized screenshot/OCR/diagram
