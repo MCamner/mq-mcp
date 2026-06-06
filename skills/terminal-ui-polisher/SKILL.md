@@ -7,6 +7,18 @@ description: Use when improving mq-mcp terminal output, Bridget CLI usage, valid
 
 Use this skill to make mq-mcp's terminal surfaces clearer, calmer, and easier to debug.
 
+## When to use
+
+- Improving mq-mcp CLI output, validation script messages, release script output, or help screens
+- Reviewing `bridge.py` usage and error message clarity
+- Making `--json` output stable and consistent across scripts
+
+## When not to use
+
+- Changing MCP tool behavior or safety — use `mcp-tool-safety-maintainer`
+- Changing bridge logic or Bridget behavior — use `bridget-bridge-maintainer`
+- Docs content changes — use `docs-maintainer`
+
 ## Terminal Surfaces
 
 - `mq-mcp/bridge.py` usage, `--tools`, `--search`, and error output

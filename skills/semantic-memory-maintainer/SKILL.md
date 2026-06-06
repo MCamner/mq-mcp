@@ -7,6 +7,18 @@ description: Use when maintaining mq-mcp semantic memory packs, vector context, 
 
 Use this skill when mq-mcp's documentation or repo knowledge needs to stay useful for semantic retrieval and cross-repo assistant workflows.
 
+## When to use
+
+- Maintaining semantic memory packs, vector context docs, or OpenAI upload scripts
+- Updating `docs/semantic-index/` or `docs/global/` after tool surface changes
+- Deciding what content should be indexed for cross-repo assistant workflows
+
+## When not to use
+
+- Uploading to vector stores without explicit user intent — upload scripts are opt-in
+- Changing MCP tool behavior — use `mcp-tool-safety-maintainer`
+- Docs changes unrelated to semantic retrieval — use `docs-maintainer`
+
 ## Relevant Files
 
 - `VECTOR_CONTEXT.md`

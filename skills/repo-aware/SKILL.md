@@ -7,6 +7,36 @@ description: Use when inspecting, explaining, planning, reviewing, or changing m
 
 Use this skill to keep work grounded in mq-mcp's actual structure, safety model, and local-first MCP architecture.
 
+## When to use
+
+- General work on mq-mcp when no narrower skill clearly owns the task
+- Understanding the repo structure, architecture, or safety model before acting
+- Planning or reviewing a change that spans multiple surfaces
+
+## When not to use
+
+- Adding or auditing MCP tools — use `mcp-tool-safety-maintainer`
+- Bridge or Bridget changes — use `bridget-bridge-maintainer`
+- Release validation — use `release-readiness`
+- Docs-only updates — use `docs-maintainer`
+- Review engine changes — use `review-runtime-maintainer`
+
+## Evals
+
+### Should trigger
+
+* "what does mq-mcp do?"
+* "explain mq-mcp's architecture and safety model"
+* "I'm new to mq-mcp — what are the key surfaces and patterns?"
+* "what's the scope of changes I need for this mq-mcp task?"
+
+### Should not trigger
+
+* "update mq-mcp docs" → use `docs-maintainer`
+* "add or audit an MCP tool" → use `mcp-tool-safety-maintainer`
+* "fix the Bridget bridge" → use `bridget-bridge-maintainer`
+* "is mq-mcp ready to release?" → use `release-readiness`
+
 ## What This Repo Is
 
 `mq-mcp` is a local macOS MCP server and bridge toolkit. It exposes a FastMCP server, a Bridget/OpenAI bridge, macOS automation helpers, repo-analysis tools, safety documentation, GitHub Pages docs, and release validation scripts.

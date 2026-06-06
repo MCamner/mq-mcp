@@ -7,6 +7,34 @@ description: Use when preparing mq-mcp for release by checking versioning, chang
 
 Use this skill before tagging, publishing, announcing, or merging release-critical mq-mcp changes.
 
+## When to use
+
+- Before tagging, publishing, or announcing a mq-mcp release
+- After completing a milestone to verify version alignment, tool docs, and CI status
+- When the release checklist needs a structured pass
+
+## When not to use
+
+- Regular development or feature work not bound for immediate release
+- Diagnosing a specific tool failure — use `mcp-tool-safety-maintainer`
+- Docs-only updates — use `docs-maintainer`
+
+## Evals
+
+### Should trigger
+
+* "is mq-mcp ready to release?"
+* "check mq-mcp tool contracts and safety before tagging"
+* "what's blocking the mq-mcp v2.0.0 release?"
+* "run the mq-mcp release checklist"
+
+### Should not trigger
+
+* "update mq-mcp docs" → use `docs-maintainer`
+* "fix the Bridget bridge" → use `bridget-bridge-maintainer`
+* "check a specific tool safety issue" → use `mcp-tool-safety-maintainer`
+* "regular mq-mcp feature work" → only needed at release boundaries
+
 ## Always Inspect
 
 - `git status --short`

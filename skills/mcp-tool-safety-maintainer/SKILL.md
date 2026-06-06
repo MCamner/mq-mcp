@@ -7,6 +7,19 @@ description: Use when adding, changing, reviewing, or documenting mq-mcp FastMCP
 
 Use this skill for the highest-risk part of mq-mcp: the tool surface exposed by `mq-mcp/server.py`.
 
+## When to use
+
+- Adding, changing, reviewing, or documenting any FastMCP tool in `server.py`
+- Auditing path resolvers, write-capable tools, subprocess behavior, or tool safety classifications
+- Updating `docs/TOOL_SAFETY.md`, `TOOL_INDEX.md`, or safety tests after tool changes
+
+## When not to use
+
+- Bridge or Bridget changes — use `bridget-bridge-maintainer`
+- Review engine changes — use `review-runtime-maintainer`
+- Docs-only updates not touching tool safety — use `docs-maintainer`
+- Semantic memory changes — use `semantic-memory-maintainer`
+
 ## Safety Model
 
 mq-mcp tools are grouped into:

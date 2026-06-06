@@ -7,6 +7,19 @@ description: Use when working on mq-mcp integrations with mq-hal, repo-signal, M
 
 Use this skill for the surrounding MQ ecosystem: `mq-mcp`, `mq-hal`, `repo-signal`, local repo registration, and global documentation.
 
+## When to use
+
+- Working on mq-mcp integration with mq-hal, repo-signal, or configured local repos
+- Changing `MQ_MCP_LOCAL_REPOS`, `MQ_MCP_ALLOWED_PATHS`, or cross-repo tool behavior
+- Maintaining global docs, semantic packs, or ecosystem documentation
+- Adding or debugging integration smoke checks
+
+## When not to use
+
+- Adding new standalone MCP tools — use `mcp-tool-safety-maintainer`
+- Changing Bridget or bridge.py behavior — use `bridget-bridge-maintainer`
+- Review engine changes — use `review-runtime-maintainer`
+
 ## Integration Role
 
 `mq-mcp` is the local MCP bridge layer. It connects local assistant workflows to safe repo analysis and publish-quality checks.

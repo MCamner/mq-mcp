@@ -7,6 +7,19 @@ description: Use when changing mq-mcp review engine code, review contracts, revi
 
 Use this skill for mq-mcp's central cognition runtime.
 
+## When to use
+
+- Changing review engine code, review contracts, severity parsing, multi-pass review, or review memory
+- Adding new review skills or updating golden review tests
+- Debugging why review output, architecture memory, or repo context selection is wrong
+
+## When not to use
+
+- Orchestrating review calls from mq-agent — use the mq-agent `mq-mcp-review-orchestration` skill
+- Adding new non-review MCP tools — use `mcp-tool-safety-maintainer`
+- Semantic memory changes unrelated to review — use `semantic-memory-maintainer`
+- Bridge or Bridget changes — use `bridget-bridge-maintainer`
+
 ## Core Files
 
 - `review_engine/`

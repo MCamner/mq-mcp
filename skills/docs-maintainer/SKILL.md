@@ -7,6 +7,19 @@ description: Use when keeping mq-mcp README, GitHub Pages docs, installation gui
 
 Keep mq-mcp documentation accurate because docs are part of the safety boundary.
 
+## When to use
+
+- Keeping README, GitHub Pages, safety docs, tool docs, changelog, or integration docs consistent with code
+- Syncing docs after MCP tool surface changes, safety reclassifications, or release bumps
+- Checking for stale tool counts, broken examples, or drifted installation instructions
+
+## When not to use
+
+- Changing MCP tool behavior — use `mcp-tool-safety-maintainer`
+- Changing the review engine — use `review-runtime-maintainer`
+- Semantic memory or vector store updates — use `semantic-memory-maintainer`
+- Product positioning or README launch polish — use `repo-product-auditor`
+
 ## Docs Surfaces
 
 Check the relevant docs in this order:

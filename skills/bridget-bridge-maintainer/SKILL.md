@@ -8,6 +8,19 @@ description: "Use when changing Bridget, bridge.py, OpenAI tool calling, MCP too
 Use this skill for `mq-mcp/bridge.py`, Bridget behavior, OpenAI tool
 calls, and the local MCP bridge experience.
 
+## When to use
+
+- Changing `bridge.py`, Bridget behavior, OpenAI tool calling schema, or MCP tool discovery
+- Debugging bridge startup, tool discovery, or `content_to_text()` conversion
+- Modifying `--tools`, `--search`, or `--search-global` behavior
+- Changing Bridget voice or image response behavior
+
+## When not to use
+
+- Adding new MCP tools to `server.py` — use `mcp-tool-safety-maintainer`
+- Fixing CLI output unrelated to bridge mode — use `terminal-ui-polisher`
+- Review engine changes — use `review-runtime-maintainer`
+
 ## Core Files
 
 - `mq-mcp/bridge.py`
