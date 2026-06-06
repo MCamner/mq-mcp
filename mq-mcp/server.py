@@ -3,6 +3,7 @@ import random
 import re
 import requests
 import os
+import shlex
 import time
 from pathlib import Path
 from typing import Any
@@ -519,7 +520,7 @@ def git_diff(relative_path: str | None = None) -> str:
 
 
 @mcp.tool()
-def release_gate_run(repo: str = ".", target: str = "v1.4.0") -> dict[str, Any]:
+def release_gate_run(repo: str = ".", target: str = "v1.4.0", test_command: str = "") -> dict[str, Any]:
     """Run Release Gate v2 for a repo. Read-only deterministic validation."""
     try:
         from release_gate import run_release_gate
@@ -527,7 +528,8 @@ def release_gate_run(repo: str = ".", target: str = "v1.4.0") -> dict[str, Any]:
         repo_path = Path(repo).expanduser()
         if not repo_path.is_absolute():
             repo_path = (REPO_ROOT / repo_path).resolve()
-        result = run_release_gate(repo_path, target)
+        parsed_test_command = shlex.split(test_command) if test_command else None
+        result = run_release_gate(repo_path, target, test_command=parsed_test_command)
         return result.to_dict()
     except Exception as exc:
         return {
@@ -3998,6 +4000,90 @@ def learn_status(repo: str = "") -> str:
     Safety: Class A — read-only compatibility alias.
     """
     return learning_status(repo=repo)
+
+
+@mcp.tool()
+def ollama_learn_status() -> str:
+    """Report optional Ollama learn provider availability.
+
+    Checks whether the local Ollama server is running and the mq-learn model
+    is installed. Does not generate, store, or mutate anything.
+
+    Safety: Class B — local HTTP read to Ollama only, no storage, no execution.
+    """
+    eng = _learn_engine()
+    result = eng.ollama_learn_status()
+
+    lines = [
+        f"Ollama learn provider: {result['status'].upper()}",
+        "",
+        f"model: {result.get('model', 'mq-learn')}",
+    ]
+
+    if result["status"] != "ready":
+        lines += [
+            f"reason: {result.get('reason', '-')}",
+            "",
+            "fix:",
+            "  ollama serve",
+            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+        ]
+    else:
+        lines += [
+            f"schema: {result.get('schema')}",
+            f"mode: {result.get('mode')}",
+            f"storage: {result.get('storage')}",
+        ]
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def ollama_learn_extract(review_findings: str) -> str:
+    """Dry-run extraction of a learn pattern from review findings via Ollama.
+
+    Calls the local mq-learn model to extract a structured learn candidate from
+    review findings text. Always dry-run — no storage, no mutations. Returns a
+    formatted preview of the candidate record for inspection.
+
+    Safety: Class B — local HTTP to Ollama only, no storage, no execution.
+    """
+    eng = _learn_engine()
+    result = eng.ollama_learn_extract(review_findings)
+
+    if result.get("status") == "unavailable":
+        return "\n".join([
+            "Ollama learn extract: UNAVAILABLE",
+            "",
+            f"reason: {result.get('reason', '-')}",
+            "",
+            "fix:",
+            "  ollama serve",
+            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+        ])
+
+    record = result.get("record", {})
+    lines = [
+        "Ollama learn extract: DRY-RUN PREVIEW",
+        "",
+        f"pattern_name:    {record.get('pattern_name', '-')}",
+        f"pattern_type:    {record.get('pattern_type', '-')}",
+        f"confidence:      {record.get('confidence', '-')}",
+        f"should_store:    {record.get('should_store', False)}",
+        "",
+        f"summary: {record.get('summary', '-')}",
+        "",
+        "evidence:",
+    ]
+    for item in record.get("evidence", []):
+        lines.append(f"  - {item}")
+    lines += [
+        "",
+        f"recommended_action: {record.get('recommended_action', '-')}",
+        "",
+        "status: dry_run — no data stored",
+    ]
+    return "\n".join(lines)
 
 
 @mcp.tool()

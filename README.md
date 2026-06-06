@@ -19,7 +19,7 @@ orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
-- a local MCP server with 100 documented, safety-classified tools
+- a local MCP server with 102 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -37,7 +37,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 100 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 101 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -317,6 +317,8 @@ The local MCP server exposes 100 tools across five safety classes. See [`docs/TO
 - `learn_hygiene` — reports learn memory hygiene: duplicates, invalid records, low-confidence storage, and missing validation (Class A)
 - `learning_status` — returns learn layer stats: counts by source, risk, and repo (Class A)
 - `learn_status` — mq-agent-compatible alias for `learning_status` (Class A)
+- `ollama_learn_status` — reports whether the local Ollama server is running and the mq-learn model is installed; read-only (Class B)
+- `ollama_learn_extract` — dry-run extraction of a learn pattern from review findings via local Ollama; no storage, preview only (Class B)
 - `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
 
 **Review engine tools:**

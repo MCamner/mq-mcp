@@ -101,10 +101,29 @@ def check_file_mentions_target(repo: Path, filename: str, target: str, blocker: 
     )
 
 
+def _repo_exposes_mcp_tools(repo: Path) -> bool:
+    server_candidates = [
+        repo / "mq-mcp" / "server.py",
+        repo / "server.py",
+    ]
+    for path in server_candidates:
+        text = _read(path)
+        if "@mcp.tool" in text or "FastMCP" in text:
+            return True
+    return False
+
+
 def check_contracts_valid(repo: Path) -> GateCheck:
     candidates = [repo / "docs" / "tool_contracts.json", repo / "contracts" / "release_gate_v2.schema.json"]
     existing = [path for path in candidates if path.is_file()]
     if not existing:
+        if not _repo_exposes_mcp_tools(repo):
+            return GateCheck(
+                "contracts_valid",
+                "warning",
+                "No release/tool contract schema was found; non-MCP repo contract validation was skipped.",
+                next_action="Add contracts/release_gate_v2.schema.json if this repo participates in Release Gate v2.",
+            )
         return GateCheck(
             "contracts_valid",
             "blocked",
@@ -129,6 +148,12 @@ def check_contracts_valid(repo: Path) -> GateCheck:
 def check_safety_classes_valid(repo: Path) -> GateCheck:
     path = repo / "docs" / "tool_contracts.json"
     if not path.is_file():
+        if not _repo_exposes_mcp_tools(repo):
+            return GateCheck(
+                "safety_classes_valid",
+                "pass",
+                "No MCP server detected; tool safety class check skipped.",
+            )
         return GateCheck(
             "safety_classes_valid",
             "warning",
@@ -153,6 +178,13 @@ def check_safety_classes_valid(repo: Path) -> GateCheck:
 
 
 def check_learn_contract_valid(repo: Path) -> GateCheck:
+    if not (repo / "mq-mcp" / "server.py").is_file():
+        return GateCheck(
+            "learn_contract_valid",
+            "pass",
+            "No mq-mcp server detected; learn contract check skipped.",
+        )
+
     required = [
         repo / "docs" / "LEARNING_CONTRACT.md",
         repo / "docs" / "LEARNING_MODEL.md",
@@ -197,7 +229,14 @@ def check_learn_alias_tools_present(repo: Path) -> GateCheck:
     contracts = repo / "docs" / "tool_contracts.json"
     aliases = ("learn_status", "search_learned_patterns", "explain_learned_pattern")
 
-    if not server.is_file() or not contracts.is_file():
+    if not server.is_file():
+        return GateCheck(
+            "learn_alias_tools_present",
+            "pass",
+            "No mq-mcp server detected; learn alias check skipped.",
+        )
+
+    if not contracts.is_file():
         return GateCheck(
             "learn_alias_tools_present",
             "blocked",

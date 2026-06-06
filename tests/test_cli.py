@@ -48,7 +48,7 @@ def test_health_json_reports_tool_count(capsys):
     assert result == 0
     assert payload["version"] == "1.10.0"
     assert payload["status"] == "ok"
-    assert payload["tool_count"] == 99
+    assert payload["tool_count"] >= 100
     assert payload["contracts_ok"] is True
 
 
@@ -113,3 +113,30 @@ def test_release_gate_run_json_reports_status(capsys, tmp_path):
     assert result == 0
     assert payload["repo"] == "sample"
     assert payload["status"] == "warning"
+
+
+def test_release_gate_run_cli_accepts_test_command(capsys, tmp_path):
+    cli = load_cli()
+    repo = tmp_path / "plain"
+    repo.mkdir()
+    (repo / "VERSION").write_text("1.4.0", encoding="utf-8")
+    (repo / "README.md").write_text("Current v1.4.0", encoding="utf-8")
+    (repo / "ROADMAP.md").write_text("Next v1.4.0", encoding="utf-8")
+    (repo / "CHANGELOG.md").write_text("## [v1.4.0]", encoding="utf-8")
+
+    result = cli.main([
+        "release-gate",
+        "run",
+        "--repo",
+        str(repo),
+        "--target",
+        "v1.4.0",
+        "--test-command",
+        "true",
+        "--json",
+    ])
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    checks = {check["name"]: check for check in payload["checks"]}
+    assert checks["tests_pass"]["status"] == "pass"

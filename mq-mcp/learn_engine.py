@@ -191,6 +191,119 @@ def _ollama_prompt(review_findings: str) -> str:
     )
 
 
+def ollama_learn_status(
+    *,
+    endpoint: str = "http://localhost:11434/api/tags",
+    model: str = "mq-learn",
+    http_get: Callable[..., Any] | None = None,
+    timeout: int = 5,
+) -> dict[str, Any]:
+    """Return optional Ollama learn provider availability.
+
+    Read-only. Does not generate, store, or mutate anything.
+    """
+    if http_get is None:
+        try:
+            import requests
+        except Exception as exc:
+            return {
+                "status": "unavailable",
+                "reason": f"requests unavailable: {exc}",
+                "model": model,
+            }
+        http_get = requests.get
+
+    try:
+        response = http_get(endpoint, timeout=timeout)
+        if hasattr(response, "raise_for_status"):
+            response.raise_for_status()
+        body = response.json() if hasattr(response, "json") else response
+    except Exception as exc:
+        return {
+            "status": "unavailable",
+            "reason": f"Ollama endpoint unavailable: {exc}",
+            "model": model,
+        }
+
+    models = body.get("models", []) if isinstance(body, dict) else []
+    names = {item.get("name", "").split(":")[0] for item in models if isinstance(item, dict)}
+
+    if model not in names:
+        return {
+            "status": "unavailable",
+            "reason": f"model {model!r} not found",
+            "model": model,
+            "available_models": sorted(names),
+        }
+
+    return {
+        "status": "ready",
+        "reason": "provider available",
+        "model": model,
+        "schema": "schemas/learn_extraction.schema.json",
+        "mode": "optional",
+        "storage": "dry-run only unless approved through Class C path",
+    }
+
+
+def ollama_learn_extract(
+    review_findings: str,
+    *,
+    model: str = "mq-learn",
+    endpoint: str = "http://localhost:11434/api/generate",
+    timeout: int = 30,
+    http_post: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Dry-run extraction of a learn pattern from review findings via Ollama.
+
+    Always dry-run — coerces should_store=True to False, never stores.
+    Returns a {status: dry_run, record: ...} preview dict.
+    """
+    if not review_findings.strip():
+        raise ValueError("review_findings is required")
+
+    if http_post is None:
+        try:
+            import requests  # noqa: PLC0415
+        except Exception as exc:
+            return {"status": "unavailable", "reason": f"requests unavailable: {exc}"}
+        http_post = requests.post
+
+    payload = {
+        "model": model,
+        "prompt": _ollama_prompt(review_findings.strip()),
+        "format": LEARN_EXTRACTION_SCHEMA,
+        "stream": False,
+        "options": {"temperature": 0.1, "num_ctx": 4096, "num_predict": 700, "seed": 42},
+    }
+
+    try:
+        response = http_post(endpoint, json=payload, timeout=timeout)
+        if hasattr(response, "raise_for_status"):
+            response.raise_for_status()
+        body = response.json() if hasattr(response, "json") else response
+    except Exception as exc:
+        return {"status": "unavailable", "reason": f"Ollama learn provider unavailable: {exc}"}
+
+    generated = body.get("response") if isinstance(body, dict) else body
+    if isinstance(generated, str):
+        try:
+            generated = json.loads(generated)
+        except json.JSONDecodeError:
+            return {"status": "unavailable", "reason": "Ollama learn provider returned non-JSON output"}
+
+    # Coerce should_store=True — this function is always dry-run.
+    if isinstance(generated, dict) and generated.get("should_store"):
+        generated = {**generated, "should_store": False}
+
+    try:
+        candidate = validate_learn_record(generated, approve=False)
+    except ValueError as exc:
+        return {"status": "unavailable", "reason": str(exc)}
+
+    return {"status": "dry_run", "stored": False, "reason": "explicit approval required", "record": candidate}
+
+
 def learn_extract_pattern(
     review_findings: str,
     *,

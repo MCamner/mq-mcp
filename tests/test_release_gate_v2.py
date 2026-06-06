@@ -92,6 +92,27 @@ def test_release_gate_can_return_warning(tmp_path):
     assert any("Tests were not run" in warning for warning in result.warnings)
 
 
+def test_non_mcp_repo_without_tool_contracts_does_not_fail_safety_checks(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = tmp_path / "plain-repo"
+    repo.mkdir()
+
+    contracts = checks.check_contracts_valid(repo)
+    safety = checks.check_safety_classes_valid(repo)
+    learn_contract = checks.check_learn_contract_valid(repo)
+    learn_aliases = checks.check_learn_alias_tools_present(repo)
+
+    assert contracts.status == "warning"
+    assert contracts.blocker is False
+    assert "non-MCP repo" in contracts.message
+    assert safety.status == "pass"
+    assert "No MCP server detected" in safety.message
+    assert learn_contract.status == "pass"
+    assert "No mq-mcp server detected" in learn_contract.message
+    assert learn_aliases.status == "pass"
+    assert "No mq-mcp server detected" in learn_aliases.message
+
+
 def test_release_gate_can_return_blocked(tmp_path):
     runner = load_release_gate_module("runner")
     repo = write_repo(tmp_path)
