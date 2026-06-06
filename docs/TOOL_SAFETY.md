@@ -91,6 +91,7 @@ These tools cannot write files and cannot run processes. They can read files out
 | `get_public_ip` | Return public IP via curl to api.ipify.org | Write, access files; makes external HTTP call |
 | `ollama_learn_status` | Check local Ollama server and mq-learn model availability | Write, subprocess |
 | `ollama_learn_extract` | Dry-run extraction of a learn pattern via local Ollama | Write, subprocess |
+| `learn_extract_from_last_review` | Dry-run extraction from the last stored review for a file | Write, subprocess |
 
 Resolver: `resolve_allowed_local_file` (repo-signal tools, analyze_guitar_pro); no resolver for system read-only tools (they read system state, not user files)
 
@@ -261,6 +262,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `ollama_learn_status` | B | http://localhost:11434/api/tags (read) | No | No |
 | `ollama_learn_extract` | B | http://localhost:11434/api/generate (read) | No | No |
+| `learn_extract_from_last_review` | B | review_memory (read) + http://localhost:11434/api/generate (read) | No | No |
 | `run_mqlaunch_doctor` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_selftest` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_release_check` | D | subprocess (mqlaunch) | No | Yes |

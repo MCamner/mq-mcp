@@ -4086,6 +4086,80 @@ def ollama_learn_extract(review_findings: str) -> str:
 
 
 @mcp.tool()
+def learn_extract_from_last_review(relative_path: str) -> str:
+    """Dry-run extraction of a learn pattern from the last review for a file.
+
+    Loads stored review findings for the given repo-relative path, passes them
+    to the local Ollama mq-learn model, and returns a preview candidate.
+    Always dry-run — no storage, no mutations.
+
+    Safety: Class B — reads local review memory + local HTTP to Ollama only.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+
+    def _review_loader(path: str) -> str | None:
+        try:
+            from review_engine.review_memory import ReviewMemory as _ReviewMemory
+            entry = _ReviewMemory().get_last(path)
+            return entry.findings_text if entry is not None else None
+        except Exception:
+            return None
+
+    eng = _learn_engine()
+    result = eng.learn_extract_from_last_review(relative_path, review_loader=_review_loader)
+
+    if result.get("status") == "no_review":
+        return "\n".join([
+            f"Learn extract from last review: NO REVIEW FOUND",
+            "",
+            f"file: {relative_path}",
+            "",
+            "Run review_file or risk_review_file on this path first.",
+        ])
+
+    if result.get("status") == "unavailable":
+        return "\n".join([
+            "Learn extract from last review: UNAVAILABLE",
+            "",
+            f"file: {relative_path}",
+            f"reason: {result.get('reason', '-')}",
+            "",
+            "fix:",
+            "  ollama serve",
+            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+        ])
+
+    record = result.get("record", {})
+    lines = [
+        "Learn extract from last review: DRY-RUN PREVIEW",
+        "",
+        f"file:     {relative_path}",
+        "provider: ollama / mq-learn",
+        "stored:   false",
+        "",
+        f"pattern_name: {record.get('pattern_name', '-')}",
+        f"pattern_type: {record.get('pattern_type', '-')}",
+        f"confidence:   {record.get('confidence', '-')}",
+        "",
+        f"summary: {record.get('summary', '-')}",
+        "",
+        "evidence:",
+    ]
+    for item in record.get("evidence", []):
+        lines.append(f"  - {item}")
+    lines += [
+        "",
+        f"recommended_action: {record.get('recommended_action', '-')}",
+        "",
+        "next:",
+        "  use record_learning or approved store path if this should become memory",
+    ]
+    return "\n".join(lines)
+
+
+@mcp.tool()
 def learn_from_review(relative_path: str, task: str = "", risk: str = "low") -> str:
     """Create a learning record from the last review findings for a file.
 

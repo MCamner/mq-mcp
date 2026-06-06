@@ -19,7 +19,7 @@ orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
-- a local MCP server with 102 documented, safety-classified tools
+- a local MCP server with 103 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -319,6 +319,7 @@ The local MCP server exposes 100 tools across five safety classes. See [`docs/TO
 - `learn_status` — mq-agent-compatible alias for `learning_status` (Class A)
 - `ollama_learn_status` — reports whether the local Ollama server is running and the mq-learn model is installed; read-only (Class B)
 - `ollama_learn_extract` — dry-run extraction of a learn pattern from review findings via local Ollama; no storage, preview only (Class B)
+- `learn_extract_from_last_review` — loads stored review findings for a file, runs dry-run Ollama extraction, returns a preview candidate; no storage (Class B)
 - `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
 
 **Review engine tools:**
