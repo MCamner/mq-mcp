@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.10.0",
-  "tool_count": 95,
+  "tool_count": 96,
   "tools": [
     {
       "name": "analyze_csv",
@@ -714,6 +714,16 @@
       "side_effects": [
         "openai-api"
       ],
+      "examples": []
+    },
+    {
+      "name": "release_gate_run",
+      "class": "A",
+      "description": "Run Release Gate v2 for a repo. Read-only deterministic validation.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {

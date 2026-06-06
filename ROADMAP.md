@@ -214,19 +214,20 @@ What should be fixed first?
 
 Planned scope:
 
-- [ ] Add `docs/RELEASE_GATE_V2.md` as the authoritative gate contract
-- [ ] Add `contracts/release_gate_v2.schema.json`
-- [ ] Add `mq-mcp release-gate run --repo . --profile v2`
-- [ ] Return stable JSON with `status`, `score`, `blockers`, `warnings` and
+- [x] Add `docs/RELEASE_GATE_V2.md` as the authoritative gate contract
+- [x] Add `contracts/release_gate_v2.schema.json`
+- [x] Add `mq-mcp release-gate run --repo . --target <version>`
+- [x] Return stable JSON with `status`, `score`, `blockers`, `warnings` and
   `next_actions`
-- [ ] Add human-readable release status output for mq-agent/operator workflows
-- [ ] Validate tests, lint/type, docs, contracts, safety classes, versioning,
-  perception artifacts, repo quality and release notes
+- [x] Add human-readable release status output for mq-agent/operator workflows
+- [x] Validate tests, docs, contracts, safety classes, versioning and release
+  notes
+- [ ] Validate lint/type, perception artifacts and repo quality
 - [ ] Add read-only perception review support for mq-image-analyze output
 - [ ] Add perception contract checks for normalized screenshot/OCR/diagram
   payloads
-- [ ] Add schema tests, blocker/warning classification tests, contract drift
-  tests and unsafe command detection tests
+- [x] Add schema tests and blocker/warning classification tests
+- [ ] Add contract drift tests and unsafe command detection tests
 
 Boundary:
 

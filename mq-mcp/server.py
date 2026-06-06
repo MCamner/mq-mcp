@@ -518,6 +518,30 @@ def git_diff(relative_path: str | None = None) -> str:
     return result
 
 
+@mcp.tool()
+def release_gate_run(repo: str = ".", target: str = "v1.4.0") -> dict[str, Any]:
+    """Run Release Gate v2 for a repo. Read-only deterministic validation."""
+    try:
+        from release_gate import run_release_gate
+
+        repo_path = Path(repo).expanduser()
+        if not repo_path.is_absolute():
+            repo_path = (REPO_ROOT / repo_path).resolve()
+        result = run_release_gate(repo_path, target)
+        return result.to_dict()
+    except Exception as exc:
+        return {
+            "repo": Path(repo).name or str(repo),
+            "target": target,
+            "status": "blocked",
+            "score": 0,
+            "blockers": [f"Release Gate v2 failed: {exc}"],
+            "warnings": [],
+            "next_actions": ["Fix Release Gate v2 invocation and rerun."],
+            "checks": [],
+        }
+
+
 
 @mcp.tool()
 def update_repo_file(relative_path: str, old_text: str, new_text: str) -> str:

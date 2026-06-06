@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -293,6 +294,17 @@ def build_parser() -> argparse.ArgumentParser:
     memory_list = memory_sub.add_parser("list", help="List all semantic memory entries.")
     memory_list.add_argument("--json", action="store_true", help="Output as JSON.")
 
+    release_gate_parser = sub.add_parser("release-gate", help="Run Release Gate v2.")
+    release_gate_sub = release_gate_parser.add_subparsers(dest="release_gate_command")
+    release_gate_run = release_gate_sub.add_parser("run", help="Run deterministic release checks.")
+    release_gate_run.add_argument("--repo", default=".", help="Repository path to validate.")
+    release_gate_run.add_argument("--target", required=True, help="Target release, e.g. v1.4.0.")
+    release_gate_run.add_argument("--json", action="store_true", help="Print machine-readable output.")
+    release_gate_run.add_argument(
+        "--test-command",
+        help="Optional shell-style test command to run, e.g. 'python -m pytest -q'.",
+    )
+
     return parser
 
 
@@ -461,6 +473,18 @@ def main(argv: list[str] | None = None) -> int:
                 print()
             return 0
         parser.error("memory requires one of: audit, count, list")
+    if args.command == "release-gate":
+        if args.release_gate_command == "run":
+            from release_gate import render_release_gate, run_release_gate  # noqa: PLC0415
+
+            test_command = shlex.split(args.test_command) if args.test_command else None
+            result = run_release_gate(args.repo, args.target, test_command=test_command)
+            if args.json:
+                print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+            else:
+                print(render_release_gate(result))
+            return 1 if result.status == "blocked" else 0
+        parser.error("release-gate requires one of: run")
 
     parser.print_help()
     return 0
