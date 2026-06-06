@@ -63,8 +63,6 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
-| `ollama_learn_status` | Report optional local Ollama learn provider availability | Write, subprocess |
-| `ollama_learn_extract` | Dry-run extraction of a learn pattern via local Ollama | Write, subprocess |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -91,6 +89,8 @@ These tools cannot write files and cannot run processes. They can read files out
 | `find_recent_files` | Find recently modified files via find | Write, access files |
 | `check_port` | Check if a TCP port is in use via lsof | Write, access files |
 | `get_public_ip` | Return public IP via curl to api.ipify.org | Write, access files; makes external HTTP call |
+| `ollama_learn_status` | Check local Ollama server and mq-learn model availability | Write, subprocess |
+| `ollama_learn_extract` | Dry-run extraction of a learn pattern via local Ollama | Write, subprocess |
 
 Resolver: `resolve_allowed_local_file` (repo-signal tools, analyze_guitar_pro); no resolver for system read-only tools (they read system state, not user files)
 

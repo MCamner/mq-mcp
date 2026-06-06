@@ -1,7 +1,6 @@
 import json
 import random
 import re
-import requests
 import os
 import shlex
 import time
