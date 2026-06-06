@@ -38,6 +38,7 @@ def test_release_gate_can_return_pass(tmp_path):
 
     assert result.status == "pass"
     assert result.blockers == []
+    assert any(check.name == "learn_hygiene_pass" and check.status == "pass" for check in result.checks)
     assert result.to_dict()["repo"] == "sample"
 
 
@@ -60,6 +61,35 @@ def test_release_gate_can_return_blocked(tmp_path):
 
     assert result.status == "blocked"
     assert any("CHANGELOG.md" in blocker for blocker in result.blockers)
+
+
+def test_release_gate_blocks_unsafe_learn_hygiene(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    learn_store = repo / "learn_engine" / "memory" / "lessons.jsonl"
+    learn_store.parent.mkdir(parents=True)
+    learn_store.write_text(
+        json.dumps(
+            {
+                "id": "learn_low",
+                "repo": "sample",
+                "source": "review",
+                "task": "Low confidence",
+                "lesson": "Low-confidence Ollama records should not be stored.",
+                "validation": ["checked"],
+                "risk": "unknown",
+                "tags": ["ollama-learn", "low"],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "blocked"
+    assert any("Learn hygiene blocked" in blocker for blocker in result.blockers)
+    assert any(check.name == "learn_hygiene_pass" and check.status == "blocked" for check in result.checks)
 
 
 def test_release_gate_render_includes_operator_sections(tmp_path):

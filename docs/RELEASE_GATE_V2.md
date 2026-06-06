@@ -43,6 +43,7 @@ readme_current
 roadmap_current
 contracts_valid
 safety_classes_valid
+learn_hygiene_pass
 release_notes_present
 ```
 

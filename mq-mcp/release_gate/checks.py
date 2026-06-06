@@ -152,6 +152,45 @@ def check_safety_classes_valid(repo: Path) -> GateCheck:
     return GateCheck("safety_classes_valid", "pass", "Tool safety classes are present.")
 
 
+def check_learn_hygiene_pass(repo: Path) -> GateCheck:
+    try:
+        import learn_engine
+    except Exception as exc:
+        return GateCheck(
+            "learn_hygiene_pass",
+            "warning",
+            f"Learn hygiene could not be checked: {exc}",
+            next_action="Fix learn_engine importability and rerun Release Gate v2.",
+        )
+
+    report = learn_engine.hygiene_report(repo)
+    message = (
+        f"Learn hygiene {report['status']}: "
+        f"records={report['records']}, "
+        f"duplicates={len(report['duplicates'])}, "
+        f"invalid={len(report['invalid_records'])}, "
+        f"low_confidence={len(report['low_confidence_stored'])}, "
+        f"missing_validation={len(report['missing_validation'])}."
+    )
+
+    if report["status"] == "pass":
+        return GateCheck("learn_hygiene_pass", "pass", message)
+    if report["status"] == "warning":
+        return GateCheck(
+            "learn_hygiene_pass",
+            "warning",
+            message,
+            next_action="Review duplicate or incomplete learn records before release.",
+        )
+    return GateCheck(
+        "learn_hygiene_pass",
+        "blocked",
+        message,
+        blocker=True,
+        next_action="Fix invalid or unsafe low-confidence learn records before release.",
+    )
+
+
 def check_release_notes_present(repo: Path, target: str) -> GateCheck:
     release_notes = repo / "docs" / "RELEASE_NOTES.md"
     changelog = repo / "CHANGELOG.md"
@@ -184,5 +223,6 @@ def run_p0_checks(repo: Path, target: str, test_command: list[str] | None = None
         check_file_mentions_target(repo, "ROADMAP.md", target, blocker=False),
         check_contracts_valid(repo),
         check_safety_classes_valid(repo),
+        check_learn_hygiene_pass(repo),
         check_release_notes_present(repo, target),
     ]
