@@ -222,9 +222,10 @@ Planned scope:
 - [x] Add human-readable release status output for mq-agent/operator workflows
 - [x] Validate tests, docs, contracts, safety classes, versioning and release
   notes
-- [ ] Validate lint/type, perception artifacts and repo quality
+- [ ] Validate lint/type and repo quality
+- [x] Validate perception artifacts
 - [ ] Add read-only perception review support for mq-image-analyze output
-- [ ] Add perception contract checks for normalized screenshot/OCR/diagram
+- [x] Add perception contract checks for normalized screenshot/OCR/diagram
   payloads
 - [x] Add schema tests and blocker/warning classification tests
 - [ ] Add contract drift tests and unsafe command detection tests

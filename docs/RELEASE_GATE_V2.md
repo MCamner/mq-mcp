@@ -44,6 +44,7 @@ roadmap_current
 contracts_valid
 safety_classes_valid
 learn_hygiene_pass
+perception_artifacts_valid
 release_notes_present
 ```
 

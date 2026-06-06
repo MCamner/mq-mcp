@@ -92,6 +92,64 @@ def test_release_gate_blocks_unsafe_learn_hygiene(tmp_path):
     assert any(check.name == "learn_hygiene_pass" and check.status == "blocked" for check in result.checks)
 
 
+def test_release_gate_validates_perception_artifacts(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    fixture = repo / "tests" / "fixtures" / "sample_perception_output.json"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text(
+        json.dumps(
+            {
+                "source_type": "screenshot",
+                "source_path": "docs/screenshot.png",
+                "ocr_text": "Release ready",
+                "visual_summary": "Release status screenshot.",
+                "detected_regions": [],
+                "risk_signals": [],
+                "confidence": "medium",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "pass"
+    assert any(
+        check.name == "perception_artifacts_valid" and check.status == "pass"
+        for check in result.checks
+    )
+
+
+def test_release_gate_blocks_invalid_perception_artifacts(tmp_path):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    fixture = repo / "tests" / "fixtures" / "sample_perception_output.json"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text(
+        json.dumps(
+            {
+                "source_type": "screenshot",
+                "source_path": "docs/screenshot.png",
+                "ocr_text": "Release ready",
+                "visual_summary": "Release status screenshot.",
+                "risk_signals": "low contrast",
+                "confidence": "medium",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+
+    assert result.status == "blocked"
+    assert any("Invalid perception artifact" in blocker for blocker in result.blockers)
+    assert any(
+        check.name == "perception_artifacts_valid" and check.status == "blocked"
+        for check in result.checks
+    )
+
+
 def test_release_gate_render_includes_operator_sections(tmp_path):
     runner = load_release_gate_module("runner")
     render = load_release_gate_module("render")

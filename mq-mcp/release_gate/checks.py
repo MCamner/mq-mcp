@@ -191,6 +191,74 @@ def check_learn_hygiene_pass(repo: Path) -> GateCheck:
     )
 
 
+def check_perception_artifacts_valid(repo: Path) -> GateCheck:
+    candidates = _find_perception_artifacts(repo)
+    if not candidates:
+        return GateCheck(
+            "perception_artifacts_valid",
+            "pass",
+            "No perception artifacts found; nothing to validate.",
+        )
+
+    invalid: list[str] = []
+    for path in candidates:
+        errors = _validate_perception_artifact(path)
+        if errors:
+            invalid.append(f"{path.relative_to(repo)} ({'; '.join(errors)})")
+
+    if not invalid:
+        return GateCheck(
+            "perception_artifacts_valid",
+            "pass",
+            f"Validated {len(candidates)} perception artifact(s).",
+        )
+    return GateCheck(
+        "perception_artifacts_valid",
+        "blocked",
+        f"Invalid perception artifact(s): {', '.join(invalid[:3])}",
+        blocker=True,
+        next_action="Fix perception JSON artifacts before release.",
+    )
+
+
+def _find_perception_artifacts(repo: Path) -> list[Path]:
+    patterns = [
+        "perception/**/*.json",
+        "reports/perception/**/*.json",
+        "reports/perception*.json",
+        "docs/perception/**/*.json",
+        "docs/perception*.json",
+        "tests/fixtures/*perception*.json",
+    ]
+    found: dict[Path, None] = {}
+    for pattern in patterns:
+        for path in repo.glob(pattern):
+            if path.is_file():
+                found[path] = None
+    return sorted(found)
+
+
+def _validate_perception_artifact(path: Path) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [f"invalid JSON: {exc}"]
+    if not isinstance(payload, dict):
+        return ["artifact must be a JSON object"]
+
+    required = ["source_type", "source_path", "ocr_text", "visual_summary", "risk_signals", "confidence"]
+    errors = [f"missing {key}" for key in required if key not in payload]
+    if payload.get("source_type") not in {"screenshot", "diagram", "ui", "terminal", "browser"}:
+        errors.append(f"invalid source_type: {payload.get('source_type')}")
+    if payload.get("confidence") not in {"low", "medium", "high"}:
+        errors.append(f"invalid confidence: {payload.get('confidence')}")
+    if "risk_signals" in payload and not isinstance(payload["risk_signals"], list):
+        errors.append("risk_signals must be a list")
+    if "detected_regions" in payload and not isinstance(payload["detected_regions"], list):
+        errors.append("detected_regions must be a list")
+    return errors
+
+
 def check_release_notes_present(repo: Path, target: str) -> GateCheck:
     release_notes = repo / "docs" / "RELEASE_NOTES.md"
     changelog = repo / "CHANGELOG.md"
@@ -224,5 +292,6 @@ def run_p0_checks(repo: Path, target: str, test_command: list[str] | None = None
         check_contracts_valid(repo),
         check_safety_classes_valid(repo),
         check_learn_hygiene_pass(repo),
+        check_perception_artifacts_valid(repo),
         check_release_notes_present(repo, target),
     ]
