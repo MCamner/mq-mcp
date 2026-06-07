@@ -15,7 +15,7 @@ import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 _SECRET_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9_\-]{20,}"),
@@ -299,7 +299,7 @@ def ollama_learn_extract(
             import requests  # noqa: PLC0415
         except Exception as exc:
             return {"status": "unavailable", "reason": f"requests unavailable: {exc}"}
-        http_post = requests.post
+        http_post = cast(Callable[..., Any], requests.post)
 
     payload = {
         "model": model,
@@ -371,7 +371,7 @@ def learn_extract_pattern(
             import requests
         except Exception as exc:  # pragma: no cover - depends on environment
             raise RuntimeError("Ollama learn provider unavailable: requests is not installed") from exc
-        http_post = requests.post
+        http_post = cast(Callable[..., Any], requests.post)
 
     try:
         response = http_post(endpoint, json=payload, timeout=timeout)

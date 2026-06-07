@@ -2,6 +2,11 @@
     "diffEditor.codeLens": true,
     "python.defaultInterpreterPath": "${workspaceFolder}/mq-mcp/.venv/bin/python",
     "python.analysis.extraPaths": [
+        ".",
         "./mq-mcp"
+    ],
+    "mypy-type-checker.args": [
+        "--config-file=${workspaceFolder}/mypy.ini",
+        "--python-executable=${workspaceFolder}/mq-mcp/.venv/bin/python"
     ]
 }

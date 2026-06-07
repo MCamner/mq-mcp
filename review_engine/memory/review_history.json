@@ -215,5 +215,341 @@
       "findings_text": "Review findings — review_engine/generated_artifacts.py: 6 total  [RISK=2  NOTE=4]\n\n[RISK] review_engine/generated_artifacts.py:96\nThe _git_log_ownership function invokes the 'git log' subprocess without an explicit user approval gate or confirmation, which may expose structural risk as subprocess execution can have unintended side effects if misused.\n\n[RISK] review_engine/generated_artifacts.py:96\nThe _git_log_ownership function reads and processes git commit data from the subprocess result without declared side effects documentation or contract, potentially creating a process risk if subprocess use or git interaction policy mandates explicit declaration.\n\n[NOTE] review_engine/generated_artifacts.py:96\nThe subprocess.run call includes a timeout and capture_output, mitigating some risk, but the lack of explicit approval gate still poses structural risk for this Class D operation.\n\n[NOTE] review_engine/generated_artifacts.py:102\nThe subprocess call in _git_log_ownership appears limited to read-only git log operations with no writes or state changes, reducing the severity level of the side effect risk but not eliminating the need for documentation.\n\n[NOTE] review_engine/generated_artifacts.py:166\nThe build_rich_architecture_map function calls filesystem read and writes (writing JSON files) which are expected side effects given the function purpose, and the docstring declares these writes, so no undeclared side effects risk is found there.\n\n[NOTE] review_engine/generated_artifacts.py:181\nThe build_ownership_map function exposes subprocess invocation side effects transitively via _git_log_ownership without explicitly documenting these effects in the function docstring or tool contracts, indicating potential undocumented side effects risk.",
       "skill": "security-review"
     }
+  ],
+  "review_engine/convention_extractor.py": [
+    {
+      "file_path": "review_engine/convention_extractor.py",
+      "mode": "comment",
+      "timestamp": 1780790525.985743,
+      "timestamp_iso": "2026-06-07T00:02:05Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 9,
+      "severity_counts": {
+        "MISSING": 3,
+        "SUGGESTION": 1,
+        "NOTE": 5
+      },
+      "findings_text": "Review findings — review_engine/convention_extractor.py: 9 total  [MISSING=3  SUGGESTION=1  NOTE=5]\n\n[MISSING] review_engine/convention_extractor.py:1\nModule docstring is present but lacks a summary of all public classes and methods for overall usage clarity.\n\n[MISSING] review_engine/convention_extractor.py:35\nClass ConventionExtractor has no class-level docstring describing its purpose, attributes, and usage.\n\n[MISSING] review_engine/convention_extractor.py:44\nMethod ConventionExtractor.extract lacks parameter and return type documentation in a docstring for users to understand input expectations and output structure.\n\n[SUGGESTION] review_engine/convention_extractor.py:95\nThe private function _parse_conventions could benefit from a brief docstring stating its purpose, input format, and output structure for maintainability.\n\n[NOTE] review_engine/convention_extractor.py:13\nThe Convention dataclass is self-explanatory with clear field names and type hints representing extracted conventions.\n\n[NOTE] review_engine/convention_extractor.py:20\nEXTRACT_SYSTEM defines the system prompt used for convention extraction clearly and serves as embedded documentation for prompt design.\n\n[NOTE] review_engine/convention_extractor.py:32\nEXTRACT_USER is a user prompt template with placeholders clearly documented inline, aiding prompt understanding.\n\n[NOTE] review_engine/convention_extractor.py:49\nThe existing_titles parameter fallback to empty list via None is idiomatic and documented inline with variable names but could be clarified in a docstring.\n\n[NOTE] review_engine/convention_extractor.py:76\nThe regex _CONV_RE is well-commented via its pattern structure and usage context in _parse_conventions though a docstring could enhance clarity.",
+      "skill": "review-engine"
+    }
+  ],
+  "review_engine/context_selector.py": [
+    {
+      "file_path": "review_engine/context_selector.py",
+      "mode": "comment",
+      "timestamp": 1780790529.1099021,
+      "timestamp_iso": "2026-06-07T00:02:09Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 6,
+      "severity_counts": {
+        "MISSING": 3,
+        "SUGGESTION": 2,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — review_engine/context_selector.py: 6 total  [MISSING=3  SUGGESTION=2  NOTE=1]\n\n[MISSING] review_engine/context_selector.py:1\nModule-level docstring could include a one-line summary of the module's purpose for clarity.\n\n[MISSING] review_engine/context_selector.py:24\nThe ContextSelector class lacks a docstring specifying the expected types of label and content parameters in the add method for public clarity.\n\n[MISSING] review_engine/context_selector.py:43\nThe selected method lacks explicit type hints indicating the return dictionary maps string labels to string content.\n\n[SUGGESTION] review_engine/context_selector.py:35\nThe add method's docstring could mention that content is stripped of whitespace before addition for complete clarity.\n\n[SUGGESTION] review_engine/context_selector.py:46\nThe selected method docstring could clarify that truncation adds a fixed note regardless of where truncation occurs in the content.\n\n[NOTE] review_engine/context_selector.py:12\nThe usage example in the module docstring provides helpful context on how to use ContextSelector.",
+      "skill": "review-engine"
+    }
+  ],
+  "review_engine/drift_detector.py": [
+    {
+      "file_path": "review_engine/drift_detector.py",
+      "mode": "comment",
+      "timestamp": 1780790535.3548632,
+      "timestamp_iso": "2026-06-07T00:02:15Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 15,
+      "severity_counts": {
+        "MISSING": 9,
+        "SUGGESTION": 4,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — review_engine/drift_detector.py: 15 total  [MISSING=9  SUGGESTION=4  NOTE=2]\n\n[MISSING] review_engine/drift_detector.py:16\nThe module docstring does not explain the meaning or possible values of severity labels (NOTE, WARNING, RISK) used in DriftFinding.\n\n[MISSING] review_engine/drift_detector.py:30\nDriftFinding class has no docstring describing its purpose and fields.\n\n[MISSING] review_engine/drift_detector.py:41\nDriftDetector class has no class-level docstring summarizing its role and main methods.\n\n[MISSING] review_engine/drift_detector.py:58\nThe private method _server_tools lacks a docstring describing the method's purpose, inputs, and outputs beyond the brief inline comment.\n\n[MISSING] review_engine/drift_detector.py:73\nThe private method _contracted_tools lacks a detailed docstring specifying return types and possible exceptions.\n\n[MISSING] review_engine/drift_detector.py:84\nThe private method _declared_count_in_file lacks a docstring explaining its input parameter and output.\n\n[MISSING] review_engine/drift_detector.py:94\nThe private method _safety_table_count lacks a docstring specifying what exactly it counts and the expected input format.\n\n[MISSING] review_engine/drift_detector.py:102\nThe detect() method has no docstring describing its behavior, return type, and any exceptions raised.\n\n[MISSING] review_engine/drift_detector.py:188\nThe format_report() method has no docstring explaining input parameter and output format of the report string.\n\n[SUGGESTION] review_engine/drift_detector.py:107\nIn detect(), it would improve clarity to document the meaning of each numbered check (1-11) implemented as separate code blocks.\n\n[SUGGESTION] review_engine/drift_detector.py:147\nThe inline comment \"Run build_repo_context() to refresh.\" could briefly describe what build_repo_context() does and where it is defined.\n\n[SUGGESTION] review_engine/drift_detector.py:197\nIn detect(), the final check about \"CRITICAL\" severity presence depends on a particular tool name \"risk_review_file\" in server tools but lacks context or explanation in the comment.\n\n[SUGGESTION] review_engine/drift_detector.py:203\nThe if __name__ == \"__main__\": block would benefit from a brief docstring explaining its usage as a standalone diagnostic tool.\n\n[NOTE] review_engine/drift_detector.py:82\nThe method _declared_count_in_file searches for a pattern of \"# tools\" in arbitrary files but does not clarify if this approach is robust for all expected file formats.\n\n[NOTE] review_engine/drift_detector.py:172\nThe detect() method silently passes exceptions when reading the safety text file to check coverage, which could mask IO or decoding issues—currently undocumented.",
+      "skill": "review-engine"
+    }
+  ],
+  "review_engine/callgraph_builder.py": [
+    {
+      "file_path": "review_engine/callgraph_builder.py",
+      "mode": "comment",
+      "timestamp": 1780790543.81995,
+      "timestamp_iso": "2026-06-07T00:02:23Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "WARNING": 1,
+        "MISSING": 13,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — review_engine/callgraph_builder.py: 18 total  [WARNING=1  MISSING=13  NOTE=4]\n\n[WARNING] review_engine/callgraph_builder.py:29\nThe module-level constant HUB_THRESHOLD has a value of 2 (files imported by this many or more are hubs), but the module docstring says \"3+\"; this mismatch is not documented and may cause confusion.\n\n[MISSING] review_engine/callgraph_builder.py:1\nModule docstring is present and descriptive, but individual public methods like build(), cross_file_context(), and _try_merge_repo_signal_packs() lack docstrings explaining their inputs, outputs, and behaviors.\n\n[MISSING] review_engine/callgraph_builder.py:39\nCallgraphBuilder.__init__ method has no docstring describing its parameters and instance variables for clarity.\n\n[MISSING] review_engine/callgraph_builder.py:44\nCallgraphBuilder._python_files method is missing a docstring describing its return value (list of Paths for Python files excluding ignored directories).\n\n[MISSING] review_engine/callgraph_builder.py:55\nCallgraphBuilder._module_index method has a short docstring but does not describe the parameter types and returned dictionary format explicitly (mapping of str to str).\n\n[MISSING] review_engine/callgraph_builder.py:66\nCallgraphBuilder._resolve_module method has a brief docstring but does not specify the parameter types and possible None return type clearly.\n\n[MISSING] review_engine/callgraph_builder.py:77\nCallgraphBuilder._extract_imports method is missing detailed parameter and return type explanations in its docstring, including the structure of ImportEdge list returned.\n\n[MISSING] review_engine/callgraph_builder.py:98\nCallgraphBuilder._extract_symbols method lacks a docstring describing its parameter and the list of extracted symbol names (public top-level classes and functions).\n\n[MISSING] review_engine/callgraph_builder.py:113\nCallgraphBuilder.build method has no docstring describing its process, parameters, and the structure of the dictionary returned (detailed call graph and symbol data).\n\n[MISSING] review_engine/callgraph_builder.py:161\nCallgraphBuilder._try_merge_repo_signal_packs method's docstring does not mention parameters or return value types explicitly, though it gives detailed semantic info.\n\n[MISSING] review_engine/callgraph_builder.py:188\nCallgraphBuilder._merge_callgraph_v1 method has no docstring detailing parameter types and behavior.\n\n[MISSING] review_engine/callgraph_builder.py:206\nCallgraphBuilder._merge_symbol_index_v1 method lacks a docstring describing parameters and side effects on data.\n\n[MISSING] review_engine/callgraph_builder.py:220\nCallgraphBuilder.format_summary method is missing a docstring describing the parameter structure and the format of the returned summary string.\n\n[MISSING] review_engine/callgraph_builder.py:232\nCallgraphBuilder.cross_file_context method docstring is present but does not document parameter and return types explicitly, especially the expected format and content of returned string.\n\n[NOTE] review_engine/callgraph_builder.py:94\nThe _extract_imports method uses a seen set to avoid duplicate edges, which is good practice and worth a brief inline comment about its role in deduplication.\n\n[NOTE] review_engine/callgraph_builder.py:128\nIn _extract_symbols, the combined use of ast.FunctionDef | ast.AsyncFunctionDef might be unclear to some readers; adding an inline comment on the pattern matching usage could improve clarity.\n\n[NOTE] review_engine/callgraph_builder.py:157\nThe callgraph_builder prints are controlled by argument --json, which influences output format; a brief comment near main block explaining this would clarify usage for maintainers.\n\n[NOTE] review_engine/callgraph_builder.py:276\nThe cross_file_context normalizes path separators with rel_path.replace(\"\\\\\", \"/\") to support Windows paths, a useful detail worth an inline comment for maintainability.\n\nOK — no comment review findings beyond above.",
+      "skill": "review-engine"
+    }
+  ],
+  "review_engine/repo_context_builder.py": [
+    {
+      "file_path": "review_engine/repo_context_builder.py",
+      "mode": "comment",
+      "timestamp": 1780790549.755861,
+      "timestamp_iso": "2026-06-07T00:02:29Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 14,
+      "severity_counts": {
+        "MISSING": 7,
+        "SUGGESTION": 3,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — review_engine/repo_context_builder.py: 14 total  [MISSING=7  SUGGESTION=3  NOTE=4]\n\n[MISSING] review_engine/repo_context_builder.py:1\nModule docstring is missing a brief summary of the overall purpose and functionality of the file.\n\n[MISSING] review_engine/repo_context_builder.py:37\n_role_for function has no docstring; a one-line description of its behavior and return value would clarify its purpose.\n\n[MISSING] review_engine/repo_context_builder.py:45\n_extract_python_symbols function has a partial docstring but could more explicitly describe the structure and keys of the returned dictionary.\n\n[MISSING] review_engine/repo_context_builder.py:74\n_file_summary function lacks a docstring describing its inputs, output dictionary keys, and behavior depending on file type.\n\n[MISSING] review_engine/repo_context_builder.py:96\n_should_ignore function has no docstring; adding one would clarify which files and directories it excludes and why.\n\n[MISSING] review_engine/repo_context_builder.py:103\nbuild_context function docstring should explicitly describe the structure of the returned dictionaries and the JSON files written.\n\n[MISSING] review_engine/repo_context_builder.py:138\n_context_summary function has no type annotation on its parameter and lacks explanation about the format and expected keys of the input dictionary argument.\n\n[SUGGESTION] review_engine/repo_context_builder.py:30\nROLE_HEURISTICS constant could include a comment explaining string matching behavior (e.g., substring match) and that the list order affects priority of matches.\n\n[SUGGESTION] review_engine/repo_context_builder.py:124\nbuild_context function could add a brief inline comment clarifying the filtering out of files with paths longer than six parts.\n\n[SUGGESTION] review_engine/repo_context_builder.py:125\nbuild_context function parameters repo_root and out_dir could benefit from type hints being more explicit about acceptability of Path-like input (e.g., Union[str, Path]) to improve usability.\n\n[NOTE] review_engine/repo_context_builder.py:51\n_extract_python_symbols excludes symbols starting with underscore as private; this design choice is clear but could be documented explicitly in function docstring.\n\n[NOTE] review_engine/repo_context_builder.py:85\n_file_summary returns different keys depending on file type (.py vs .md/.txt), which is practical but users should be aware of this inconsistency.\n\n[NOTE] review_engine/repo_context_builder.py:106\n_should_ignore filters hidden files except some whitelist; this filtering logic is documented in code but having a docstring would improve clarity.\n\n[NOTE] review_engine/repo_context_builder.py:150\n_context_summary returns a human-readable string summarizing the build result; adding a docstring comment about intended usage context would be helpful.\n\nOK — no comment review findings.",
+      "skill": "review-engine"
+    }
+  ],
+  "docs/ORCHESTRATION_CONTRACT.md": [
+    {
+      "file_path": "docs/ORCHESTRATION_CONTRACT.md",
+      "mode": "comment",
+      "timestamp": 1780791791.0345678,
+      "timestamp_iso": "2026-06-07T00:23:11Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "MISSING": 13,
+        "SUGGESTION": 2,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — docs/ORCHESTRATION_CONTRACT.md: 18 total  [MISSING=13  SUGGESTION=2  NOTE=3]\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:1\nTop-level document heading (# mq-mcp Orchestration Contract) is missing; add a clear main title matching the file name to improve structure and navigation.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:7\nThe initial block comment containing the summary and metadata is not introduced by a docstring or markdown header indicating purpose and version explicitly.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:22\nThe \"Invocation contract\" section lacks a brief introductory paragraph or summary explaining its intent before listing caller permissions and prohibitions.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:66\nThe \"Approval gate model\" table does not explicitly define or link to tool safety classes A-D; consider adding a description or reference for clarity.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:73\nThe \"Return contract\" section does not have a summary paragraph contextualizing output expectations and error formatting before detailed rules.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:104\nThe \"Side effect contract\" section would benefit from an introductory sentence clarifying the intent and scope of side effect guarantees and exceptions.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:117\nThe table enumerating declared persistent side effects lacks a short text heading or caption describing its purpose and usage.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:140\nThe \"Context flow\" section's diagram is provided as plain text without an accompanying explanation or legend describing each step's role in orchestration.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:162\nThe \"Cross-repo contracts\" section lacks a summary paragraph introducing the roles of external ecosystem partners and contract expectations.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:238\nMany inline code samples and file references lack fenced code blocks or inline code markup (backticks), reducing clarity—consider using consistent code formatting.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:273\nThe \"Profile access model\" section's table is presented without a leading paragraph describing profiles and their enforcement limitations.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:305\nThe \"Guarantees\" section enumerates important invariant properties without a preceding summary outlining its importance to callers and tools.\n\n[MISSING] docs/ORCHESTRATION_CONTRACT.md:334\nThe \"WARN acceptance policy\" section explains warnings without an explicit introduction or context, making the intent of the acceptance policy unclear to unfamiliar readers.\n\n[SUGGESTION] docs/ORCHESTRATION_CONTRACT.md:90\nCode block listing severity labels lacks a language specifier (e.g., ```text) for correct syntax highlighting and consistency.\n\n[SUGGESTION] docs/ORCHESTRATION_CONTRACT.md:237\nNumerous references to file paths and tool names could be wrapped in inline code markers (`) to improve readability.\n\n[NOTE] docs/ORCHESTRATION_CONTRACT.md:88\nError prefixes `{tool_name} failed:` or `ERROR:` are precisely defined; clear documentation supports caller error handling.\n\n[NOTE] docs/ORCHESTRATION_CONTRACT.md:166\nTables use consistent formatting and include relevant headers and alignment.\n\nOK — no comment review findings beyond above.\n\n[NOTE] docs/ORCHESTRATION_CONTRACT.md:202\nThe document uses consistent markdown headline levels without skipping intermediate levels.",
+      "skill": "markdown-review"
+    }
+  ],
+  "review_engine/architecture_memory.py": [
+    {
+      "file_path": "review_engine/architecture_memory.py",
+      "mode": "comment",
+      "timestamp": 1780833153.7516952,
+      "timestamp_iso": "2026-06-07T11:52:33Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 15,
+      "severity_counts": {
+        "MISSING": 12,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — review_engine/architecture_memory.py: 15 total  [MISSING=12  NOTE=3]\n\n[MISSING] review_engine/architecture_memory.py:1\nModule docstring is present but could benefit from a short summary line at the top describing the module's purpose for quick identification.\n\n[MISSING] review_engine/architecture_memory.py:1\nNo inline comments exist in the code to clarify complex operations such as score calculation in relevant_for or the regex patterns used for parsing frontmatter and sections.\n\n[MISSING] review_engine/architecture_memory.py:28\n_parse_frontmatter function has no docstring; add a one-line description of its purpose for clarity.\n\n[MISSING] review_engine/architecture_memory.py:39\nArchitectureMemory class has a one-line docstring but could improve by briefly describing its responsibilities, such as managing ADR entries for architecture memory.\n\n[MISSING] review_engine/architecture_memory.py:53\nlist_all method lacks mention of the structure and keys of the returned metadata dicts in its docstring; specify what metadata fields are expected.\n\n[MISSING] review_engine/architecture_memory.py:62\nlist_by_category method's docstring could clarify what happens if the category is invalid and describe the structure of metadata dicts returned.\n\n[MISSING] review_engine/architecture_memory.py:73\nget method docstring lacks detail on the expected format of adr_id and the returned string content (full text of an ADR file).\n\n[MISSING] review_engine/architecture_memory.py:89\nrelevant_for method's docstring could explicitly state the format expected in the \"area\" field for matching and clarify the weight/ranking mechanism briefly.\n\n[MISSING] review_engine/architecture_memory.py:108\nformat_context_block method lacks explicit mention in the docstring that it returns an empty string if no relevant ADRs found.\n\n[MISSING] review_engine/architecture_memory.py:126\nrecord method's docstring does not describe parameter types, constraints (e.g. category options), or the format of the returned ADR id string.\n\n[MISSING] review_engine/architecture_memory.py:149\nformat_list method docstring could specify the output format more clearly, e.g., that it returns a fixed-width formatted table string.\n\n[MISSING] review_engine/architecture_memory.py:162\n_extract_section function has a brief docstring but does not specify return value details (empty string if heading not found) or mention how section boundaries are detected.\n\n[NOTE] review_engine/architecture_memory.py:17\nRegular expression constants _FM_RE and _FIELD_RE are self-explanatory with their naming but lack inline comments describing expected frontmatter format.\n\n[NOTE] review_engine/architecture_memory.py:41\nArchitectureMemory constructor initializes directory structure creating expected subfolders, consistent with the documented directory layout.\n\n[NOTE] review_engine/architecture_memory.py:94\nrelevant_for returns a ranked list of architecture decision metadata matching file path area keywords; docstring is clear but could mention how it treats overlapping keywords.",
+      "skill": "review-engine"
+    }
+  ],
+  "review_engine/multi_pass_reviewer.py": [
+    {
+      "file_path": "review_engine/multi_pass_reviewer.py",
+      "mode": "comment",
+      "timestamp": 1780833154.6696808,
+      "timestamp_iso": "2026-06-07T11:52:34Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "review-engine"
+    }
+  ],
+  "tests/test_bridget_voice.py": [
+    {
+      "file_path": "tests/test_bridget_voice.py",
+      "mode": "comment",
+      "timestamp": 1780833160.8734982,
+      "timestamp_iso": "2026-06-07T11:52:40Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 12,
+      "severity_counts": {
+        "WARNING": 12
+      },
+      "findings_text": "Review findings — tests/test_bridget_voice.py: 12 total  [WARNING=12]\n\n[WARNING] tests/test_bridget_voice.py:10\ntest_voice_toggle_state_file is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:10\ntest_voice_toggle_state_file has parameters monkeypatch and tmp_path without type annotations.\n\n[WARNING] tests/test_bridget_voice.py:24\ntest_voice_env_override is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:24\ntest_voice_env_override has parameters monkeypatch and tmp_path without type annotations.\n\n[WARNING] tests/test_bridget_voice.py:34\ntest_voice_name_file is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:34\ntest_voice_name_file has parameters monkeypatch and tmp_path without type annotations.\n\n[WARNING] tests/test_bridget_voice.py:43\ntest_strip_for_speech_removes_code_blocks is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:58\ntest_strip_for_speech_truncates is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:64\ntest_handle_voice_command_on_off is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:64\ntest_handle_voice_command_on_off has parameters monkeypatch and tmp_path without type annotations.\n\n[WARNING] tests/test_bridget_voice.py:78\ntest_handle_voice_name_command is a public test function missing return type annotation.\n\n[WARNING] tests/test_bridget_voice.py:78\ntest_handle_voice_name_command has parameters monkeypatch and tmp_path without type annotations.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_server_observability.py": [
+    {
+      "file_path": "tests/test_server_observability.py",
+      "mode": "comment",
+      "timestamp": 1780833168.078076,
+      "timestamp_iso": "2026-06-07T11:52:48Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 16,
+      "severity_counts": {
+        "WARNING": 10,
+        "MISSING": 6
+      },
+      "findings_text": "Review findings — tests/test_server_observability.py: 16 total  [WARNING=10  MISSING=6]\n\n[WARNING] tests/test_server_observability.py:13\nserver fixture function is missing a return type annotation.\n\n[WARNING] tests/test_server_observability.py:22\ntest_health_endpoint_reports_version_and_tool_count is missing a return type annotation.\n\n[WARNING] tests/test_server_observability.py:22\nParameter 'server' of test_health_endpoint_reports_version_and_tool_count is missing a type annotation.\n\n[WARNING] tests/test_server_observability.py:32\ntest_redacted_env_hides_api_key is missing a return type annotation.\n\n[WARNING] tests/test_server_observability.py:32\nParameter 'server' of test_redacted_env_hides_api_key is missing a type annotation.\n\n[WARNING] tests/test_server_observability.py:32\nParameter 'monkeypatch' of test_redacted_env_hides_api_key is missing a type annotation.\n\n[WARNING] tests/test_server_observability.py:40\ntest_contract_classes_are_exposed_as_safety_labels is missing a return type annotation.\n\n[WARNING] tests/test_server_observability.py:40\nParameter 'server' of test_contract_classes_are_exposed_as_safety_labels is missing a type annotation.\n\n[WARNING] tests/test_server_observability.py:47\ntest_enrich_tool_uses_caller_facing_safety_label is missing a return type annotation.\n\n[WARNING] tests/test_server_observability.py:47\nParameter 'server' of test_enrich_tool_uses_caller_facing_safety_label is missing a type annotation.\n\n[MISSING] tests/test_server_observability.py:1\nModule docstring is missing; add a brief description of the purpose of this test module.\n\n[MISSING] tests/test_server_observability.py:13\nThe server fixture lacks a docstring describing what server module it loads and why.\n\n[MISSING] tests/test_server_observability.py:22\ntest_health_endpoint_reports_version_and_tool_count function has no docstring describing what it tests or details of expected response.\n\n[MISSING] tests/test_server_observability.py:32\ntest_redacted_env_hides_api_key function has no docstring explaining the purpose and significance of redaction.\n\n[MISSING] tests/test_server_observability.py:40\ntest_contract_classes_are_exposed_as_safety_labels function has no docstring to clarify the contract classes and expected safety labels.\n\n[MISSING] tests/test_server_observability.py:47\ntest_enrich_tool_uses_caller_facing_safety_label function has no docstring describing how the enrichment affects tools and the meaning of safety_class.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_allowed_local_paths.py": [
+    {
+      "file_path": "tests/test_allowed_local_paths.py",
+      "mode": "comment",
+      "timestamp": 1780833175.4500842,
+      "timestamp_iso": "2026-06-07T11:52:55Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "WARNING": 18
+      },
+      "findings_text": "Review findings — tests/test_allowed_local_paths.py: 18 total  [WARNING=18]\n\n[WARNING] tests/test_allowed_local_paths.py:18\ntest_resolve_allowed_local_file_allows_repo_relative has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:23\ntest_resolve_allowed_local_file_blocks_external_without_allowlist has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:23\ntest_resolve_allowed_local_file_blocks_external_without_allowlist parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:23\ntest_resolve_allowed_local_file_blocks_external_without_allowlist parameter 'tmp_path' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:31\ntest_resolve_allowed_local_file_allows_external_with_allowlist has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:31\ntest_resolve_allowed_local_file_allows_external_with_allowlist parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:31\ntest_resolve_allowed_local_file_allows_external_with_allowlist parameter 'tmp_path' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:39\ntest_resolve_allowed_local_file_blocks_sibling_of_allowed_root has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:39\ntest_resolve_allowed_local_file_blocks_sibling_of_allowed_root parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:39\ntest_resolve_allowed_local_file_blocks_sibling_of_allowed_root parameter 'tmp_path' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:51\ntest_allowed_external_roots_empty_without_env has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:51\ntest_allowed_external_roots_empty_without_env parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:56\ntest_allowed_external_roots_parses_colon_separated_paths has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:56\ntest_allowed_external_roots_parses_colon_separated_paths parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:56\ntest_allowed_external_roots_parses_colon_separated_paths parameter 'tmp_path' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:67\ntest_allowed_external_roots_ignores_empty_segments has no return type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:67\ntest_allowed_external_roots_ignores_empty_segments parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_allowed_local_paths.py:67\ntest_allowed_external_roots_ignores_empty_segments parameter 'tmp_path' has no type annotation.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_runtime_truth.py": [
+    {
+      "file_path": "tests/test_runtime_truth.py",
+      "mode": "comment",
+      "timestamp": 1780833365.0304809,
+      "timestamp_iso": "2026-06-07T11:56:05Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 14,
+      "severity_counts": {
+        "WARNING": 11,
+        "MISSING": 3
+      },
+      "findings_text": "Review findings — tests/test_runtime_truth.py: 14 total  [WARNING=11  MISSING=3]\n\n[WARNING] tests/test_runtime_truth.py:55\ntest_version_file_exists() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:59\ntest_version_is_semver() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:70\ntest_readme_badge_matches_version() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:78\ntest_readme_release_link_matches_version() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:86\ntest_readme_tool_count_matches_runtime() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:101\ntest_changelog_has_current_version() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:113\ntest_stability_json_version_matches() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:126\ntest_all_runtime_tools_in_tool_safety() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:135\ntest_no_phantom_tools_in_tool_safety() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:150\ntest_class_cd_tools_have_metadata() has no return type annotation; add '-> None' to indicate no return value.\n\n[WARNING] tests/test_runtime_truth.py:174\ntest_check_runtime_truth_script_passes() has no return type annotation; add '-> None' to indicate no return value.\n\n[MISSING] tests/test_runtime_truth.py:1\nThe module has no top-level docstring; add a brief description of the test module purpose.\n\n[MISSING] tests/test_runtime_truth.py:29\nis_mcp_tool() has no return type annotation; add a return type hint.\n\n[MISSING] tests/test_runtime_truth.py:29\nis_mcp_tool(): parameter 'node' has no type annotation; add a type hint for 'node'.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_ollama_learn_extract.py": [
+    {
+      "file_path": "tests/test_ollama_learn_extract.py",
+      "mode": "comment",
+      "timestamp": 1780833378.969686,
+      "timestamp_iso": "2026-06-07T11:56:18Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 24,
+      "severity_counts": {
+        "MISSING": 23,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — tests/test_ollama_learn_extract.py: 24 total  [MISSING=23  NOTE=1]\n\n[MISSING] tests/test_ollama_learn_extract.py:13\nModule has no docstring. Add a module-level docstring explaining the purpose of this test file.\n\n[MISSING] tests/test_ollama_learn_extract.py:15\nFunction _load_engine has no docstring. Add a one-line description of what this helper function does.\n\n[MISSING] tests/test_ollama_learn_extract.py:27\nClass _OkResponse has no docstring. Add a brief description of its purpose as a mock HTTP response with successful status.\n\n[MISSING] tests/test_ollama_learn_extract.py:30\nFunction raise_for_status inside _OkResponse has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:33\nFunction json inside _OkResponse has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:36\nClass _ConnectionErrorResponse has no docstring. Add a brief description or remove if unused.\n\n[MISSING] tests/test_ollama_learn_extract.py:41\nFunction test_ollama_learn_extract_dry_run has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:41\nFunction test_ollama_learn_extract_dry_run has no docstring. Add a brief description of the test's intention.\n\n[MISSING] tests/test_ollama_learn_extract.py:55\nFunction test_ollama_learn_extract_dry_run_does_not_store has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:55\nParameter 'tmp_path' in test_ollama_learn_extract_dry_run_does_not_store has no type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:55\nFunction test_ollama_learn_extract_dry_run_does_not_store has no docstring. Add a one-line explanation.\n\n[MISSING] tests/test_ollama_learn_extract.py:64\nFunction test_ollama_learn_extract_connection_error has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:64\nFunction test_ollama_learn_extract_connection_error has no docstring indicating its test purpose.\n\n[MISSING] tests/test_ollama_learn_extract.py:78\nFunction test_ollama_learn_extract_bad_json has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:78\nFunction test_ollama_learn_extract_bad_json has no docstring describing test intent.\n\n[MISSING] tests/test_ollama_learn_extract.py:82\nFunction raise_for_status inside _BadJsonResponse has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:85\nFunction json inside _BadJsonResponse has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:95\nFunction test_ollama_learn_extract_empty_findings_raises has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:95\nFunction test_ollama_learn_extract_empty_findings_raises has no docstring explaining the exception tested.\n\n[MISSING] tests/test_ollama_learn_extract.py:105\nFunction test_ollama_learn_extract_approve_false_always has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:105\nFunction test_ollama_learn_extract_approve_false_always docstring states the test goal but could mention the return type.\n\n[MISSING] tests/test_ollama_learn_extract.py:112\nFunction raise_for_status inside _WantsToStoreResponse has no return type annotation.\n\n[MISSING] tests/test_ollama_learn_extract.py:115\nFunction json inside _WantsToStoreResponse has no return type annotation.\n\n[NOTE] tests/test_ollama_learn_extract.py:21\n_CONSTANT _VALID_CANDIDATE is defined but has no inline comment or docstring clarifying its specific role in tests.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_learn_hygiene.py": [
+    {
+      "file_path": "tests/test_learn_hygiene.py",
+      "mode": "comment",
+      "timestamp": 1780833382.7247941,
+      "timestamp_iso": "2026-06-07T11:56:22Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 6,
+      "severity_counts": {
+        "MISSING": 6
+      },
+      "findings_text": "Review findings — tests/test_learn_hygiene.py: 6 total  [MISSING=6]\n\n[MISSING] tests/test_learn_hygiene.py:25\nPublic test function test_learn_hygiene_empty_store_passes is missing a docstring describing its purpose and outcomes.\n\n[MISSING] tests/test_learn_hygiene.py:25\nParameter tmp_path in test_learn_hygiene_empty_store_passes lacks a type annotation.\n\n[MISSING] tests/test_learn_hygiene.py:35\nPublic test function test_learn_hygiene_detects_duplicates is missing a docstring describing its behavior and expectations.\n\n[MISSING] tests/test_learn_hygiene.py:35\nParameter tmp_path in test_learn_hygiene_detects_duplicates lacks a type annotation.\n\n[MISSING] tests/test_learn_hygiene.py:57\nPublic test function test_learn_hygiene_blocks_invalid_and_low_confidence_storage is missing a docstring explaining what it tests and its expected results.\n\n[MISSING] tests/test_learn_hygiene.py:57\nParameter tmp_path in test_learn_hygiene_blocks_invalid_and_low_confidence_storage has no type annotation.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_learn_extract_from_last_review.py": [
+    {
+      "file_path": "tests/test_learn_extract_from_last_review.py",
+      "mode": "comment",
+      "timestamp": 1780833385.694525,
+      "timestamp_iso": "2026-06-07T11:56:25Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 7,
+      "severity_counts": {
+        "WARNING": 7
+      },
+      "findings_text": "Review findings — tests/test_learn_extract_from_last_review.py: 7 total  [WARNING=7]\n\n[WARNING] tests/test_learn_extract_from_last_review.py:31\nraise_for_status method is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:34\njson method is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:40\ntest_learn_extract_from_last_review_dry_run function is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:54\ntest_learn_extract_from_last_review_no_history function is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:67\ntest_learn_extract_from_last_review_ollama_unavailable function is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:83\ntest_learn_extract_from_last_review_preserves_file_on_unavailable function is missing a return type annotation.\n\n[WARNING] tests/test_learn_extract_from_last_review.py:98\ntest_learn_extract_from_last_review_does_not_store function is missing a return type annotation.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_bridget_images.py": [
+    {
+      "file_path": "tests/test_bridget_images.py",
+      "mode": "comment",
+      "timestamp": 1780833390.2378292,
+      "timestamp_iso": "2026-06-07T11:56:30Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 12,
+      "severity_counts": {
+        "WARNING": 8,
+        "MISSING": 4
+      },
+      "findings_text": "Review findings — tests/test_bridget_images.py: 12 total  [WARNING=8  MISSING=4]\n\n[WARNING] tests/test_bridget_images.py:14\nbridge() fixture has no return type annotation.\n\n[WARNING] tests/test_bridget_images.py:27\ntest_find_bridget_images_uses_bridget_jpg_glob() has no return type annotation.\n\n[WARNING] tests/test_bridget_images.py:27\ntest_find_bridget_images_uses_bridget_jpg_glob() parameter 'bridge' has no type annotation.\n\n[WARNING] tests/test_bridget_images.py:27\ntest_find_bridget_images_uses_bridget_jpg_glob() parameter 'monkeypatch' has no type annotation.\n\n[WARNING] tests/test_bridget_images.py:27\ntest_find_bridget_images_uses_bridget_jpg_glob() parameter 'tmp_path' has no type annotation.\n\n[WARNING] tests/test_bridget_images.py:45\ntest_choose_bridget_image_does_not_repeat_when_possible() has no return type annotation.\n\n[WARNING] tests/test_bridget_images.py:45\ntest_choose_bridget_image_does_not_repeat_when_possible() parameter 'bridge' has no type annotation.\n\n[WARNING] tests/test_bridget_images.py:45\ntest_choose_bridget_image_does_not_repeat_when_possible() parameter 'tmp_path' has no type annotation.\n\n[MISSING] tests/test_bridget_images.py:1\nMissing module-level docstring describing the purpose of this test module.\n\n[MISSING] tests/test_bridget_images.py:14\nbridge() fixture is a public function without a docstring explaining its role.\n\n[MISSING] tests/test_bridget_images.py:27\ntest_find_bridget_images_uses_bridget_jpg_glob() is a public test function without a docstring describing its purpose.\n\n[MISSING] tests/test_bridget_images.py:45\ntest_choose_bridget_image_does_not_repeat_when_possible() is a public test function missing a docstring describing what it verifies.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_semantic_memory_policy.py": [
+    {
+      "file_path": "tests/test_semantic_memory_policy.py",
+      "mode": "comment",
+      "timestamp": 1780833422.7325509,
+      "timestamp_iso": "2026-06-07T11:57:02Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 16,
+      "severity_counts": {
+        "NOTE": 16
+      },
+      "findings_text": "Review findings — tests/test_semantic_memory_policy.py: 16 total  [NOTE=16]\n\n[NOTE] tests/test_semantic_memory_policy.py:21\ntest_policy_file_exists() has no return type annotation; unclear whether adding return type hints is a codebase policy for test functions.\n\n[NOTE] tests/test_semantic_memory_policy.py:25\ntest_schema_file_exists() has no return type annotation; unclear whether test functions are expected to have explicit return type hints.\n\n[NOTE] tests/test_semantic_memory_policy.py:29\ntest_store_file_exists() has no return type annotation; unclear whether this omission is intentional or oversight.\n\n[NOTE] tests/test_semantic_memory_policy.py:33\ntest_schema_is_valid_json() has no return type annotation; unclear if this affects readability in test context.\n\n[NOTE] tests/test_semantic_memory_policy.py:39\ntest_policy_covers_required_sections() has no return type annotation; adding a minimal docstring could clarify what the test asserts about POLICY.md.\n\n[NOTE] tests/test_semantic_memory_policy.py:58\ntest_store_is_valid_json() has no return type annotation; no docstring to describe what is validated exactly.\n\n[NOTE] tests/test_semantic_memory_policy.py:63\ntest_store_has_entries() has no return type annotation; a one-line docstring could clarify this checks non-emptiness of the store.\n\n[NOTE] tests/test_semantic_memory_policy.py:68\ntest_no_duplicate_keys() has no return type annotation; an inline comment notes that JSON keys are unique by nature—this comment is useful and should be retained.\n\n[NOTE] tests/test_semantic_memory_policy.py:75\ntest_all_entries_have_required_fields() has no return type annotation; adding a docstring stating what required fields are checked would improve clarity.\n\n[NOTE] tests/test_semantic_memory_policy.py:87\ntest_entries_with_type_use_valid_values() has no return type annotation; a docstring explaining VALID_TYPES could be helpful.\n\n[NOTE] tests/test_semantic_memory_policy.py:96\ntest_entries_with_confidence_use_valid_values() has no return type annotation; a brief docstring on VALID_CONFIDENCE would improve understanding.\n\n[NOTE] tests/test_semantic_memory_policy.py:105\ntest_no_entry_has_forbidden_source() has no return type annotation; a docstring naming forbidden source values may aid readability.\n\n[NOTE] tests/test_semantic_memory_policy.py:114\ntest_no_entry_has_empty_content() has no return type annotation; a docstring could clarify that this checks non-blank content in entries.\n\n[NOTE] tests/test_semantic_memory_policy.py:124\ntest_bootstrap_entries_are_summary_type() has a helpful docstring specifying this constraint; this is consistent with best practice.\n\n[NOTE] tests/test_semantic_memory_policy.py:141\ntest_check_semantic_memory_script_exists() has no return type annotation; a docstring explaining why this script is critical may help maintainers.\n\n[NOTE] tests/test_semantic_memory_policy.py:147\ntest_check_semantic_memory_script_passes() has no return type annotation; a docstring explaining the significance of this script's output would be beneficial.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_orchestration_boundary_docs.py": [
+    {
+      "file_path": "tests/test_orchestration_boundary_docs.py",
+      "mode": "comment",
+      "timestamp": 1780833424.787524,
+      "timestamp_iso": "2026-06-07T11:57:04Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 5,
+      "severity_counts": {
+        "WARNING": 4,
+        "MISSING": 1
+      },
+      "findings_text": "Review findings — tests/test_orchestration_boundary_docs.py: 5 total  [WARNING=4  MISSING=1]\n\n[WARNING] tests/test_orchestration_boundary_docs.py:11\ntest_orchestration_boundary_doc_exists() has no return type annotation.\n\n[WARNING] tests/test_orchestration_boundary_docs.py:15\ntest_boundary_doc_names_repo_roles_and_approval_rules() has no return type annotation.\n\n[WARNING] tests/test_orchestration_boundary_docs.py:32\ntest_public_docs_link_to_boundary() has no return type annotation.\n\n[WARNING] tests/test_orchestration_boundary_docs.py:37\ntest_mq_agent_profile_declares_boundary_limits() has no return type annotation.\n\n[MISSING] tests/test_orchestration_boundary_docs.py:3\nModule docstring is missing; add a brief description of the purpose of this test module.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_ollama_learn_status.py": [
+    {
+      "file_path": "tests/test_ollama_learn_status.py",
+      "mode": "comment",
+      "timestamp": 1780833432.142216,
+      "timestamp_iso": "2026-06-07T11:57:12Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "MISSING": 17,
+        "SUGGESTION": 1
+      },
+      "findings_text": "Review findings — tests/test_ollama_learn_status.py: 18 total  [MISSING=17  SUGGESTION=1]\n\n[MISSING] tests/test_ollama_learn_status.py:14\nClass _OkResponse has no docstring; add a brief description of its purpose in tests.\n\n[MISSING] tests/test_ollama_learn_status.py:23\nClass _MissingModelResponse has no docstring; add a brief description of its purpose in tests.\n\n[MISSING] tests/test_ollama_learn_status.py:32\nClass _EmptyModelsResponse has no docstring; add a brief description of its purpose in tests.\n\n[MISSING] tests/test_ollama_learn_status.py:40\nFunction raise_for_status() in _OkResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:43\nFunction json() in _OkResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:48\nFunction raise_for_status() in _MissingModelResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:51\nFunction json() in _MissingModelResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:56\nFunction raise_for_status() in _EmptyModelsResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:59\nFunction json() in _EmptyModelsResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:69\ntest_ollama_learn_status_ready function is missing a return type annotation; add it for clarity.\n\n[MISSING] tests/test_ollama_learn_status.py:79\ntest_ollama_learn_status_missing_model function is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:88\ntest_ollama_learn_status_no_models function is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:95\ntest_ollama_learn_status_connection_error function is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:106\ntest_ollama_learn_status_custom_model function is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:124\nFunction raise_for_status() in _CustomModelResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:127\nFunction json() in _CustomModelResponse class is missing a return type annotation.\n\n[MISSING] tests/test_ollama_learn_status.py:133\ntest_ollama_learn_status_does_not_write function is missing a return type annotation.\n\n[SUGGESTION] tests/test_ollama_learn_status.py:133\nParameter tmp_path name is clear in context of pytest temporary directory but could be type hinted as pathlib.Path for explicitness.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_profiles.py": [
+    {
+      "file_path": "tests/test_profiles.py",
+      "mode": "comment",
+      "timestamp": 1780833434.538432,
+      "timestamp_iso": "2026-06-07T11:57:14Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 4,
+      "severity_counts": {
+        "WARNING": 2,
+        "MISSING": 1,
+        "SUGGESTION": 1
+      },
+      "findings_text": "Review findings — tests/test_profiles.py: 4 total  [WARNING=2  MISSING=1  SUGGESTION=1]\n\n[WARNING] tests/test_profiles.py:9\ntest_expected_profiles_exist is a public test function but lacks a return type annotation; add `-> None` for clarity.\n\n[WARNING] tests/test_profiles.py:24\ntest_profiles_have_required_contract is a public test function but lacks a return type annotation; add `-> None` for clarity.\n\n[MISSING] tests/test_profiles.py:1\nModule-level docstring is missing; add a brief description of the purpose of this test module.\n\n[SUGGESTION] tests/test_profiles.py:26\nThe docstring for test_profiles_have_required_contract would improve clarity by describing what the \"required contract\" means for the profiles tested.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_safety_classes.py": [
+    {
+      "file_path": "tests/test_safety_classes.py",
+      "mode": "comment",
+      "timestamp": 1780833448.261536,
+      "timestamp_iso": "2026-06-07T11:57:28Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 44,
+      "severity_counts": {
+        "WARNING": 1,
+        "MISSING": 16,
+        "SUGGESTION": 27
+      },
+      "findings_text": "Review findings — tests/test_safety_classes.py: 44 total  [WARNING=1  MISSING=16  SUGGESTION=27]\n\n[WARNING] tests/test_safety_classes.py:1\nModule docstring describes the purpose but could clarify that it enforces JSON-based tool safety contract rules as tests.\n\n[MISSING] tests/test_safety_classes.py:14\ntools() fixture function has no docstring; add a one-line description of what tools data represents.\n\n[MISSING] tests/test_safety_classes.py:25\n_by_class() function has no docstring; add a one-liner describing it returns filtered tools by class.\n\n[MISSING] tests/test_safety_classes.py:32\ntest_class_a_no_file_writes() has no docstring; add a short description of what invariant it checks.\n\n[MISSING] tests/test_safety_classes.py:39\ntest_class_a_no_arbitrary_subprocess() has no return type annotation.\n\n[MISSING] tests/test_safety_classes.py:50\ntest_class_a_tools_have_repo_or_safe_resolver() has no docstring; add brief description of invariant.\n\n[MISSING] tests/test_safety_classes.py:64\ntest_class_b_no_file_writes() has no docstring; add a one-line description.\n\n[MISSING] tests/test_safety_classes.py:75\ntest_class_c_writes_files() has no docstring; add a brief description of the check.\n\n[MISSING] tests/test_safety_classes.py:82\ntest_class_c_documents_side_effects() has no docstring; add a brief description.\n\n[MISSING] tests/test_safety_classes.py:89\ntest_class_c_no_auto_commit() function has a docstring but it could specify that it checks no commit side effect.\n\n[MISSING] tests/test_safety_classes.py:98\ntest_class_c_descriptions_mention_write_scope() has a docstring but could clarify it ensures non-empty descriptions.\n\n[MISSING] tests/test_safety_classes.py:111\ntest_class_d_uses_subprocess() has no docstring; add a short description.\n\n[MISSING] tests/test_safety_classes.py:118\ntest_class_d_documents_side_effects() has no docstring; add a short description.\n\n[MISSING] tests/test_safety_classes.py:125\ntest_class_d_descriptions_non_empty() has no docstring; add a short description.\n\n[MISSING] tests/test_safety_classes.py:137\ntest_no_tool_auto_commits() has a docstring but could specify it checks all classes.\n\n[MISSING] tests/test_safety_classes.py:146\ntest_all_classes_present() has a docstring but lacks explicit detail on purpose.\n\n[MISSING] tests/test_safety_classes.py:157\ntest_check_tool_contracts_script_passes() has no docstring; add a one-liner describing the script check.\n\n[SUGGESTION] tests/test_safety_classes.py:20\ntools() fixture function has no return type annotation; specify returned type for clarity.\n\n[SUGGESTION] tests/test_safety_classes.py:32\ntest_class_a_no_file_writes() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:32\ntest_class_a_no_file_writes() parameter 'tools' has no type annotation; add for clarity.\n\n[SUGGESTION] tests/test_safety_classes.py:39\ntest_class_a_no_arbitrary_subprocess() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:50\ntest_class_a_tools_have_repo_or_safe_resolver() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:50\ntest_class_a_tools_have_repo_or_safe_resolver() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:64\ntest_class_b_no_file_writes() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:64\ntest_class_b_no_file_writes() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:75\ntest_class_c_writes_files() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:75\ntest_class_c_writes_files() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:82\ntest_class_c_documents_side_effects() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:82\ntest_class_c_documents_side_effects() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:89\ntest_class_c_no_auto_commit() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:89\ntest_class_c_no_auto_commit() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:98\ntest_class_c_descriptions_mention_write_scope() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:98\ntest_class_c_descriptions_mention_write_scope() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:111\ntest_class_d_uses_subprocess() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:111\ntest_class_d_uses_subprocess() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:118\ntest_class_d_documents_side_effects() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:118\ntest_class_d_documents_side_effects() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:125\ntest_class_d_descriptions_non_empty() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:125\ntest_class_d_descriptions_non_empty() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:137\ntest_no_tool_auto_commits() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:137\ntest_no_tool_auto_commits() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:146\ntest_all_classes_present() has no return type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:146\ntest_all_classes_present() parameter 'tools' has no type annotation.\n\n[SUGGESTION] tests/test_safety_classes.py:157\ntest_check_tool_contracts_script_passes() has no return type annotation.",
+      "skill": "python-comment-review"
+    }
   ]
 }

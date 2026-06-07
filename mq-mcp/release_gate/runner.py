@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .checks import run_p0_checks
-from .models import GateCheck, ReleaseGateResult
+from .models import GateCheck, ReleaseGateResult, ReleaseGateStatus
 
 
 def _score(checks: list[GateCheck]) -> int:
@@ -24,7 +24,12 @@ def run_release_gate(repo: str | Path, target: str, test_command: list[str] | No
     for check in checks:
         if check.next_action and check.next_action not in next_actions:
             next_actions.append(check.next_action)
-    status = "blocked" if blockers else "warning" if warnings else "pass"
+    if blockers:
+        status: ReleaseGateStatus = "blocked"
+    elif warnings:
+        status = "warning"
+    else:
+        status = "pass"
     return ReleaseGateResult(
         repo=repo_path.name,
         target=target,
