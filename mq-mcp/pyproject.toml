@@ -11,6 +11,7 @@ dependencies = [
     "pillow>=12.2.0",
     "psutil>=7.2.2",
     "pyguitarpro>=0.11",
+    "python-dotenv>=1.0.0",
     "requests>=2.34.0",
 ]
 

@@ -11,10 +11,15 @@ import shutil
 import subprocess
 import pandas as pd
 import guitarpro
+from dotenv import load_dotenv
 from PIL import Image
 from mcp.server.fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+# Load .env from the same directory as server.py (mq-mcp/mq-mcp/.env).
+# override=False keeps any env vars already set in the shell.
+load_dotenv(Path(__file__).parent / ".env", override=False)
 
 # Initiera servern. mq-agent expects the local HTTP/SSE bridge on :8765.
 MCP_HOST = os.getenv("MQ_MCP_HOST", "127.0.0.1")
