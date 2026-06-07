@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 100 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 115 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -80,6 +80,18 @@ These tools cannot write files and cannot run processes. They can read files out
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_inspect` | Run repo-signal inspect --json on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_doctor_json` | Run repo-signal doctor --json on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_report` | Run repo-signal report --format json on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_suggest` | Run repo-signal suggest --format json on an allowed repo path | Write, access outside allowed roots |
+| `repo_signal_positioning` | Run repo-signal positioning --json on an allowed repo path | Write, access outside allowed roots |
+| `zephyr_validate` | Validate a zephyr architecture YAML file | Write, access outside allowed roots |
+| `zephyr_review` | Review a zephyr architecture YAML file | Write, access outside allowed roots |
+| `zephyr_analyze` | Analyze a zephyr architecture YAML file | Write, access outside allowed roots |
+| `zephyr_diff` | Compare two zephyr architecture YAML files | Write, access outside allowed roots |
+| `image_observe_architecture` | Observe an architecture diagram through mq-image | Write, access outside allowed roots |
+| `image_analyze_ui` | Analyze a UI screenshot through mq-image | Write, access outside allowed roots |
+| `image_analyze` | Analyze an image through mq-image | Write, access outside allowed roots |
+| `ums_command_catalog` | Read the mq-ums command catalog from MQ_UMS_DIR/config | Write, subprocess, network |
+| `ums_audit_log` | Read mq-ums local audit logs from MQ_UMS_DIR/logs | Write, subprocess, network |
 | `get_clipboard` | Read clipboard via pbpaste | Write, access files |
 | `get_wifi_info` | Read Wi-Fi info via airport/networksetup | Write, access files |
 | `get_battery_status` | Read battery status via pmset | Write, access files |
@@ -184,6 +196,18 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `repo_signal_checklist` | B | resolve_allowed_local_file | No | Yes |
 | `repo_signal_inspect` | B | resolve_allowed_local_file | No | Yes |
 | `repo_signal_doctor_json` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_report` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_suggest` | B | resolve_allowed_local_file | No | Yes |
+| `repo_signal_positioning` | B | resolve_allowed_local_file | No | Yes |
+| `zephyr_validate` | B | resolve_allowed_local_file | No | Yes |
+| `zephyr_review` | B | resolve_allowed_local_file | No | Yes |
+| `zephyr_analyze` | B | resolve_allowed_local_file | No | Yes |
+| `zephyr_diff` | B | resolve_allowed_local_file | No | Yes |
+| `image_observe_architecture` | B | resolve_allowed_local_file | No | Yes |
+| `image_analyze_ui` | B | resolve_allowed_local_file | No | Yes |
+| `image_analyze` | B | resolve_allowed_local_file | No | Yes |
+| `ums_command_catalog` | B | MQ_UMS_DIR | No | No |
+| `ums_audit_log` | B | MQ_UMS_DIR | No | No |
 | `get_clipboard` | B | none (pbpaste) | No | Yes |
 | `get_wifi_info` | B | none (airport/networksetup) | No | Yes |
 | `get_battery_status` | B | none (pmset) | No | Yes |

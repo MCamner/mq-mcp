@@ -50,6 +50,7 @@ def test_resolve_allowed_local_file_blocks_sibling_of_allowed_root(monkeypatch, 
 
 def test_allowed_external_roots_empty_without_env(monkeypatch):
     monkeypatch.delenv("MQ_MCP_ALLOWED_PATHS", raising=False)
+    monkeypatch.delenv("MQ_MCP_LOCAL_REPOS", raising=False)
     assert allowed_external_roots() == []
 
 
@@ -68,6 +69,7 @@ def test_allowed_external_roots_ignores_empty_segments(monkeypatch, tmp_path):
     first = tmp_path / "real"
     first.mkdir()
     monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", f":{first}:")
+    monkeypatch.delenv("MQ_MCP_LOCAL_REPOS", raising=False)
     roots = allowed_external_roots()
     assert first.resolve() in roots
     assert len(roots) == 1

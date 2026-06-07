@@ -19,7 +19,7 @@ orchestration contract WARN acceptance policy, and ADR-006.
 
 This repository is useful as:
 
-- a local MCP server with 103 documented, safety-classified tools
+- a local MCP server with 115 documented, safety-classified tools
 - a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 - validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 - a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -37,7 +37,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 - `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 - Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 - Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-- Safety policy classifies all 103 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+- Safety policy classifies all 115 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 - Tests for path safety and tool output shape run in CI via `pytest`
 - CI runs on `macos-latest` — not a Linux approximation
 
@@ -165,7 +165,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 103 MCP tools with descriptions.
+Expected response lists all 115 MCP tools with descriptions.
 
 ## Integration map
 
@@ -227,7 +227,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 103 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 115 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -250,7 +250,19 @@ The local MCP server exposes 103 tools across five safety classes. See [`docs/TO
 - `repo_signal_checklist` — runs repo-signal publish checklist on a local repository (read-only)
 - `repo_signal_inspect` — runs repo-signal inspect --json and returns structured inspect.v1 data
 - `repo_signal_doctor_json` — runs repo-signal doctor --json and returns structured doctor.v1 data
+- `repo_signal_report` — runs repo-signal report --format json and returns structured report.v1 data
+- `repo_signal_suggest` — runs repo-signal suggest --format json and returns structured suggest.v1 data
+- `repo_signal_positioning` — runs repo-signal positioning --json and returns structured positioning.v1 data
 - `repo_signal_status` — reports whether repo-signal export packs are present and merged (Class A, read-only)
+- `zephyr_validate` — validates a zephyr architecture YAML file
+- `zephyr_review` — reviews a zephyr architecture YAML file
+- `zephyr_analyze` — analyzes a zephyr architecture YAML file
+- `zephyr_diff` — compares two zephyr architecture YAML files
+- `image_observe_architecture` — observes an architecture diagram through mq-image
+- `image_analyze_ui` — analyzes a UI screenshot through mq-image
+- `image_analyze` — analyzes an image through mq-image
+- `ums_command_catalog` — reads the mq-ums command catalog from MQ_UMS_DIR/config
+- `ums_audit_log` — reads mq-ums local audit logs from MQ_UMS_DIR/logs
 - `get_clipboard` — reads the current macOS clipboard
 - `get_wifi_info` — returns current Wi-Fi network name and signal info
 - `get_battery_status` — returns battery level, charging state, and estimated time remaining

@@ -45,6 +45,11 @@ TOOL_META: dict[str, dict] = {
     "repo_signal_checklist":  {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
     "repo_signal_doctor_json":{"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
     "repo_signal_inspect":    {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
+    "repo_signal_positioning":{"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
+    "repo_signal_report":     {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
+    "repo_signal_suggest":    {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
+    "ums_audit_log":          {"class": "B", "resolver": "MQ_UMS_DIR",                  "write": False, "subprocess": False, "side_effects": []},
+    "ums_command_catalog":    {"class": "B", "resolver": "MQ_UMS_DIR",                  "write": False, "subprocess": False, "side_effects": []},
 
     "edit_image":             {"class": "C", "resolver": "resolve_allowed_local_file",  "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "set_clipboard":          {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["clipboard-write"]},
@@ -142,6 +147,15 @@ TOOL_META: dict[str, dict] = {
     "run_mqlaunch_demo":           {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
     "run_mqlaunch_bundle":         {"class": "D", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["subprocess", "file-write"]},
     "run_mqlaunch_ask":            {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess", "openai-api"]},
+
+    # Structured architecture and image analysis tools
+    "zephyr_validate":             {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "zephyr_review":               {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "zephyr_analyze":              {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "zephyr_diff":                 {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "image_observe_architecture":  {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "image_analyze_ui":            {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
+    "image_analyze":               {"class": "B", "resolver": "resolve_allowed_local_file", "write": False, "subprocess": True, "side_effects": ["subprocess"]},
 }
 
 
