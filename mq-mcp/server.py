@@ -708,14 +708,25 @@ def _resolve_signal_repo(repo_path: str) -> Path:
     return resolve_allowed_local_file(repo_path)
 
 
-def _run_repo_signal(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
+def _resolve_repo_signal_bin() -> str:
+    env = os.getenv("REPO_SIGNAL_BIN")
+    if env:
+        return env
+    home = Path.home()
+    candidate = home / "repo-signal" / ".venv" / "bin" / "repo-signal"
+    if candidate.exists():
+        return str(candidate)
+    return "repo-signal"
+
+
+def _run_repo_signal(args: list[str], cwd: Path, timeout: int = 60) -> subprocess.CompletedProcess:
     """Run repo-signal CLI as a subprocess. Raises FileNotFoundError if not installed."""
     return subprocess.run(
-        ["repo-signal", *args],
+        [_resolve_repo_signal_bin(), *args],
         cwd=str(cwd),
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=timeout,
     )
 
 
@@ -812,6 +823,85 @@ def repo_signal_doctor_json(repo_path: str = ".") -> dict:
         return {"error": f"doctor returned invalid JSON: {exc}"}
     except Exception as exc:
         return {"error": f"repo_signal_doctor_json failed: {exc}"}
+
+
+@mcp.tool()
+def repo_signal_report(repo_path: str = ".") -> dict:
+    """Run repo-signal report --format json and return structured report.v1 data. Read-only.
+
+    Returns a machine-readable full report covering README quality, git health,
+    release maturity, docs coverage, and actionable next steps. Uses the stable
+    report.v1 JSON contract. Path must be within MQ_MCP_ALLOWED_PATHS or
+    the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    import json as _json
+    try:
+        target = _resolve_signal_repo(repo_path)
+        result = _run_repo_signal(["report", str(target), "--format", "json"], cwd=target)
+        if result.returncode != 0:
+            return {"error": result.stderr.strip() or "report failed", "repo_path": str(target)}
+        return _json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "repo-signal is not installed or not on PATH. Set REPO_SIGNAL_BIN to override."}
+    except _json.JSONDecodeError as exc:
+        return {"error": f"report returned invalid JSON: {exc}"}
+    except Exception as exc:
+        return {"error": f"repo_signal_report failed: {exc}"}
+
+
+@mcp.tool()
+def repo_signal_suggest(repo_path: str = ".") -> dict:
+    """Run repo-signal suggest --format json and return structured suggest.v1 data. Read-only.
+
+    Returns machine-readable improvement suggestions with risk levels and categories.
+    Uses the stable suggest.v1 JSON contract. Path must be within MQ_MCP_ALLOWED_PATHS
+    or the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    import json as _json
+    try:
+        target = _resolve_signal_repo(repo_path)
+        result = _run_repo_signal(["suggest", str(target), "--format", "json"], cwd=target)
+        if result.returncode != 0:
+            return {"error": result.stderr.strip() or "suggest failed", "repo_path": str(target)}
+        return _json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "repo-signal is not installed or not on PATH. Set REPO_SIGNAL_BIN to override."}
+    except _json.JSONDecodeError as exc:
+        return {"error": f"suggest returned invalid JSON: {exc}"}
+    except Exception as exc:
+        return {"error": f"repo_signal_suggest failed: {exc}"}
+
+
+@mcp.tool()
+def repo_signal_positioning(repo_path: str = ".") -> dict:
+    """Run repo-signal positioning --json and return structured positioning.v1 data. Read-only.
+
+    Returns machine-readable project positioning: what the project is, who it's for,
+    what problem it solves, and differentiation signals. Uses the stable positioning.v1
+    JSON contract. Path must be within MQ_MCP_ALLOWED_PATHS or the mq-mcp repository root.
+
+    Args:
+        repo_path: Absolute or repo-relative path to the repository root. Defaults to mq-mcp repo.
+    """
+    import json as _json
+    try:
+        target = _resolve_signal_repo(repo_path)
+        result = _run_repo_signal(["positioning", str(target), "--json"], cwd=target)
+        if result.returncode != 0:
+            return {"error": result.stderr.strip() or "positioning failed", "repo_path": str(target)}
+        return _json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "repo-signal is not installed or not on PATH. Set REPO_SIGNAL_BIN to override."}
+    except _json.JSONDecodeError as exc:
+        return {"error": f"positioning returned invalid JSON: {exc}"}
+    except Exception as exc:
+        return {"error": f"repo_signal_positioning failed: {exc}"}
 
 
 @mcp.tool()

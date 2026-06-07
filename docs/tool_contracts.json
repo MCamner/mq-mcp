@@ -715,6 +715,24 @@
       "examples": []
     },
     {
+      "name": "repo_signal_positioning",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Run repo-signal positioning --json. Returns positioning.v1 structured data.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
+    },
+    {
+      "name": "repo_signal_report",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Run repo-signal report --format json. Returns report.v1 structured data.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
+    },
+    {
       "name": "repo_signal_status",
       "class": "A",
       "description": "Report whether repo-signal export packs are present, their age, and merge status.",
@@ -723,6 +741,15 @@
       "subprocess": false,
       "side_effects": [],
       "examples": []
+    },
+    {
+      "name": "repo_signal_suggest",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Run repo-signal suggest --format json. Returns suggest.v1 structured data.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
     },
     {
       "name": "review_architecture_doc",
