@@ -4791,6 +4791,121 @@ def zephyr_diff(file_a: str, file_b: str) -> str:
     return output or "zephyr diff returned no output."
 
 
+def _resolve_mq_image_bin() -> str:
+    env = os.getenv("MQ_IMAGE_BIN")
+    if env:
+        return env
+    home = Path.home()
+    candidate = home / "mq-image-analyze" / ".venv" / "bin" / "mq-image"
+    if candidate.exists():
+        return str(candidate)
+    return "mq-image"
+
+
+def _run_mq_image(args: list[str], timeout: int = 120) -> tuple[str, int]:
+    """Run mq-image CLI and return (output, returncode). Never raises."""
+    bin_path = _resolve_mq_image_bin()
+    try:
+        result = subprocess.run(
+            [bin_path, *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        output = (result.stdout or "").strip() or (result.stderr or "").strip()
+        return output, result.returncode
+    except FileNotFoundError:
+        return f"mq-image not found at {bin_path}. Check MQ_IMAGE_BIN or install mq-image-analyze.", 127
+    except subprocess.TimeoutExpired:
+        return f"mq-image timed out after {timeout}s.", 124
+
+
+@mcp.tool()
+def image_observe_architecture(image_path: str) -> dict:
+    """Observe an architecture diagram and return visual_architecture_observation.v1 JSON.
+
+    Passes the image to mq-image observe-architecture which uses a vision model
+    to extract components, flows, risks, and structural observations.
+    Output is the stable visual_architecture_observation.v1 contract —
+    pass it as context to review_repo or review_file for enriched analysis.
+
+    Class B — read-only subprocess; no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    import json as _json
+    try:
+        safe = resolve_allowed_local_file(image_path)
+    except ValueError as exc:
+        return {"error": f"image_observe_architecture failed: {exc}"}
+
+    output, rc = _run_mq_image(["observe-architecture", str(safe), "--json"])
+    if rc not in (0, 1):
+        return {"error": f"mq-image observe-architecture exited {rc}", "output": output}
+    try:
+        return _json.loads(output)
+    except _json.JSONDecodeError:
+        return {"error": "observe-architecture returned non-JSON output", "raw": output[:500]}
+
+
+@mcp.tool()
+def image_analyze_ui(image_path: str) -> dict:
+    """Analyze a UI screenshot — layout, contrast, hierarchy, accessibility.
+
+    Passes the screenshot to mq-image analyze-ui which uses a vision model
+    to return structured findings on visual hierarchy, color contrast, spacing,
+    and actionable improvements.
+
+    Class B — read-only subprocess; no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    import json as _json
+    try:
+        safe = resolve_allowed_local_file(image_path)
+    except ValueError as exc:
+        return {"error": f"image_analyze_ui failed: {exc}"}
+
+    output, rc = _run_mq_image(["analyze-ui", str(safe), "--json"])
+    if rc not in (0, 1):
+        return {"error": f"mq-image analyze-ui exited {rc}", "output": output}
+    try:
+        return _json.loads(output)
+    except _json.JSONDecodeError:
+        return {"error": "analyze-ui returned non-JSON output", "raw": output[:500]}
+
+
+@mcp.tool()
+def image_analyze(image_path: str, mode: str = "local-fast") -> dict:
+    """Analyze an image — objects, style, composition, reverse prompt.
+
+    Passes the image to mq-image analyze with the specified vision backend.
+
+    Supported modes:
+      local-fast   — fastest local model (default)
+      local-deep   — higher-recall local model
+      cloud-verify — cloud vision API (requires API key)
+
+    Class B — read-only subprocess; no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    import json as _json
+    valid_modes = {"local-fast", "local-deep", "cloud-verify"}
+    if mode not in valid_modes:
+        return {"error": f"Unsupported mode '{mode}'. Use: {', '.join(sorted(valid_modes))}"}
+
+    try:
+        safe = resolve_allowed_local_file(image_path)
+    except ValueError as exc:
+        return {"error": f"image_analyze failed: {exc}"}
+
+    output, rc = _run_mq_image(["analyze", str(safe), "--json", "--mode", mode])
+    if rc not in (0, 1):
+        return {"error": f"mq-image analyze exited {rc}", "output": output}
+    try:
+        return _json.loads(output)
+    except _json.JSONDecodeError:
+        return {"error": "analyze returned non-JSON output", "raw": output[:500]}
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]

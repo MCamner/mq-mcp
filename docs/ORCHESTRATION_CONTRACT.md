@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-06-07 (v1.11.0).
+Last updated: 2026-06-07 (v1.12.0).
 
 ---
 
@@ -185,6 +185,7 @@ mq-agent must not:
 | Learn system (extract) | `learn_extract_from_last_review` | B | Dry-run; reads review memory + optional Ollama call |
 | Ollama learn | `ollama_learn_status`, `ollama_learn_extract` | B | Network read from local Ollama; no persistent write |
 | Zephyr (architecture) | `zephyr_validate`, `zephyr_review`, `zephyr_analyze`, `zephyr_diff` | B | Proxy to zephyr-workbench CLI; path-safe; no file writes |
+| Image analysis | `image_observe_architecture`, `image_analyze_ui`, `image_analyze` | B | Proxy to mq-image CLI; path-safe; local or cloud vision backend |
 
 All group B tools make network calls (OpenAI or Ollama) but produce no persistent side effects.
 Authoritative safety metadata: `docs/TOOL_SAFETY.md`.
@@ -227,9 +228,14 @@ mq-mcp must not: duplicate zephyr's scoring or lifecycle logic.
 
 mq-image-analyze provides visual analysis:
 
-- Invoked as an external tool; output is a structured JSON blob (`visual_architecture_observation.v1`)
-- mq-mcp does not call mq-image-analyze directly — callers invoke it and pass
-  the result as context to mq-mcp review tools
+- `image_observe_architecture` — architecture diagram → `visual_architecture_observation.v1` JSON
+- `image_analyze_ui` — UI screenshot → layout, contrast, hierarchy, accessibility JSON
+- `image_analyze` — general image → objects, style, composition JSON
+
+All three are Class B (subprocess; no persistent writes). Binary resolved via
+`MQ_IMAGE_BIN` env or `~/mq-image-analyze/.venv/bin/mq-image`.
+`image_observe_architecture` output should be passed as context to `review_repo`
+or `review_file` for enriched architecture review.
 
 ### mq-mcp → callers (output contract)
 

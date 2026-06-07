@@ -295,6 +295,33 @@
       "examples": []
     },
     {
+      "name": "image_analyze",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Analyze an image \u2014 objects, style, composition, reverse prompt. Returns JSON.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Mode: local-fast/local-deep/cloud-verify."
+    },
+    {
+      "name": "image_analyze_ui",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Analyze a UI screenshot \u2014 layout, contrast, hierarchy, accessibility. Returns JSON.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Calls local vision model."
+    },
+    {
+      "name": "image_observe_architecture",
+      "class": "B",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "description": "Observe an architecture diagram \u2014 returns visual_architecture_observation.v1 JSON.",
+      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Calls local vision model."
+    },
+    {
       "name": "learn_extract_from_last_review",
       "class": "B",
       "description": "Dry-run extraction of a learn pattern from the last review for a file.",
