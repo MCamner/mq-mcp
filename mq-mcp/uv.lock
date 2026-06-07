@@ -551,6 +551,7 @@ dependencies = [
     { name = "pillow" },
     { name = "psutil" },
     { name = "pyguitarpro" },
+    { name = "python-dotenv" },
     { name = "requests" },
 ]
 
@@ -567,6 +568,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "pyguitarpro", specifier = ">=0.11" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "requests", specifier = ">=2.34.0" },
 ]
 
