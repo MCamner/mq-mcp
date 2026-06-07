@@ -177,7 +177,12 @@ def extract_learn_items(
     except OllamaValidationError as exc:
         return {"candidates": [], "rejected": [], "errors": [str(exc)], "model": model, "elapsed_ms": 0}
 
-    items = raw if isinstance(raw, list) else raw.get("items", [raw])
+    # Model may wrap the array under various keys — unwrap any single-key dict
+    if isinstance(raw, list):
+        items = raw
+    elif isinstance(raw, dict):
+        # Find first value that is a list (lessons, items, results, data, etc.)
+        items = next((v for v in raw.values() if isinstance(v, list)), [raw])
 
     candidates = []
     rejected = []
