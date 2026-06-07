@@ -3733,12 +3733,14 @@ def record_learning(
         risk=risk,
     )
     result = eng.record_learning(REPO_ROOT, record)
+    if result.get("status") == "duplicate":
+        return f"Duplicate lesson — already stored as {result['id']}."
     return (
         f"Saved lesson {result['id']}.\n"
-        f"  repo:   {result['repo'] or '(general)'}\n"
-        f"  source: {result['source']}\n"
-        f"  risk:   {result['risk']}\n"
-        f"  task:   {result['task'][:72]}"
+        f"  repo:   {record.repo or '(general)'}\n"
+        f"  source: {record.source}\n"
+        f"  risk:   {record.risk}\n"
+        f"  task:   {record.task[:72]}"
     )
 
 
