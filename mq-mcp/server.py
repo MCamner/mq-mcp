@@ -5011,6 +5011,135 @@ def ums_audit_log(days: int = 7, command_id: str = "", status: str = "") -> dict
     }
 
 
+# ---------------------------------------------------------------------------
+# Brain tools — Obsidian second brain (Class C: local filesystem writes)
+# ---------------------------------------------------------------------------
+
+from runtime.memory.obsidian_writer import (
+    record_decision as _obsidian_record_decision,
+    record_review as _obsidian_record_review,
+    record_session as _obsidian_record_session,
+    record_learning as _obsidian_record_learning,
+    vault_exists as _obsidian_vault_exists,
+    vault_path as _obsidian_vault_path,
+)
+
+
+@mcp.tool()
+def brain_status() -> dict:
+    """Return the current status of the mqobsidian second brain vault.
+
+    Class A — read-only.
+    """
+    exists = _obsidian_vault_exists()
+    vp = _obsidian_vault_path()
+    if not exists:
+        return {"ok": False, "vault": str(vp), "error": "Vault not found"}
+    folders = [d.name for d in sorted(vp.iterdir()) if d.is_dir() and not d.name.startswith(".")]
+    counts = {
+        folder: sum(1 for f in (vp / folder).rglob("*.md") if f.is_file())
+        for folder in folders
+    }
+    return {"ok": True, "vault": str(vp), "folders": folders, "file_counts": counts}
+
+
+@mcp.tool()
+def brain_record_decision(
+    title: str,
+    context: str,
+    decision: str,
+    rationale: str,
+    consequences: str = "",
+    tags: list[str] = [],
+) -> dict:
+    """Write an architecture decision record (ADR) to mqobsidian/decisions/.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+    Schema: decision.v1
+    """
+    return _obsidian_record_decision(
+        title=title,
+        context=context,
+        decision=decision,
+        rationale=rationale,
+        consequences=consequences,
+        tags=list(tags),
+    )
+
+
+@mcp.tool()
+def brain_record_review(
+    source: str,
+    finding_count: int,
+    top_risks: list[str],
+    suggested_next_steps: list[str],
+    confidence: str = "medium",
+    raw_summary: str = "",
+) -> dict:
+    """Write a code review summary to mqobsidian/reviews/.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+    Schema: review.v1
+    Confidence must be: high, medium, or low.
+    """
+    return _obsidian_record_review(
+        source=source,
+        finding_count=finding_count,
+        top_risks=list(top_risks),
+        suggested_next_steps=list(suggested_next_steps),
+        confidence=confidence,
+        raw_summary=raw_summary,
+    )
+
+
+@mcp.tool()
+def brain_record_session(
+    title: str,
+    summary: str,
+    repos: list[str] = [],
+    outcomes: list[str] = [],
+    follow_ups: list[str] = [],
+) -> dict:
+    """Write a session note to mqobsidian/sessions/.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+    Schema: session.v1
+    """
+    return _obsidian_record_session(
+        title=title,
+        summary=summary,
+        repos=list(repos),
+        outcomes=list(outcomes),
+        follow_ups=list(follow_ups),
+    )
+
+
+@mcp.tool()
+def brain_record_learning(
+    pattern_name: str,
+    pattern_type: str,
+    summary: str,
+    evidence: list[str],
+    recommended_action: str,
+    confidence: str = "medium",
+) -> dict:
+    """Write a learned engineering pattern to mqobsidian/learn/.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+    Schema: learn.v1
+    pattern_type must be one of: architecture, docs, integration, release, safety, testing, unknown
+    Overwrites if pattern_name already exists (patterns are updated, not duplicated).
+    """
+    return _obsidian_record_learning(
+        pattern_name=pattern_name,
+        pattern_type=pattern_type,
+        summary=summary,
+        evidence=list(evidence),
+        recommended_action=recommended_action,
+        confidence=confidence,
+    )
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]
