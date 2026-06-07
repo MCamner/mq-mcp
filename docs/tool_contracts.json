@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.10.0",
-  "tool_count": 103,
+  "tool_count": 115,
   "tools": [
     {
       "name": "analyze_csv",
@@ -297,29 +297,38 @@
     {
       "name": "image_analyze",
       "class": "B",
-      "safety_class": "B",
+      "description": "Analyze an image — objects, style, composition, reverse prompt.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Analyze an image \u2014 objects, style, composition, reverse prompt. Returns JSON.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Mode: local-fast/local-deep/cloud-verify."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "image_analyze_ui",
       "class": "B",
-      "safety_class": "B",
+      "description": "Analyze a UI screenshot — layout, contrast, hierarchy, accessibility.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Analyze a UI screenshot \u2014 layout, contrast, hierarchy, accessibility. Returns JSON.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Calls local vision model."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "image_observe_architecture",
       "class": "B",
-      "safety_class": "B",
+      "description": "Observe an architecture diagram and return visual_architecture_observation.v1 JSON.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Observe an architecture diagram \u2014 returns visual_architecture_observation.v1 JSON.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file. Calls local vision model."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "learn_extract_from_last_review",
@@ -566,7 +575,7 @@
     {
       "name": "open_in_app",
       "class": "D",
-      "description": "\u00d6ppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop).",
+      "description": "Öppnar en fil i dess standardprogram (t.ex. GP8 eller Photoshop).",
       "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
@@ -660,7 +669,7 @@
     {
       "name": "read_repo_file",
       "class": "A",
-      "description": "L\u00e4ser inneh\u00e5llet i en fil inom repo-katalogen.",
+      "description": "Läser innehållet i en fil inom repo-katalogen.",
       "resolver": "resolve_repo_file",
       "write": false,
       "subprocess": false,
@@ -744,20 +753,22 @@
     {
       "name": "repo_signal_positioning",
       "class": "B",
-      "safety_class": "B",
+      "description": "Run repo-signal positioning --json and return structured positioning.v1 data. Read-only.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Run repo-signal positioning --json. Returns positioning.v1 structured data.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
+      "side_effects": [],
+      "examples": []
     },
     {
       "name": "repo_signal_report",
       "class": "B",
-      "safety_class": "B",
+      "description": "Run repo-signal report --format json and return structured report.v1 data. Read-only.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Run repo-signal report --format json. Returns report.v1 structured data.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
+      "side_effects": [],
+      "examples": []
     },
     {
       "name": "repo_signal_status",
@@ -772,11 +783,12 @@
     {
       "name": "repo_signal_suggest",
       "class": "B",
-      "safety_class": "B",
+      "description": "Run repo-signal suggest --format json and return structured suggest.v1 data. Read-only.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Run repo-signal suggest --format json. Returns suggest.v1 structured data.",
-      "safety_notes": "Read-only subprocess. Path-safe via resolve_allowed_local_file."
+      "side_effects": [],
+      "examples": []
     },
     {
       "name": "review_architecture_doc",
@@ -869,7 +881,7 @@
     {
       "name": "run_mqlaunch",
       "class": "D",
-      "description": "\u00d6ppnar mqlaunch i ett nytt Terminal-f\u00f6nster. mqlaunch \u00e4r ett interaktivt TUI och kr\u00e4ver en riktig terminal.",
+      "description": "Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -895,7 +907,7 @@
     {
       "name": "run_mqlaunch_bundle",
       "class": "D",
-      "description": "Run mqlaunch bundle \u2014 create a debug bundle for support/diagnostics.",
+      "description": "Run mqlaunch bundle — create a debug bundle for support/diagnostics.",
       "resolver": "none",
       "write": true,
       "subprocess": true,
@@ -908,7 +920,7 @@
     {
       "name": "run_mqlaunch_demo",
       "class": "D",
-      "description": "Run mqlaunch demo \u2014 guided demo of mqlaunch features.",
+      "description": "Run mqlaunch demo — guided demo of mqlaunch features.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -920,7 +932,7 @@
     {
       "name": "run_mqlaunch_doctor",
       "class": "D",
-      "description": "Run mqlaunch doctor \u2014 environment and dependency health check.",
+      "description": "Run mqlaunch doctor — environment and dependency health check.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -932,7 +944,7 @@
     {
       "name": "run_mqlaunch_perf",
       "class": "D",
-      "description": "Run mqlaunch perf \u2014 performance monitoring menu.",
+      "description": "Run mqlaunch perf — performance monitoring menu.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -944,7 +956,7 @@
     {
       "name": "run_mqlaunch_release_check",
       "class": "D",
-      "description": "Run mqlaunch release-check \u2014 pre-release gate for macos-scripts.",
+      "description": "Run mqlaunch release-check — pre-release gate for macos-scripts.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -956,7 +968,7 @@
     {
       "name": "run_mqlaunch_selftest",
       "class": "D",
-      "description": "Run mqlaunch selftest \u2014 internal smoke tests for mqlaunch itself.",
+      "description": "Run mqlaunch selftest — internal smoke tests for mqlaunch itself.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -968,7 +980,7 @@
     {
       "name": "run_mqlaunch_system_check",
       "class": "D",
-      "description": "Run mqlaunch system check \u2014 system health and environment overview.",
+      "description": "Run mqlaunch system check — system health and environment overview.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -980,7 +992,7 @@
     {
       "name": "run_mqlaunch_version",
       "class": "D",
-      "description": "Run mqlaunch version \u2014 show mqlaunch version information.",
+      "description": "Run mqlaunch version — show mqlaunch version information.",
       "resolver": "none",
       "write": false,
       "subprocess": true,
@@ -1129,7 +1141,7 @@
     {
       "name": "summarize_learnings",
       "class": "A",
-      "description": "Summarize stored lessons \u2014 counts by source and risk, recent entries.",
+      "description": "Summarize stored lessons — counts by source and risk, recent entries.",
       "resolver": "none",
       "write": false,
       "subprocess": false,
@@ -1172,6 +1184,26 @@
       "examples": []
     },
     {
+      "name": "ums_audit_log",
+      "class": "B",
+      "description": "Read mq-ums local audit logs. Read-only. Works without a live UMS connection.",
+      "resolver": "MQ_UMS_DIR",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "ums_command_catalog",
+      "class": "B",
+      "description": "Return the mq-ums command catalog from config/commands.json. Read-only.",
+      "resolver": "MQ_UMS_DIR",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "update_repo_file",
       "class": "C",
       "description": "Safely update a text file inside the repo by replacing exact text. Does not commit.",
@@ -1208,38 +1240,50 @@
     {
       "name": "zephyr_analyze",
       "class": "B",
-      "safety_class": "B",
+      "description": "Full intelligence analysis of a zephyr architecture YAML.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Full intelligence analysis of a zephyr architecture YAML.",
-      "safety_notes": "Runs zephyr CLI as a subprocess. No file writes. Deeper than zephyr_review."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "zephyr_diff",
       "class": "B",
-      "safety_class": "B",
+      "description": "Compare two zephyr architecture YAML files.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Compare two zephyr architecture YAML files.",
-      "safety_notes": "Runs zephyr CLI as a subprocess. No file writes. Both paths path-checked."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "zephyr_review",
       "class": "B",
-      "safety_class": "B",
+      "description": "Architecture review of a zephyr YAML — all findings in severity order.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Architecture review of a zephyr YAML \u2014 all findings in severity order.",
-      "safety_notes": "Runs zephyr CLI as a subprocess. No file writes. Supports focused templates."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     },
     {
       "name": "zephyr_validate",
       "class": "B",
-      "safety_class": "B",
+      "description": "Validate a zephyr architecture YAML file.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": true,
-      "description": "Validate a zephyr architecture YAML file. Read-only.",
-      "safety_notes": "Runs zephyr CLI as a subprocess. No file writes. Respects path boundaries."
+      "side_effects": [
+        "subprocess"
+      ],
+      "examples": []
     }
   ]
 }

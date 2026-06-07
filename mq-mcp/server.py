@@ -4906,6 +4906,111 @@ def image_analyze(image_path: str, mode: str = "local-fast") -> dict:
         return {"error": "analyze returned non-JSON output", "raw": output[:500]}
 
 
+def _resolve_mq_ums_dir() -> Path:
+    env = os.getenv("MQ_UMS_DIR")
+    if env:
+        return Path(env).expanduser().resolve()
+    return Path.home() / "mq-ums"
+
+
+@mcp.tool()
+def ums_command_catalog(section: str = "") -> dict:
+    """Return the mq-ums command catalog from config/commands.json. Read-only.
+
+    Lists all 30 UMS commands with their id, name, section, PowerShell command,
+    allowed args, danger flag, and description. Works without a live UMS connection.
+
+    Args:
+        section: Optional filter — returns only commands in this section.
+                 Known sections: Status, Firmware, Device, Directory, Profile,
+                 Policy, File, Network, Admin.
+                 Leave empty to return all commands.
+
+    Class A — pure local file read; no subprocess, no network calls.
+    """
+    import json as _json
+    ums_dir = _resolve_mq_ums_dir()
+    config_path = ums_dir / "config" / "commands.json"
+    try:
+        data = _json.loads(config_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"error": f"mq-ums config not found at {config_path}. Set MQ_UMS_DIR to override."}
+    except Exception as exc:
+        return {"error": f"ums_command_catalog failed: {exc}"}
+
+    commands = data.get("commands", [])
+    if section:
+        commands = [c for c in commands if c.get("section", "").lower() == section.lower()]
+
+    sections = sorted({c.get("section", "Unknown") for c in data.get("commands", [])})
+    return {
+        "schema": "ums_command_catalog.v1",
+        "total": len(commands),
+        "sections": sections,
+        "commands": commands,
+    }
+
+
+@mcp.tool()
+def ums_audit_log(days: int = 7, command_id: str = "", status: str = "") -> dict:
+    """Read mq-ums local audit logs. Read-only. Works without a live UMS connection.
+
+    Returns structured audit entries from logs/audit-YYYY-MM-DD.jsonl files,
+    covering the last N days. Useful for reviewing what UMS commands were run,
+    their outcomes, and whether they were dry-run or live.
+
+    Args:
+        days:       How many days back to read (default 7, max 30).
+        command_id: Optional filter — only entries for this command id (e.g. "get-status").
+        status:     Optional filter — dry-run, error, ok, or leave empty for all.
+
+    Class A — local file read only; no subprocess, no network calls.
+    """
+    import json as _json
+    from datetime import datetime, timedelta, timezone
+
+    days = min(max(1, days), 30)
+    ums_dir = _resolve_mq_ums_dir()
+    logs_dir = ums_dir / "logs"
+
+    entries = []
+    errors = []
+    today = datetime.now(timezone.utc).date()
+
+    for i in range(days):
+        date = today - timedelta(days=i)
+        log_file = logs_dir / f"audit-{date}.jsonl"
+        if not log_file.exists():
+            continue
+        try:
+            for line in log_file.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = _json.loads(line)
+                    if command_id and entry.get("commandId") != command_id:
+                        continue
+                    if status and entry.get("status") != status:
+                        continue
+                    entries.append(entry)
+                except _json.JSONDecodeError:
+                    errors.append(f"{log_file.name}: invalid JSON line")
+        except Exception as exc:
+            errors.append(f"{log_file.name}: {exc}")
+
+    entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
+
+    return {
+        "schema": "ums_audit_log.v1",
+        "days": days,
+        "filters": {"command_id": command_id or None, "status": status or None},
+        "total": len(entries),
+        "errors": errors,
+        "entries": entries,
+    }
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]
