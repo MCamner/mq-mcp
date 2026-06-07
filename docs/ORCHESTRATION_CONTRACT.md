@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-05-31 (v1.9.0).
+Last updated: 2026-06-07 (v1.10.0).
 
 ---
 
@@ -175,6 +175,18 @@ mq-agent must not:
 - Construct filesystem paths outside of tool arguments
 - Assume mq-mcp maintains session state between calls
 - Invoke tools in a sequence that collectively produces a git commit
+
+#### Tool groups available to mq-agent (v1.10.0)
+
+| Group | Tools | Class | Notes |
+| ----- | ----- | ----- | ----- |
+| Release gate | `release_gate_run` | A | Deterministic validation; no file writes |
+| Learn system (read) | `learn_status`, `explain_learned_pattern`, `search_learned_patterns`, `learn_hygiene` | A | Read-only access to learn memory |
+| Learn system (extract) | `learn_extract_from_last_review` | B | Dry-run; reads review memory + optional Ollama call |
+| Ollama learn | `ollama_learn_status`, `ollama_learn_extract` | B | Network read from local Ollama; no persistent write |
+
+All group B tools make network calls (OpenAI or Ollama) but produce no persistent side effects.
+Authoritative safety metadata: `docs/TOOL_SAFETY.md`.
 
 ### repo-signal → mq-mcp
 
