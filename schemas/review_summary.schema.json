@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcamner.github.io/mq-mcp/schemas/review_summary.schema.json",
+  "title": "MQ Review Summary",
+  "description": "Structured summary of a mq-mcp review session — produced by Ollama provider or direct summarisation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source",
+    "confidence",
+    "finding_count",
+    "top_risks",
+    "suggested_next_steps"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "review_summary.v1"
+    },
+    "source": {
+      "type": "string",
+      "description": "Where the findings came from: review_file, review_repo, review_diff, etc."
+    },
+    "repo": {
+      "type": "string",
+      "description": "Repository name or path reviewed."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Summary confidence — low means the model was uncertain about key findings."
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of findings the summary was derived from."
+    },
+    "severity_breakdown": {
+      "type": "object",
+      "description": "Count per severity label from the review output.",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "top_risks": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "string"
+      },
+      "description": "Top risk findings in plain language — quoted or paraphrased from review output."
+    },
+    "suggested_next_steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "Concrete next actions — must not include release approval or destructive commands."
+    },
+    "learn_candidates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pattern names worth extracting to learn memory — cross-reference learn_extraction.schema.json."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional free-text note about the review context."
+    }
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "pattern_name": "subprocess-proxy-rc1-is-valid",
+    "pattern_type": "integration",
+    "summary": "CLI proxy tools must treat exit code 1 as valid output, not failure.",
+    "evidence": [
+      "zephyr review exits with rc=1 when findings exist — this is documented CLI behavior",
+      "treating rc=1 as error caused every non-empty review to return an error response"
+    ],
+    "recommended_action": "Accept rc 0 and 1 as success for CLI tools that use rc=1 to signal findings. Only rc>=2 or FileNotFoundError signals a real failure.",
+    "confidence": "high",
+    "should_store": true
+  },
+  {
+    "pattern_name": "dotenv-load-at-import-time",
+    "pattern_type": "integration",
+    "summary": "uv run does not inherit .env automatically — load_dotenv must be called at import time.",
+    "evidence": [
+      "server restarted cleanly but MQ_MCP_ALLOWED_PATHS was empty because .env was not loaded",
+      "fixed by adding load_dotenv(Path(__file__).parent / '.env', override=False) at the top of server.py"
+    ],
+    "recommended_action": "Always call load_dotenv() at module import time in FastMCP servers started via uv run. Use override=False to preserve shell-set vars.",
+    "confidence": "high",
+    "should_store": true
+  },
+  {
+    "pattern_name": "json-variant-for-every-cli-proxy",
+    "pattern_type": "architecture",
+    "summary": "When a CLI supports --json or --format json, always expose that as a separate mq-mcp tool returning dict.",
+    "evidence": [
+      "repo_signal_report, repo_signal_suggest, repo_signal_positioning added as JSON-returning tools",
+      "text-output variants are useful for display; JSON variants are what mq-agent can machine-read and chain"
+    ],
+    "recommended_action": "For each CLI proxy tool, check if a structured JSON flag exists. If yes, add a second tool that returns dict — named with the same base but no suffix change needed.",
+    "confidence": "high",
+    "should_store": true
+  }
+]
