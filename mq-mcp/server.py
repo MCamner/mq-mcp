@@ -4574,6 +4574,128 @@ def run_mqlaunch_ask(question: str) -> str:
     return output
 
 
+def _resolve_zephyr_bin() -> str:
+    env = os.getenv("ZEPHYR_BIN")
+    if env:
+        return env
+    home = Path.home()
+    return str(home / "zephyr-workbench" / ".venv" / "bin" / "zephyr")
+
+
+def _run_zephyr(args: list[str], timeout: int = 60) -> tuple[str, int]:
+    """Run zephyr CLI and return (output, returncode). Never raises."""
+    bin_path = _resolve_zephyr_bin()
+    try:
+        result = subprocess.run(
+            [bin_path, *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        output = (result.stdout or "").strip() or (result.stderr or "").strip()
+        return output, result.returncode
+    except FileNotFoundError:
+        return f"zephyr not found at {bin_path}. Check ZEPHYR_BIN or install zephyr-workbench.", 127
+    except subprocess.TimeoutExpired:
+        return f"zephyr timed out after {timeout}s.", 124
+
+
+@mcp.tool()
+def zephyr_validate(file: str) -> str:
+    """Validate a zephyr architecture YAML file.
+
+    Checks schema, required fields, and internal consistency.
+    Returns a structured validation report.
+
+    Class B — read-only, no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    try:
+        safe = resolve_allowed_local_file(file)
+    except ValueError as exc:
+        return f"zephyr_validate failed: {exc}"
+
+    output, rc = _run_zephyr(["validate", str(safe)])
+    if rc not in (0, 1):
+        return f"zephyr_validate failed (exit {rc}):\n{output}"
+    return output or "zephyr validate returned no output."
+
+
+@mcp.tool()
+def zephyr_review(file: str, template: str = "") -> str:
+    """Architecture review of a zephyr YAML — all findings in severity order.
+
+    Optional template focuses the review on a specific lens:
+      security, zero-trust, resilience, compliance
+
+    Class B — read-only, no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    valid_templates = {"", "security", "zero-trust", "resilience", "compliance"}
+    if template not in valid_templates:
+        return (
+            f"zephyr_review failed: unsupported template '{template}'.\n"
+            f"Supported: {', '.join(sorted(t for t in valid_templates if t))}"
+        )
+
+    try:
+        safe = resolve_allowed_local_file(file)
+    except ValueError as exc:
+        return f"zephyr_review failed: {exc}"
+
+    args = ["review", str(safe)]
+    if template:
+        args += ["--template", template]
+
+    output, rc = _run_zephyr(args)
+    if rc not in (0, 1):
+        return f"zephyr_review failed (exit {rc}):\n{output}"
+    return output or "zephyr review returned no output."
+
+
+@mcp.tool()
+def zephyr_analyze(file: str) -> str:
+    """Full intelligence analysis of a zephyr architecture YAML.
+
+    Detects anti-patterns, risks, and dependency chains.
+    More comprehensive than zephyr_review — use for deep audits.
+
+    Class B — read-only, no persistent side effects.
+    File must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    try:
+        safe = resolve_allowed_local_file(file)
+    except ValueError as exc:
+        return f"zephyr_analyze failed: {exc}"
+
+    output, rc = _run_zephyr(["analyze", str(safe)])
+    if rc not in (0, 1):
+        return f"zephyr_analyze failed (exit {rc}):\n{output}"
+    return output or "zephyr analyze returned no output."
+
+
+@mcp.tool()
+def zephyr_diff(file_a: str, file_b: str) -> str:
+    """Compare two zephyr architecture YAML files.
+
+    Returns a structured diff highlighting added, removed, and changed
+    components, flows, and risks between two architecture versions.
+
+    Class B — read-only, no persistent side effects.
+    Both files must be within REPO_ROOT or MQ_MCP_ALLOWED_PATHS.
+    """
+    try:
+        safe_a = resolve_allowed_local_file(file_a)
+        safe_b = resolve_allowed_local_file(file_b)
+    except ValueError as exc:
+        return f"zephyr_diff failed: {exc}"
+
+    output, rc = _run_zephyr(["diff", str(safe_a), str(safe_b)])
+    if rc not in (0, 1):
+        return f"zephyr_diff failed (exit {rc}):\n{output}"
+    return output or "zephyr diff returned no output."
+
+
 if __name__ == "__main__":
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]

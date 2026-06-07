@@ -13,7 +13,7 @@ The boundary is not aspirational. It is enforced structurally:
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-06-07 (v1.10.0).
+Last updated: 2026-06-07 (v1.11.0).
 
 ---
 
@@ -176,7 +176,7 @@ mq-agent must not:
 - Assume mq-mcp maintains session state between calls
 - Invoke tools in a sequence that collectively produces a git commit
 
-#### Tool groups available to mq-agent (v1.10.0)
+#### Tool groups available to mq-agent (v1.11.0)
 
 | Group | Tools | Class | Notes |
 | ----- | ----- | ----- | ----- |
@@ -184,6 +184,7 @@ mq-agent must not:
 | Learn system (read) | `learn_status`, `explain_learned_pattern`, `search_learned_patterns`, `learn_hygiene` | A | Read-only access to learn memory |
 | Learn system (extract) | `learn_extract_from_last_review` | B | Dry-run; reads review memory + optional Ollama call |
 | Ollama learn | `ollama_learn_status`, `ollama_learn_extract` | B | Network read from local Ollama; no persistent write |
+| Zephyr (architecture) | `zephyr_validate`, `zephyr_review`, `zephyr_analyze`, `zephyr_diff` | B | Proxy to zephyr-workbench CLI; path-safe; no file writes |
 
 All group B tools make network calls (OpenAI or Ollama) but produce no persistent side effects.
 Authoritative safety metadata: `docs/TOOL_SAFETY.md`.
@@ -206,6 +207,21 @@ mq-hal provides runtime and model health summaries:
 
 - `hal_repo_report` — mq-mcp proxies as Class D (runs mq-hal CLI)
 - Expected output: text report from mq-hal
+
+### zephyr-workbench → mq-mcp
+
+zephyr-workbench provides model-based architecture analysis:
+
+- `zephyr_validate` — schema + internal consistency check for architecture YAML
+- `zephyr_review` — all findings in severity order; optional focused template
+- `zephyr_analyze` — full intelligence analysis (anti-patterns, risks, dependencies)
+- `zephyr_diff` — structured diff between two architecture versions
+
+All four are Class B (subprocess; no persistent writes). Path safety enforced by
+`resolve_allowed_local_file`; configure external roots via `MQ_MCP_ALLOWED_PATHS`.
+Override binary path with `ZEPHYR_BIN` env var.
+
+mq-mcp must not: duplicate zephyr's scoring or lifecycle logic.
 
 ### mq-image-analyze → mq-mcp
 
