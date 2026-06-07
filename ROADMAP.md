@@ -99,7 +99,7 @@ mq-mcp must not absorb heavy UI, duplicated repository indexing, repo metrics
 dashboards, or workflow automation logic. Those belong to mq-agent,
 repo-signal, macos-scripts and mq-hal.
 
-### Next phase — Ollama-backed learn extraction hardening
+### Completed — Ollama-backed learn extraction hardening
 
 Goal:
 
@@ -107,7 +107,7 @@ Use Ollama only as an optional local provider for deterministic learn pattern
 extraction. mq-mcp remains the source of truth for contracts, validation, safety
 classes, review logic, and memory storage.
 
-Planned scope:
+Completed scope:
 
 - validate learn extraction records before storage
 - default extraction to dry-run/read-only behavior
@@ -115,6 +115,16 @@ Planned scope:
 - reject prompt-injection text inside reviewed content as instructions
 - handle missing Ollama or missing `mq-learn` model as an optional-provider
   error
+
+Validation:
+
+- Ollama prompts wrap review findings as untrusted data and force
+  `should_store=false`
+- learn extraction coerces provider storage requests back to read-only
+- structured model output is rejected when summary/action fields contain
+  prompt-injection text
+- prompt-injection text remains allowed as quoted evidence from reviewed
+  content
 
 Non-goals:
 
