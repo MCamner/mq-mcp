@@ -15,6 +15,7 @@ from runtime.memory.obsidian_writer import (
     record_learning,
     record_review,
     record_session,
+    promote_learning,
     vault_exists,
     vault_path,
 )
@@ -139,3 +140,99 @@ def test_record_decision_optional_consequences_omitted(vault: Path) -> None:
     assert result["ok"] is True
     content = Path(result["path"]).read_text()
     assert "Consequences" not in content
+
+
+# ── promote_learning ────────────────────────────────────────────────────────
+
+_VALID_LEARN_CONTENT = """\
+---
+schema_version: learn.v1
+written_by: mq-mcp/obsidian_writer
+timestamp: 2026-06-08T00:00:00Z
+pattern_name: test-pattern
+pattern_type: release
+confidence: high
+---
+# Pattern: test-pattern
+
+## Overview
+
+**Type:** release
+
+## Summary
+
+Always verify git tags match gh releases.
+
+## Evidence
+
+- Fixed by running gh release create after git tag
+
+## Recommended action
+
+After tagging, run gh release list to confirm the release exists.
+"""
+
+
+def test_promote_learning_creates_verified_file(vault: Path) -> None:
+    learn_dir = vault / "learn"
+    learn_dir.mkdir()
+    (learn_dir / "test-pattern.md").write_text(_VALID_LEARN_CONTENT)
+
+    result = promote_learning("test-pattern")
+
+    assert result["ok"] is True
+    verified_dir = vault / "learn" / "verified"
+    assert verified_dir.exists()
+    promoted_files = list(verified_dir.glob("*test-pattern.md"))
+    assert len(promoted_files) == 1
+    content = promoted_files[0].read_text()
+    assert "status: verified" in content
+    assert "promoted_at:" in content
+    assert "promoted_from: learn/test-pattern.md" in content
+
+
+def test_promote_learning_marks_original_as_promoted(vault: Path) -> None:
+    learn_dir = vault / "learn"
+    learn_dir.mkdir()
+    source = learn_dir / "test-pattern.md"
+    source.write_text(_VALID_LEARN_CONTENT)
+
+    promote_learning("test-pattern")
+
+    original = source.read_text()
+    assert "status: promoted" in original
+
+
+def test_promote_learning_accepts_learn_prefix_and_md_suffix(vault: Path) -> None:
+    (vault / "learn").mkdir()
+    (vault / "learn" / "test-pattern.md").write_text(_VALID_LEARN_CONTENT)
+
+    r1 = promote_learning("learn/test-pattern.md")
+    assert r1["ok"] is True
+
+
+def test_promote_learning_fails_missing_fields(vault: Path) -> None:
+    (vault / "learn").mkdir()
+    (vault / "learn" / "incomplete.md").write_text(
+        "---\nschema_version: learn.v1\n---\n## Summary\n\ntext\n\n## Evidence\n\n- x\n\n## Recommended action\n\nfix it\n"
+    )
+    result = promote_learning("incomplete")
+    assert result["ok"] is False
+    assert "pattern_name" in result["error"]
+
+
+def test_promote_learning_fails_missing_sections(vault: Path) -> None:
+    (vault / "learn").mkdir()
+    (vault / "learn" / "no-sections.md").write_text(
+        "---\npattern_name: x\npattern_type: release\n---\n# Pattern: x\n\nNo required sections here.\n"
+    )
+    result = promote_learning("no-sections")
+    assert result["ok"] is False
+    assert "Missing required sections" in result["error"]
+
+
+def test_promote_learning_fails_if_slug_not_found(vault: Path) -> None:
+    (vault / "learn").mkdir()
+    result = promote_learning("nonexistent-slug")
+    assert result["ok"] is False
+    assert "Not found" in result["error"]

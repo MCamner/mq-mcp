@@ -210,6 +210,114 @@ def record_session(
     return _write("sessions", filename, fm + f"# {title}\n\n" + _body(*sections))
 
 
+def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
+    """Parse YAML-style frontmatter. Returns (fields, body_after_fm)."""
+    if not content.startswith("---\n"):
+        return {}, content
+    end = content.find("\n---\n", 4)
+    if end == -1:
+        return {}, content
+    fm_text = content[4:end]
+    body = content[end + 5:]
+    fields: dict[str, Any] = {}
+    current_key: str | None = None
+    current_list: list[str] | None = None
+    for line in fm_text.splitlines():
+        if line.startswith("  - ") and current_key and current_list is not None:
+            current_list.append(line[4:])
+        elif ":" in line:
+            if current_key and current_list is not None:
+                fields[current_key] = current_list
+                current_list = None
+            if ": " in line:
+                k, _, v = line.partition(": ")
+                v = v.strip().strip('"')
+                fields[k.strip()] = v
+                current_key = k.strip()
+            else:
+                current_key = line.rstrip(":").strip()
+                current_list = []
+                fields[current_key] = current_list
+    if current_key and current_list is not None:
+        fields[current_key] = current_list
+    return fields, body
+
+
+def _set_frontmatter_field(content: str, key: str, value: str) -> str:
+    """Add or update a scalar field in YAML frontmatter. No-op if no frontmatter."""
+    if not content.startswith("---\n"):
+        return content
+    end = content.find("\n---\n", 4)
+    if end == -1:
+        return content
+    fm_lines = content[4:end].splitlines()
+    body_after = content[end + 5:]
+    updated = False
+    new_lines = []
+    for line in fm_lines:
+        if line.startswith(f"{key}:"):
+            new_lines.append(f"{key}: {value}")
+            updated = True
+        else:
+            new_lines.append(line)
+    if not updated:
+        new_lines.append(f"{key}: {value}")
+    return "---\n" + "\n".join(new_lines) + "\n---\n" + body_after
+
+
+def promote_learning(slug: str) -> dict[str, Any]:
+    """Promote learn/<slug>.md to learn/verified/.
+
+    1. Reads learn/<slug>.md
+    2. Validates required frontmatter fields and body sections
+    3. Writes learn/verified/<timestamp>-<slug>.md with promoted_at + status: verified
+    4. Marks original as status: promoted
+
+    Returns {"ok": True, "path": "...", "source": "..."} or {"ok": False, "error": "..."}.
+    """
+    if not vault_exists():
+        return {"ok": False, "error": f"Vault not found: {_vault()}"}
+
+    slug_clean = slug.removeprefix("learn/").removesuffix(".md")
+    source_path = _vault() / "learn" / f"{slug_clean}.md"
+
+    if not source_path.exists():
+        return {"ok": False, "error": f"Not found: learn/{slug_clean}.md"}
+
+    content = source_path.read_text(encoding="utf-8")
+    fm_fields, body = _parse_frontmatter(content)
+
+    missing_fields = [f for f in ("pattern_name", "pattern_type") if not fm_fields.get(f)]
+    if missing_fields:
+        return {"ok": False, "error": f"Missing required frontmatter: {', '.join(missing_fields)}"}
+
+    body_lower = body.lower()
+    missing_sections = [
+        s for s in ("## summary", "## evidence", "## recommended action")
+        if s not in body_lower
+    ]
+    if missing_sections:
+        return {"ok": False, "error": f"Missing required sections: {', '.join(missing_sections)}"}
+
+    now = _now_iso()
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    promoted_filename = f"learn-{ts}-{slug_clean}.md"
+
+    promoted_fm = dict(fm_fields)
+    promoted_fm["status"] = "verified"
+    promoted_fm["promoted_at"] = now
+    promoted_fm["promoted_from"] = f"learn/{slug_clean}.md"
+
+    result = _write("learn/verified", promoted_filename, _frontmatter(**promoted_fm) + body)
+    if not result.get("ok"):
+        return result
+
+    updated = _set_frontmatter_field(content, "status", "promoted")
+    source_path.write_text(updated, encoding="utf-8")
+
+    return {"ok": True, "path": result["path"], "source": str(source_path), "slug": slug_clean}
+
+
 def record_learning(
     pattern_name: str,
     pattern_type: str,

@@ -5020,6 +5020,7 @@ from runtime.memory.obsidian_writer import (
     record_review as _obsidian_record_review,
     record_session as _obsidian_record_session,
     record_learning as _obsidian_record_learning,
+    promote_learning as _obsidian_promote_learning,
     vault_exists as _obsidian_vault_exists,
     vault_path as _obsidian_vault_path,
 )
@@ -5138,6 +5139,22 @@ def brain_record_learning(
         recommended_action=recommended_action,
         confidence=confidence,
     )
+
+
+@mcp.tool()
+def brain_promote_learning(slug: str) -> dict:
+    """Promote learn/<slug>.md to learn/verified/.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+
+    Validates required frontmatter (pattern_name, pattern_type) and body sections
+    (## Summary, ## Evidence, ## Recommended action), then:
+    - Writes learn/verified/<timestamp>-<slug>.md with status: verified and promoted_at
+    - Marks the original learn/<slug>.md as status: promoted
+
+    slug: filename without path or .md extension (e.g. "atlas-one-release-gap-pattern")
+    """
+    return _obsidian_promote_learning(slug)
 
 
 if __name__ == "__main__":
