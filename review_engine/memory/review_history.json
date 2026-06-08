@@ -641,5 +641,167 @@
       "findings_text": "Review findings — tests/test_tool_contracts.py: 34 total  [MISSING=34]\n\n[MISSING] tests/test_tool_contracts.py:8\nModule has no docstring; add a module-level docstring summarizing the testing purpose.\n\n[MISSING] tests/test_tool_contracts.py:11\ncontracts() fixture has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:16\ntools() fixture has no parameter type annotation for 'contracts'.\n\n[MISSING] tests/test_tool_contracts.py:16\ntools() fixture has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:22\ntest_contracts_file_exists() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:26\ntest_schema_version() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:26\ntest_schema_version() function parameter 'contracts' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:30\ntest_tool_count_field_matches_actual() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:30\ntest_tool_count_field_matches_actual() parameters 'contracts' and 'tools' have no type annotations.\n\n[MISSING] tests/test_tool_contracts.py:36\ntest_no_duplicate_tool_names() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:36\ntest_no_duplicate_tool_names() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:50\ntest_every_tool_has_name() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:50\ntest_every_tool_has_name() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:55\ntest_every_tool_has_class() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:55\ntest_every_tool_has_class() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:60\ntest_every_tool_has_valid_class() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:60\ntest_every_tool_has_valid_class() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:65\ntest_every_tool_has_description() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:65\ntest_every_tool_has_description() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:70\ntest_every_tool_has_resolver() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:70\ntest_every_tool_has_resolver() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:75\ntest_every_tool_has_write_field() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:75\ntest_every_tool_has_write_field() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:80\ntest_every_tool_has_subprocess_field() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:80\ntest_every_tool_has_subprocess_field() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:85\ntest_every_tool_has_side_effects_field() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:85\ntest_every_tool_has_side_effects_field() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:94\ntest_class_cd_have_side_effects() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:94\ntest_class_cd_have_side_effects() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:102\ntest_class_c_have_write_true() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:102\ntest_class_c_have_write_true() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:110\ntest_class_d_have_subprocess_true() function has no return type annotation.\n\n[MISSING] tests/test_tool_contracts.py:110\ntest_class_d_have_subprocess_true() parameter 'tools' has no type annotation.\n\n[MISSING] tests/test_tool_contracts.py:122\ntest_no_tool_with_empty_examples_is_acceptable() function has no return type annotation.",
       "skill": "python-comment-review"
     }
+  ],
+  "tests/test_obsidian_writer.py": [
+    {
+      "file_path": "tests/test_obsidian_writer.py",
+      "mode": "comment",
+      "timestamp": 1780941174.289552,
+      "timestamp_iso": "2026-06-08T17:52:54Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "MISSING": 18
+      },
+      "findings_text": "Review findings — tests/test_obsidian_writer.py: 18 total  [MISSING=18]\n\n[MISSING] tests/test_obsidian_writer.py:1\nModule-level docstring is missing; add a brief description of the file's purpose and scope.\n\n[MISSING] tests/test_obsidian_writer.py:15\nPublic fixture function vault has no docstring; add a one-line description of its purpose and what it returns.\n\n[MISSING] tests/test_obsidian_writer.py:22\nPublic test function test_vault_exists_true has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:27\nPublic test function test_vault_exists_false has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:33\nPublic test function test_vault_path_uses_env has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:38\nPublic test function test_record_review_creates_file has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:52\nPublic test function test_record_review_missing_vault has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:58\nPublic test function test_record_learning_creates_file has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:73\nPublic test function test_record_learning_overwrites_same_pattern has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:82\nPublic test function test_record_session_creates_file has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:96\nPublic test function test_record_decision_creates_file has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:111\nPublic test function test_record_decision_optional_consequences_omitted has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:124\nPublic test function test_promote_learning_creates_verified_file has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:151\nPublic test function test_promote_learning_marks_original_as_promoted has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:164\nPublic test function test_promote_learning_accepts_learn_prefix_and_md_suffix has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:172\nPublic test function test_promote_learning_fails_missing_fields has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:183\nPublic test function test_promote_learning_fails_missing_sections has no docstring; add a brief description of the test's intent.\n\n[MISSING] tests/test_obsidian_writer.py:195\nPublic test function test_promote_learning_fails_if_slug_not_found has no docstring; add a brief description of the test's intent.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "tests/test_learn_engine.py": [
+    {
+      "file_path": "tests/test_learn_engine.py",
+      "mode": "comment",
+      "timestamp": 1780941192.5110312,
+      "timestamp_iso": "2026-06-08T17:53:12Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 38,
+      "severity_counts": {
+        "WARNING": 38
+      },
+      "findings_text": "Review findings — tests/test_learn_engine.py: 38 total  [WARNING=38]\n\n[WARNING] tests/test_learn_engine.py:22\ntest_record_and_search_learning is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:22\ntest_record_and_search_learning parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:47\ntest_record_learning_skips_duplicate_fingerprint is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:47\ntest_record_learning_skips_duplicate_fingerprint parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:78\ntest_learning_redacts_secrets_before_storage is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:78\ntest_learning_redacts_secrets_before_storage parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:98\ntest_promotion_preview_does_not_write_target_files is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:98\ntest_promotion_preview_does_not_write_target_files parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:117\ntest_learning_rejects_unsupported_source_and_risk is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:117\ntest_learning_rejects_unsupported_source_and_risk parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:141\ntest_learning_schema_accepts_example_shape is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:141\ntest_learning_schema_accepts_example_shape parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:159\ntest_learn_extraction_schema_loaded_from_schema_file is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:182\ntest_validate_learn_record_accepts_contract_shape is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:191\ntest_validate_learn_record_rejects_missing_unknown_and_empty_evidence is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:209\ntest_validate_learn_record_requires_approval_for_storage is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:219\ntest_validate_learn_record_rejects_low_confidence_auto_store is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:229\ntest_validate_learn_record_rejects_prompt_injection_as_action is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:238\ntest_validate_learn_record_allows_prompt_injection_as_evidence_quote is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:249\ntest_store_learn_record_defaults_to_dry_run is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:249\ntest_store_learn_record_defaults_to_dry_run parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:259\ntest_store_learn_record_dry_run_still_validates_shape is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:259\ntest_store_learn_record_dry_run_still_validates_shape parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:266\ntest_store_learn_record_writes_only_with_approval is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:266\ntest_store_learn_record_writes_only_with_approval parameter 'tmp_path' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:283\ntest_learn_extract_pattern_calls_ollama_with_schema_and_validates_response is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:288\nraise_for_status method inside test_learn_extract_pattern_calls_ollama_with_schema_and_validates_response has no return type annotation.\n\n[WARNING] tests/test_learn_engine.py:291\njson method inside test_learn_extract_pattern_calls_ollama_with_schema_and_validates_response has no return type annotation.\n\n[WARNING] tests/test_learn_engine.py:294\nfake_post function is missing return type annotation.\n\n[WARNING] tests/test_learn_engine.py:294\nfake_post parameter 'url' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:294\nfake_post parameter 'json' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:294\nfake_post parameter 'timeout' is missing a type annotation.\n\n[WARNING] tests/test_learn_engine.py:314\ntest_learn_extract_pattern_rejects_non_json_provider_output is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:318\nraise_for_status method inside test_learn_extract_pattern_rejects_non_json_provider_output has no return type annotation.\n\n[WARNING] tests/test_learn_engine.py:321\njson method inside test_learn_extract_pattern_rejects_non_json_provider_output has no return type annotation.\n\n[WARNING] tests/test_learn_engine.py:328\ntest_learn_extract_pattern_coerces_provider_storage_request_to_read_only is a public test function missing a return type annotation.\n\n[WARNING] tests/test_learn_engine.py:332\nraise_for_status method inside test_learn_extract_pattern_coerces_provider_storage_request_to_read_only has no return type annotation.\n\n[WARNING] tests/test_learn_engine.py:335\njson method inside test_learn_extract_pattern_coerces_provider_storage_request_to_read_only has no return type annotation.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "semantic_memory/__init__.py": [
+    {
+      "file_path": "semantic_memory/__init__.py",
+      "mode": "comment",
+      "timestamp": 1780941193.218503,
+      "timestamp_iso": "2026-06-08T17:53:13Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "semantic-memory"
+    }
+  ],
+  "semantic_memory/semantic_memory.py": [
+    {
+      "file_path": "semantic_memory/semantic_memory.py",
+      "mode": "comment",
+      "timestamp": 1780941201.6244612,
+      "timestamp_iso": "2026-06-08T17:53:21Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "MISSING": 15,
+        "SUGGESTION": 1,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — semantic_memory/semantic_memory.py: 18 total  [MISSING=15  SUGGESTION=1  NOTE=2]\n\n[MISSING] semantic_memory/semantic_memory.py:1\nModule-level docstring is present but could be expanded to explicitly document the overall purpose and usage of the SemanticMemory class.\n\n[MISSING] semantic_memory/semantic_memory.py:16\nMemoryItem class has no class docstring; add one summarizing its role as a data container for memory entries.\n\n[MISSING] semantic_memory/semantic_memory.py:26\nMemoryItem.preview() method has no docstring; add a brief description explaining it returns a content preview truncated to PREVIEW_CHARS.\n\n[MISSING] semantic_memory/semantic_memory.py:30\nSemanticMemory class has no class docstring; add one outlining its purpose as a durable knowledge store API.\n\n[MISSING] semantic_memory/semantic_memory.py:34\nSemanticMemory.__init__ method is missing a docstring; add one describing it initializes and loads the store from disk.\n\n[MISSING] semantic_memory/semantic_memory.py:38\nSemanticMemory._load method has no docstring; add a description mentioning it loads the persistent store from the JSON file or returns empty dict.\n\n[MISSING] semantic_memory/semantic_memory.py:44\nSemanticMemory._save method lacks a docstring; add one describing saving current in-memory data to the JSON file, creating directories if needed.\n\n[MISSING] semantic_memory/semantic_memory.py:51\nSemanticMemory.store method docstring should document that tags are optional and describe the parameters and returned MemoryItem explicitly.\n\n[MISSING] semantic_memory/semantic_memory.py:64\nSemanticMemory.get method docstring should specify return type as Optional[MemoryItem] and behavior when key doesn't exist.\n\n[MISSING] semantic_memory/semantic_memory.py:70\nSemanticMemory.list_all method docstring should mention it returns all items sorted by updated time descending.\n\n[MISSING] semantic_memory/semantic_memory.py:76\nSemanticMemory.search method docstring could expand returned list item details and clarify scoring of keyword matches.\n\n[MISSING] semantic_memory/semantic_memory.py:93\nSemanticMemory.search_for_file method docstring should clarify matching logic on file path parts and suffixes as implicit tags.\n\n[MISSING] semantic_memory/semantic_memory.py:104\nSemanticMemory.format_context_block method docstring should specify the returned formatted string structure.\n\n[MISSING] semantic_memory/semantic_memory.py:114\nSemanticMemory.delete method docstring is missing parameter and return value details.\n\n[MISSING] semantic_memory/semantic_memory.py:121\nSemanticMemory.item_count method has no docstring; add brief statement about returning number of stored items.\n\n[SUGGESTION] semantic_memory/semantic_memory.py:12\nModule-level constants (REPO_ROOT, STORE_DIR, STORE_FILE, MAX_SEARCH_RESULTS, PREVIEW_CHARS) could be documented with inline comments for clarity.\n\n[NOTE] semantic_memory/semantic_memory.py:79\nsearch method uses simple keyword count scoring; unclear whether more advanced ranking metrics were considered or needed.\n\n[NOTE] semantic_memory/semantic_memory.py:89\nsearch_for_file uses terms filtered by length > 2 for search; unclear if this threshold is empirically chosen or arbitrary.",
+      "skill": "semantic-memory"
+    }
+  ],
+  "scripts/generate_tool_contracts.py": [
+    {
+      "file_path": "scripts/generate_tool_contracts.py",
+      "mode": "comment",
+      "timestamp": 1780941205.822431,
+      "timestamp_iso": "2026-06-08T17:53:25Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 8,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 2,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — scripts/generate_tool_contracts.py: 8 total  [MISSING=4  SUGGESTION=2  NOTE=2]\n\n[MISSING] scripts/generate_tool_contracts.py:1\nModule has no top-level docstring; add a docstring summarizing the script's purpose and usage.\n\n[MISSING] scripts/generate_tool_contracts.py:34\nextract_tools function has no return type hint; add a return type annotation for clarity.\n\n[MISSING] scripts/generate_tool_contracts.py:59\nmain function has no return type hint; add a return type annotation indicating it returns int.\n\n[MISSING] scripts/generate_tool_contracts.py:92\nThe script uses a module-level block with if __name__ == \"__main__\": but lacks a module-level docstring to indicate script entry point semantics.\n\n[SUGGESTION] scripts/generate_tool_contracts.py:34\nextract_tools function docstring could be expanded to clarify the format of the returned dict keys and values for better understanding.\n\n[SUGGESTION] scripts/generate_tool_contracts.py:62\nThe variables missing_meta and extra_meta are printed with error/warning messages but lack inline comments explaining their purpose or the importance of these checks.\n\n[NOTE] scripts/generate_tool_contracts.py:40\nThe check for decorators named \"tool\" handles both ast.Call and ast.Attribute nodes; this precise logic is documented only in code, could benefit from a brief inline comment explaining why both cases are checked.\n\n[NOTE] scripts/generate_tool_contracts.py:81\nThe \"tools\" list is constructed with dictionaries including an empty \"examples\" list; unclear whether an explanation or docstring could clarify intent of this field.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/generate_screenshots.py": [
+    {
+      "file_path": "scripts/generate_screenshots.py",
+      "mode": "comment",
+      "timestamp": 1780941676.804356,
+      "timestamp_iso": "2026-06-08T18:01:16Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 14,
+      "severity_counts": {
+        "WARNING": 8,
+        "MISSING": 6
+      },
+      "findings_text": "Review findings — scripts/generate_screenshots.py: 14 total  [WARNING=8  MISSING=6]\n\n[WARNING] scripts/generate_screenshots.py:28\ndraw_terminal_header() is missing a return type annotation; add for public function clarity.\n\n[WARNING] scripts/generate_screenshots.py:28\ndraw_terminal_header() parameters 'draw', 'width', 'title', and 'font' lack type annotations; specify types for clarity.\n\n[WARNING] scripts/generate_screenshots.py:33\nrender_terminal_screenshot() is missing a return type annotation; add for public function clarity.\n\n[WARNING] scripts/generate_screenshots.py:33\nrender_terminal_screenshot() parameters 'filename', 'prompt', 'output_text', and 'title' lack type annotations; specify types for clarity.\n\n[WARNING] scripts/generate_screenshots.py:65\nrender_terminal_image_screenshot() is missing a return type annotation; add for public function clarity.\n\n[WARNING] scripts/generate_screenshots.py:65\nrender_terminal_image_screenshot() parameters 'filename', 'prompt', 'image_path', and 'title' lack type annotations; specify types for clarity.\n\n[WARNING] scripts/generate_screenshots.py:91\nfirst_existing_bridget_image() is missing a return type annotation; add for public function clarity.\n\n[WARNING] scripts/generate_screenshots.py:99\nmain() is missing a return type annotation; add for public function clarity.\n\n[MISSING] scripts/generate_screenshots.py:1\nModule 'scripts/generate_screenshots.py' has no module-level docstring; add a summary of the script's purpose and usage.\n\n[MISSING] scripts/generate_screenshots.py:28\ndraw_terminal_header() has no docstring; add a one-line description of its behavior.\n\n[MISSING] scripts/generate_screenshots.py:33\nrender_terminal_screenshot() has no docstring; add a description including what the function returns.\n\n[MISSING] scripts/generate_screenshots.py:65\nrender_terminal_image_screenshot() has no docstring; add a description including what the function returns.\n\n[MISSING] scripts/generate_screenshots.py:91\nfirst_existing_bridget_image() has no docstring; add a one-liner describing the function's purpose and return value.\n\n[MISSING] scripts/generate_screenshots.py:99\nmain() has no docstring; add a brief summary of its purpose.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/upload_semantic_memory.py": [
+    {
+      "file_path": "scripts/upload_semantic_memory.py",
+      "mode": "comment",
+      "timestamp": 1780941696.429461,
+      "timestamp_iso": "2026-06-08T18:01:36Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 6,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 1,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — scripts/upload_semantic_memory.py: 6 total  [MISSING=4  SUGGESTION=1  NOTE=1]\n\n[MISSING] scripts/upload_semantic_memory.py:1\nModule docstring is present but could be more detailed about the file’s usage and parameters.\n\n[MISSING] scripts/upload_semantic_memory.py:16\nclear_store function is public and lacks a docstring; add a one-line description of its purpose.\n\n[MISSING] scripts/upload_semantic_memory.py:31\nupload_pack function is public and lacks a docstring; add a one-line summary including what it returns or raises.\n\n[MISSING] scripts/upload_semantic_memory.py:59\nmain function is public and lacks a docstring; add a one-line summary of its behavior and effects.\n\n[SUGGESTION] scripts/upload_semantic_memory.py:43\nIn upload_pack, parameter PACK_DIR is read from a global constant; consider documenting this dependency in the function docstring.\n\n[NOTE] scripts/upload_semantic_memory.py:15\nclear_store's inline comments explain the deletion steps but do not clarify why deleting the underlying file might already be unnecessary; unclear whether deletion errors are logged intentionally or suppressed silently.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/create_vector_store.py": [
+    {
+      "file_path": "scripts/create_vector_store.py",
+      "mode": "comment",
+      "timestamp": 1780941706.158707,
+      "timestamp_iso": "2026-06-08T18:01:46Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 13,
+      "severity_counts": {
+        "WARNING": 1,
+        "MISSING": 5,
+        "SUGGESTION": 3,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — scripts/create_vector_store.py: 13 total  [WARNING=1  MISSING=5  SUGGESTION=3  NOTE=4]\n\n[WARNING] scripts/create_vector_store.py:24\nThe update_env function manipulates environment file lines based on regex but has no explanation why re.MULTILINE is used or why this regex approach was chosen over other parsing methods; this could cause confusion.\n\n[MISSING] scripts/create_vector_store.py:18\nModule docstring does not document the return behavior or side effects of the script; adding information about expected output or environment changes would be helpful.\n\n[MISSING] scripts/create_vector_store.py:23\nupdate_env function is public but lacks a docstring describing its purpose, parameters, and side effects.\n\n[MISSING] scripts/create_vector_store.py:37\nmain function is public and missing a docstring; a description of what it returns or its side effects should be added.\n\n[MISSING] scripts/create_vector_store.py:37\nmain function processes files but does not document the expected exceptions it may raise or exit behavior explicitly in a docstring.\n\n[MISSING] scripts/create_vector_store.py:71\nNo inline comments explain the purpose or structure of the upload_and_poll call; adding a brief note would improve understandability.\n\n[SUGGESTION] scripts/create_vector_store.py:26\nThe parameter 'vector_store_id' in update_env could be more descriptive to clarify it represents a string ID of the created vector store.\n\n[SUGGESTION] scripts/create_vector_store.py:38\nThe print statements in main communicate progress but lack contextual inline comments explaining their placement or why certain information is printed.\n\n[SUGGESTION] scripts/create_vector_store.py:39\nmain function lacks a return type annotation; adding `-> None` would improve type clarity.\n\n[NOTE] scripts/create_vector_store.py:43\nThe variable 'client' is an instance of OpenAI client; while not commented, this is fairly self-explanatory in this context.\n\n[NOTE] scripts/create_vector_store.py:49\nThe file filtering comprehension uses ALLOWED_SUFFIXES but does not elaborate in comments why these suffixes are chosen; this is understandable but could be clarified for maintainers.\n\n[NOTE] scripts/create_vector_store.py:74\nThe upload loop includes exception handling printing \"FAILED\" and exception messages; no comments explain what types of exceptions are expected or if any retry mechanism is considered.\n\n[NOTE] scripts/create_vector_store.py:89\nThe final message instructing to run 'source ~/.zshrc' or re-enter the directory implies environmental changes but is not documented or referenced in the docstrings.\n\nOK — no comment review findings.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/upload_vector_pack.py": [
+    {
+      "file_path": "scripts/upload_vector_pack.py",
+      "mode": "comment",
+      "timestamp": 1780941712.098458,
+      "timestamp_iso": "2026-06-08T18:01:52Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 11,
+      "severity_counts": {
+        "MISSING": 5,
+        "SUGGESTION": 2,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — scripts/upload_vector_pack.py: 11 total  [MISSING=5  SUGGESTION=2  NOTE=4]\n\n[MISSING] scripts/upload_vector_pack.py:14\nModule-level docstring describes usage but lacks a summary line about the module purpose or script goal.\n\n[MISSING] scripts/upload_vector_pack.py:18\npack_files function has no docstring describing its return value and purpose.\n\n[MISSING] scripts/upload_vector_pack.py:23\nclear_store function lacks a docstring explaining parameters, return value, and behavior.\n\n[MISSING] scripts/upload_vector_pack.py:39\nupload_pack function is missing a docstring describing parameters, return values, and side effects.\n\n[MISSING] scripts/upload_vector_pack.py:61\nmain function has no docstring describing its overall workflow, inputs, outputs, or exit conditions.\n\n[SUGGESTION] scripts/upload_vector_pack.py:23\nParameter name 'client' in clear_store could be more descriptive, clarifying it is an OpenAI API client instance.\n\n[SUGGESTION] scripts/upload_vector_pack.py:39\nParameter name 'files' in upload_pack could be clearer as 'file_paths' or similar for readability.\n\n[NOTE] scripts/upload_vector_pack.py:14\nThe multiline script usage instructions in the module docstring clearly describe steps to run the script including environment setup.\n\n[NOTE] scripts/upload_vector_pack.py:18\nType hint on pack_files return type is correctly used for list of Paths; consistent with modern Python style.\n\n[NOTE] scripts/upload_vector_pack.py:39\nupload_pack returns a tuple of two integers but this is not described in the code comments or docstring (missing).\n\n[NOTE] scripts/upload_vector_pack.py:66\nmain function uses environment variable OPENAI_VECTOR_STORE_ID, which is noted in the module docstring setup instructions.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/vignette.py": [
+    {
+      "file_path": "scripts/vignette.py",
+      "mode": "comment",
+      "timestamp": 1780941716.909933,
+      "timestamp_iso": "2026-06-08T18:01:56Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 7,
+      "severity_counts": {
+        "MISSING": 3,
+        "SUGGESTION": 2,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — scripts/vignette.py: 7 total  [MISSING=3  SUGGESTION=2  NOTE=2]\n\n[MISSING] scripts/vignette.py:8\nModule-level docstring is minimal and only describes the effect; consider expanding it to explain the script's purpose and usage.\n\n[MISSING] scripts/vignette.py:14\nmake_vignette_mask function has no docstring; add a description of what the returned Image mask represents.\n\n[MISSING] scripts/vignette.py:25\napply_vignette function has no docstring; add description of parameters, effect, and no return value.\n\n[SUGGESTION] scripts/vignette.py:14\nThe parameter 'size' in make_vignette_mask could be more clearly annotated as 'tuple[int, int]' or a named type to specify (width, height).\n\n[SUGGESTION] scripts/vignette.py:34\napply_vignette parameters 'src' and 'dst' could have clearer names like 'source_path' and 'destination_path' for readability at call sites.\n\n[NOTE] scripts/vignette.py:11-12\nConstants FEATHER and BLUR_RADIUS are at module level and named clearly; no docstrings needed but consider grouping constants with comments.\n\n[NOTE] scripts/vignette.py:38\nThe print statement logs the result of apply_vignette; consider adding a docstring statement describing output for clarify.",
+      "skill": "python-comment-review"
+    }
   ]
 }
