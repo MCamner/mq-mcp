@@ -803,5 +803,171 @@
       "findings_text": "Review findings — scripts/vignette.py: 7 total  [MISSING=3  SUGGESTION=2  NOTE=2]\n\n[MISSING] scripts/vignette.py:8\nModule-level docstring is minimal and only describes the effect; consider expanding it to explain the script's purpose and usage.\n\n[MISSING] scripts/vignette.py:14\nmake_vignette_mask function has no docstring; add a description of what the returned Image mask represents.\n\n[MISSING] scripts/vignette.py:25\napply_vignette function has no docstring; add description of parameters, effect, and no return value.\n\n[SUGGESTION] scripts/vignette.py:14\nThe parameter 'size' in make_vignette_mask could be more clearly annotated as 'tuple[int, int]' or a named type to specify (width, height).\n\n[SUGGESTION] scripts/vignette.py:34\napply_vignette parameters 'src' and 'dst' could have clearer names like 'source_path' and 'destination_path' for readability at call sites.\n\n[NOTE] scripts/vignette.py:11-12\nConstants FEATHER and BLUR_RADIUS are at module level and named clearly; no docstrings needed but consider grouping constants with comments.\n\n[NOTE] scripts/vignette.py:38\nThe print statement logs the result of apply_vignette; consider adding a docstring statement describing output for clarify.",
       "skill": "python-comment-review"
     }
+  ],
+  "scripts/check-stability.py": [
+    {
+      "file_path": "scripts/check-stability.py",
+      "mode": "comment",
+      "timestamp": 1780958843.313123,
+      "timestamp_iso": "2026-06-08T22:47:23Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 12,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 1,
+        "NOTE": 7
+      },
+      "findings_text": "Review findings — scripts/check-stability.py: 12 total  [MISSING=4  SUGGESTION=1  NOTE=7]\n\n[MISSING] scripts/check-stability.py:1\nModule docstring is too brief and does not describe the script's overall functionality, inputs, outputs, or side effects.\n\n[MISSING] scripts/check-stability.py:13\nfail() function has no docstring describing its parameter and the effect of the function (exiting the program).\n\n[MISSING] scripts/check-stability.py:17\nrequire_file() function lacks a docstring describing its parameter and purpose.\n\n[MISSING] scripts/check-stability.py:21\nmain() function has no docstring describing its parameters (none) and return type, and explaining what the script checks and what the exit codes mean.\n\n[SUGGESTION] scripts/check-stability.py:21\nmain() function has no return type annotation; adding `-> int` would improve clarity for users of the function.\n\n[NOTE] scripts/check-stability.py:24\nThe parameter `path` in require_file() is typed as str, but internally it is combined with the ROOT Path object; unclear whether path should always be a relative path string.\n\n[NOTE] scripts/check-stability.py:35\nLocal variable `version` is derived from reading a file; unclear whether additional validation of version string format is warranted.\n\n[NOTE] scripts/check-stability.py:54\nLocal variable `contracts` loads a JSON with keys `mq_mcp_version` and `schema_version`; unclear if these keys are guaranteed to exist in all versions of the file, or if a KeyError could arise.\n\n[NOTE] scripts/check-stability.py:60\nLocal variable `requirements` is expected to be a list, but type is loosely checked; unclear whether elements of the list are always dicts or if further validation is needed.\n\n[NOTE] scripts/check-stability.py:66\nIn checking requirement items in the loop, keys like \"name\", \"status\", and \"evidence\" are accessed without prior validation of presence; unclear whether the input files always contain these keys.\n\n[NOTE] scripts/check-stability.py:79\nThe print statement at the end prints a success message; unclear whether the format and content of this output meets other logging or machine parsing expectations.\n\n[NOTE] scripts/check-stability.py:82\nThe script uses `raise SystemExit(main())` in the main guard; this is non-typical but valid; unclear whether this usage should be documented for maintainers.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "scripts/check-profiles.py": [
+    {
+      "file_path": "scripts/check-profiles.py",
+      "mode": "comment",
+      "timestamp": 1780958850.476135,
+      "timestamp_iso": "2026-06-08T22:47:30Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 13,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 2,
+        "NOTE": 7
+      },
+      "findings_text": "Review findings — scripts/check-profiles.py: 13 total  [MISSING=4  SUGGESTION=2  NOTE=7]\n\n[MISSING] scripts/check-profiles.py:1\nModule-level docstring is very brief and does not explain the script's purpose or usage beyond a short summary.\n\n[MISSING] scripts/check-profiles.py:21\nFunction main has no docstring; add a description of what it validates and what it returns.\n\n[MISSING] scripts/check-profiles.py:51\nThe for loop iterating through profile JSON paths lacks inline comments explaining key validation steps, such as why certain fields must be checked or why some checks are performed (e.g., filename matching name).\n\n[MISSING] scripts/check-profiles.py:82\nNo comments or docstring note about EXPECTED_PROFILES purpose or that missing ones cause failure.\n\n[SUGGESTION] scripts/check-profiles.py:46\nfail parameter name \"message\" is clear, but its usage could be clarified in a docstring for fail function, describing that it prints an error message then exits.\n\n[SUGGESTION] scripts/check-profiles.py:62\nWhen validating data[\"schema_version\"], a comment would clarify why only \"mq-mcp.profile.v1\" is accepted.\n\n[NOTE] scripts/check-profiles.py:13\nConstants ROOT, PROFILES_DIR, REQUIRED_FIELDS, and EXPECTED_PROFILES are well-named and self-explanatory.\n\n[NOTE] scripts/check-profiles.py:50\nmain is a public function and has a return type annotation, consistent with good practice.\n\n[NOTE] scripts/check-profiles.py:58\nThe error messages in fail calls provide helpful information for debugging profile issues.\n\n[NOTE] scripts/check-profiles.py:72\nType checks for fields \"args\", \"env\", \"recommended_tools\", and \"safety_notes\" in profiles are explicit and clear without need for extra comments.\n\n[NOTE] scripts/check-profiles.py:87\nUse of set operations to check missing fields is clear and appropriate.\n\n[NOTE] scripts/check-profiles.py:92\nThe script uses a main guard correctly to prevent unintended execution on import.\n\n[NOTE] scripts/check-profiles.py:94\nThe script raises SystemExit on completion, which is appropriate for CLI tools.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/learn_engine.py": [
+    {
+      "file_path": "mq-mcp/learn_engine.py",
+      "mode": "comment",
+      "timestamp": 1780958865.630708,
+      "timestamp_iso": "2026-06-08T22:47:45Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 34,
+      "severity_counts": {
+        "MISSING": 26,
+        "SUGGESTION": 5,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — mq-mcp/learn_engine.py: 34 total  [MISSING=26  SUGGESTION=5  NOTE=3]\n\n[MISSING] mq-mcp/learn_engine.py:38\n_learning_extraction_schema() has no docstring; add a one-line description of its purpose and return value.\n\n[MISSING] mq-mcp/learn_engine.py:61\nLearningRecord class lacks a class-level docstring summarizing its role and fields.\n\n[MISSING] mq-mcp/learn_engine.py:106\nlearning_dir function has no docstring; add a one-line description of the directory path it returns.\n\n[MISSING] mq-mcp/learn_engine.py:110\nlearning_store_path function has no docstring; add a one-line description of the file path it returns.\n\n[MISSING] mq-mcp/learn_engine.py:114\nredact_secrets function has no type hints; add parameter and return type annotations.\n\n[MISSING] mq-mcp/learn_engine.py:114\nredact_secrets function lacks a description of the accepted input types and the output transformation.\n\n[MISSING] mq-mcp/learn_engine.py:116\nInline comment \"Redact likely secrets from strings, lists, and dictionaries.\" is helpful but could be expanded into a full docstring.\n\n[MISSING] mq-mcp/learn_engine.py:129\nvalidate_learn_record has no return type hint; add return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:129\nvalidate_learn_record docstring does not specify the return type or the structure of the returned dict.\n\n[MISSING] mq-mcp/learn_engine.py:250\nollama_learn_status lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:250\nollama_learn_status docstring does not specify the structure of the returned dict.\n\n[MISSING] mq-mcp/learn_engine.py:276\nlearn_extract_from_last_review function lacks return type hint.\n\n[MISSING] mq-mcp/learn_engine.py:276\nlearn_extract_from_last_review docstring does not state the structure or content of the returned dict.\n\n[MISSING] mq-mcp/learn_engine.py:293\nollama_learn_extract function lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:293\nollama_learn_extract docstring does not describe the structure of the returned dictionary.\n\n[MISSING] mq-mcp/learn_engine.py:324\nlearn_extract_pattern function lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:324\nlearn_extract_pattern docstring does not describe the return value structure.\n\n[MISSING] mq-mcp/learn_engine.py:357\nstore_learn_record function lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:357\nstore_learn_record's docstring omits describing the return dict format.\n\n[MISSING] mq-mcp/learn_engine.py:409\nrecord_learning function lacks return type hint.\n\n[MISSING] mq-mcp/learn_engine.py:426\nload_learnings function lacks return type hint specifying the list of dicts format.\n\n[MISSING] mq-mcp/learn_engine.py:440\nhygiene_report function lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:509\nget_learning function lacks return type annotation specifying optional dict return.\n\n[MISSING] mq-mcp/learn_engine.py:517\nsearch_learnings function lacks return type annotation.\n\n[MISSING] mq-mcp/learn_engine.py:529\nsummarize_learnings function lacks type annotation for return type.\n\n[MISSING] mq-mcp/learn_engine.py:543\npromotion_preview function docstring does not specify the return type explicitly.\n\n[SUGGESTION] mq-mcp/learn_engine.py:114\nredact_secrets parameter name 'value' could be more descriptive, e.g., 'input_data' for clarity.\n\n[SUGGESTION] mq-mcp/learn_engine.py:129\nvalidate_learn_record parameter 'record' is of type Any; consider using more precise type hints if possible.\n\n[SUGGESTION] mq-mcp/learn_engine.py:157\n_ollama_prompt function is private but has no docstring; consider adding a brief one for clarity on its formatting role.\n\n[SUGGESTION] mq-mcp/learn_engine.py:185\nollama_learn_status parameter 'http_get' is typed as Callable[..., Any] | None without explanation; clarify expected callable signature.\n\n[SUGGESTION] mq-mcp/learn_engine.py:349\nstore_learn_record parameter 'record' typed as dict[str, Any] but no detailed explanation of expected keys; documenting this would improve clarity.\n\n[NOTE] mq-mcp/learn_engine.py:396\nlearn_fingerprint concatenates input strings with newlines and semicolons before hashing — clear and consistent with usage.\n\n[NOTE] mq-mcp/learn_engine.py:426\nload_learnings reads JSONL records one per line; no comment on error handling for malformed lines — unclear if intentional.\n\n[NOTE] mq-mcp/learn_engine.py:529\nsummarize_learnings generates markdown summary string, output is clearly structured but not documented in docstring.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/bridget_voice.py": [
+    {
+      "file_path": "mq-mcp/bridget_voice.py",
+      "mode": "comment",
+      "timestamp": 1780958875.298889,
+      "timestamp_iso": "2026-06-08T22:47:55Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 13,
+      "severity_counts": {
+        "MISSING": 9,
+        "SUGGESTION": 1,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — mq-mcp/bridget_voice.py: 13 total  [MISSING=9  SUGGESTION=1  NOTE=3]\n\n[MISSING] mq-mcp/bridget_voice.py:15\n_function _state_file has no docstring; even private helper functions can benefit from a brief description of their role returning the state file Path.\n\n[MISSING] mq-mcp/bridget_voice.py:24\n_function _voice_file has no docstring; document that it returns the Path object for the voice name file.\n\n[MISSING] mq-mcp/bridget_voice.py:30\n_public function set_voice_enabled lacks a docstring; add one describing its parameter and effect of enabling or disabling the voice state.\n\n[MISSING] mq-mcp/bridget_voice.py:38\n_public function is_voice_enabled has no docstring; add a line describing the boolean return indicating whether voice output is enabled.\n\n[MISSING] mq-mcp/bridget_voice.py:53\n_public function set_voice_name is missing a docstring describing the parameter 'name' and that it sets/persists the selected voice name.\n\n[MISSING] mq-mcp/bridget_voice.py:63\n_public function get_voice_name lacks docstring; describe the string return of current voice name determined by env variable, file, or default.\n\n[MISSING] mq-mcp/bridget_voice.py:71\n_public function strip_for_speech has a brief docstring but it should explicitly document the return value as the cleaned string suitable for speech synthesis.\n\n[MISSING] mq-mcp/bridget_voice.py:93\n_public function speak_if_enabled has no docstring; add a description that it invokes system TTS if voice enabled, silently ignoring errors.\n\n[MISSING] mq-mcp/bridget_voice.py:106\n_public function handle_voice_command lacks a docstring; add explanation of input prompt and boolean return for whether command was recognized and handled.\n\n[SUGGESTION] mq-mcp/bridget_voice.py:106\nParameter name 'prompt' in handle_voice_command is clear, no change needed.\n\n[NOTE] mq-mcp/bridget_voice.py:71\nThe strip_for_speech function performs important sanitization for speech clarity; the docstring could mention key replacements done for acronyms and truncation.\n\n[NOTE] mq-mcp/bridget_voice.py:93\nThe speak_if_enabled function suppresses any exceptions from subprocess.Popen silently—unclear whether logging or user feedback was considered desirable.\n\n[NOTE] mq-mcp/bridget_voice.py:106\nThe handle_voice_command function prints directly to standard output; unclear whether this is intended for CLI usage only or if comments could clarify.\n\nOK — no comment review findings beyond above.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/ask.py": [
+    {
+      "file_path": "mq-mcp/ask.py",
+      "mode": "comment",
+      "timestamp": 1780958879.922085,
+      "timestamp_iso": "2026-06-08T22:47:59Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 8,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 1,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — mq-mcp/ask.py: 8 total  [MISSING=4  SUGGESTION=1  NOTE=3]\n\n[MISSING] mq-mcp/ask.py:14\nModule-level docstring should include a one-line summary of what the module provides beyond usage examples.\n\n[MISSING] mq-mcp/ask.py:29\nscramble_print function is public but lacks a docstring describing its behavior.\n\n[MISSING] mq-mcp/ask.py:44\nrun_ask function has no docstring; add a description of parameters and behavior, including what it returns or outputs.\n\n[MISSING] mq-mcp/ask.py:88\nmain function is public but lacks a docstring describing its role, parameters, and behavior.\n\n[SUGGESTION] mq-mcp/ask.py:44\nrun_ask parameter global_only could be named search_global_only for clarity at call sites.\n\n[NOTE] mq-mcp/ask.py:45\nrun_ask function lacks a return type hint; adding '-> None' would improve clarity.\n\n[NOTE] mq-mcp/ask.py:52\nThe SYSTEM_LOCAL and SYSTEM_GLOBAL constants have descriptive texts; consider adding brief comments explaining their role for maintainability.\n\n[NOTE] mq-mcp/ask.py:88\nmain function lacks a return type hint; adding '-> None' would improve clarity.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/tool_registry.py": [
+    {
+      "file_path": "mq-mcp/tool_registry.py",
+      "mode": "comment",
+      "timestamp": 1780960953.097266,
+      "timestamp_iso": "2026-06-08T23:22:33Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 10,
+      "severity_counts": {
+        "MISSING": 8,
+        "SUGGESTION": 1,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — mq-mcp/tool_registry.py: 10 total  [MISSING=8  SUGGESTION=1  NOTE=1]\n\n[MISSING] mq-mcp/tool_registry.py:88\nload_registry has no docstring explaining the structure and key fields of the returned list of dicts.\n\n[MISSING] mq-mcp/tool_registry.py:95\nregistry_summary lacks explicit documentation on the exact keys and types of the returned summary dict.\n\n[MISSING] mq-mcp/tool_registry.py:110\nas_markdown_table docstring does not describe the output Markdown table format or key columns meaning.\n\n[MISSING] mq-mcp/tool_registry.py:124\n_export_tool_index does not have a docstring explaining the JSON schema it writes.\n\n[MISSING] mq-mcp/tool_registry.py:136\nexport_tool_safety lacks a docstring detailing the safety-focused aspects of the exported JSON and key included fields.\n\n[MISSING] mq-mcp/tool_registry.py:157\nexport_runtime_contract docstring does not mention the meaning or source of \"runtime_tools\" or other keys in the output.\n\n[MISSING] mq-mcp/tool_registry.py:181\nexport_release_state docstring does not cover structure or semantics of the output JSON.\n\n[MISSING] mq-mcp/tool_registry.py:208\nexport_profile_index docstring does not describe the profile metadata fields included or any error handling behavior.\n\n[SUGGESTION] mq-mcp/tool_registry.py:56\nThe parameter name raw in _normalize could be improved to raw_contract or raw_tool_data for clarity that it represents a single contract entry.\n\n[NOTE] mq-mcp/tool_registry.py:30\nThe detailed _CATEGORIES dict has no inline comments explaining the reasoning behind categorization or potential updates, but this is understandable due to its static nature.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/bridge.py": [
+    {
+      "file_path": "mq-mcp/bridge.py",
+      "mode": "comment",
+      "timestamp": 1780960963.831787,
+      "timestamp_iso": "2026-06-08T23:22:43Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 21,
+      "severity_counts": {
+        "MISSING": 18,
+        "SUGGESTION": 2,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — mq-mcp/bridge.py: 21 total  [MISSING=18  SUGGESTION=2  NOTE=1]\n\n[MISSING] mq-mcp/bridge.py:126\nscramble_print has no docstring; add a description of its purpose and parameters.\n\n[MISSING] mq-mcp/bridge.py:142\nusage function lacks a docstring; include a brief summary of its usage instructions.\n\n[MISSING] mq-mcp/bridge.py:155\nparse_prompt is a public function without a docstring; add one explaining its return values and parameters.\n\n[MISSING] mq-mcp/bridge.py:182\ntool_catalog_text has no docstring; add one to explain its input and the format of the returned string.\n\n[MISSING] mq-mcp/bridge.py:194\nto_openai_tools has no docstring; document its parameters and return type.\n\n[MISSING] mq-mcp/bridge.py:208\ncontent_to_text function lacks a docstring describing its behavior and return type.\n\n[MISSING] mq-mcp/bridge.py:220\ncall_mcp_tool is missing a docstring; this public async function should describe parameters, return type, and error handling.\n\n[MISSING] mq-mcp/bridge.py:237\ntool_call_name_and_args has no docstring; add one explaining what a tool_call is and the returned tuple contents.\n\n[MISSING] mq-mcp/bridge.py:245\nbridget_image_dirs is a public function without a docstring; add one explaining what directories it returns.\n\n[MISSING] mq-mcp/bridge.py:252\nfind_bridget_images lacks a docstring; document that it returns a list of Paths of available images.\n\n[MISSING] mq-mcp/bridge.py:265\nchoose_bridget_image has no docstring describing its parameters and behavior including use of _last_bridget_image.\n\n[MISSING] mq-mcp/bridge.py:279\n_image_line function is missing a docstring; add one explaining what it does with the image and return value.\n\n[MISSING] mq-mcp/bridge.py:295\nshow_bridget_face has no docstring; add description of its side-effects and behavior.\n\n[MISSING] mq-mcp/bridge.py:332\nknown_local_repos has a partial docstring, but should be expanded to explain return type and environment variable format in detail.\n\n[MISSING] mq-mcp/bridge.py:344\nis_goto_repo_prompt lacks a docstring; add one explaining input, output tuple, and usage.\n\n[MISSING] mq-mcp/bridge.py:354\nhandle_goto_repo has a short docstring; clarify that it outputs a shell wrapper signal rather than changing directory directly.\n\n[MISSING] mq-mcp/bridge.py:367\nis_bridget_face_prompt has no docstring; add one explaining what prompts it matches and return type.\n\n[MISSING] mq-mcp/bridge.py:395\nrun_bridge is missing a docstring; add a clear description of its asynchronous role and high-level workflow.\n\n[SUGGESTION] mq-mcp/bridge.py:220\ncall_mcp_tool accepts raw_args as str|None but the parameter type is Optional[str] typed as Any; consider more specific typing in signature for clarity.\n\n[SUGGESTION] mq-mcp/bridge.py:237\ntool_call_name_and_args returns Tuple[str, Optional[str]] but argument extraction might produce other types; clarify in docstring or typing.\n\n[NOTE] mq-mcp/bridge.py:302\nknown_local_repos imports Path internally rather than at module level; unclear whether this is intentional to avoid circular import or for startup performance reasons.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/main.py": [
+    {
+      "file_path": "mq-mcp/main.py",
+      "mode": "comment",
+      "timestamp": 1780960974.132191,
+      "timestamp_iso": "2026-06-08T23:22:54Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 21,
+      "severity_counts": {
+        "MISSING": 16,
+        "SUGGESTION": 2,
+        "NOTE": 3
+      },
+      "findings_text": "Review findings — mq-mcp/main.py: 21 total  [MISSING=16  SUGGESTION=2  NOTE=3]\n\n[MISSING] mq-mcp/main.py:12\nThe module has no module-level docstring; add a descriptive docstring explaining its purpose as the CLI entry point.\n\n[MISSING] mq-mcp/main.py:16\nFunction read_version has no docstring; add a one-line docstring describing its return value.\n\n[MISSING] mq-mcp/main.py:20\nFunction run_command has no docstring; add a description of parameters and the meaning of its return value.\n\n[MISSING] mq-mcp/main.py:28\nFunction capture_command has no docstring; add a description of parameters and the dictionary format of its return value.\n\n[MISSING] mq-mcp/main.py:45\nFunction safe_git_summary has no docstring; add a one-line docstring describing its returned dictionary.\n\n[MISSING] mq-mcp/main.py:55\nFunction redacted_env_summary has no docstring; add a one-line docstring describing the summary of environment variables including redaction details.\n\n[MISSING] mq-mcp/main.py:72\nFunction load_contract_summary has no docstring; add a description of the contract summary dictionary returned.\n\n[MISSING] mq-mcp/main.py:87\nFunction load_profiles has no docstring; add a description of the list of loaded profile dictionaries returned.\n\n[MISSING] mq-mcp/main.py:95\nFunction find_profile has no docstring; add a description of its parameter and return value semantics.\n\n[MISSING] mq-mcp/main.py:102\nFunction load_stability has no docstring; add a one-line docstring describing the JSON stability baseline loaded.\n\n[MISSING] mq-mcp/main.py:106\nFunction build_health_payload has no docstring; add a description of the health summary dictionary returned.\n\n[MISSING] mq-mcp/main.py:118\nFunction build_report has no docstring; add a description of parameters and the generated diagnostic report dictionary.\n\n[MISSING] mq-mcp/main.py:138\nFunction print_payload has no docstring; add a description of parameters and output format choice.\n\n[MISSING] mq-mcp/main.py:151\nFunction doctor has no docstring; add a description of its parameter and the integer exit code returned.\n\n[MISSING] mq-mcp/main.py:200\nFunction build_parser has no docstring; add a one-line docstring describing the construction of the CLI argument parser.\n\n[MISSING] mq-mcp/main.py:255\nFunction main has no docstring; add a description of parameters and the integer return exit code semantics.\n\n[SUGGESTION] mq-mcp/main.py:32\nIn run_command and capture_command, the parameter name args is generic; consider naming it command_args or cmd_args for clarity.\n\n[SUGGESTION] mq-mcp/main.py:255\nIn main function, the argument argv is optionally None but untyped in docstring; document that None means sys.argv[1:] is used.\n\n[NOTE] mq-mcp/main.py:12\nThe existing module-level comment string is a standalone line, not a proper docstring; consider converting it to a triple-quoted docstring for consistency.\n\n[NOTE] mq-mcp/main.py:181\nThe print_payload function prints non-JSON human-readable output summarizing a payload dictionary; this is consistent with CLI usage.\n\n[NOTE] mq-mcp/main.py:271\nThe main function performs extensive command dispatch based on parsed arguments; docstrings could briefly mention the commands handled.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/providers/__init__.py": [
+    {
+      "file_path": "mq-mcp/providers/__init__.py",
+      "mode": "comment",
+      "timestamp": 1780960975.417643,
+      "timestamp_iso": "2026-06-08T23:22:55Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/providers/ollama_provider.py": [
+    {
+      "file_path": "mq-mcp/providers/ollama_provider.py",
+      "mode": "comment",
+      "timestamp": 1780960989.756758,
+      "timestamp_iso": "2026-06-08T23:23:09Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 21,
+      "severity_counts": {
+        "MISSING": 6,
+        "SUGGESTION": 4,
+        "NOTE": 11
+      },
+      "findings_text": "Review findings — mq-mcp/providers/ollama_provider.py: 21 total  [MISSING=6  SUGGESTION=4  NOTE=11]\n\n[MISSING] mq-mcp/providers/ollama_provider.py:44\nhealth function has a docstring but lacks a return type annotation; add return type hint for clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:56\nlist_models function has a docstring but lacks a return type annotation; add return type hint for clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:69\nchat_json function docstring omits the return type information; explicitly document the returned dictionary format.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:125\n_extract_learn_item function is private but its parameter's type is Any without further type hint detail, which reduces clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:143\nextract_learn_items function docstring describes return keys but lacks a return type annotation; add precise return type hint.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:172\nreview_summary function docstring describes return value but lacks a return type annotation; add return type hint.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:62\nParameter name `model` is clear, but specifying in docstrings that it refers to an Ollama model name could improve clarity.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:121\n_validate_learn_item function uses a list named `required` for field presence checks; documenting expected types or content for each field might improve maintainability.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:153\nIn extract_learn_items, the parameter `findings` is typed as str but could benefit from a docstring statement clarifying expected content format (e.g., text with findings).\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:177\nIn review_summary, parameter `findings` could explicitly document the expected format or source to aid downstream usage.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:5\nModule-level docstring clearly describes purpose and usage, aiding maintainability.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:24\nClass OllamaUnavailableError inherits from RuntimeError—no class-level docstring exists, but name is sufficiently clear for context.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:28\nClass OllamaValidationError inherits from ValueError—no class-level docstring exists, but name is sufficiently descriptive.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:46\nhealth function has a detailed docstring explaining behavior including failure mode returning error dict.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:58\nlist_models function docstring specifies it raises OllamaUnavailableError if Ollama is down.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:78\nchat_json function has a precise docstring explaining exceptions raised on error conditions.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:111\n_LEARN_SYSTEM and _LEARN_PROMPT_TEMPLATE constants have clear explanatory string values aiding understanding.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:138\n_extract_learn_item private function has a minimal docstring summarizing its purpose.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:158\nextract_learn_items function docstring clearly explains the return dict structure and keys.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:180\nreview_summary function docstring explains role and possible error keys in the return dict.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:193\n_SUMMARY_SYSTEM and _SUMMARY_PROMPT_TEMPLATE constants have clear explanatory string values for their use cases.",
+      "skill": "python-comment-review"
+    }
   ]
 }
