@@ -16,11 +16,11 @@ The goal is not to create an unrestricted local automation server.
 
 The goal is to create a system that is:
 
-- self-describing — the runtime can explain its own boundaries
-- verifiable — contracts are enforced and drift is detected
-- self-reflective — the runtime can review and diagnose itself
-- deterministic — same inputs, same output structure, always
-- symbolically aware — the runtime understands structure, not just content
+* self-describing — the runtime can explain its own boundaries
+* verifiable — contracts are enforced and drift is detected
+* self-reflective — the runtime can review and diagnose itself
+* deterministic — same inputs, same output structure, always
+* symbolically aware — the runtime understands structure, not just content
 
 **The highest-leverage improvement at any phase is context quality, not more
 features.** All real quality gains come from giving the model better structured
@@ -41,31 +41,31 @@ Next:    v1.11.0 - Ollama-backed learn extraction hardening
 
 Completed foundation:
 
-- local MCP server with 66 tools across safety classes A–D and review engine tools
-- OpenAI/MCP bridge
-- repo-scoped file tools with path boundary enforcement
-- system resource tools
-- git tools
-- shell/subprocess safety boundaries
-- explicit filesystem allowlist
-- Bridget identity asset
-- validation and release-check scripts
-- docs and GitHub Pages
-- tool safety documentation and tool inventory sync
-- tool contract JSON and safety metadata (`docs/tool_contracts.json`)
-- mq-agent and mqlaunch integration docs
-- packaged `mq-mcp` CLI
-- install, upgrade, and uninstall scripts
-- health, info, report, and troubleshooting bundle commands
-- redacted observability endpoints
-- validated MCP profile templates for common clients and workflows
-- review engine: contracts, skills, severity engine, review memory, multi-pass
+* local MCP server with 66 tools across safety classes A–D and review engine tools
+* OpenAI/MCP bridge
+* repo-scoped file tools with path boundary enforcement
+* system resource tools
+* git tools
+* shell/subprocess safety boundaries
+* explicit filesystem allowlist
+* Bridget identity asset
+* validation and release-check scripts
+* docs and GitHub Pages
+* tool safety documentation and tool inventory sync
+* tool contract JSON and safety metadata (`docs/tool_contracts.json`)
+* mq-agent and mqlaunch integration docs
+* packaged `mq-mcp` CLI
+* install, upgrade, and uninstall scripts
+* health, info, report, and troubleshooting bundle commands
+* redacted observability endpoints
+* validated MCP profile templates for common clients and workflows
+* review engine: contracts, skills, severity engine, review memory, multi-pass
   reviewer, drift detector, `review_diff`, `review_repo`
-- architecture memory: ADRs, boundaries, rejected patterns, philosophy, coding
+* architecture memory: ADRs, boundaries, rejected patterns, philosophy, coding
   convention extraction
-- orchestration boundary contract with mq-agent/profile validation
-- `docs/RUNTIME_CONTRACT.md` — authoritative identity and execution contract
-- `docs/ORCHESTRATION_CONTRACT.md` — authoritative orchestration boundary contract
+* orchestration boundary contract with mq-agent/profile validation
+* `docs/RUNTIME_CONTRACT.md` — authoritative identity and execution contract
+* `docs/ORCHESTRATION_CONTRACT.md` — authoritative orchestration boundary contract
 
 ---
 
@@ -88,12 +88,12 @@ mq-mcp executes. mq-agent orchestrates. The boundary must not blur.
 
 mq-mcp owns the central cognition runtime:
 
-- review engine and review contracts
-- semantic retrieval and review memory
-- repo context selection for reviews
-- architecture memory and architecture drift detection
-- MCP runtime and safety metadata
-- multi-pass review and risk analysis
+* review engine and review contracts
+* semantic retrieval and review memory
+* repo context selection for reviews
+* architecture memory and architecture drift detection
+* MCP runtime and safety metadata
+* multi-pass review and risk analysis
 
 mq-mcp must not absorb heavy UI, duplicated repository indexing, repo metrics
 dashboards, or workflow automation logic. Those belong to mq-agent,
@@ -109,30 +109,30 @@ classes, review logic, and memory storage.
 
 Completed scope:
 
-- validate learn extraction records before storage
-- default extraction to dry-run/read-only behavior
-- require explicit approval for storage
-- reject prompt-injection text inside reviewed content as instructions
-- handle missing Ollama or missing `mq-learn` model as an optional-provider
+* validate learn extraction records before storage
+* default extraction to dry-run/read-only behavior
+* require explicit approval for storage
+* reject prompt-injection text inside reviewed content as instructions
+* handle missing Ollama or missing `mq-learn` model as an optional-provider
   error
 
 Validation:
 
-- Ollama prompts wrap review findings as untrusted data and force
+* Ollama prompts wrap review findings as untrusted data and force
   `should_store=false`
-- learn extraction coerces provider storage requests back to read-only
-- structured model output is rejected when summary/action fields contain
+* learn extraction coerces provider storage requests back to read-only
+* structured model output is rejected when summary/action fields contain
   prompt-injection text
-- prompt-injection text remains allowed as quoted evidence from reviewed
+* prompt-injection text remains allowed as quoted evidence from reviewed
   content
 
 Non-goals:
 
-- no autonomous learning
-- no repo mutation from Ollama output
-- no command execution from Ollama output
-- no final risk scoring by Ollama
-- no replacement of mq-mcp review logic
+* no autonomous learning
+* no repo mutation from Ollama output
+* no command execution from Ollama output
+* no final risk scoring by Ollama
+* no replacement of mq-mcp review logic
 
 ---
 
@@ -159,9 +159,9 @@ mq-mcp reviews itself
 
 When this loop is closed, the runtime acquires:
 
-- self-diagnostics
-- architectural immune response
-- adaptive stabilization
+* self-diagnostics
+* architectural immune response
+* adaptive stabilization
 
 The permanent design tension:
 
@@ -224,22 +224,22 @@ What should be fixed first?
 
 Planned scope:
 
-- [x] Add `docs/RELEASE_GATE_V2.md` as the authoritative gate contract
-- [x] Add `contracts/release_gate_v2.schema.json`
-- [x] Add `mq-mcp release-gate run --repo . --target <version>`
-- [x] Return stable JSON with `status`, `score`, `blockers`, `warnings` and
+* [x] Add `docs/RELEASE_GATE_V2.md` as the authoritative gate contract
+* [x] Add `contracts/release_gate_v2.schema.json`
+* [x] Add `mq-mcp release-gate run --repo . --target <version>`
+* [x] Return stable JSON with `status`, `score`, `blockers`, `warnings` and
   `next_actions`
-- [x] Add human-readable release status output for mq-agent/operator workflows
-- [x] Validate tests, docs, contracts, safety classes, versioning and release
+* [x] Add human-readable release status output for mq-agent/operator workflows
+* [x] Validate tests, docs, contracts, safety classes, versioning and release
   notes
-- [ ] Validate lint/type and repo quality
-- [x] Validate repo-signal readiness exports
-- [x] Validate perception artifacts
-- [ ] Add read-only perception review support for mq-image-analyze output
-- [x] Add perception contract checks for normalized screenshot/OCR/diagram
+* [ ] Validate lint/type and repo quality
+* [x] Validate repo-signal readiness exports
+* [x] Validate perception artifacts
+* [ ] Add read-only perception review support for mq-image-analyze output
+* [x] Add perception contract checks for normalized screenshot/OCR/diagram
   payloads
-- [x] Add schema tests and blocker/warning classification tests
-- [ ] Add contract drift tests and unsafe command detection tests
+* [x] Add schema tests and blocker/warning classification tests
+* [ ] Add contract drift tests and unsafe command detection tests
 
 Boundary:
 
@@ -252,10 +252,230 @@ repo-signal provides repo intelligence exports.
 
 Non-goals:
 
-- no browser UI ownership
-- no mq-agent workflow orchestration logic inside mq-mcp
-- no visual OCR or screenshot analysis logic inside mq-mcp
-- no autonomous fix branches or repo mutation
+* no browser UI ownership
+* no mq-agent workflow orchestration logic inside mq-mcp
+* no visual OCR or screenshot analysis logic inside mq-mcp
+* no autonomous fix branches or repo mutation
+
+---
+
+## Planned: v1.11.0 — mq-learn integration
+
+### Goal
+
+Göra `mq-learn` mer värdefull genom att flytta implementationen till rätt plats i
+stacken och koppla den korrekt till review-pipeline, repo-kontext och Obsidian.
+
+`mq-learn:latest` är Llama 3.2 + custom Modelfile/systemprompt.
+Den är byggd för att omvandla review findings till strukturerade learning records
+i JSON. Den ska inte svara på fria frågor — bara göra detta:
+
+```text
+mq-mcp review finding → mq-learn → valid JSON learning record
+```
+
+### Ansvarsfördelning i stacken
+
+```text
+mq-mcp       → äger learn engine, schema, validering, review→learn pipeline
+mq-agent     → använder mq-learn via adapter/commands (Fas 5 — eget ROADMAP)
+mqobsidian   → visar/sparar godkända learn records (Fas 4)
+mqlaunch     → tunn meny/entrypoint (Fas 6 — mqlaunch ROADMAP)
+repo-signal  → skickar repo-status som input till mq-mcp
+```
+
+---
+
+### Fas 0 — Fixa Modelfile-kontraktet
+
+Göra `mq-learn` striktare så den slutar hallucinera repo-filer, versioner och
+GitHub-issues.
+
+**Filer att lägga till / uppdatera**
+
+```text
+mq-mcp/
+  models/
+    ollama/
+      Modelfile.mq-learn
+  docs/
+    LEARN_OLLAMA.md
+    LEARN_CONTRACT.md
+  schemas/
+    learn_extraction.schema.json
+```
+
+**Ändringar i Modelfile**
+
+* `"should_store": true` → `"should_store": false` som default i JSON-exemplet
+* Lägg till hård regel:
+
+```text
+If no review finding, repository snapshot, or evidence is provided,
+return pattern_type="unknown", evidence=[], confidence="low".
+Never infer file names, versions, branches, commits, issues, paths, or tools.
+```
+
+**Acceptance criteria**
+
+* [ ] `ollama run mq-learn:latest "Lista exakt filer i mq-mcp"` hittar inte på
+* [ ] Rätt svar är JSON med `confidence="low"` och `evidence=[]`
+
+---
+
+### Fas 1 — Gör mq-learn till en riktig extractor
+
+**Filer att lägga till**
+
+```text
+mq-mcp/
+  learn_engine/
+    extractor.py
+    validator.py
+    prompts.py
+  tests/
+    test_learn_extractor.py
+    test_learn_validator.py
+```
+
+**JSON-format**
+
+```json
+{
+  "pattern_name": "string",
+  "pattern_type": "architecture|safety|docs|release|testing|integration|unknown",
+  "summary": "string",
+  "evidence": ["string"],
+  "recommended_action": "string",
+  "confidence": "high|medium|low",
+  "should_store": false
+}
+```
+
+**Acceptance criteria**
+
+* [ ] Ogiltig JSON stoppas
+* [ ] Saknad evidence ger `confidence=low`
+* [ ] `should_store=true` tillåts bara om input uttryckligen godkänner lagring
+* [ ] Inga repo-mutationer
+* [ ] `scripts/validate.sh` passerar
+
+---
+
+### Fas 2 — Koppla mq-learn till mq-mcp review output
+
+Flöde:
+
+```text
+review_engine
+  ↓
+review finding
+  ↓
+learn_engine.extractor
+  ↓
+mq-learn via Ollama
+  ↓
+schema validation
+  ↓
+dry-run output
+  ↓
+approved storage
+```
+
+**CLI-kommandon**
+
+```bash
+mq-mcp learn extract reviews/latest.json --dry-run
+mq-mcp learn validate learn_engine/memory/lessons.jsonl
+mq-mcp learn list
+mq-mcp learn explain architecture
+```
+
+**Acceptance criteria**
+
+* [ ] Default är alltid `--dry-run`
+* [ ] Lagring kräver explicit `--approve-store`
+* [ ] Output är JSONL-kompatibel
+* [ ] `scripts/release-check.sh` passerar
+
+---
+
+## Planned: v1.12.0 — Repo-snapshot som kontrollerad evidence
+
+### Goal
+
+Minska hallucination genom att alltid ge modellen faktisk repo-kontext.
+
+### Fas 3 — Repo-snapshot som evidence-källa
+
+**Repos:** `mq-mcp` + input från `repo-signal`
+
+**Input-format**
+
+```json
+{
+  "repo": "mq-mcp",
+  "branch": "main",
+  "status": "unit tests ongoing",
+  "files": [
+    "review_engine/multi_pass_reviewer.py",
+    "review_engine/severity_engine.py"
+  ],
+  "finding": "docs/RUNTIME_CONTRACT.md missing"
+}
+```
+
+**Filer att lägga till**
+
+```text
+mq-mcp/
+  learn_engine/
+    repo_context.py
+    evidence_builder.py
+```
+
+**Acceptance criteria**
+
+* [ ] `mq-learn` får aldrig svara på repo-frågor utan `repo_context`
+* [ ] `evidence_builder` hämtar repo-kontext från `repo-signal` eller git
+
+---
+
+### Fas 4 — Spara godkända learn records i mqobsidian
+
+**Struktur i Obsidian**
+
+```text
+~/mqobsidian/
+  memory/
+    learn/
+      patterns/
+      reviews/
+      contracts/
+```
+
+**Exportformat — frontmatter**
+
+```yaml
+repo: mq-mcp
+pattern_type: architecture
+confidence: medium
+source: mq-mcp-review
+stored_by: mq-learn
+approved: true
+```
+
+Varje godkänd learning sparas som:
+
+```text
+memory/learn/patterns/<pattern_name>.md
+```
+
+**Acceptance criteria**
+
+* [ ] Obsidian är bara storage/display — exekverar inget
+* [ ] `mq-mcp` äger valideringen
+* [ ] Export kräver explicit `--approve-store`
 
 ---
 
@@ -263,17 +483,17 @@ Non-goals:
 
 ### v0.1.0 — Public baseline
 
-- [x] Create repository
-- [x] Add README
-- [x] Add LICENSE
-- [x] Add CHANGELOG
-- [x] Add VERSION
-- [x] Add ROADMAP
-- [x] Add GitHub Pages docs folder
-- [x] Add docs/index.html
-- [x] Add docs/screenshots/
-- [x] Add issue templates
-- [x] Add first release
+* [x] Create repository
+* [x] Add README
+* [x] Add LICENSE
+* [x] Add CHANGELOG
+* [x] Add VERSION
+* [x] Add ROADMAP
+* [x] Add GitHub Pages docs folder
+* [x] Add docs/index.html
+* [x] Add docs/screenshots/
+* [x] Add issue templates
+* [x] Add first release
 
 ---
 
@@ -283,16 +503,16 @@ Goal:
 
 Make the project understandable from the GitHub front page.
 
-- [x] Fix root README formatting
-- [x] Explain what the project is and is not
-- [x] Document the repository layout
-- [x] Document the local setup flow
-- [x] Document how to run the MCP server
-- [x] Document how to run the OpenAI/MCP bridge
-- [x] Add clear safety notes
-- [x] Add basic development checks
-- [x] Confirm GitHub Pages link works
-- [x] Add terminal output example
+* [x] Fix root README formatting
+* [x] Explain what the project is and is not
+* [x] Document the repository layout
+* [x] Document the local setup flow
+* [x] Document how to run the MCP server
+* [x] Document how to run the OpenAI/MCP bridge
+* [x] Add clear safety notes
+* [x] Add basic development checks
+* [x] Confirm GitHub Pages link works
+* [x] Add terminal output example
 
 ---
 
@@ -302,14 +522,14 @@ Goal:
 
 Make it easy to verify that the local MCP setup works.
 
-- [x] Add a simple validation command
-- [x] Add expected output examples
-- [x] Add troubleshooting notes for missing `uv`
-- [x] Add troubleshooting notes for Python version mismatch
-- [x] Add troubleshooting notes for missing OpenAI credentials
-- [x] Add troubleshooting notes for MCP server startup failures
-- [x] Add a smoke-test script
-- [x] Add a release-readiness checklist
+* [x] Add a simple validation command
+* [x] Add expected output examples
+* [x] Add troubleshooting notes for missing `uv`
+* [x] Add troubleshooting notes for Python version mismatch
+* [x] Add troubleshooting notes for missing OpenAI credentials
+* [x] Add troubleshooting notes for MCP server startup failures
+* [x] Add a smoke-test script
+* [x] Add a release-readiness checklist
 
 ---
 
@@ -319,14 +539,14 @@ Goal:
 
 Make the local MCP server safer and easier to extend.
 
-- [x] Replace hardcoded local paths with config or environment variables
-- [x] Add an explicit filesystem allowlist
-- [x] Document every exposed MCP tool
-- [x] Separate system tools from repo/file tools
-- [x] Add safer error handling
-- [x] Add tests for path safety
-- [x] Add tests for tool output shape
-- [x] Add a minimal example config file
+* [x] Replace hardcoded local paths with config or environment variables
+* [x] Add an explicit filesystem allowlist
+* [x] Document every exposed MCP tool
+* [x] Separate system tools from repo/file tools
+* [x] Add safer error handling
+* [x] Add tests for path safety
+* [x] Add tests for tool output shape
+* [x] Add a minimal example config file
 
 ---
 
@@ -336,15 +556,15 @@ Goal:
 
 Give the project a recognizable identity and improve repo metadata quality.
 
-- [x] Add Python syntax check workflow
-- [x] Add basic test workflow
-- [x] Add status badge when CI exists
-- [x] Add Bridget face identity asset
-- [x] Add Bridget face trigger to `bridge.py`
-- [x] Add Bridget smoke-check to `scripts/validate.sh`
-- [x] Sync `pyproject.toml` version with `VERSION`
-- [x] Migrate unsafe `os.path.normpath` paths in `server.py`
-- [x] Update GitHub Pages landing page
+* [x] Add Python syntax check workflow
+* [x] Add basic test workflow
+* [x] Add status badge when CI exists
+* [x] Add Bridget face identity asset
+* [x] Add Bridget face trigger to `bridge.py`
+* [x] Add Bridget smoke-check to `scripts/validate.sh`
+* [x] Sync `pyproject.toml` version with `VERSION`
+* [x] Migrate unsafe `os.path.normpath` paths in `server.py`
+* [x] Update GitHub Pages landing page
 
 ---
 
@@ -355,14 +575,14 @@ Goal:
 Make the repository trustworthy by removing stale documentation and tool count
 drift.
 
-- [x] Sync tool count across README, demo docs and safety docs
-- [x] Fix Python version requirement in docs
-- [x] Update stale tool list
-- [x] Add proof section to README
-- [x] Add `scripts/release-check.sh`
-- [x] Add docs consistency workflow
-- [x] Add tool inventory docs
-- [x] Improve CI credibility
+* [x] Sync tool count across README, demo docs and safety docs
+* [x] Fix Python version requirement in docs
+* [x] Update stale tool list
+* [x] Add proof section to README
+* [x] Add `scripts/release-check.sh`
+* [x] Add docs consistency workflow
+* [x] Add tool inventory docs
+* [x] Improve CI credibility
 
 ---
 
@@ -373,10 +593,10 @@ Goal:
 Wire in mq-image-analyze and Claude Code subagents for richer local
 intelligence.
 
-- [x] Bridget face lines dynamically generated via `mq-image-analyze`
-- [x] Parallel mq-image analysis with chafa rendering — lower latency
-- [x] Fix Bridget face output routing to `/dev/tty` (survives piped contexts)
-- [x] Add Claude Code subagents: `mq-project-context`,
+* [x] Bridget face lines dynamically generated via `mq-image-analyze`
+* [x] Parallel mq-image analysis with chafa rendering — lower latency
+* [x] Fix Bridget face output routing to `/dev/tty` (survives piped contexts)
+* [x] Add Claude Code subagents: `mq-project-context`,
   `mcp-tool-safety-reviewer`, `mcp-release-validator`
 
 ---
@@ -387,15 +607,15 @@ Goal:
 
 Make mq-mcp useful beyond a one-off local experiment.
 
-- [x] Add a stable launcher command
-- [x] Add documented MCP server profiles
-- [x] Add setup examples for common MCP clients
-- [x] Add screenshots for installation and usage
-- [x] Add a complete troubleshooting page
-- [x] Add example workflows
-- [x] Add clear upgrade instructions
-- [x] Make tool documentation easier to follow
-- [x] Make validation flow repeatable
+* [x] Add a stable launcher command
+* [x] Add documented MCP server profiles
+* [x] Add setup examples for common MCP clients
+* [x] Add screenshots for installation and usage
+* [x] Add a complete troubleshooting page
+* [x] Add example workflows
+* [x] Add clear upgrade instructions
+* [x] Make tool documentation easier to follow
+* [x] Make validation flow repeatable
 
 ---
 
@@ -410,20 +630,20 @@ This release should fix the trust layer before adding more features.
 
 **Scope**
 
-- [x] Fix failing GitHub Actions on `main`
-- [x] Ensure `scripts/validate.sh` passes locally
-- [x] Ensure `scripts/release-check.sh` passes locally
-- [x] Ensure Python syntax checks pass
-- [x] Ensure tests pass on supported Python versions
-- [x] Ensure docs consistency workflow passes
-- [x] Add clear failure output for validation scripts
-- [x] Add proof section for current tool count
-- [x] Confirm `VERSION`, `pyproject.toml`, README and CHANGELOG are in sync
-- [x] Confirm `docs/index.html` reflects the current version
-- [x] Confirm `docs/TOOL_SAFETY.md` lists every exposed tool
-- [x] Confirm `docs/TOOL_INVENTORY.md` matches actual server tools
-- [x] Add a release checklist section for GitHub Actions
-- [x] Add branch protection recommendation to docs
+* [x] Fix failing GitHub Actions on `main`
+* [x] Ensure `scripts/validate.sh` passes locally
+* [x] Ensure `scripts/release-check.sh` passes locally
+* [x] Ensure Python syntax checks pass
+* [x] Ensure tests pass on supported Python versions
+* [x] Ensure docs consistency workflow passes
+* [x] Add clear failure output for validation scripts
+* [x] Add proof section for current tool count
+* [x] Confirm `VERSION`, `pyproject.toml`, README and CHANGELOG are in sync
+* [x] Confirm `docs/index.html` reflects the current version
+* [x] Confirm `docs/TOOL_SAFETY.md` lists every exposed tool
+* [x] Confirm `docs/TOOL_INVENTORY.md` matches actual server tools
+* [x] Add a release checklist section for GitHub Actions
+* [x] Add branch protection recommendation to docs
 
 **Validation commands**
 
@@ -436,15 +656,15 @@ uv run pytest -v
 
 **Definition of done**
 
-- [x] Latest commit on `main` is green
-- [x] GitHub Actions are green
-- [x] Local validation passes
-- [x] Release check passes
-- [x] Tool count is documented once and referenced consistently
-- [x] README proof section is current
-- [x] CHANGELOG includes v0.3.1
-- [x] GitHub release `v0.3.1` exists (shipped as v0.4.0 — merged directly)
-- [x] GitHub Pages deployment is successful
+* [x] Latest commit on `main` is green
+* [x] GitHub Actions are green
+* [x] Local validation passes
+* [x] Release check passes
+* [x] Tool count is documented once and referenced consistently
+* [x] README proof section is current
+* [x] CHANGELOG includes v0.3.1
+* [x] GitHub release `v0.3.1` exists (shipped as v0.4.0 — merged directly)
+* [x] GitHub Pages deployment is successful
 
 ---
 
@@ -457,19 +677,19 @@ mq-agent to consume.
 
 **Planned scope**
 
-- [x] Add canonical tool contract schema
-- [x] Add tool name
-- [x] Add tool description
-- [x] Add input schema
-- [x] Add output schema
-- [x] Add safety class
-- [x] Add side-effect category
-- [x] Add filesystem boundary notes
-- [x] Add subprocess behavior notes
-- [ ] Add error model *(deferred — no blocking use case)*
-- [ ] Add examples for each tool *(deferred — examples live in docs/demo.md)*
-- [x] Generate docs from tool metadata
-- [x] Add CI check that docs and tool registry match
+* [x] Add canonical tool contract schema
+* [x] Add tool name
+* [x] Add tool description
+* [x] Add input schema
+* [x] Add output schema
+* [x] Add safety class
+* [x] Add side-effect category
+* [x] Add filesystem boundary notes
+* [x] Add subprocess behavior notes
+* [ ] Add error model *(deferred — no blocking use case)*
+* [ ] Add examples for each tool *(deferred — examples live in docs/demo.md)*
+* [x] Generate docs from tool metadata
+* [x] Add CI check that docs and tool registry match
 
 **Proposed safety classes**
 
@@ -487,11 +707,11 @@ unknown
 
 **Definition of done**
 
-- [x] Every tool has a declared safety class
-- [x] Every tool has a stable metadata entry
-- [x] Tool docs are generated or verified from metadata
-- [x] CI fails when a tool is undocumented
-- [x] mq-agent can consume the tool metadata safely
+* [x] Every tool has a declared safety class
+* [x] Every tool has a stable metadata entry
+* [x] Tool docs are generated or verified from metadata
+* [x] CI fails when a tool is undocumented
+* [x] mq-agent can consume the tool metadata safely
 
 ---
 
@@ -503,16 +723,16 @@ Make mq-mcp a reliable backend for mq-agent and mqlaunch workflows.
 
 **Planned scope**
 
-- [x] Verify mq-agent can discover mq-mcp tools
-- [x] Verify mq-agent can display mq-mcp tool safety classes
-- [x] Verify mq-agent can dry-run mq-mcp tool calls
-- [x] Verify mq-agent blocks unsafe tools without approval
-- [x] Add docs for mq-agent integration
-- [x] Add docs for mqlaunch integration
-- [x] Add smoke test for mq-agent → mq-mcp
-- [x] Add smoke test for mqlaunch → mq-agent → mq-mcp
-- [x] Add example local workflow
-- [x] Add troubleshooting for port conflicts and server startup
+* [x] Verify mq-agent can discover mq-mcp tools
+* [x] Verify mq-agent can display mq-mcp tool safety classes
+* [x] Verify mq-agent can dry-run mq-mcp tool calls
+* [x] Verify mq-agent blocks unsafe tools without approval
+* [x] Add docs for mq-agent integration
+* [x] Add docs for mqlaunch integration
+* [x] Add smoke test for mq-agent → mq-mcp
+* [x] Add smoke test for mqlaunch → mq-agent → mq-mcp
+* [x] Add example local workflow
+* [x] Add troubleshooting for port conflicts and server startup
 
 **Example target flow**
 
@@ -546,16 +766,16 @@ Make mq-mcp easy to install, update and run on a new macOS machine.
 
 **Planned scope**
 
-- [x] Add install script
-- [x] Add uninstall script
-- [x] Add upgrade script
-- [x] Add shell completions if useful
-- [x] Add launch command
-- [x] Add optional background service mode
-- [x] Add health check command
-- [x] Add local config discovery
-- [x] Add example `.env`
-- [x] Add docs for clean reinstall
+* [x] Add install script
+* [x] Add uninstall script
+* [x] Add upgrade script
+* [x] Add shell completions if useful
+* [x] Add launch command
+* [x] Add optional background service mode
+* [x] Add health check command
+* [x] Add local config discovery
+* [x] Add example `.env`
+* [x] Add docs for clean reinstall
 
 **Possible commands**
 
@@ -569,9 +789,9 @@ mq-mcp tools
 
 **Non-goals**
 
-- No hidden daemon by default
-- No automatic startup without explicit user choice
-- No silent credentials handling
+* No hidden daemon by default
+* No automatic startup without explicit user choice
+* No silent credentials handling
 
 ---
 
@@ -583,15 +803,15 @@ Make the MCP server and OpenAI bridge easier to inspect while running.
 
 **Planned scope**
 
-- [x] Add health endpoint
-- [x] Add tool count endpoint
-- [x] Add server info endpoint
-- [x] Add request logging option
-- [x] Add redacted debug mode
-- [x] Add timing metrics
-- [x] Add validation report output
-- [x] Add JSON output for diagnostics
-- [x] Add troubleshooting bundle command
+* [x] Add health endpoint
+* [x] Add tool count endpoint
+* [x] Add server info endpoint
+* [x] Add request logging option
+* [x] Add redacted debug mode
+* [x] Add timing metrics
+* [x] Add validation report output
+* [x] Add JSON output for diagnostics
+* [x] Add troubleshooting bundle command
 
 **Possible commands**
 
@@ -606,10 +826,10 @@ mq-mcp bundle --validate
 
 **Safety requirements**
 
-- Logs must not print secrets
-- Debug output must redact tokens and keys
-- Local paths should be shown only when useful
-- Dangerous tools must remain explicit
+* Logs must not print secrets
+* Debug output must redact tokens and keys
+* Local paths should be shown only when useful
+* Dangerous tools must remain explicit
 
 ---
 
@@ -622,16 +842,16 @@ tools.
 
 **Planned scope**
 
-- [x] Add Claude Desktop profile template
-- [x] Add Codex profile template
-- [x] Add OpenAI bridge profile template
-- [x] Add mq-agent profile template
-- [x] Add macOS local profile
-- [x] Add repo-only profile
-- [x] Add read-only profile
-- [x] Add developer profile
-- [x] Add docs for selecting the right profile
-- [x] Add validation for profile files
+* [x] Add Claude Desktop profile template
+* [x] Add Codex profile template
+* [x] Add OpenAI bridge profile template
+* [x] Add mq-agent profile template
+* [x] Add macOS local profile
+* [x] Add repo-only profile
+* [x] Add read-only profile
+* [x] Add developer profile
+* [x] Add docs for selecting the right profile
+* [x] Add validation for profile files
 
 **Example profiles**
 
@@ -653,22 +873,22 @@ Make mq-mcp stable enough to be the default MCP tool layer for the mq ecosystem.
 
 ### v1.0.0 requirements
 
-- [x] Stable server startup
-- [x] Stable tool registry
-- [x] Stable tool metadata schema
-- [x] Stable safety classes
-- [x] Stable filesystem boundary model
-- [x] Stable config format
-- [x] Stable validation command
-- [x] Stable install flow
-- [x] Complete tool docs
-- [x] Complete troubleshooting docs
-- [x] Complete example workflows
-- [x] Green CI
-- [x] Protected main branch
-- [x] GitHub release
-- [x] GitHub Pages documentation
-- [x] No known critical safety gaps
+* [x] Stable server startup
+* [x] Stable tool registry
+* [x] Stable tool metadata schema
+* [x] Stable safety classes
+* [x] Stable filesystem boundary model
+* [x] Stable config format
+* [x] Stable validation command
+* [x] Stable install flow
+* [x] Complete tool docs
+* [x] Complete troubleshooting docs
+* [x] Complete example workflows
+* [x] Green CI
+* [x] Protected main branch
+* [x] GitHub release
+* [x] GitHub Pages documentation
+* [x] No known critical safety gaps
 
 ---
 
@@ -686,23 +906,23 @@ Strategic principle: better context architecture, not more AI.
 
 Goal: make review output consistent, stable, and contract-driven.
 
-- [x] `reviews/contracts/comment-review.md` — hard rules: severity labels,
+* [x] `reviews/contracts/comment-review.md` — hard rules: severity labels,
   output format, scope, max findings, uncertainty handling
-- [x] `reviews/skills/python-comment-review.md` — Python-specific guidance:
+* [x] `reviews/skills/python-comment-review.md` — Python-specific guidance:
   docstrings, type hints, naming, module-level side effects
-- [x] `reviews/skills/shell-review.md` — shell-specific guidance: headers,
+* [x] `reviews/skills/shell-review.md` — shell-specific guidance: headers,
   unquoted vars, silent errors, set -e
-- [x] `reviews/skills/mcp-tool-review.md` — MCP tool guidance: Args blocks,
+* [x] `reviews/skills/mcp-tool-review.md` — MCP tool guidance: Args blocks,
   safety notes, path boundary docs, naming conventions
-- [x] `server.py`: `review_file`, `build_repo_context`, `list_review_contracts`
+* [x] `server.py`: `review_file`, `build_repo_context`, `list_review_contracts`
   MCP tools — review engine exposed on the MCP surface (53 tools total)
-- [x] Tool docs synced: TOOL_SAFETY.md, TOOL_INDEX.md, README.md,
+* [x] Tool docs synced: TOOL_SAFETY.md, TOOL_INDEX.md, README.md,
   tool_contracts.json — all updated to 53 tools
-- [x] `reviews/golden/bridge-py-comment-review.md` — 12-finding reference
+* [x] `reviews/golden/bridge-py-comment-review.md` — 12-finding reference
   review with reasoning notes and excluded-findings section
-- [x] `reviews/contracts/architecture-review.md` — ARCHITECTURE and RISK
+* [x] `reviews/contracts/architecture-review.md` — ARCHITECTURE and RISK
   severity labels; scoped to boundaries, coupling, doc vs runtime
-- [x] `reviews/contracts/security-review.md` — NOTE/WARNING/RISK labels;
+* [x] `reviews/contracts/security-review.md` — NOTE/WARNING/RISK labels;
   scoped to subprocess injection, path traversal, prompt injection,
   secret leakage, env forwarding, osascript injection
 
@@ -712,30 +932,30 @@ Goal: make review output consistent, stable, and contract-driven.
 
 Goal: give the review engine real system understanding.
 
-- [x] `review_engine/repo_context_builder.py` — generates
+* [x] `review_engine/repo_context_builder.py` — generates
   `architecture_map.json` (role of each file) and `file_summary_index.json`
   (public symbols, docstrings, line counts) from file heuristics + Python AST
-- [x] `review_engine/review_router.py` — routes files to the correct skill
+* [x] `review_engine/review_router.py` — routes files to the correct skill
   by extension and path; wired into `review_file` — skill injected automatically
-- [x] `review_engine/severity_engine.py` — parse_findings(), format_summary(),
+* [x] `review_engine/severity_engine.py` — parse_findings(), format_summary(),
   has_blocking_findings(), severity_counts(); sorts by severity then line number
-- [x] `docs/architecture/SYSTEM_OVERVIEW.md` — ground-truth reference:
+* [x] `docs/architecture/SYSTEM_OVERVIEW.md` — ground-truth reference:
   runtime layers, file responsibilities, review pipeline, path safety,
   env vars, tool classes; used for drift detection
-- [x] `docs/architecture/REVIEW_PIPELINE.md` — full pipeline reference:
+* [x] `docs/architecture/REVIEW_PIPELINE.md` — full pipeline reference:
   stages, prompt structure, severity parsing, memory persistence, MCP tools
-- [x] `review_engine/callgraph_builder.py` — cross-file import graph and hub
+* [x] `review_engine/callgraph_builder.py` — cross-file import graph and hub
   file detection. Outputs `review_engine/context/callgraph.json` with
   `imports`, `importers`, `hub_files`, `symbols`, and `edges`. Wired into
   `build_repo_context` (regenerated alongside architecture_map.json) and
   `review_file` / `MultiPassReviewer.review_pass` — cross-file context injected
   for every file, with hub files and their importers named explicitly.
-- [x] `callgraph_builder._try_merge_repo_signal_packs()` — hook that merges
+* [x] `callgraph_builder._try_merge_repo_signal_packs()` — hook that merges
   `repo_signal_callgraph.json`, `repo_signal_symbols.json`, and
   `repo_signal_summary.json` from `review_engine/context/` when present.
   Activates automatically when repo-signal starts writing intelligence packs to
   disk; no-op until then. Status surfaced in `build_repo_context` output.
-- [x] `review_engine/context_selector.py` — `ContextSelector` enforces a 12 000-
+* [x] `review_engine/context_selector.py` — `ContextSelector` enforces a 12 000-
   char budget (~3 000 tokens) on injected context. Priority order: past findings
   (2) before cross-file context (3). High-priority pieces are truncated rather
   than dropped when budget is tight. Wired into `review_file` after loading
@@ -747,21 +967,21 @@ Goal: give the review engine real system understanding.
 
 Goal: intelligent long-term memory for the review engine.
 
-- [x] `review_engine/review_memory.py` — local persistent review history;
+* [x] `review_engine/review_memory.py` — local persistent review history;
   `ReviewMemory` saves/retrieves findings per file, formats past context
   for injection into future reviews (max 5 findings, capped 10 entries/file)
-- [x] `review_file` wired to memory: loads past context before model call,
+* [x] `review_file` wired to memory: loads past context before model call,
   saves structured findings after; past findings shown as `## Previous review context`
-- [x] `list_review_history` MCP tool — summary of all reviewed files
-- [x] `get_last_review` MCP tool — full last review for a specific file
-- [x] `reviews/skills/markdown-review.md` + `reviews/skills/json-review.md` —
+* [x] `list_review_history` MCP tool — summary of all reviewed files
+* [x] `get_last_review` MCP tool — full last review for a specific file
+* [x] `reviews/skills/markdown-review.md` + `reviews/skills/json-review.md` —
   review skills for `.md` and `.json` file types; wired into review_router
-- [x] Cross-file reasoning: `_build_rich_cross_file_context()` injects arch role,
+* [x] Cross-file reasoning: `_build_rich_cross_file_context()` injects arch role,
   top public symbols, and last review summary (finding count + severity
   distribution) for every file that imports or is imported by the file under
   review. Backed by `callgraph.json` (Phase 2) + `ContextSelector` (Phase 2).
   Files are no longer reviewed in isolation.
-- [ ] Persist coding conventions extracted from reviews into architecture memory
+* [ ] Persist coding conventions extracted from reviews into architecture memory
   — deferred to v1.2.0 (Architecture memory), where it belongs structurally.
 
 ---
@@ -770,37 +990,37 @@ Goal: intelligent long-term memory for the review engine.
 
 Goal: higher quality through structured pipeline.
 
-- [x] `review_engine/multi_pass_reviewer.py` — `MultiPassReviewer` class:
-  - Pass 1: structural analysis (responsibility, patterns, hotspots, ≤400 tokens)
-  - Pass 2: contract-driven review enriched with structure context (≤2048 tokens)
-  - Pass 3: consistency pass — doc vs runtime divergence (docstrings, names,
+* [x] `review_engine/multi_pass_reviewer.py` — `MultiPassReviewer` class:
+  * Pass 1: structural analysis (responsibility, patterns, hotspots, ≤400 tokens)
+  * Pass 2: contract-driven review enriched with structure context (≤2048 tokens)
+  * Pass 3: consistency pass — doc vs runtime divergence (docstrings, names,
     type hints vs actual behavior; ≤1024 tokens)
-  - Pass 4: deduplication — merges Pass 2 + Pass 3 findings, keeps highest
+  * Pass 4: deduplication — merges Pass 2 + Pass 3 findings, keeps highest
     severity per location, drops near-duplicate bodies (pure Python, no API call)
-- [x] `review_file(deep=True)` — single-pass stays default; `deep=True` runs
+* [x] `review_file(deep=True)` — single-pass stays default; `deep=True` runs
   all 4 passes, returns formatted + deduplicated findings, ~3x API calls
 
 ---
 
 ### Phase 5 — Advanced Engineering Review (done)
 
-- [x] `--risk` mode: `mode="security"` in `review_file` via `reviews/contracts/security-review.md`
+* [x] `--risk` mode: `mode="security"` in `review_file` via `reviews/contracts/security-review.md`
   covers subprocess injection, path traversal, prompt injection, secret leakage,
   env forwarding, osascript injection
-- [x] `review_engine/drift_detector.py` — `DriftDetector` checks: tool count vs
+* [x] `review_engine/drift_detector.py` — `DriftDetector` checks: tool count vs
   README/TOOL_SAFETY.md/tool_contracts.json, contract coverage (all tools in JSON),
   phantom contracts (JSON tools not in server), safety doc coverage, arch map freshness
-- [x] `detect_architecture_drift` MCP tool — exposes DriftDetector on the MCP surface
+* [x] `detect_architecture_drift` MCP tool — exposes DriftDetector on the MCP surface
 
 ---
 
 ### Phase 6 — Autonomous Review Runtime (done)
 
-- [x] `review_diff` MCP tool — continuous review triggered by git diff: reviews all
+* [x] `review_diff` MCP tool — continuous review triggered by git diff: reviews all
   `.py/.sh/.md/.json` files changed in the working tree or staging area, capped at 10
-- [x] `review_repo` MCP tool — agentic review: prioritizes the least-recently-reviewed
+* [x] `review_repo` MCP tool — agentic review: prioritizes the least-recently-reviewed
   Python files in the repo (uses review memory to order by staleness), max 20 files
-- [~] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
+* [~] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
 
 ---
 
@@ -825,25 +1045,25 @@ self-describing, verifiable, and self-reflective**.
 Goal: the runtime can analyze its own architecture, verify its own contracts,
 and surface drift between documentation and implementation.
 
-- [x] `review_runtime_contract` MCP tool — reviews `docs/RUNTIME_CONTRACT.md`
+* [x] `review_runtime_contract` MCP tool — reviews `docs/RUNTIME_CONTRACT.md`
   against actual server state: structural checks (path resolvers, no-auto-commit,
   _redacted_env) + AI architecture pass with injected tool count and safety class
   breakdown
-- [x] Extend `detect_architecture_drift` — checks 8-10: RUNTIME_CONTRACT.md
+* [x] Extend `detect_architecture_drift` — checks 8-10: RUNTIME_CONTRACT.md
   existence (RISK), freshness relative to server.py (NOTE/WARNING), and reference
   document existence for all docs listed in the contract's reference table
-- [x] `list_architecture_docs` MCP tool — inventory of all docs in
+* [x] `list_architecture_docs` MCP tool — inventory of all docs in
   `docs/architecture/`, with last-modified timestamps and freshness status
   relative to `server.py` mtime
-- [x] `review_architecture_doc` MCP tool — applies the `architecture` review
+* [x] `review_architecture_doc` MCP tool — applies the `architecture` review
   contract to a named architecture document, injecting current runtime state
   (tool count, safety classes, actual server mtime) so the model can detect
   stale counts, incorrect classifications, and undocumented behaviors
-- [x] Cross-file semantic similarity: `_build_rich_cross_file_context()` pulls
+* [x] Cross-file semantic similarity: `_build_rich_cross_file_context()` pulls
   architecture role, top public symbols, and last review summary for every file
   that imports or is imported by the file under review. Injected into both
   single-pass and deep-mode `review_file`. Removes the file-isolation barrier.
-- [x] Golden reviews for `.md` and `.json` file types —
+* [x] Golden reviews for `.md` and `.json` file types —
   `reviews/golden/system-overview-md-markdown-review.md` (5 findings:
   stale tool count, incomplete router table, stale pipeline diagram, missing
   file responsibilities, static date pattern) and
@@ -861,29 +1081,29 @@ not just review findings.
 The current `review_engine/memory/review_history.json` stores what the review
 engine found. Architecture memory stores why the system is designed as it is.
 
-- [x] `architecture_memory/` directory — structured ADR-style entries:
+* [x] `architecture_memory/` directory — structured ADR-style entries:
   `decisions/` (ADR-001–005), `rejected/` (REJ-001), `boundaries/` (BND-001–002),
   `philosophy/` (PHI-001–002). 8 seed entries covering path resolvers, no-auto-commit,
   safety classes, review contracts, secret handling, cognition ownership,
   execution vs orchestration, determinism, and context quality.
-- [x] `review_engine/architecture_memory.py` — `ArchitectureMemory` class: `list_all()`,
+* [x] `review_engine/architecture_memory.py` — `ArchitectureMemory` class: `list_all()`,
   `list_by_category()`, `get(id)`, `relevant_for(file_path)`, `format_context_block()`,
   `record()`. Relevance matching by area keyword against file path; philosophy entries
   match all files.
-- [x] `list_architecture_decisions` MCP tool — lists all entries with ID, status,
+* [x] `list_architecture_decisions` MCP tool — lists all entries with ID, status,
   category, title (Class A, read-only)
-- [x] `get_architecture_decision` MCP tool — returns full text by ID (Class A)
-- [x] `record_architecture_decision` MCP tool — writes a new ADR to
+* [x] `get_architecture_decision` MCP tool — returns full text by ID (Class A)
+* [x] `record_architecture_decision` MCP tool — writes a new ADR to
   `architecture_memory/{category}/` (Class C, does not commit)
-- [x] ADR injection in `review_file` — `format_context_block()` injects up to 3
+* [x] ADR injection in `review_file` — `format_context_block()` injects up to 3
   relevant ADRs (decision body, capped at 300 chars each) at priority 1 in
   `ContextSelector` — highest priority, before past findings and cross-file context.
   Deep mode prepends ADRs to `cross_file_ctx`.
-- [x] `review_engine/convention_extractor.py` — `ConventionExtractor` runs a single
+* [x] `review_engine/convention_extractor.py` — `ConventionExtractor` runs a single
   model call to extract generalizable coding conventions from review findings.
   Output format: `CONVENTION / AREA / RATIONALE` blocks, parsed into structured entries.
   Deduplicates against existing convention titles before writing.
-- [x] `extract_coding_conventions` MCP tool — loads last review from ReviewMemory,
+* [x] `extract_coding_conventions` MCP tool — loads last review from ReviewMemory,
   runs ConventionExtractor, saves each convention to `architecture_memory/decisions/`
   with `status: convention`. Conventions are immediately injected into future reviews
   of matching files via the existing ADR context mechanism (Class C).
@@ -895,22 +1115,22 @@ engine found. Architecture memory stores why the system is designed as it is.
 Goal: make the mq-agent / mq-mcp boundary explicit, machine-readable, and
 verifiable — not just documented in prose.
 
-- [x] `docs/ORCHESTRATION_CONTRACT.md` — formal contract defining:
-  - what mq-agent is allowed to invoke
-  - what return shapes it can rely on
-  - what side effects it must never assume
-  - how context flows from mq-agent into mq-mcp and back
-- [x] Document cross-repo input/output contracts:
-  - repo-signal exports repo intelligence packs
-  - mq-image-analyze exports visual analysis JSON
-  - mq-hal exports runtime and model health summaries
-  - mq-agent routes review/orchestration requests to mq-mcp
-- [x] `validate_orchestration_contract` MCP tool — verifies that the current
+* [x] `docs/ORCHESTRATION_CONTRACT.md` — formal contract defining:
+  * what mq-agent is allowed to invoke
+  * what return shapes it can rely on
+  * what side effects it must never assume
+  * how context flows from mq-agent into mq-mcp and back
+* [x] Document cross-repo input/output contracts:
+  * repo-signal exports repo intelligence packs
+  * mq-image-analyze exports visual analysis JSON
+  * mq-hal exports runtime and model health summaries
+  * mq-agent routes review/orchestration requests to mq-mcp
+* [x] `validate_orchestration_contract` MCP tool — verifies that the current
   tool set satisfies the orchestration contract: all caller-visible tools are
   documented, no undeclared side effects, no missing error prefixes
-- [x] Profile validation: verify that each profile in `profiles/` restricts
+* [x] Profile validation: verify that each profile in `profiles/` restricts
   tool access to the minimum required for its declared use case
-- [x] Semantic coupling audit: error prefix consistency checked; profile
+* [x] Semantic coupling audit: error prefix consistency checked; profile
   max-class violations found and corrected across 5 profiles
 
 ---
@@ -930,34 +1150,34 @@ semantic_memory/      — long-term reusable knowledge (semantic)
 
 **What semantic memory stores:**
 
-- Summaries of README, ROADMAP, and key architecture docs
-- Contracts and review examples (indexed, not raw text)
-- Extracted conventions (already done via extract_coding_conventions)
-- Tool docs and safety notes
-- Cross-repo facts (e.g. "repo-signal outputs callgraph.json to disk")
+* Summaries of README, ROADMAP, and key architecture docs
+* Contracts and review examples (indexed, not raw text)
+* Extracted conventions (already done via extract_coding_conventions)
+* Tool docs and safety notes
+* Cross-repo facts (e.g. "repo-signal outputs callgraph.json to disk")
 
 **What it does NOT store:**
 
-- Entire raw repos
-- Generated build artifacts
-- Large binaries or noisy logs
+* Entire raw repos
+* Generated build artifacts
+* Large binaries or noisy logs
 
 Items:
 
-- [x] `semantic_memory/` directory + `SemanticMemory` class with
+* [x] `semantic_memory/` directory + `SemanticMemory` class with
   `store(key, content, tags)`, `search(query, max=5)`, `get(key)`, `list()`
-- [x] `store_semantic_memory` MCP tool — writes a named knowledge item with
+* [x] `store_semantic_memory` MCP tool — writes a named knowledge item with
   tags for retrieval (Class C, writes to `semantic_memory/`)
-- [x] `search_semantic_memory` MCP tool — keyword/tag search over stored items,
+* [x] `search_semantic_memory` MCP tool — keyword/tag search over stored items,
   returns ranked matches (Class A)
-- [x] `get_semantic_memory` MCP tool — retrieves a specific item by key (Class A)
-- [x] Bootstrap ingestion: index README, ROADMAP, RUNTIME_CONTRACT.md,
+* [x] `get_semantic_memory` MCP tool — retrieves a specific item by key (Class A)
+* [x] Bootstrap ingestion: index README, ROADMAP, RUNTIME_CONTRACT.md,
   ORCHESTRATION_CONTRACT.md, TOOL_SAFETY.md into semantic_memory at startup
   (lazy, on first search)
-- [x] Integration with `review_file` context: semantic memory injected at
+* [x] Integration with `review_file` context: semantic memory injected at
   priority 0 (above ADRs) when a match is found for the file being reviewed
-- [x] `list_semantic_memory` MCP tool — inventory of stored items (Class A)
-- [x] Docs: update ORCHESTRATION_CONTRACT.md §3 declared side effects table
+* [x] `list_semantic_memory` MCP tool — inventory of stored items (Class A)
+* [x] Docs: update ORCHESTRATION_CONTRACT.md §3 declared side effects table
 
 ---
 
@@ -983,21 +1203,21 @@ architecture — boundary violations, coupling, responsibility drift,
 
 Items:
 
-- [x] `risk_review_file` MCP tool — targeted risk pass on a single file with
+* [x] `risk_review_file` MCP tool — targeted risk pass on a single file with
   declared mode (`security`, `risk`, `architecture`). Returns findings using
   the fixed severity vocabulary (CRITICAL/RISK/WARNING). Class A.
-- [x] `risk_review_diff` MCP tool — risk pass over current git diff. Same
+* [x] `risk_review_diff` MCP tool — risk pass over current git diff. Same
   modes. Class A.
-- [x] Risk contract in `reviews/contracts/risk-review.md` — defines what the
+* [x] Risk contract in `reviews/contracts/risk-review.md` — defines what the
   security/risk/architecture passes look for and how to format findings
-- [x] Security skill in `reviews/skills/security-review.md` — file-type-aware
+* [x] Security skill in `reviews/skills/security-review.md` — file-type-aware
   security patterns (Python subprocess, shell, env, path)
-- [x] Severity engine update: add `CRITICAL` level above `RISK` for findings
+* [x] Severity engine update: add `CRITICAL` level above `RISK` for findings
   that represent immediate exploitable vulnerabilities
-- [x] `detect_security_patterns` helper — grep-based pre-scan for known
+* [x] `detect_security_patterns` helper — grep-based pre-scan for known
   dangerous patterns (`os.system`, `eval`, `exec`, `shell=True`, hardcoded
   secrets) before API call; injects findings as context
-- [x] Integration: `review_file(mode="risk")` routes through the risk contract
+* [x] Integration: `review_file(mode="risk")` routes through the risk contract
   rather than the standard comment contract
 
 ---
@@ -1030,21 +1250,21 @@ generated/
 
 Items:
 
-- [x] `generated/` directory with `.gitkeep` and `generated/.gitignore`
+* [x] `generated/` directory with `.gitkeep` and `generated/.gitignore`
   (exclude snapshots from version control)
-- [x] `build_repo_context` extended: write `architecture_map.json` to
+* [x] `build_repo_context` extended: write `architecture_map.json` to
   `generated/architecture/` in addition to `callgraph.json`
-- [x] `architecture_map.json` schema: maps file path → role label, public
+* [x] `architecture_map.json` schema: maps file path → role label, public
   symbols, last review timestamp, hub score
-- [x] `ownership_map.json` schema: maps file path → author (from git blame),
+* [x] `ownership_map.json` schema: maps file path → author (from git blame),
   change frequency, last modified
-- [x] `export_symbol_index` MCP tool — writes current callgraph symbols to
+* [x] `export_symbol_index` MCP tool — writes current callgraph symbols to
   `generated/symbols/symbol_index.json` in a format repo-signal can consume
   (Class C)
-- [x] Activate `_try_merge_repo_signal_packs()`: once repo-signal publishes
+* [x] Activate `_try_merge_repo_signal_packs()`: once repo-signal publishes
   its packs, the merge hook auto-activates; document the expected file paths
   and schema in `docs/ORCHESTRATION_CONTRACT.md §5`
-- [x] `repo_signal_status` MCP tool — reports whether repo-signal packs are
+* [x] `repo_signal_status` MCP tool — reports whether repo-signal packs are
   present, their age, and whether they have been merged into the callgraph
   (Class A)
 
@@ -1091,23 +1311,23 @@ docs/
 
 Class A — read-only:
 
-- [x] `list_learnings`
-- [x] `search_learnings`
-- [x] `get_learning`
-- [x] `summarize_learnings`
-- [x] `learning_status`
-- [x] mq-agent compatibility aliases: `learn_status`,
+* [x] `list_learnings`
+* [x] `search_learnings`
+* [x] `get_learning`
+* [x] `summarize_learnings`
+* [x] `learning_status`
+* [x] mq-agent compatibility aliases: `learn_status`,
   `search_learned_patterns`, `explain_learned_pattern`
-- [x] `learn_hygiene` report for duplicates, invalid records,
+* [x] `learn_hygiene` report for duplicates, invalid records,
   low-confidence storage, missing validation, and hygiene status
 
 Class C — controlled write:
 
-- [x] `record_learning`
-- [x] `learn_from_review`
-- [x] `learn_from_diff`
-- [x] `promote_learning`
-- [x] `bootstrap_learning_memory`
+* [x] `record_learning`
+* [x] `learn_from_review`
+* [x] `learn_from_diff`
+* [x] `promote_learning`
+* [x] `bootstrap_learning_memory`
 
 Class C tools may write only within the learning, semantic memory, runbook,
 architecture memory, `AGENTS.md`, or `CLAUDE.md` promotion scope. They must not
@@ -1131,14 +1351,14 @@ recommendations.
 
 Learning must not:
 
-- execute commands
-- mutate router policy
-- mutate safety classes
-- mutate allowlists
-- approve tool calls
-- write `AGENTS.md` or `CLAUDE.md` without explicit confirmation
-- store secrets
-- store chain-of-thought
+* execute commands
+* mutate router policy
+* mutate safety classes
+* mutate allowlists
+* approve tool calls
+* write `AGENTS.md` or `CLAUDE.md` without explicit confirmation
+* store secrets
+* store chain-of-thought
 
 **Promotion model**
 
@@ -1153,40 +1373,40 @@ mq-mcp learn promote <id> --to architecture-memory --dry-run
 
 Allowed promotion targets:
 
-- `docs/RUNBOOK.md`
-- `AGENTS.md`
-- `CLAUDE.md`
-- `architecture_memory/`
-- `semantic_memory/store.json`
+* `docs/RUNBOOK.md`
+* `AGENTS.md`
+* `CLAUDE.md`
+* `architecture_memory/`
+* `semantic_memory/store.json`
 
 **Non-goals**
 
-- No self-training
-- No chain-of-thought storage
-- No hidden uploads
-- No autonomous tool loops
-- No safety policy mutation
-- No router or allowlist changes based on learned content
+* No self-training
+* No chain-of-thought storage
+* No hidden uploads
+* No autonomous tool loops
+* No safety policy mutation
+* No router or allowlist changes based on learned content
 
 **Definition of done**
 
-- [x] `docs/LEARNING_CONTRACT.md` and `docs/LEARNING_MODEL.md` exist.
-- [x] `schemas/learning.schema.json` validates all stored lessons.
-- [x] Learn tools are listed in README, TOOL_INDEX, `docs/TOOL_SAFETY.md`, and
+* [x] `docs/LEARNING_CONTRACT.md` and `docs/LEARNING_MODEL.md` exist.
+* [x] `schemas/learning.schema.json` validates all stored lessons.
+* [x] Learn tools are listed in README, TOOL_INDEX, `docs/TOOL_SAFETY.md`, and
   `docs/tool_contracts.json`.
-- [x] Read tools are classified as Class A.
-- [x] Write and promotion tools are classified as Class C.
-- [x] Secret redaction runs before any learning is written.
-- [x] Promotion defaults to dry-run.
-- [x] Tests prove learn tools cannot execute commands, mutate allowlists,
+* [x] Read tools are classified as Class A.
+* [x] Write and promotion tools are classified as Class C.
+* [x] Secret redaction runs before any learning is written.
+* [x] Promotion defaults to dry-run.
+* [x] Tests prove learn tools cannot execute commands, mutate allowlists,
   commit, push, or write outside allowed paths.
-- [x] Compatibility alias tests lock `mq-agent learn status/search/explain`
+* [x] Compatibility alias tests lock `mq-agent learn status/search/explain`
   tool names.
-- [x] Release Gate v2 includes `learn_contract_valid`,
+* [x] Release Gate v2 includes `learn_contract_valid`,
   `learn_alias_tools_present`, and `learn_hygiene_pass` so the learn contract,
   mq-agent aliases, and memory hygiene are visible before release.
-- [x] `scripts/validate.sh` passes.
-- [x] `scripts/release-check.sh` passes.
+* [x] `scripts/validate.sh` passes.
+* [x] `scripts/release-check.sh` passes.
 
 ---
 
@@ -1213,17 +1433,17 @@ data sources.
 
 Other ideas:
 
-- Bridget voice mode
-- Bridget terminal avatar mode
-- local event history
-- repo health history
-- MCP tool marketplace
-- integration with mq-ums
-- cross-repo tool inventory
-- visual safety map — runtime dependency graph, orchestration topology
-- generated architecture diagrams from architecture_memory
-- drift visualization: doc vs implementation divergence over time
-- demo videos or GIFs
+* Bridget voice mode
+* Bridget terminal avatar mode
+* local event history
+* repo health history
+* MCP tool marketplace
+* integration with mq-ums
+* cross-repo tool inventory
+* visual safety map — runtime dependency graph, orchestration topology
+* generated architecture diagrams from architecture_memory
+* drift visualization: doc vs implementation divergence over time
+* demo videos or GIFs
 
 ---
 
@@ -1231,16 +1451,16 @@ Other ideas:
 
 mq-mcp should remain:
 
-- local-first
-- explicit
-- safe by default
-- repo-aware
-- path-bounded
-- testable
-- observable
-- easy to validate
-- easy to disable
-- useful without hidden automation
+* local-first
+* explicit
+* safe by default
+* repo-aware
+* path-bounded
+* testable
+* observable
+* easy to validate
+* easy to disable
+* useful without hidden automation
 
 The server should expose tools.
 
@@ -1252,23 +1472,23 @@ It should not become an unrestricted remote-control layer.
 
 mq-mcp must never:
 
-- expose arbitrary filesystem access by default
-- run subprocess tools silently
-- ignore path boundaries
-- leak API keys
-- print secrets in logs
-- mutate repositories without explicit tool intent
-- hide dangerous behavior behind friendly names
-- treat AI-generated requests as automatically trusted
+* expose arbitrary filesystem access by default
+* run subprocess tools silently
+* ignore path boundaries
+* leak API keys
+* print secrets in logs
+* mutate repositories without explicit tool intent
+* hide dangerous behavior behind friendly names
+* treat AI-generated requests as automatically trusted
 
 Every powerful tool must have:
 
-- a safety class
-- documented inputs
-- documented outputs
-- tests
-- error handling
-- explicit approval behavior when used by higher-level agents
+* a safety class
+* documented inputs
+* documented outputs
+* tests
+* error handling
+* explicit approval behavior when used by higher-level agents
 
 ---
 
@@ -1306,11 +1526,11 @@ When that chain is stable, the system can carry more integrations without creati
 
 The repo has grown quickly and now contains 76 MCP tools, a review engine, semantic memory, safety classes, an OpenAI bridge, profiles for multiple clients, and integration with mq-hal and repo-signal. The following signals can start to drift apart independently:
 
-- README status and version badge
-- VERSION, CHANGELOG, GitHub release
-- docs/stability.json
-- runtime tool count
-- docs/TOOL_SAFETY.md, TOOL_INDEX.md, actual MCP tool discovery
+* README status and version badge
+* VERSION, CHANGELOG, GitHub release
+* docs/stability.json
+* runtime tool count
+* docs/TOOL_SAFETY.md, TOOL_INDEX.md, actual MCP tool discovery
 
 This is a system problem, not a series of isolated documentation errors.
 
@@ -1337,21 +1557,21 @@ Goal: get all public signals to say the same thing.
 
 **Tasks**
 
-- [x] Verify that `VERSION` matches the intended current release.
-- [x] Update the README version badge.
-- [x] Update the README status line.
-- [x] Verify that `CHANGELOG.md` has an entry for the current version.
-- [x] Verify that `docs/stability.json` matches the current version.
-- [x] Verify that the GitHub release/tag matches the current version.
-- [x] Fix any CI failure before the next release.
-- [x] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
+* [x] Verify that `VERSION` matches the intended current release.
+* [x] Update the README version badge.
+* [x] Update the README status line.
+* [x] Verify that `CHANGELOG.md` has an entry for the current version.
+* [x] Verify that `docs/stability.json` matches the current version.
+* [x] Verify that the GitHub release/tag matches the current version.
+* [x] Fix any CI failure before the next release.
+* [x] Remove or ignore cache directories that should not be version-controlled, e.g. `.mypy_cache`.
 
 **Definition of done**
 
-- [x] `git status` is clean after changes.
-- [x] `./scripts/validate.sh` passes.
-- [x] README, VERSION, CHANGELOG, and release status are in sync.
-- [x] The repo shows a consistent version externally and internally.
+* [x] `git status` is clean after changes.
+* [x] `./scripts/validate.sh` passes.
+* [x] README, VERSION, CHANGELOG, and release status are in sync.
+* [x] The repo shows a consistent version externally and internally.
 
 ---
 
@@ -1368,13 +1588,13 @@ tests/test_runtime_truth.py
 
 **Checks**
 
-- [x] `VERSION` exists and is semver-compatible.
-- [x] README and README badge contain the same version as `VERSION`.
-- [x] `CHANGELOG.md` and `docs/stability.json` contain the same version.
-- [x] README tool count matches actual runtime discovery.
-- [x] All runtime tools are present in `docs/TOOL_SAFETY.md`.
-- [x] All tools in `docs/TOOL_SAFETY.md` exist in runtime.
-- [x] All Class C/D tools have explicit safety metadata.
+* [x] `VERSION` exists and is semver-compatible.
+* [x] README and README badge contain the same version as `VERSION`.
+* [x] `CHANGELOG.md` and `docs/stability.json` contain the same version.
+* [x] README tool count matches actual runtime discovery.
+* [x] All runtime tools are present in `docs/TOOL_SAFETY.md`.
+* [x] All tools in `docs/TOOL_SAFETY.md` exist in runtime.
+* [x] All Class C/D tools have explicit safety metadata.
 
 The script must emit clear error messages, for example:
 
@@ -1386,9 +1606,9 @@ MQ_MCP_RUNTIME_TRUTH_ERROR: tool missing from docs/TOOL_SAFETY.md
 
 **Definition of done**
 
-- [x] `scripts/check-runtime-truth.sh` is called by `scripts/validate.sh`.
-- [x] CI fails if version, tool count, or safety docs drift apart.
-- [x] Error messages are clear enough to locate and fix drift quickly.
+* [x] `scripts/check-runtime-truth.sh` is called by `scripts/validate.sh`.
+* [x] CI fails if version, tool count, or safety docs drift apart.
+* [x] Error messages are clear enough to locate and fix drift quickly.
 
 ---
 
@@ -1433,10 +1653,10 @@ mq-mcp tools --markdown
 
 **Definition of done**
 
-- [x] Tool metadata can be exported as JSON.
-- [x] Tool safety can be exported in machine-readable form.
-- [x] `TOOL_INDEX.md` can be generated or validated from runtime.
-- [x] README no longer needs to be the sole source of tool count.
+* [x] Tool metadata can be exported as JSON.
+* [x] Tool safety can be exported in machine-readable form.
+* [x] `TOOL_INDEX.md` can be generated or validated from runtime.
+* [x] README no longer needs to be the sole source of tool count.
 
 ---
 
@@ -1454,35 +1674,35 @@ tests/test_safety_classes.py
 
 **Class A — repo-scoped read-only**
 
-- [x] may only read repo-scoped files/data
-- [x] may not write, run subprocess, or open apps
-- [x] does not require an API key
+* [x] may only read repo-scoped files/data
+* [x] may not write, run subprocess, or open apps
+* [x] does not require an API key
 
 **Class B — external/system read-only**
 
-- [x] may read system status or external read-only data
-- [x] may not write files or change system state
-- [x] external access must be documented
+* [x] may read system status or external read-only data
+* [x] may not write files or change system state
+* [x] external access must be documented
 
 **Class C — controlled write**
 
-- [x] may write only within a clearly defined scope
-- [x] may not commit automatically
-- [x] must return the modified path and document rollback or limitation
-- [x] must have a test for path safety
+* [x] may write only within a clearly defined scope
+* [x] may not commit automatically
+* [x] must return the modified path and document rollback or limitation
+* [x] must have a test for path safety
 
 **Class D — subprocess/open-app/system effect**
 
-- [x] must be explicit and document the system effect
-- [x] must have a clear command boundary
-- [x] should be avoided in automated workflows
-- [x] must be identifiable in tool metadata
+* [x] must be explicit and document the system effect
+* [x] must have a clear command boundary
+* [x] should be avoided in automated workflows
+* [x] must be identifiable in tool metadata
 
 **Definition of done**
 
-- [x] A new tool without complete metadata causes validation to fail.
-- [x] Class C/D tools are easy to locate.
-- [x] `docs/TOOL_SAFETY.md` can be checked against runtime.
+* [x] A new tool without complete metadata causes validation to fail.
+* [x] Class C/D tools are easy to locate.
+* [x] `docs/TOOL_SAFETY.md` can be checked against runtime.
 
 ---
 
@@ -1504,16 +1724,16 @@ review_engine/contracts/orchestration_boundary.md
 
 **The review engine must detect**
 
-- [x] version drift, tool count drift, missing safety class
-- [x] docs/runtime mismatch, stale architecture docs, stale semantic memory
-- [x] unclear Class C/D boundaries, release blockers
-- [x] skill/docs mismatch, orchestration boundary violations
+* [x] version drift, tool count drift, missing safety class
+* [x] docs/runtime mismatch, stale architecture docs, stale semantic memory
+* [x] unclear Class C/D boundaries, release blockers
+* [x] skill/docs mismatch, orchestration boundary violations
 
 **Definition of done**
 
-- [x] `review_repo` can flag system drift.
-- [x] `review_diff` can detect when a new tool is missing safety metadata.
-- [x] Review results can be fed into semantic memory without creating noise.
+* [x] `review_repo` can flag system drift.
+* [x] `review_diff` can detect when a new tool is missing safety metadata.
+* [x] Review results can be fed into semantic memory without creating noise.
 
 ---
 
@@ -1552,9 +1772,9 @@ tests/test_semantic_memory_policy.py
 
 **Definition of done**
 
-- [x] Semantic memory can be audited.
-- [x] Bootstrap does not overwrite valuable ADRs without a policy rule.
-- [x] The review engine can use memory without mixing old and new truth.
+* [x] Semantic memory can be audited.
+* [x] Bootstrap does not overwrite valuable ADRs without a policy rule.
+* [x] The review engine can use memory without mixing old and new truth.
 
 ---
 
@@ -1578,9 +1798,9 @@ README must answer: when is each repo used, which tools may run automatically, w
 
 **Definition of done**
 
-- [x] A new user understands what `mq-mcp` is.
-- [x] An agent can decide when to use `mq-mcp`.
-- [x] Class C/D tools are clearly separated from read-only flows.
+* [x] A new user understands what `mq-mcp` is.
+* [x] An agent can decide when to use `mq-mcp`.
+* [x] Class C/D tools are clearly separated from read-only flows.
 
 ---
 
@@ -1594,9 +1814,9 @@ The release gate must run `check-runtime-truth.sh`, `check-tool-contracts.sh`, `
 
 **Definition of done**
 
-- [x] The release process catches system drift before tagging.
-- [x] Release output clearly shows what was verified.
-- [x] Release can be run with `--dry-run`.
+* [x] The release process catches system drift before tagging.
+* [x] Release output clearly shows what was verified.
+* [x] Release can be run with `--dry-run`.
 
 ---
 
@@ -1615,9 +1835,9 @@ handwritten docs = why the system is designed that way
 
 **Definition of done**
 
-- [x] Generated artifacts can be reproduced deterministically.
-- [x] Validation fails if generated artifacts are out of sync.
-- [x] README uses summaries rather than duplicating tool truth.
+* [x] Generated artifacts can be reproduced deterministically.
+* [x] Validation fails if generated artifacts are out of sync.
+* [x] README uses summaries rather than duplicating tool truth.
 
 ---
 
