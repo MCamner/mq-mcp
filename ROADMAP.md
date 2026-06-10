@@ -200,7 +200,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 | v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
 | v1.10.0 | Learning Contract Layer                     | Done          |
-| v1.11.0 | Ollama-backed learn extraction hardening    | Planned       |
+| v1.11.0 | Ollama-backed learn extraction hardening    | In progress   |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Planned       |
 
 ---
@@ -402,8 +402,6 @@ mq-mcp learn explain architecture
 
 ## Planned: v1.12.0 — Repo-snapshot som kontrollerad evidence
 
-### Goal
-
 Minska hallucination genom att alltid ge modellen faktisk repo-kontext.
 
 ### Fas 3 — Repo-snapshot som evidence-källa
@@ -473,9 +471,9 @@ memory/learn/patterns/<pattern_name>.md
 
 **Acceptance criteria**
 
-* [ ] Obsidian är bara storage/display — exekverar inget
-* [ ] `mq-mcp` äger valideringen
-* [ ] Export kräver explicit `--approve-store`
+* [x] Obsidian är bara storage/display — exekverar inget (`brain_record_learning` / `brain_promote_learning` skriver markdown, kör inget)
+* [x] `mq-mcp` äger valideringen (`validate_learn_record` i `learn_engine.py`)
+* [x] Export kräver explicit approve (`brain_record_learning` är Class C, kräver `--approve` via mq-agent)
 
 ---
 
