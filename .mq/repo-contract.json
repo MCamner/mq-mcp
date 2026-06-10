@@ -1,0 +1,14 @@
+{
+  "repo": "mq-mcp",
+  "role": "runtime",
+  "version": "1.11.0",
+  "status": "active",
+  "contracts": [
+    "review_contract.v1",
+    "safety_class.v1",
+    "tool_registry.v1",
+    "learn_contract.v1",
+    "brain_write.v1"
+  ],
+  "next_focus": ""
+}
