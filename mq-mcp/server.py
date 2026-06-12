@@ -2,6 +2,7 @@ import json
 import random
 import re
 import os
+import sys
 import shlex
 import time
 from pathlib import Path
@@ -26,7 +27,10 @@ MCP_HOST = os.getenv("MQ_MCP_HOST", "127.0.0.1")
 MCP_PORT = int(os.getenv("MQ_MCP_PORT", "8765"))
 mcp = FastMCP("mq-mcp", host=MCP_HOST, port=MCP_PORT)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.parent
+if str(APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_ROOT))
 _CONTRACTS_PATH = REPO_ROOT / "docs" / "tool_contracts.json"
 _STARTED_AT = time.time()
 

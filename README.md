@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-1.10.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.10.0)
+[![Version](https://img.shields.io/badge/version-1.11.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.11.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -14,8 +14,7 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v1.10.0 — learning contract layer complete: learn hygiene report, compatibility aliases, and governance roadmap (Phases 1-9) done.
-orchestration contract WARN acceptance policy, and ADR-006.
+v1.11.0 — brain/Obsidian tools, local Ollama learn provider scaffolding, mq-agent learn compatibility aliases, and release-gate hardening.
 
 This repository is useful as:
 
@@ -333,6 +332,15 @@ The local MCP server exposes 121 tools across five safety classes. See [`docs/TO
 * `ollama_learn_extract` — dry-run extraction of a learn pattern from review findings via local Ollama; no storage, preview only (Class B)
 * `learn_extract_from_last_review` — loads stored review findings for a file, runs dry-run Ollama extraction, returns a preview candidate; no storage (Class B)
 * `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
+
+**Brain tools (Class A/C):**
+
+* `brain_status` — reports mqobsidian vault availability and top-level folders (Class A)
+* `brain_record_decision` — writes an ADR to mqobsidian/decisions/ (Class C)
+* `brain_record_review` — writes a review summary to mqobsidian/reviews/ (Class C)
+* `brain_record_session` — writes a session note to mqobsidian/sessions/ (Class C)
+* `brain_record_learning` — writes a learned pattern to mqobsidian/learn/ (Class C)
+* `brain_promote_learning` — promotes a learning note into mqobsidian/learn/verified/ (Class C)
 
 **Review engine tools:**
 

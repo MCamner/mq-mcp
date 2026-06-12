@@ -137,6 +137,14 @@ TOOL_META: dict[str, dict] = {
     "ollama_learn_extract":        {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_extract_from_last_review": {"class": "B", "resolver": "resolve_repo_file",  "write": False, "subprocess": False, "side_effects": []},
 
+    # Brain / mqobsidian tools (v1.11.0)
+    "brain_status":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "brain_record_decision":        {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "brain_record_review":          {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "brain_record_session":         {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "brain_record_learning":        {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "brain_promote_learning":       {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+
     # mqlaunch bridge tools (v1.9.0)
     "run_mqlaunch_doctor":         {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
     "run_mqlaunch_selftest":       {"class": "D", "resolver": "none",                   "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
