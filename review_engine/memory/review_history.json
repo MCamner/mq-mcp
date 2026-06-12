@@ -169,6 +169,21 @@
     {
       "file_path": "review_engine/review_memory.py",
       "mode": "comment",
+      "timestamp": 1781290686.7722461,
+      "timestamp_iso": "2026-06-12T18:58:06Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 13,
+      "severity_counts": {
+        "MISSING": 11,
+        "SUGGESTION": 1,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — review_engine/review_memory.py: 13 total  [MISSING=11  SUGGESTION=1  NOTE=1]\n\n[MISSING] review_engine/review_memory.py:1\nModule-level docstring does not mention function parameters or return types for public methods; add summaries for them.\n\n[MISSING] review_engine/review_memory.py:22\nReviewEntry class is missing a class docstring describing its purpose as a data container for review history entries.\n\n[MISSING] review_engine/review_memory.py:27\nReviewEntry.age_days method is public but lacks a docstring explaining it returns the age of the review entry in days.\n\n[MISSING] review_engine/review_memory.py:33\nReviewMemory.__init__ method is public and lacks a docstring explaining its parameters and initialization behavior.\n\n[MISSING] review_engine/review_memory.py:40\nReviewMemory._load method is private but could benefit from a short docstring describing it loads history JSON data or returns empty dict.\n\n[MISSING] review_engine/review_memory.py:47\nReviewMemory._save method is private and lacks a docstring explaining it persists in-memory history data to file.\n\n[MISSING] review_engine/review_memory.py:53\nReviewMemory.save method has a docstring but does not describe parameter types or their expected formats; add detailed parameter/documentation.\n\n[MISSING] review_engine/review_memory.py:82\nReviewMemory.get_last method has a docstring but does not specify it returns None if no entries exist for the file path.\n\n[MISSING] review_engine/review_memory.py:90\nReviewMemory.get_history method has a docstring but could be more explicit about its return type as list of ReviewEntry newest first.\n\n[MISSING] review_engine/review_memory.py:132\nall_files method has a docstring but does not specify it returns a sorted list of file paths.\n\n[MISSING] review_engine/review_memory.py:136\nsummary method has a docstring but could describe the format and meaning of its returned summary string more specifically.\n\n[SUGGESTION] review_engine/review_memory.py:104\nformat_past_context method docstring could clarify the format/structure of the returned summary string.\n\n[NOTE] review_engine/review_memory.py:88\nIn get_last and get_history methods, exceptions in ReviewEntry construction are silently caught and ignored — unclear whether additional logging would be helpful for debugging data integrity.",
+      "skill": "review-engine"
+    },
+    {
+      "file_path": "review_engine/review_memory.py",
+      "mode": "comment",
       "timestamp": 1780001469.030144,
       "timestamp_iso": "2026-05-28T20:51:09Z",
       "model": "gpt-4.1-mini",
@@ -183,6 +198,21 @@
     }
   ],
   "review_engine/review_router.py": [
+    {
+      "file_path": "review_engine/review_router.py",
+      "mode": "comment",
+      "timestamp": 1781290693.149896,
+      "timestamp_iso": "2026-06-12T18:58:13Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 9,
+      "severity_counts": {
+        "MISSING": 7,
+        "SUGGESTION": 1,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — review_engine/review_router.py: 9 total  [MISSING=7  SUGGESTION=1  NOTE=1]\n\n[MISSING] review_engine/review_router.py:1\nModule docstring is minimal and could clarify that this module routes source files to specific review skill modules based on path prefixes and file extensions.\n\n[MISSING] review_engine/review_router.py:17\n_PREFIX_ROUTES constant lacks a docstring explaining the semantics and expected format of the tuples (e.g., what path prefix and skill filename mean).\n\n[MISSING] review_engine/review_router.py:25\n_ROUTES constant lacks a detailed docstring describing the tuple structure: how path_pattern, extension_set, and skill filename are used to match and route files.\n\n[MISSING] review_engine/review_router.py:32\n_SECURITY_SKILL_FILE constant does not have an inline comment explaining its role in always injecting security-review.md for certain modes.\n\n[MISSING] review_engine/review_router.py:36\nThe function route_file_for_mode is missing parameter and return type hints and a complete docstring detailing parameters, expected input values for mode, and exact return semantics.\n\n[MISSING] review_engine/review_router.py:49\nThe function route_file is missing parameter and return type hints and could elaborate in its docstring about the fallback (\"none\", \"\") return when no match is found.\n\n[MISSING] review_engine/review_router.py:79\nThe function list_routes lacks parameter and return type hints and could improve its docstring by clarifying the dictionary keys and their meanings in the returned list.\n\n[SUGGESTION] review_engine/review_router.py:56\nThe logic inside route_file could benefit from inline comments explaining the rationale and order of the routing strategy (prefix routes first, then extension routes).\n\n[NOTE] review_engine/review_router.py:88\nThe main block demonstrates example usage and listing of routes, which is informative for manual testing but is not documented in the module-level docstring or function docstrings.",
+      "skill": "review-engine"
+    },
     {
       "file_path": "review_engine/review_router.py",
       "mode": "comment",
@@ -1046,6 +1076,78 @@
         "NOTE": 1
       },
       "findings_text": "Review findings — mq-mcp/release_gate/checks.py: 21 total  [MISSING=16  SUGGESTION=4  NOTE=1]\n\n[MISSING] mq-mcp/release_gate/checks.py:1\nModule has no docstring; add a module-level docstring summarizing the purpose of this file.\n\n[MISSING] mq-mcp/release_gate/checks.py:7\n_public function check_tests_pass is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:33\n_public function check_version_consistent is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:52\n_public function check_file_mentions_target is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:74\n_private function _repo_exposes_mcp_tools is missing a docstring; add a brief description of its purpose.\n\n[MISSING] mq-mcp/release_gate/checks.py:84\n_public function check_contracts_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:111\n_public function check_safety_classes_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:135\n_public function check_learn_contract_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:178\n_public function check_learn_alias_tools_present is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:214\n_public function check_learn_hygiene_pass is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:246\n_public function check_perception_artifacts_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:269\n_private function _find_perception_artifacts is missing a docstring; add a brief description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:281\n_private function _validate_perception_artifact is missing a docstring; add a brief description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:304\n_public function check_repo_signal_readiness_export is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:342\n_public function check_release_notes_present is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:360\n_public function run_p0_checks is missing a docstring; add a one-line description including its return type.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:52\nThe parameter name 'filename' in check_file_mentions_target is clear, but adding a type hint for filename and blocker parameters would improve readability.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:74\nIn _repo_exposes_mcp_tools, a docstring explaining what '@mcp.tool' and 'FastMCP' signify in this context would improve maintainability.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:214\nIn check_learn_alias_tools_present, the alias names could be clarified with comments explaining their relation to learning features.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:281\nIn _validate_perception_artifact, adding type hints for the return type (list[str]) and parameter path would improve clarity.\n\n[NOTE] mq-mcp/release_gate/checks.py:360\nrun_p0_checks orchestrates multiple checks returning a list of GateCheck objects; the lack of a docstring leaves unclear the expected usage pattern.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/release_gate/__init__.py": [
+    {
+      "file_path": "mq-mcp/release_gate/__init__.py",
+      "mode": "comment",
+      "timestamp": 1781290666.915443,
+      "timestamp_iso": "2026-06-12T18:57:46Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/runtime/memory/__init__.py": [
+    {
+      "file_path": "mq-mcp/runtime/memory/__init__.py",
+      "mode": "comment",
+      "timestamp": 1781290667.930288,
+      "timestamp_iso": "2026-06-12T18:57:47Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/runtime/memory/obsidian_writer.py": [
+    {
+      "file_path": "mq-mcp/runtime/memory/obsidian_writer.py",
+      "mode": "comment",
+      "timestamp": 1781290919.432779,
+      "timestamp_iso": "2026-06-12T19:01:59Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 19,
+      "severity_counts": {
+        "MISSING": 11,
+        "SUGGESTION": 4,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — mq-mcp/runtime/memory/obsidian_writer.py: 19 total  [MISSING=11  SUGGESTION=4  NOTE=4]\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:27\n_vault function has no docstring; add a one-line description of its purpose and return value.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:32\nvault_path function has no docstring; add a one-line description of what path it returns.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:36\nvault_exists function has no docstring; add a one-line description clarifying what \"exists\" means (e.g., if the directory is present).\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:41\n_slug function has no docstring; add descriptions for the input text, output format, and max_len parameter usage.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:56\n_write function has no docstring; add a description of parameters, side-effects (file write), and the return value dictionary structure.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:68\n_frontmatter function has no docstring; add description of purpose building YAML frontmatter, accepted arguments, and output format.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:119\n_body function is public-like but has no detailed docstring describing its parameters fully and its return format.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:173\n_parse_frontmatter function has a minimal docstring; consider expanding it to clarify the expected input format and exact structure of returned tuple.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:209\n_set_frontmatter_field function has a minimal docstring; consider expanding to specify the behavior when the frontmatter is missing or the key is not found.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:221\n_parse_frontmatter declares return as tuple[dict[str, Any], str] but lacks type hints for internal variables; adding type hints here could improve clarity (note: partial).\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:232\nrecord_session function parameters repos, outcomes, follow_ups lack explanation of expected contents.\n\n[SUGGESTION] mq-mcp/runtime/memory/obsidian_writer.py:41\n_slug parameter max_len could be better described as \"maximum length of the resulting slug string.\"\n\n[SUGGESTION] mq-mcp/runtime/memory/obsidian_writer.py:253\npromote_learning function docstring is comprehensive but could explicitly document the expected format of the slug parameter.\n\n[SUGGESTION] mq-mcp/runtime/memory/obsidian_writer.py:256\npromote_learning uses abbreviations in docstring for steps; consider expanding \"1.\", \"2.\", etc. lines to full sentences for clarity.\n\n[SUGGESTION] mq-mcp/runtime/memory/obsidian_writer.py:313\nrecord_learning function docstring should specify the format and expected contents of the evidence parameter (list of strings).\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:96\nrecord_decision docstring describes return values as dicts with \"ok\" and \"path\" or \"error\" keys; this is clear and helpful.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:115\n_body function describes \"No indentation drift\" which is a helpful note about formatting intent.\n\nOK — no comment review findings beyond those listed.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:125\nrecord_review function docstring clearly describes return value and intent; parameter naming is clear and consistent.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:167\nrecord_session has a clear docstring specifying location of notes and return contract.",
+      "skill": "python-comment-review"
+    },
+    {
+      "file_path": "mq-mcp/runtime/memory/obsidian_writer.py",
+      "mode": "comment",
+      "timestamp": 1781290901.614248,
+      "timestamp_iso": "2026-06-12T19:01:41Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 19,
+      "severity_counts": {
+        "MISSING": 13,
+        "SUGGESTION": 1,
+        "NOTE": 5
+      },
+      "findings_text": "Review findings — mq-mcp/runtime/memory/obsidian_writer.py: 19 total  [MISSING=13  SUGGESTION=1  NOTE=5]\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:29\n_vault function has no docstring; add a one-line description of its purpose and return value.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:35\nvault_path function has no docstring; add a one-line description of what path it returns.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:39\nvault_exists function has no docstring; add a one-line description clarifying what \"exists\" means (e.g., if the directory is present).\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:44\n_slug function has no docstring; add descriptions for the input text, output format, and max_len parameter usage.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:92\n_write function lacks a docstring; add a description of input parameters and the structure of the returned dict.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:106\n_frontmatter function has no docstring; add a description of how it formats YAML frontmatter from key-value fields.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:151\nrecord_decision lacks detail in the docstring regarding the keys in the returned dict and error cases.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:181\nrecord_review docstring could be improved by describing the structure and expected contents of top_risks and suggested_next_steps lists.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:213\nrecord_session docstring should describe the repos, outcomes, and follow_ups parameters and their expected list contents or default behavior.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:249\n_parse_frontmatter function lacks a detailed docstring explaining the parsing logic and the format of the returned tuple.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:280\n_set_frontmatter_field function docstring should clarify the behavior when the frontmatter is absent and that only scalar fields are updated.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:301\npromote_learning function docstring missing explicit parameter and return value descriptions including error scenarios.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:346\nrecord_learning docstring does not document parameters in detail, especially evidence and recommended_action lists usage and expected file overwrite behavior.\n\n[SUGGESTION] mq-mcp/runtime/memory/obsidian_writer.py:128\n_body function parameter should be named more descriptively than *sections (tuple[str, str]) to improve clarity at call sites.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:20\nModule-level docstring effectively summarizes purpose and safety but does not document environment variable MQ_OBSIDIAN_DIR in detail (e.g., type or default platform differences).\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:78\n_now_iso function name implies returning ISO8601 datetime string; this is consistent with formatting but could have a brief docstring for clarity.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:136\nrecord_decision docstring returns mention \"path\" key without specifying the path type or format—likely filesystem path but unspecified.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:167\nrecord_review docstring uses plural \"summaries\" but parameter raw_summary is singular and optional—could be clarified.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:300\npromote_learning implementation changes frontmatter status fields, but notes that it does not handle absent or malformed frontmatter explicitly—unclear if intentional.",
+      "skill": "python-comment-review"
+    },
+    {
+      "file_path": "mq-mcp/runtime/memory/obsidian_writer.py",
+      "mode": "comment",
+      "timestamp": 1781290679.607402,
+      "timestamp_iso": "2026-06-12T18:57:59Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 22,
+      "severity_counts": {
+        "MISSING": 16,
+        "NOTE": 6
+      },
+      "findings_text": "Review findings — mq-mcp/runtime/memory/obsidian_writer.py: 22 total  [MISSING=16  NOTE=6]\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:32\n_vault has no docstring; add a one-line description of what path it returns.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:41\nvault_path has no docstring; add a one-line description.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:45\nvault_exists has no docstring; add a one-line description and clarify what \"exists\" means (e.g. directory presence).\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:50\n_slug has no docstring; add a description of input, output format, and max_len usage.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:57\n_today has no docstring; clarify it returns current date string in UTC.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:61\n_now_iso has no docstring; clarify it returns current datetime in ISO 8601 UTC format.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:66\n_write has no docstring; add explanation of parameters, returned dict keys, and error conditions if any.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:75\n_frontmatter has no docstring; describe what the output string represents and expected field value types.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:88\n_body has a one-line docstring but uses \"No indentation drift\" which is unclear; rephrase for clarity.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:122\n_record_decision parameters and return value are documented, but tags parameter type lacks explanation if None is allowed; also clarify expected structure of returned dict.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:149\n_record_review parameters including lists lack explanation about allowed contents and what \"confidence\" values are accepted; describe return dict keys.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:179\n_record_session parameters and return dict are documented, but repos, outcomes, and follow_ups are lists or None — clarify content requirements and None meaning.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:212\n_parse_frontmatter has a brief docstring but does not explain expected input format in detail or structure of returned fields dictionary.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:243\n_set_frontmatter_field has a short docstring but does not specify expected formatting constraints of content or behavior when multiple keys exist.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:259\npromote_learning is documented but should specify types expected for slug argument and detail all possible keys in returned dict for success and failure cases.\n\n[MISSING] mq-mcp/runtime/memory/obsidian_writer.py:312\nrecord_learning is documented but does not clarify expected contents and types in evidence list parameter, nor all possible keys in return dict.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:32\nModule-level docstring clearly summarizes functionality, safety classification, usage constraints, and vault path configuration.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:112\nrecord_decision documents that it returns {\"ok\": True, \"path\": \"...\"} or {\"ok\": False, \"error\": \"...\"}, which is consistent and useful for callers.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:139\nrecord_review documents return values similarly, maintaining consistency across public APIs.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:169\nrecord_session documents return values similarly, consistent with other public API functions.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:259\npromote_learning documents steps performed and possible return dict structures, aiding user understanding.\n\n[NOTE] mq-mcp/runtime/memory/obsidian_writer.py:312\nrecord_learning documents overwrite behavior and return dict format, improving usability clarity.",
       "skill": "python-comment-review"
     }
   ]
