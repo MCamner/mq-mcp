@@ -113,6 +113,22 @@
     {
       "file_path": "review_engine/severity_engine.py",
       "mode": "comment",
+      "timestamp": 1781298778.390881,
+      "timestamp_iso": "2026-06-12T21:12:58Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 14,
+      "severity_counts": {
+        "WARNING": 1,
+        "MISSING": 3,
+        "SUGGESTION": 2,
+        "NOTE": 8
+      },
+      "findings_text": "Review findings — review_engine/severity_engine.py: 14 total  [WARNING=1  MISSING=3  SUGGESTION=2  NOTE=8]\n\n[WARNING] review_engine/severity_engine.py:37\nThe Finding class properties file and line are not documented regarding the expected format of location strings or handling of missing or malformed line numbers.\n\n[MISSING] review_engine/severity_engine.py:1\nModule docstring is present but could be expanded with an explicit note on the multi-mode (comment-review and architecture-review) usage and how severity levels outside comment-review contract integrate.\n\n[MISSING] review_engine/severity_engine.py:14\nSeverity enum members include levels (ARCHITECTURE, RISK, CRITICAL) outside comment-review contract scope, but no docstring or inline comment clarifies reasoning or usage context.\n\n[MISSING] review_engine/severity_engine.py:26\nNo module-level docstring or inline comment explains the SEVERITY_ORDER list—specifically its criteria for ordering and intended effect on sorted findings.\n\n[SUGGESTION] review_engine/severity_engine.py:54\nparse_findings return value docstring specifies sorting by severity and line number but could explicitly mention the severity order defined by SEVERITY_ORDER for user clarity.\n\n[SUGGESTION] review_engine/severity_engine.py:101\nformat_summary docstring could mention the format of the summary string and the rationale for including severity counts distribution.\n\n[NOTE] review_engine/severity_engine.py:7\nClass Severity inherits from str and Enum but no docstring exists; while not strictly needed, a short docstring could improve clarity on intended use.\n\n[NOTE] review_engine/severity_engine.py:39\nThe Finding dataclass fields are well named and self-explanatory; however, absence of explicit docstrings on the class or its attributes is minor but noted.\n\n[NOTE] review_engine/severity_engine.py:54\nparse_findings function docstring clearly states that unknown severity labels are dropped, aiding clarity for external callers.\n\n[NOTE] review_engine/severity_engine.py:101\nformat_summary function includes parameter and return documentation, aiding usability and integration.\n\n[NOTE] review_engine/severity_engine.py:122\nformat_findings_text function has a concise one-line docstring accurately describing its output format.\n\n[NOTE] review_engine/severity_engine.py:126\nseverity_counts function includes a succinct docstring explaining the mapping from severity label to count.\n\n[NOTE] review_engine/severity_engine.py:131\nhas_blocking_findings function docstring clearly states which severity levels count as blocking findings.\n\n[NOTE] review_engine/severity_engine.py:135\nThe example/main block at the bottom includes sample data and usage, improving understandability though could benefit from a short comment header describing its purpose.\n\nOK — no further comment review findings.",
+      "skill": "review-engine"
+    },
+    {
+      "file_path": "review_engine/severity_engine.py",
+      "mode": "comment",
       "timestamp": 1780004766.3404858,
       "timestamp_iso": "2026-05-28T21:46:06Z",
       "model": "gpt-4.1-mini",
@@ -248,6 +264,21 @@
   "review_engine/generated_artifacts.py": [
     {
       "file_path": "review_engine/generated_artifacts.py",
+      "mode": "comment",
+      "timestamp": 1781298785.767264,
+      "timestamp_iso": "2026-06-12T21:13:05Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 18,
+      "severity_counts": {
+        "MISSING": 12,
+        "SUGGESTION": 2,
+        "NOTE": 4
+      },
+      "findings_text": "Review findings — review_engine/generated_artifacts.py: 18 total  [MISSING=12  SUGGESTION=2  NOTE=4]\n\n[MISSING] review_engine/generated_artifacts.py:11\nModule-level docstring does not document the purpose and format of the JSON schemas (architecture_map.v1, ownership_map.v1) beyond file names.\n\n[MISSING] review_engine/generated_artifacts.py:31\nTop-level constants such as REPO_ROOT, ARCHITECTURE_MAP_SCHEMA, and OWNERSHIP_MAP_SCHEMA lack comments or docstrings explaining their intended usage.\n\n[MISSING] review_engine/generated_artifacts.py:33\n_public_symbols function lacks type hints for parameters and return value.\n\n[MISSING] review_engine/generated_artifacts.py:33\n_public_symbols function docstring could clarify whether only top-level symbols are included (e.g., no nested or imported symbols).\n\n[MISSING] review_engine/generated_artifacts.py:46\n_last_review_timestamp function lacks type hints for parameters and return value.\n\n[MISSING] review_engine/generated_artifacts.py:46\n_last_review_timestamp docstring does not specify the expected format of the timestamp or the structure of review_memory_path JSON data.\n\n[MISSING] review_engine/generated_artifacts.py:58\n_hub_scores function lacks type hints for its parameters and return value.\n\n[MISSING] review_engine/generated_artifacts.py:58\n_hub_scores docstring could indicate expected callgraph.json schema, particularly the structure of the \"importers\" dict.\n\n[MISSING] review_engine/generated_artifacts.py:69\n_git_log_ownership function lacks type hints for parameters and return value.\n\n[MISSING] review_engine/generated_artifacts.py:69\n_git_log_ownership docstring could document the format of the returned dictionary’s values more explicitly, including types expected for \"author\", \"change_frequency\", and \"last_modified\".\n\n[MISSING] review_engine/generated_artifacts.py:111\nbuild_rich_architecture_map function is missing type hints for parameters and return value.\n\n[MISSING] review_engine/generated_artifacts.py:157\nbuild_ownership_map function is missing type hints for its parameters and return value.\n\n[SUGGESTION] review_engine/generated_artifacts.py:111\nbuild_rich_architecture_map's docstring could document the exact expected structure of the returned dict, especially the \"files\" dict value format.\n\n[SUGGESTION] review_engine/generated_artifacts.py:157\nbuild_ownership_map docstring could specify the exact format of the returned dictionary and the \"files\" dict key-value structure more explicitly.\n\n[NOTE] review_engine/generated_artifacts.py:33\n_public_symbols suppresses SyntaxError and OSError — the docstring could clarify that missing or invalid files result in an empty list.\n\n[NOTE] review_engine/generated_artifacts.py:46\n_last_review_timestamp swallows all exceptions silently — docstring should clarify that missing or malformed review memory results in None.\n\n[NOTE] review_engine/generated_artifacts.py:58\n_hub_scores quietly returns empty dict on any exception — this behavior could be further documented for clarity about errors in callgraph.json parsing.\n\n[NOTE] review_engine/generated_artifacts.py:69\n_git_log_ownership runs a subprocess for git log with read-only intent and includes timeout and error handling, but docstrings acknowledge subprocess side effects.",
+      "skill": "review-engine"
+    },
+    {
+      "file_path": "review_engine/generated_artifacts.py",
       "mode": "risk:risk",
       "timestamp": 1780006510.946286,
       "timestamp_iso": "2026-05-28T22:15:10Z",
@@ -262,6 +293,21 @@
     }
   ],
   "review_engine/convention_extractor.py": [
+    {
+      "file_path": "review_engine/convention_extractor.py",
+      "mode": "comment",
+      "timestamp": 1781298791.2750132,
+      "timestamp_iso": "2026-06-12T21:13:11Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 10,
+      "severity_counts": {
+        "MISSING": 3,
+        "SUGGESTION": 1,
+        "NOTE": 6
+      },
+      "findings_text": "Review findings — review_engine/convention_extractor.py: 10 total  [MISSING=3  SUGGESTION=1  NOTE=6]\n\n[MISSING] review_engine/convention_extractor.py:1\nThe module docstring lacks a summary of all public classes and methods to clarify their overall usage for users.\n\n[MISSING] review_engine/convention_extractor.py:35\nClass ConventionExtractor has no class-level docstring describing its purpose, attributes, and typical usage pattern.\n\n[MISSING] review_engine/convention_extractor.py:44\nMethod ConventionExtractor.extract docstring should include parameter type, meaning, and return value description for clarity.\n\n[SUGGESTION] review_engine/convention_extractor.py:88\nThe private function _parse_conventions would benefit from a brief docstring explaining its input format, output structure, and purpose.\n\n[NOTE] review_engine/convention_extractor.py:15\nThe Convention dataclass has typed fields but no docstring describing what each field represents or how it is used.\n\n[NOTE] review_engine/convention_extractor.py:49\nThe extract method uses type annotations but the parameter existing_titles is only partially described as list[str] | None in the signature without further explanation in the docstring.\n\n[NOTE] review_engine/convention_extractor.py:78\nThe EXTRACT_SYSTEM constant contains detailed instructions as a triple-quoted string, which helps maintain clarity on the extraction protocol.\n\n[NOTE] review_engine/convention_extractor.py:86\nThe variable raw is stripped and checked for a \"no conventions found\" phrase, but the reasoning for this format choice is not documented.\n\n[NOTE] review_engine/convention_extractor.py:93\nRegular expression _CONV_RE is defined with a complex pattern; a comment or docstring would clarify expected input patterns.\n\n[NOTE] review_engine/convention_extractor.py:94\nThe regex uses re.DOTALL and a non-greedy match for multi-line extraction, which is appropriate but not documented explicitly.",
+      "skill": "review-engine"
+    },
     {
       "file_path": "review_engine/convention_extractor.py",
       "mode": "comment",
@@ -282,6 +328,20 @@
     {
       "file_path": "review_engine/context_selector.py",
       "mode": "comment",
+      "timestamp": 1781298795.8140879,
+      "timestamp_iso": "2026-06-12T21:13:15Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 4,
+      "severity_counts": {
+        "MISSING": 3,
+        "SUGGESTION": 1
+      },
+      "findings_text": "Review findings — review_engine/context_selector.py: 4 total  [MISSING=3  SUGGESTION=1]\n\n[MISSING] review_engine/context_selector.py:1\nModule-level docstring should include a one-line summary of the module's purpose for immediate clarity.\n\n[MISSING] review_engine/context_selector.py:24\nContextSelector class docstring lacks explicit types for 'label' and 'content' parameters in the add method for public clarity.\n\n[MISSING] review_engine/context_selector.py:43\nselected method lacks type hints indicating it returns a dictionary mapping string labels to string content for better API clarity.\n\n[SUGGESTION] review_engine/context_selector.py:35\nThe add method docstring could explicitly state that content is stripped of whitespace before addition to clarify behavior.",
+      "skill": "review-engine"
+    },
+    {
+      "file_path": "review_engine/context_selector.py",
+      "mode": "comment",
       "timestamp": 1780790529.1099021,
       "timestamp_iso": "2026-06-07T00:02:09Z",
       "model": "gpt-4.1-mini",
@@ -296,6 +356,21 @@
     }
   ],
   "review_engine/drift_detector.py": [
+    {
+      "file_path": "review_engine/drift_detector.py",
+      "mode": "comment",
+      "timestamp": 1781298801.455307,
+      "timestamp_iso": "2026-06-12T21:13:21Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 12,
+      "severity_counts": {
+        "MISSING": 8,
+        "SUGGESTION": 2,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — review_engine/drift_detector.py: 12 total  [MISSING=8  SUGGESTION=2  NOTE=2]\n\n[MISSING] review_engine/drift_detector.py:1\nModule-level docstring does not explain the meaning or possible values of severity labels (NOTE, WARNING, RISK) used in DriftFinding.\n\n[MISSING] review_engine/drift_detector.py:14\nDriftFinding dataclass has no docstring describing its purpose and fields.\n\n[MISSING] review_engine/drift_detector.py:31\nDriftDetector class has no class-level docstring summarizing its role and main methods.\n\n[MISSING] review_engine/drift_detector.py:41\nThe private method _server_tools has only a brief inline comment; add a more complete docstring describing method behavior, inputs, and outputs.\n\n[MISSING] review_engine/drift_detector.py:54\nThe private method _contracted_tools lacks a docstring describing what data it returns and the format of the returned tuple.\n\n[MISSING] review_engine/drift_detector.py:65\nThe private method _declared_count_in_file lacks a docstring describing its purpose and expected input/output.\n\n[MISSING] review_engine/drift_detector.py:73\nThe private method _safety_table_count lacks a docstring explaining how it counts tools in the TOOL_SAFETY.md summary table.\n\n[MISSING] review_engine/drift_detector.py:232\nformat_report should have a docstring describing its input and output format for usage clarity.\n\n[SUGGESTION] review_engine/drift_detector.py:106\nIn detect, the string \"N tools\" is parsed from text files to find declared counts; consider clarifying with a comment or docstring describing this heuristic.\n\n[SUGGESTION] review_engine/drift_detector.py:178\nThe detect method has multiple blocks appending DriftFinding instances; consider adding brief inline comments explaining each numbered check explicitly.\n\n[NOTE] review_engine/drift_detector.py:208\nIn detect, the check for CRITICAL severity presence in RUNTIME_CONTRACT.md depends on \"risk_review_file\" in server.py, which implies coupling that may deserve explicit documentation.\n\n[NOTE] review_engine/drift_detector.py:230\nThe format_report method counts severity categories and formats them in a summary line, consistent with usage pattern.",
+      "skill": "review-engine"
+    },
     {
       "file_path": "review_engine/drift_detector.py",
       "mode": "comment",
