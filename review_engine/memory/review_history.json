@@ -969,5 +969,84 @@
       "findings_text": "Review findings — mq-mcp/providers/ollama_provider.py: 21 total  [MISSING=6  SUGGESTION=4  NOTE=11]\n\n[MISSING] mq-mcp/providers/ollama_provider.py:44\nhealth function has a docstring but lacks a return type annotation; add return type hint for clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:56\nlist_models function has a docstring but lacks a return type annotation; add return type hint for clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:69\nchat_json function docstring omits the return type information; explicitly document the returned dictionary format.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:125\n_extract_learn_item function is private but its parameter's type is Any without further type hint detail, which reduces clarity.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:143\nextract_learn_items function docstring describes return keys but lacks a return type annotation; add precise return type hint.\n\n[MISSING] mq-mcp/providers/ollama_provider.py:172\nreview_summary function docstring describes return value but lacks a return type annotation; add return type hint.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:62\nParameter name `model` is clear, but specifying in docstrings that it refers to an Ollama model name could improve clarity.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:121\n_validate_learn_item function uses a list named `required` for field presence checks; documenting expected types or content for each field might improve maintainability.\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:153\nIn extract_learn_items, the parameter `findings` is typed as str but could benefit from a docstring statement clarifying expected content format (e.g., text with findings).\n\n[SUGGESTION] mq-mcp/providers/ollama_provider.py:177\nIn review_summary, parameter `findings` could explicitly document the expected format or source to aid downstream usage.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:5\nModule-level docstring clearly describes purpose and usage, aiding maintainability.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:24\nClass OllamaUnavailableError inherits from RuntimeError—no class-level docstring exists, but name is sufficiently clear for context.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:28\nClass OllamaValidationError inherits from ValueError—no class-level docstring exists, but name is sufficiently descriptive.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:46\nhealth function has a detailed docstring explaining behavior including failure mode returning error dict.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:58\nlist_models function docstring specifies it raises OllamaUnavailableError if Ollama is down.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:78\nchat_json function has a precise docstring explaining exceptions raised on error conditions.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:111\n_LEARN_SYSTEM and _LEARN_PROMPT_TEMPLATE constants have clear explanatory string values aiding understanding.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:138\n_extract_learn_item private function has a minimal docstring summarizing its purpose.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:158\nextract_learn_items function docstring clearly explains the return dict structure and keys.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:180\nreview_summary function docstring explains role and possible error keys in the return dict.\n\n[NOTE] mq-mcp/providers/ollama_provider.py:193\n_SUMMARY_SYSTEM and _SUMMARY_PROMPT_TEMPLATE constants have clear explanatory string values for their use cases.",
       "skill": "python-comment-review"
     }
+  ],
+  "mq-mcp/runtime/__init__.py": [
+    {
+      "file_path": "mq-mcp/runtime/__init__.py",
+      "mode": "comment",
+      "timestamp": 1781107811.968004,
+      "timestamp_iso": "2026-06-10T16:10:11Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 0,
+      "severity_counts": {},
+      "findings_text": "OK — no comment review findings.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/release_gate/runner.py": [
+    {
+      "file_path": "mq-mcp/release_gate/runner.py",
+      "mode": "comment",
+      "timestamp": 1781107813.973171,
+      "timestamp_iso": "2026-06-10T16:10:13Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 3,
+      "severity_counts": {
+        "MISSING": 2,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — mq-mcp/release_gate/runner.py: 3 total  [MISSING=2  NOTE=1]\n\n[MISSING] mq-mcp/release_gate/runner.py:10\n_score function is missing a docstring; add a one-line description of its purpose and the meaning of the returned score.\n\n[MISSING] mq-mcp/release_gate/runner.py:14\nrun_release_gate function is missing a docstring; add a description of parameters, return type, and what the function returns.\n\n[NOTE] mq-mcp/release_gate/runner.py:14\nrun_release_gate uses type hints appropriately for parameters and return type with union types (str | Path); this is consistent and clear.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/release_gate/models.py": [
+    {
+      "file_path": "mq-mcp/release_gate/models.py",
+      "mode": "comment",
+      "timestamp": 1781107817.5584462,
+      "timestamp_iso": "2026-06-10T16:10:17Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 5,
+      "severity_counts": {
+        "MISSING": 4,
+        "SUGGESTION": 1
+      },
+      "findings_text": "Review findings — mq-mcp/release_gate/models.py: 5 total  [MISSING=4  SUGGESTION=1]\n\n[MISSING] mq-mcp/release_gate/models.py:1\nModule missing a top-level docstring describing its purpose and contents.\n\n[MISSING] mq-mcp/release_gate/models.py:11\nReleaseGateStatus alias has no explanation or comment describing the meaning of each possible literal value.\n\n[MISSING] mq-mcp/release_gate/models.py:17\nGateCheck class docstring does not explain the meaning or expected format of fields like 'message', 'blocker', or 'next_action'.\n\n[MISSING] mq-mcp/release_gate/models.py:29\nReleaseGateResult class docstring is brief and does not describe what each attribute represents or expected usage.\n\n[SUGGESTION] mq-mcp/release_gate/models.py:42\nto_dict method has no docstring describing the return type and what the dictionary keys represent.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/release_gate/render.py": [
+    {
+      "file_path": "mq-mcp/release_gate/render.py",
+      "mode": "comment",
+      "timestamp": 1781107821.447295,
+      "timestamp_iso": "2026-06-10T16:10:21Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 6,
+      "severity_counts": {
+        "MISSING": 2,
+        "SUGGESTION": 2,
+        "NOTE": 2
+      },
+      "findings_text": "Review findings — mq-mcp/release_gate/render.py: 6 total  [MISSING=2  SUGGESTION=2  NOTE=2]\n\n[MISSING] mq-mcp/release_gate/render.py:5\nrender_release_gate function lacks a docstring; add one to describe its parameters and exact return value (the rendered string).\n\n[MISSING] mq-mcp/release_gate/render.py:26\n_private function _numbered has no docstring; even though it is private, a brief docstring could improve clarity on what it returns.\n\n[SUGGESTION] mq-mcp/release_gate/render.py:13\nConsider adding return type hints to render_release_gate as \"-> str\" to improve typing clarity of public function.\n\n[SUGGESTION] mq-mcp/release_gate/render.py:26\n_parameter name \"items\" in _numbered function is clear but could be annotated with a return type hint as \"_numbered(items: list[str]) -> list[str]\" to improve public API typing consistency, if considered part of the module interface.\n\n[NOTE] mq-mcp/release_gate/render.py:1\nThe module has a top-level docstring briefly describing its purpose as \"Human rendering for Release Gate v2.\"\n\n[NOTE] mq-mcp/release_gate/render.py:27\nThe inline comment style is minimal but functional; no inline comments present, which seems appropriate given the function simplicity.",
+      "skill": "python-comment-review"
+    }
+  ],
+  "mq-mcp/release_gate/checks.py": [
+    {
+      "file_path": "mq-mcp/release_gate/checks.py",
+      "mode": "comment",
+      "timestamp": 1781107835.273487,
+      "timestamp_iso": "2026-06-10T16:10:35Z",
+      "model": "gpt-4.1-mini",
+      "finding_count": 21,
+      "severity_counts": {
+        "MISSING": 16,
+        "SUGGESTION": 4,
+        "NOTE": 1
+      },
+      "findings_text": "Review findings — mq-mcp/release_gate/checks.py: 21 total  [MISSING=16  SUGGESTION=4  NOTE=1]\n\n[MISSING] mq-mcp/release_gate/checks.py:1\nModule has no docstring; add a module-level docstring summarizing the purpose of this file.\n\n[MISSING] mq-mcp/release_gate/checks.py:7\n_public function check_tests_pass is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:33\n_public function check_version_consistent is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:52\n_public function check_file_mentions_target is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:74\n_private function _repo_exposes_mcp_tools is missing a docstring; add a brief description of its purpose.\n\n[MISSING] mq-mcp/release_gate/checks.py:84\n_public function check_contracts_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:111\n_public function check_safety_classes_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:135\n_public function check_learn_contract_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:178\n_public function check_learn_alias_tools_present is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:214\n_public function check_learn_hygiene_pass is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:246\n_public function check_perception_artifacts_valid is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:269\n_private function _find_perception_artifacts is missing a docstring; add a brief description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:281\n_private function _validate_perception_artifact is missing a docstring; add a brief description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:304\n_public function check_repo_signal_readiness_export is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:342\n_public function check_release_notes_present is missing a docstring; add a one-line description including its return type.\n\n[MISSING] mq-mcp/release_gate/checks.py:360\n_public function run_p0_checks is missing a docstring; add a one-line description including its return type.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:52\nThe parameter name 'filename' in check_file_mentions_target is clear, but adding a type hint for filename and blocker parameters would improve readability.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:74\nIn _repo_exposes_mcp_tools, a docstring explaining what '@mcp.tool' and 'FastMCP' signify in this context would improve maintainability.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:214\nIn check_learn_alias_tools_present, the alias names could be clarified with comments explaining their relation to learning features.\n\n[SUGGESTION] mq-mcp/release_gate/checks.py:281\nIn _validate_perception_artifact, adding type hints for the return type (list[str]) and parameter path would improve clarity.\n\n[NOTE] mq-mcp/release_gate/checks.py:360\nrun_p0_checks orchestrates multiple checks returning a list of GateCheck objects; the lack of a docstring leaves unclear the expected usage pattern.",
+      "skill": "python-comment-review"
+    }
   ]
 }
