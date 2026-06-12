@@ -9,55 +9,65 @@ Use this skill for the surrounding MQ ecosystem: `mq-mcp`, `mq-hal`, `repo-signa
 
 ## When to use
 
-- Working on mq-mcp integration with mq-hal, repo-signal, or configured local repos
-- Changing `MQ_MCP_LOCAL_REPOS`, `MQ_MCP_ALLOWED_PATHS`, or cross-repo tool behavior
-- Maintaining global docs, semantic packs, or ecosystem documentation
-- Adding or debugging integration smoke checks
+* Working on mq-mcp integration with mq-hal, repo-signal, or configured local repos
+* Changing `MQ_MCP_LOCAL_REPOS`, `MQ_MCP_ALLOWED_PATHS`, or cross-repo tool behavior
+* Maintaining global docs, semantic packs, or ecosystem documentation
+* Adding or debugging integration smoke checks
 
 ## When not to use
 
-- Adding new standalone MCP tools — use `mcp-tool-safety-maintainer`
-- Changing Bridget or bridge.py behavior — use `bridget-bridge-maintainer`
-- Review engine changes — use `review-runtime-maintainer`
+* Adding new standalone MCP tools — use `mcp-tool-safety-maintainer`
+* Changing Bridget or bridge.py behavior — use `bridget-bridge-maintainer`
+* Review engine changes — use `review-runtime-maintainer`
+
+## Evals
+
+### Should trigger
+
+* "register a new local repo for cross-repo tools"
+* "the repo-signal integration smoke check fails"
+* "add a zephyr_* integration tool wired to zephyr-workbench"
+* "update the global command surface docs"
+
+### Should not trigger
+
+* "add a standalone screenshot tool" → use `mcp-tool-safety-maintainer`
+* "fix Bridget tool discovery" → use `bridget-bridge-maintainer`
+* "change review contracts" → use `review-runtime-maintainer`
+* "docs drift unrelated to integrations" → use `docs-maintainer`
 
 ## Integration Role
 
 `mq-mcp` is the local MCP bridge layer. It connects local assistant workflows to safe repo analysis and publish-quality checks.
 
-Current integration points:
+Integration tool families (`hal_*`, `repo_signal_*`, `ums_*`, `zephyr_*`, plus `list_local_repos`, `open_repo_terminal`, and `run_tests`) grow over time — do not trust a hardcoded list. Get the current surface from:
 
-- `hal_repo_report`
-- `repo_signal_analyze`
-- `repo_signal_checklist`
-- `repo_signal_inspect`
-- `repo_signal_doctor_json`
-- `list_local_repos`
-- `open_repo_terminal`
-- `run_tests`
-- global docs under `docs/global/`
+* `generated/tool-index.json` (authoritative, generated)
+* `TOOL_INDEX.md`
+* global docs under `docs/global/`
 
 ## Files To Inspect
 
-- `mq-mcp/server.py`
-- `docs/integration.md`
-- `docs/integration.html`
-- `docs/global/GLOBAL_COMMAND_SURFACE.md`
-- `docs/global/GLOBAL_ARCHITECTURE_NOTES.md`
-- `docs/global/GLOBAL_REPO_MAP.md`
-- `docs/global/GLOBAL_VECTOR_STORE_POLICY.md`
-- `VECTOR_CONTEXT.md`
-- `scripts/check-integration-docs.sh`
-- `scripts/check-integration-smoke.sh`
-- `scripts/build_semantic_memory_pack.sh`
-- `scripts/upload_semantic_memory.py`
-- `scripts/upload_vector_pack.py`
+* `mq-mcp/server.py`
+* `docs/integration.md`
+* `docs/integration.html`
+* `docs/global/GLOBAL_COMMAND_SURFACE.md`
+* `docs/global/GLOBAL_ARCHITECTURE_NOTES.md`
+* `docs/global/GLOBAL_REPO_MAP.md`
+* `docs/global/GLOBAL_VECTOR_STORE_POLICY.md`
+* `VECTOR_CONTEXT.md`
+* `scripts/check-integration-docs.sh`
+* `scripts/check-integration-smoke.sh`
+* `scripts/build_semantic_memory_pack.sh`
+* `scripts/upload_semantic_memory.py`
+* `scripts/upload_vector_pack.py`
 
 ## Environment Contracts
 
-- `MQ_MCP_LOCAL_REPOS` registers known local repositories by absolute path.
-- `MQ_MCP_ALLOWED_PATHS` grants explicit external file roots.
-- Registered repos should be real project roots, not broad home-directory paths.
-- Cross-repo tools should remain read-only unless the user explicitly asks for controlled local actions.
+* `MQ_MCP_LOCAL_REPOS` registers known local repositories by absolute path.
+* `MQ_MCP_ALLOWED_PATHS` grants explicit external file roots.
+* Registered repos should be real project roots, not broad home-directory paths.
+* Cross-repo tools should remain read-only unless the user explicitly asks for controlled local actions.
 
 ## Change Rules
 

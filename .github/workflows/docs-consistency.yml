@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skills are consistent (frontmatter, cross-refs, paths, SKILLS.md)
+        run: ./scripts/check-skills.sh
+
       - name: Python version in install.md is not 3.14
         run: |
           if grep -q '3\.14' docs/install.md; then

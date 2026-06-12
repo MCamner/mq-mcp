@@ -9,41 +9,57 @@ Use this skill for the highest-risk part of mq-mcp: the tool surface exposed by 
 
 ## When to use
 
-- Adding, changing, reviewing, or documenting any FastMCP tool in `server.py`
-- Auditing path resolvers, write-capable tools, subprocess behavior, or tool safety classifications
-- Updating `docs/TOOL_SAFETY.md`, `TOOL_INDEX.md`, or safety tests after tool changes
+* Adding, changing, reviewing, or documenting any FastMCP tool in `server.py`
+* Auditing path resolvers, write-capable tools, subprocess behavior, or tool safety classifications
+* Updating `docs/TOOL_SAFETY.md`, `TOOL_INDEX.md`, or safety tests after tool changes
 
 ## When not to use
 
-- Bridge or Bridget changes — use `bridget-bridge-maintainer`
-- Review engine changes — use `review-runtime-maintainer`
-- Docs-only updates not touching tool safety — use `docs-maintainer`
-- Semantic memory changes — use `semantic-memory-maintainer`
+* Bridge or Bridget changes — use `bridget-bridge-maintainer`
+* Review engine changes — use `review-runtime-maintainer`
+* Docs-only updates not touching tool safety — use `docs-maintainer`
+* Semantic memory changes — use `semantic-memory-maintainer`
+
+## Evals
+
+### Should trigger
+
+* "add a new MCP tool that reads battery status"
+* "audit the path resolvers for traversal escapes"
+* "should this new tool be Class B or Class C?"
+* "update TOOL_SAFETY.md after the tool change"
+
+### Should not trigger
+
+* "Bridget tool discovery is broken" → use `bridget-bridge-maintainer`
+* "add a review contract" → use `review-runtime-maintainer`
+* "the README is stale but no tool changed" → use `docs-maintainer`
+* "rebuild semantic memory" → use `semantic-memory-maintainer`
 
 ## Safety Model
 
 mq-mcp tools are grouped into:
 
-- Class A: read-only, repo-scoped
-- Class B: read-only, allowed external paths or system state
-- Class C: write-capable, controlled scope
-- Class D: subprocess or open-app actions
+* Class A: read-only, repo-scoped
+* Class B: read-only, allowed external paths or system state
+* Class C: write-capable, controlled scope
+* Class D: subprocess or open-app actions
 
 Keep this classification current in `docs/TOOL_SAFETY.md`.
 
 ## Files To Inspect
 
-- `mq-mcp/server.py`
-- `docs/TOOL_SAFETY.md`
-- `SAFETY_MODEL.md`
-- `docs/security.md`
-- `TOOL_INDEX.md`
-- `README.md`
-- `docs/semantic-index/mcp-tools-map.md`
-- `scripts/check-mcp-tool-docs.sh`
-- `scripts/check-integration-smoke.sh`
-- `tests/test_server_safety.py`
-- `tests/test_allowed_local_paths.py`
+* `mq-mcp/server.py`
+* `docs/TOOL_SAFETY.md`
+* `SAFETY_MODEL.md`
+* `docs/security.md`
+* `TOOL_INDEX.md`
+* `README.md`
+* `docs/semantic-index/mcp-tools-map.md`
+* `scripts/check-mcp-tool-docs.sh`
+* `scripts/check-integration-smoke.sh`
+* `tests/test_server_safety.py`
+* `tests/test_allowed_local_paths.py`
 
 ## Resolver Rules
 
@@ -69,12 +85,12 @@ For every MCP tool change:
 
 Watch these tools closely:
 
-- `update_repo_file`: exact-match only, no `.env`, no lockfiles, no hidden/system dirs, no auto-commit
-- `edit_image`: overwrites files, must stay scoped to allowed roots
-- `take_screenshot`: writes local screenshots and may capture sensitive data
-- `open_*` tools: app-launch and URL/path validation matters
-- `run_tests`: executes code in registered repos only
-- `repo_signal_*` and `hal_repo_report`: must remain read-only integrations
+* `update_repo_file`: exact-match only, no `.env`, no lockfiles, no hidden/system dirs, no auto-commit
+* `edit_image`: overwrites files, must stay scoped to allowed roots
+* `take_screenshot`: writes local screenshots and may capture sensitive data
+* `open_*` tools: app-launch and URL/path validation matters
+* `run_tests`: executes code in registered repos only
+* `repo_signal_*` and `hal_repo_report`: must remain read-only integrations
 
 ## Verification
 

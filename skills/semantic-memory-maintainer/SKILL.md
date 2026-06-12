@@ -9,49 +9,67 @@ Use this skill when mq-mcp's documentation or repo knowledge needs to stay usefu
 
 ## When to use
 
-- Maintaining semantic memory packs, vector context docs, or OpenAI upload scripts
-- Updating `docs/semantic-index/` or `docs/global/` after tool surface changes
-- Deciding what content should be indexed for cross-repo assistant workflows
+* Maintaining semantic memory packs, vector context docs, or OpenAI upload scripts
+* Updating `docs/semantic-index/` or `docs/global/` after tool surface changes
+* Deciding what content should be indexed for cross-repo assistant workflows
 
 ## When not to use
 
-- Uploading to vector stores without explicit user intent — upload scripts are opt-in
-- Changing MCP tool behavior — use `mcp-tool-safety-maintainer`
-- Docs changes unrelated to semantic retrieval — use `docs-maintainer`
+* Uploading to vector stores without explicit user intent — upload scripts are opt-in
+* Changing MCP tool behavior — use `mcp-tool-safety-maintainer`
+* Docs changes unrelated to semantic retrieval — use `docs-maintainer`
+* Obsidian vault records or `brain_*` tools — use `brain-maintainer`
+* Learning engine or lesson storage — use `learn-engine-maintainer`
+
+## Evals
+
+### Should trigger
+
+* "rebuild the semantic memory pack after the tool surface change"
+* "update VECTOR_CONTEXT.md with the new capability"
+* "what should we index for cross-repo assistant workflows?"
+* "the mcp-tools-map is out of date with server.py"
+
+### Should not trigger
+
+* "record this decision in the second brain" → use `brain-maintainer`
+* "store a verified lesson" → use `learn-engine-maintainer`
+* "fix the README install section" → use `docs-maintainer`
+* "add a new MCP tool" → use `mcp-tool-safety-maintainer`
 
 ## Relevant Files
 
-- `VECTOR_CONTEXT.md`
-- `docs/semantic-index/architecture.md`
-- `docs/semantic-index/mcp-tools-map.md`
-- `docs/global/GLOBAL_COMMAND_SURFACE.md`
-- `docs/global/GLOBAL_ARCHITECTURE_NOTES.md`
-- `docs/global/GLOBAL_REPO_MAP.md`
-- `docs/global/GLOBAL_VECTOR_STORE_POLICY.md`
-- `scripts/build_semantic_memory_pack.sh`
-- `scripts/build_vector_pack.sh`
-- `scripts/create_vector_store.py`
-- `scripts/upload_semantic_memory.py`
-- `scripts/upload_vector_pack.py`
-- `scripts/vignette.py`
+* `VECTOR_CONTEXT.md`
+* `docs/semantic-index/architecture.md`
+* `docs/semantic-index/mcp-tools-map.md`
+* `docs/global/GLOBAL_COMMAND_SURFACE.md`
+* `docs/global/GLOBAL_ARCHITECTURE_NOTES.md`
+* `docs/global/GLOBAL_REPO_MAP.md`
+* `docs/global/GLOBAL_VECTOR_STORE_POLICY.md`
+* `scripts/build_semantic_memory_pack.sh`
+* `scripts/build_vector_pack.sh`
+* `scripts/create_vector_store.py`
+* `scripts/upload_semantic_memory.py`
+* `scripts/upload_vector_pack.py`
+* `scripts/vignette.py`
 
 ## Maintenance Rules
 
-- Keep semantic docs factual and compact.
-- Prefer stable architecture, command, safety, and integration facts over changelog noise.
-- Do not include secrets, local credentials, private tokens, or broad personal filesystem details.
-- Keep tool maps synchronized with `mq-mcp/server.py` and `docs/TOOL_SAFETY.md`.
-- Keep global docs clear about what is repo-specific versus ecosystem-wide.
-- Treat upload scripts as opt-in operations that require explicit user intent.
+* Keep semantic docs factual and compact.
+* Prefer stable architecture, command, safety, and integration facts over changelog noise.
+* Do not include secrets, local credentials, private tokens, or broad personal filesystem details.
+* Keep tool maps synchronized with `mq-mcp/server.py` and `docs/TOOL_SAFETY.md`.
+* Keep global docs clear about what is repo-specific versus ecosystem-wide.
+* Treat upload scripts as opt-in operations that require explicit user intent.
 
 ## When Tool Surface Changes
 
 Update:
 
-- `docs/semantic-index/mcp-tools-map.md`
-- `VECTOR_CONTEXT.md` if retrieval context should know the new capability
-- `docs/global/GLOBAL_COMMAND_SURFACE.md` if the command affects the wider MQ ecosystem
-- safety docs if the change touches risk or access scope
+* `docs/semantic-index/mcp-tools-map.md`
+* `VECTOR_CONTEXT.md` if retrieval context should know the new capability
+* `docs/global/GLOBAL_COMMAND_SURFACE.md` if the command affects the wider MQ ecosystem
+* safety docs if the change touches risk or access scope
 
 ## Verification
 
