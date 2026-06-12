@@ -2,16 +2,45 @@
 
 ## Unreleased
 
+### Added
+
+* Skills: `learn-engine-maintainer` and `brain-maintainer` now own the learning
+  engine and Obsidian second-brain surfaces.
+* `scripts/check-skills.sh`: validates skill frontmatter, cross-references,
+  referenced paths, and SKILLS.md sync; wired into the docs-consistency
+  workflow. `--fix` regenerates SKILLS.md from frontmatter.
+
+### Changed
+
+* All skills now include an `## Evals` section (should/should-not-trigger).
+* `integration-stack-maintainer` points to `generated/tool-index.json` instead
+  of a hardcoded integration tool list.
+* `docs-maintainer` no longer routes to the non-existent `repo-product-auditor`
+  skill.
+* CHANGELOG 1.11.0 entry corrected: brain tools are `brain_status` and
+  `brain_record_decision/review/session/learning` + `brain_promote_learning`
+  (not `insight/pattern/question`), image tools are `image_analyze`,
+  `image_analyze_ui`, `image_observe_architecture` (not `image_ocr`/`image_diff`).
+
+### Fixed
+
+* `scramble_print` in `bridge.py` and `ask.py` now animates only on an
+  interactive TTY. Piped or captured output (validate.sh, CI, logs) previously
+  received the raw scramble bytes — three random characters plus backspace per
+  visible character — which rendered as garbled text wherever backspaces are
+  not interpreted.
+
 ## 1.11.0 - 2026-06-10
 
 ### Added
 
-* Brain/Obsidian tools (Class C): `obsidian_writer` module with `brain_record_insight`,
-  `brain_record_decision`, `brain_record_pattern`, `brain_record_question`, and
-  `brain_promote_learning` — routes mq-mcp findings directly into the Obsidian second brain.
+* Brain/Obsidian tools: `obsidian_writer` module with `brain_status` (Class A) and
+  `brain_record_decision`, `brain_record_review`, `brain_record_session`,
+  `brain_record_learning`, `brain_promote_learning` (Class C) — routes mq-mcp
+  findings directly into the Obsidian second brain.
 * Zephyr-workbench integration: 4 Class B MCP tools exposed via `zephyr_*` routes.
-* mq-image-analyze integration: 3 Class B MCP tools (`image_ocr`, `image_analyze`,
-  `image_diff`) exposed as first-class mq-mcp tools.
+* mq-image-analyze integration: 3 Class B MCP tools (`image_analyze`,
+  `image_analyze_ui`, `image_observe_architecture`) exposed as first-class mq-mcp tools.
 * UMS tooling: `ums_command_catalog` (Class A) and `ums_audit_log` (Class A).
 * repo-signal JSON tools: `repo_signal_report`, `repo_signal_suggest`,
   `repo_signal_positioning` — structured readiness output without shell parsing.

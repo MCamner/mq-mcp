@@ -75,6 +75,14 @@ BRIDGET_LOCAL_LINES = [
 
 def scramble_print(text: str, file: Any = None) -> None:
     out = file or sys.stdout
+    # The decode animation relies on "\b" overwriting characters, which only
+    # works on an interactive terminal. Piped/captured output (validate.sh,
+    # CI, logs) must get plain text or the scramble bytes leak through.
+    isatty = getattr(out, "isatty", None)
+    if not (isatty and isatty()):
+        out.write(text + "\n")
+        out.flush()
+        return
     for ch in text:
         if ch in (" ", "\n", "\t"):
             out.write(ch)

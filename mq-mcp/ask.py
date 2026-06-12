@@ -35,6 +35,13 @@ _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
 
 
 def scramble_print(text: str) -> None:
+    # The decode animation relies on "\b" overwriting characters, which only
+    # works on an interactive terminal. Piped/captured output must get plain
+    # text or the scramble bytes leak through.
+    if not sys.stdout.isatty():
+        sys.stdout.write(text + "\n")
+        sys.stdout.flush()
+        return
     for ch in text:
         if ch in (" ", "\n", "\t"):
             sys.stdout.write(ch)
