@@ -64,7 +64,10 @@ while IFS=: read -r file token; do
   token="${token#\`}"; token="${token%\`}"
   [[ "$token" == *"*"* || "$token" == *" "* ]] && continue   # globs, phrases
   [[ "$token" == -* || "$token" == /* || "$token" == .* ]] && continue
-  if [[ ! -e "$token" ]]; then
+  # A path is valid if it exists, or if git ignores it — a generated artifact
+  # (e.g. generated/tool-index.json) is absent from a fresh checkout but is a
+  # legitimate reference. Only an absent, non-ignored path is a dead reference.
+  if [[ ! -e "$token" ]] && ! git check-ignore -q "$token" 2>/dev/null; then
     fail "$file references missing path '$token'"
     PATH_FAIL=1
   fi
