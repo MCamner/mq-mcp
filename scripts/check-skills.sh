@@ -69,6 +69,7 @@ while IFS=: read -r file token; do
   # — a generated artifact (e.g. generated/tool-index.json) is absent from a
   # fresh checkout but is a legitimate reference. Only an absent, non-ignored
   # path is a dead reference.
+  [[ "$token" =~ ^[A-Za-z0-9._-]+/$ ]] && continue           # bare top-level dir mention (bin/, tools/)
   skill_dir="$(dirname "$file")"
   if [[ ! -e "$token" && ! -e "$skill_dir/$token" ]] && ! git check-ignore -q "$token" 2>/dev/null; then
     fail "$file references missing path '$token'"
