@@ -1104,22 +1104,45 @@ def open_app(app_name: str) -> str:
 
 @mcp.tool()
 def get_wifi_info() -> str:
-    """Return the current Wi-Fi network name and signal info."""
-    try:
-        result = subprocess.run(
-            ["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-I"],
-            capture_output=True, text=True, check=False, timeout=5,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
-        # Fallback: networksetup
-        result2 = subprocess.run(
-            ["networksetup", "-getairportnetwork", "en0"],
-            capture_output=True, text=True, check=False, timeout=5,
-        )
-        return result2.stdout.strip() or "No Wi-Fi info available."
-    except Exception as exc:
-        return f"Could not get Wi-Fi info: {exc}"
+    """Return the current Wi-Fi network name and signal info.
+
+    Uses system_profiler, which works without elevated privileges on modern
+    macOS. (The legacy `airport` binary was removed, and
+    `networksetup -getairportnetwork` regressed.) Note that macOS redacts the
+    SSID for unprivileged callers, so the network name may show as <redacted>.
+    """
+    def _run(cmd: list[str]) -> str:
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=10)
+            return r.stdout.strip() if r.returncode == 0 else ""
+        except Exception:
+            return ""
+
+    prof = _run(["system_profiler", "SPAirPortDataType"])
+    if not prof:
+        return "No Wi-Fi info available (Wi-Fi may be off or not present)."
+
+    # The active connection lives in the first "Current Network Information:"
+    # block, up to the next sibling header.
+    after = prof.split("Current Network Information:", 1)
+    if len(after) != 2:
+        return "Not associated with a Wi-Fi network."
+    block = after[1].split("Other Local Wi-Fi Networks:", 1)[0]
+    lines = [ln for ln in block.splitlines() if ln.strip()]
+    if not lines:
+        return "Not associated with a Wi-Fi network."
+
+    detail_keys = ("PHY Mode", "Channel", "Country Code", "Network Type",
+                   "Security", "Signal / Noise", "Transmit Rate", "MCS Index")
+    out: list[str] = []
+    # First indented line that is a bare "Name:" header is the SSID.
+    ssid = lines[0].strip().rstrip(":")
+    out.append(f"Network: {ssid}")
+    for ln in lines[1:]:
+        s = ln.strip()
+        if any(s.startswith(k + ":") for k in detail_keys):
+            out.append(s)
+    return "\n".join(out)
 
 
 @mcp.tool()
