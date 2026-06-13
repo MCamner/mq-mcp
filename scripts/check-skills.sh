@@ -64,10 +64,13 @@ while IFS=: read -r file token; do
   token="${token#\`}"; token="${token%\`}"
   [[ "$token" == *"*"* || "$token" == *" "* ]] && continue   # globs, phrases
   [[ "$token" == -* || "$token" == /* || "$token" == .* ]] && continue
-  # A path is valid if it exists, or if git ignores it — a generated artifact
-  # (e.g. generated/tool-index.json) is absent from a fresh checkout but is a
-  # legitimate reference. Only an absent, non-ignored path is a dead reference.
-  if [[ ! -e "$token" ]] && ! git check-ignore -q "$token" 2>/dev/null; then
+  # A path is valid if it exists (relative to repo root or the skill's own
+  # directory, so a skill may reference its own assets), or if git ignores it
+  # — a generated artifact (e.g. generated/tool-index.json) is absent from a
+  # fresh checkout but is a legitimate reference. Only an absent, non-ignored
+  # path is a dead reference.
+  skill_dir="$(dirname "$file")"
+  if [[ ! -e "$token" && ! -e "$skill_dir/$token" ]] && ! git check-ignore -q "$token" 2>/dev/null; then
     fail "$file references missing path '$token'"
     PATH_FAIL=1
   fi
