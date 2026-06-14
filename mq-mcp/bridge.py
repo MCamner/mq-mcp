@@ -418,8 +418,7 @@ async def run_bridge() -> None:
                 print(catalog)
                 return
 
-            print(f"Model: {model}")
-            print(f"Prompt: {prompt}\n")
+            print(f"Model: {model}\n")
 
             ctx = BridgetContext()
             session_context = ctx.load()
