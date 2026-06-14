@@ -4175,7 +4175,8 @@ def ollama_learn_extract(review_findings: str) -> str:
     Safety: Class B — local HTTP to Ollama only, no storage, no execution.
     """
     eng = _learn_engine()
-    result = eng.ollama_learn_extract(review_findings)
+    repo_context = eng.load_repo_context_snapshot(REPO_ROOT)
+    result = eng.ollama_learn_extract(review_findings, repo_context=repo_context)
 
     if result.get("status") == "unavailable":
         return "\n".join([

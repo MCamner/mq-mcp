@@ -206,6 +206,44 @@ def test_validate_learn_record_rejects_missing_unknown_and_empty_evidence():
         engine.validate_learn_record(_valid_extraction(evidence=["ok", 123]))
 
 
+def test_validate_learn_record_allows_empty_evidence_only_at_low_confidence():
+    engine = _load_engine()
+
+    # The "could not ground anything" signal: empty evidence is valid at low
+    # confidence (a refusal record), but a medium/high claim with no evidence is
+    # a hallucination and must be rejected.
+    record = engine.validate_learn_record(
+        _valid_extraction(confidence="low", evidence=[])
+    )
+    assert record["evidence"] == []
+    assert record["confidence"] == "low"
+
+    with pytest.raises(ValueError, match="confidence is 'low'"):
+        engine.validate_learn_record(_valid_extraction(confidence="high", evidence=[]))
+
+
+def test_load_repo_context_snapshot_lists_real_files(tmp_path):
+    engine = _load_engine()
+
+    # Absent artifact -> empty snapshot, which forces the model to low confidence.
+    assert engine.load_repo_context_snapshot(tmp_path) == ""
+
+    ctx_dir = tmp_path / "review_engine" / "context"
+    ctx_dir.mkdir(parents=True)
+    (ctx_dir / "file_summary_index.json").write_text(
+        json.dumps([
+            {"path": "mq-mcp/server.py", "role": "MCP server"},
+            {"path": "README.md"},
+            {"not_a_path": True},
+        ]),
+        encoding="utf-8",
+    )
+    snap = engine.load_repo_context_snapshot(tmp_path)
+    assert "mq-mcp/server.py — MCP server" in snap
+    assert "README.md" in snap
+    assert "not_a_path" not in snap
+
+
 def test_validate_learn_record_requires_approval_for_storage():
     engine = _load_engine()
 
