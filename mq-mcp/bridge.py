@@ -6,6 +6,7 @@ import random
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any, Optional, cast
@@ -20,6 +21,52 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 logging.getLogger("mcp").setLevel(logging.WARNING)
+
+
+class BridgetSpinner:
+    """Waiting indicator on the terminal while Bridget thinks.
+
+    Like scramble_print, the cursor/ANSI control bytes only make sense on an
+    interactive terminal. When the stream is piped/captured (validate.sh, CI,
+    logs, mq-agent) the spinner is a no-op, otherwise the escape bytes leak
+    through. Pass the /dev/tty handle so it never touches stdout.
+    """
+
+    FRAMES = ["▪▫\n▫▫", "▫▪\n▫▫", "▫▫\n▫▪", "▫▫\n▪▫"]
+    INTERVAL = 0.12
+
+    def __init__(self, stream: Any = None) -> None:
+        self._stream = stream or sys.stdout
+        isatty = getattr(self._stream, "isatty", None)
+        self._enabled = bool(isatty and isatty())
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        if not self._enabled:
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        if not self._enabled:
+            return
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join()
+        self._stream.write("\r\033[K\033[1A\r\033[K")
+        self._stream.flush()
+
+    def _spin(self) -> None:
+        idx = 0
+        while not self._stop_event.is_set():
+            top, bottom = self.FRAMES[idx % len(self.FRAMES)].split("\n")
+            self._stream.write(f"\r{top}\n{bottom}\033[1A")
+            self._stream.flush()
+            idx += 1
+            self._stop_event.wait(self.INTERVAL)
+
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 SERVER_COMMAND = os.getenv("MQ_MCP_SERVER_COMMAND", "uv")
