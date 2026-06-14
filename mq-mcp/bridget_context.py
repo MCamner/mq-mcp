@@ -1,0 +1,123 @@
+"""
+bridget_context.py — Persistent session memory for Bridget.
+
+Keeps a rolling window of the last MAX_SESSIONS sessions in
+~/.mq/bridget-context.md. Each session records what was asked,
+what tools were called, and a short summary of the outcome.
+
+Usage (from bridge.py):
+    from bridget_context import BridgetContext
+    ctx = BridgetContext()
+    system_addition = ctx.load()          # inject into system prompt
+    ctx.record(prompt, tool_calls, answer) # save at end of session
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import textwrap
+from datetime import datetime
+from pathlib import Path
+
+MAX_SESSIONS = 5
+CONTEXT_DIR = Path.home() / ".mq"
+CONTEXT_FILE = CONTEXT_DIR / "bridget-context.md"
+MAX_ANSWER_CHARS = 400   # truncate long answers when saving
+MAX_TOOLS_SHOWN = 5      # max tool calls shown per session
+
+
+class BridgetContext:
+    def __init__(
+        self,
+        path: Path = CONTEXT_FILE,
+        max_sessions: int = MAX_SESSIONS,
+    ) -> None:
+        self.path = path
+        self.max_sessions = max_sessions
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def load(self) -> str:
+        """
+        Return a string to inject into Bridget's system prompt.
+        Empty string if no context exists yet.
+        """
+        if not self.path.exists():
+            return ""
+        content = self.path.read_text(encoding="utf-8").strip()
+        if not content:
+            return ""
+        return (
+            "\n\n---\n"
+            "## Bridget session memory (previous sessions)\n\n"
+            + content
+            + "\n\n"
+            "Use the above session history as context. "
+            "Reference it when the user asks about previous work, "
+            "open tasks, or earlier decisions. "
+            "Do not repeat it back verbatim unless asked.\n---\n"
+        )
+
+    def record(
+        self,
+        prompt: str,
+        tool_calls: list[str],
+        answer: str,
+    ) -> None:
+        """
+        Append this session to the context file and rotate old sessions out.
+        """
+        session_block = self._format_session(prompt, tool_calls, answer)
+        existing = self._read_sessions()
+        updated = (existing + [session_block])[-self.max_sessions :]
+        self._write_sessions(updated)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _format_session(
+        self,
+        prompt: str,
+        tool_calls: list[str],
+        answer: str,
+    ) -> str:
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+        short_answer = self._truncate(answer, MAX_ANSWER_CHARS)
+
+        tools_line = ""
+        if tool_calls:
+            shown = tool_calls[:MAX_TOOLS_SHOWN]
+            rest = len(tool_calls) - len(shown)
+            tools_line = "- Tools: " + ", ".join(shown)
+            if rest:
+                tools_line += f" (+{rest} more)"
+            tools_line += "\n"
+
+        return (
+            f"## Session {ts}\n"
+            f"- Prompt: {prompt.strip()}\n"
+            f"{tools_line}"
+            f"- Summary: {short_answer}\n"
+        )
+
+    def _truncate(self, text: str, max_chars: int) -> str:
+        text = text.strip().replace("\n", " ")
+        if len(text) <= max_chars:
+            return text
+        return text[:max_chars].rstrip() + " …"
+
+    def _read_sessions(self) -> list[str]:
+        if not self.path.exists():
+            return []
+        content = self.path.read_text(encoding="utf-8")
+        # Split on session headers: ## Session YYYY-MM-DD HH:MM
+        parts = re.split(r"(?=^## Session \d{4}-\d{2}-\d{2})", content, flags=re.MULTILINE)
+        return [p.strip() for p in parts if p.strip()]
+
+    def _write_sessions(self, sessions: list[str]) -> None:
+        self.path.write_text("\n\n".join(sessions) + "\n", encoding="utf-8")

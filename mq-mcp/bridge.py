@@ -12,6 +12,7 @@ from typing import Any, Optional, cast
 
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
+from bridget_context import BridgetContext
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -420,8 +421,12 @@ async def run_bridge() -> None:
             print(f"Model: {model}")
             print(f"Prompt: {prompt}\n")
 
+            ctx = BridgetContext()
+            session_context = ctx.load()
+
             system_content = (
                 SYSTEM_PROMPT.strip()
+                + session_context
                 + "\n\nThis is the actual tool catalog from the connected MCP server. "
                 "Use this catalog as ground truth.\n\n"
                 + catalog
@@ -507,6 +512,15 @@ async def run_bridge() -> None:
             sys.stdout.flush()
             scramble_print(answer)
             speak_if_enabled(answer)
+
+            called_tools = []
+            if assistant_message.tool_calls:
+                called_tools = [
+                    tool_call_name_and_args(tc)[0]
+                    for tc in assistant_message.tool_calls
+                    if tool_call_name_and_args(tc)[0]
+                ]
+            ctx.record(prompt, called_tools, answer)
 
 
 if __name__ == "__main__":
