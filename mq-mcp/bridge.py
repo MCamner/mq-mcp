@@ -485,12 +485,24 @@ async def run_bridge() -> None:
 
             client = OpenAI()
 
-            first_response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                tools=openai_tools,
-                tool_choice="auto",
-            )
+            # Spinner status goes to /dev/tty so it never interleaves with the
+            # answer on stdout; falls back to stdout (and no-ops when piped).
+            try:
+                tty = open("/dev/tty", "w")
+            except Exception:
+                tty = None
+            spinner = BridgetSpinner(stream=tty)
+
+            spinner.start()
+            try:
+                first_response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    tools=openai_tools,
+                    tool_choice="auto",
+                )
+            finally:
+                spinner.stop()
 
             assistant_message = first_response.choices[0].message
 
@@ -500,6 +512,8 @@ async def run_bridge() -> None:
                 sys.stdout.flush()
                 scramble_print(answer)
                 speak_if_enabled(answer)
+                if tty:
+                    tty.close()
                 return
 
             messages.append(
@@ -516,42 +530,46 @@ async def run_bridge() -> None:
                 )
             )
 
-            for tool_call in assistant_message.tool_calls:
-                tool_name, tool_args = tool_call_name_and_args(tool_call)
-                if not tool_name:
+            spinner.start()
+            try:
+                for tool_call in assistant_message.tool_calls:
+                    tool_name, tool_args = tool_call_name_and_args(tool_call)
+                    if not tool_name:
+                        messages.append(
+                            cast(
+                                ChatCompletionMessageParam,
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": tool_call.id,
+                                    "content": "Tool call missing function name.",
+                                },
+                            )
+                        )
+                        continue
+
+                    tool_result = await call_mcp_tool(
+                        session=session,
+                        name=tool_name,
+                        raw_args=tool_args,
+                    )
+
                     messages.append(
                         cast(
                             ChatCompletionMessageParam,
                             {
                                 "role": "tool",
                                 "tool_call_id": tool_call.id,
-                                "content": "Tool call missing function name.",
+                                "content": tool_result,
                             },
                         )
                     )
-                    continue
 
-                tool_result = await call_mcp_tool(
-                    session=session,
-                    name=tool_name,
-                    raw_args=tool_args,
+                final_response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
                 )
-
-                messages.append(
-                    cast(
-                        ChatCompletionMessageParam,
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": tool_result,
-                        },
-                    )
-                )
-
-            final_response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-            )
+            finally:
+                spinner.stop()
 
             answer = final_response.choices[0].message.content or ""
             sys.stdout.write("\nBridget: ")
@@ -567,6 +585,9 @@ async def run_bridge() -> None:
                     if tool_call_name_and_args(tc)[0]
                 ]
             ctx.record(prompt, called_tools, answer)
+
+            if tty:
+                tty.close()
 
 
 if __name__ == "__main__":
