@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "1.11.0",
-  "tool_count": 121,
+  "tool_count": 122,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1169,6 +1169,19 @@
       "subprocess": true,
       "side_effects": [
         "system"
+      ],
+      "examples": []
+    },
+    {
+      "name": "shell_exec",
+      "class": "D",
+      "description": "Run a shell command on the local machine and return stdout + stderr.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
+        "subprocess",
+        "arbitrary-execution"
       ],
       "examples": []
     },

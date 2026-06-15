@@ -18,7 +18,7 @@ v1.11.0 — brain/Obsidian tools, local Ollama learn provider scaffolding, mq-ag
 
 This repository is useful as:
 
-* a local MCP server with 121 documented, safety-classified tools
+* a local MCP server with 122 documented, safety-classified tools
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -36,7 +36,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 121 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 122 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -164,7 +164,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 121 MCP tools with descriptions.
+Expected response lists all 122 MCP tools with descriptions.
 
 ## Integration map
 
@@ -226,7 +226,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 121 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 122 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -238,6 +238,7 @@ The local MCP server exposes 121 tools across five safety classes. See [`docs/TO
 * `git_diff` — shows current git diff, optionally for one path
 * `analyze_csv` — analyzes CSV files inside the repo
 * `tool_safety_report` — returns the MCP tool safety classification from docs/TOOL_SAFETY.md
+* `shell_exec` — runs an arbitrary shell command (Class D); disabled unless `MQ_MCP_ALLOW_SHELL_EXEC=1`, which the bridge sets only in `--do` mode behind a y/n approval gate
 * `list_local_repos` — lists registered local repositories from MQ_MCP_LOCAL_REPOS
 * `list_openable_apps` — returns static list of apps Bridget can open or control
 

@@ -665,6 +665,49 @@ def tool_safety_report() -> str:
 
 
 @mcp.tool()
+def shell_exec(command: str, working_dir: str = "") -> str:
+    """Run a shell command on the local machine and return stdout + stderr.
+
+    Class D — arbitrary local execution. Disabled by default: returns an error
+    unless MQ_MCP_ALLOW_SHELL_EXEC=1 is set in the server's environment. The
+    bridge sets that flag only in --do mode and enforces a per-command y/n
+    approval gate; other MCP clients (Claude Desktop, mq-agent) get it disabled.
+
+    Args:
+        command: Shell command to run via /bin/zsh -c.
+        working_dir: Optional working directory. Defaults to the server's cwd.
+    """
+    if os.getenv("MQ_MCP_ALLOW_SHELL_EXEC") != "1":
+        return (
+            "shell_exec is disabled. Set MQ_MCP_ALLOW_SHELL_EXEC=1 to enable it "
+            "(the bridge does this only in --do mode, behind a y/n approval gate)."
+        )
+
+    cwd = Path(working_dir).expanduser().resolve() if working_dir else Path.cwd()
+    if not cwd.exists():
+        return f"ERROR: working_dir does not exist: {cwd}"
+
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            executable="/bin/zsh",
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=str(cwd),
+        )
+        output = (result.stdout or "") + (result.stderr or "")
+        if result.returncode != 0:
+            output += f"\n[exit code: {result.returncode}]"
+        return output.strip() or "(no output)"
+    except subprocess.TimeoutExpired:
+        return "ERROR: Command timed out after 60 seconds."
+    except Exception as exc:
+        return f"ERROR: {exc}"
+
+
+@mcp.tool()
 def list_local_repos() -> str:
     """List all registered local repositories by name and path. Read-only.
 

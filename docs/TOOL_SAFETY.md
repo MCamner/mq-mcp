@@ -146,6 +146,7 @@ These tools invoke external processes or open applications. Review carefully bef
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
+| `shell_exec` | Run an arbitrary shell command via `/bin/zsh` (60s timeout). Disabled unless `MQ_MCP_ALLOW_SHELL_EXEC=1`; the bridge sets this only in `--do` mode, behind a per-command y/n approval gate | Run when the env flag is unset |
 | `open_in_app` | Open a file in its default macOS app | Accepts only repo or allowed-root paths |
 | `validate_project` | Run `scripts/validate.sh` with a 60s timeout | Run arbitrary commands |
 | `run_mqlaunch` | Open `mqlaunch.sh` in a new Terminal window via osascript | — |

@@ -29,6 +29,7 @@ TOOL_META: dict[str, dict] = {
     "read_repo_file":         {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": []},
     "search_repo":            {"class": "A", "resolver": "run_repo_command",             "write": False, "subprocess": True,  "side_effects": []},
     "tool_safety_report":     {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
+    "shell_exec":             {"class": "D", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": ["subprocess", "arbitrary-execution"]},
 
     "analyze_guitar_pro":     {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": False, "side_effects": []},
     "check_port":             {"class": "B", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": []},
