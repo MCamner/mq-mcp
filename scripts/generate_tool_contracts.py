@@ -131,6 +131,7 @@ TOOL_META: dict[str, dict] = {
     "promote_learning":            {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learning_status":             {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_status":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_inbox":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_from_review":           {"class": "C", "resolver": "resolve_repo_file",      "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "learn_from_diff":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["file-write"]},
     "bootstrap_learning_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},

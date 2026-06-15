@@ -36,6 +36,20 @@ if ! command -v mq-mcp >/dev/null 2>&1; then
   printf 'Run `uv tool dir --bin` to find the directory to add to PATH.\n'
 fi
 
+# --- post-commit learn hook -------------------------------------------------
+# Auto-extracts a learn candidate from each commit into the pending inbox
+# (never the curated store). Background, best-effort, no-op without Ollama.
+HOOK_SRC="$ROOT/scripts/post-commit"
+HOOK_DST="$ROOT/.git/hooks/post-commit"
+if [[ -d "$ROOT/.git/hooks" && -f "$HOOK_SRC" ]]; then
+  if [[ -f "$HOOK_DST" ]] && ! grep -q 'post_commit_learn.py' "$HOOK_DST"; then
+    printf '\nNOTE: %s exists and is not the mq-mcp learn hook — leaving it alone.\n' "$HOOK_DST"
+  else
+    install -m 0755 "$HOOK_SRC" "$HOOK_DST"
+    printf '\nInstalled post-commit learn hook: %s\n' "$HOOK_DST"
+  fi
+fi
+
 # --- bridget launcher -------------------------------------------------------
 BIN_DIR="${BIN_DIR:-$HOME/bin}"
 mkdir -p "$BIN_DIR"

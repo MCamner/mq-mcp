@@ -63,6 +63,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
+| `learn_inbox` | List pending learn candidates queued by the post-commit hook | Write, network |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -290,6 +291,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `promote_learning` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
+| `learn_inbox` | A | REPO_ROOT/learn_engine/memory/inbox.jsonl (read) | No | No |
 | `ollama_learn_status` | B | <http://localhost:11434/api/tags> (read) | No | No |
 | `ollama_learn_extract` | B | <http://localhost:11434/api/generate> (read) | No | No |
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |

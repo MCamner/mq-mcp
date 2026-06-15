@@ -4179,6 +4179,59 @@ def learn_status(repo: str = "") -> str:
 
 
 @mcp.tool()
+def learn_inbox(limit: int = 20) -> str:
+    """List pending learn candidates auto-extracted by the post-commit hook.
+
+    The post-commit hook (scripts/post_commit_learn.py) feeds each commit's
+    diff to the local mq-learn model and queues grounded, medium/high-confidence
+    candidates in learn_engine/memory/inbox.jsonl — never the curated store.
+    This tool surfaces that queue so a human or agent can review and promote
+    worthwhile candidates via record_learning / learn_from_diff.
+
+    Args:
+        limit: Max candidates to show, newest first (default 20).
+
+    Safety: Class A — read-only; reads the inbox file only.
+    """
+    inbox = REPO_ROOT / "learn_engine" / "memory" / "inbox.jsonl"
+    if not inbox.exists():
+        return "Learn inbox empty — no auto-extracted candidates pending."
+    records: list[dict] = []
+    for line in inbox.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    if not records:
+        return "Learn inbox empty — no auto-extracted candidates pending."
+
+    shown = list(reversed(records))[: max(1, limit)]
+    lines = [f"Learn inbox: {len(records)} pending candidate(s), showing {len(shown)}", ""]
+    for rec in shown:
+        lines += [
+            f"- {rec.get('pattern_name', '-')}  "
+            f"[{rec.get('confidence', '-')}] "
+            f"({rec.get('commit', '-')} @ {rec.get('captured_at', '-')})",
+            f"    {rec.get('summary', '-')}",
+        ]
+        evidence = rec.get("evidence") or []
+        if evidence:
+            lines.append(f"    evidence: {'; '.join(str(e) for e in evidence[:3])}")
+        action = rec.get("recommended_action")
+        if action:
+            lines.append(f"    action: {action}")
+    lines += [
+        "",
+        "Promote a candidate with record_learning / learn_from_diff, then remove "
+        "it from learn_engine/memory/inbox.jsonl.",
+    ]
+    return "\n".join(lines)
+
+
+@mcp.tool()
 def ollama_learn_status() -> str:
     """Report optional Ollama learn provider availability.
 

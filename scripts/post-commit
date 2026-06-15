@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# post-commit: auto-extract a learn candidate from the commit just made.
+#
+# Runs scripts/post_commit_learn.py in the background so the commit never waits.
+# That script no-ops silently when Ollama/mq-learn is unavailable and only ever
+# writes to the pending inbox (learn_engine/memory/inbox.jsonl), never to the
+# curated learn store. Review queued candidates with the learn_inbox MCP tool.
+#
+# Installed by scripts/install.sh into .git/hooks/post-commit.
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$ROOT/scripts/post_commit_learn.py" ] || exit 0
+
+# Skip while rebasing/cherry-picking to avoid a candidate per replayed commit.
+git_dir=$(git rev-parse --git-dir 2>/dev/null)
+if [ -n "$git_dir" ] && { [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; }; then
+  exit 0
+fi
+
+runner="uv run python"
+command -v uv >/dev/null 2>&1 || runner="python3"
+
+( cd "$ROOT" && nohup $runner scripts/post_commit_learn.py >/dev/null 2>&1 & ) || true
+exit 0
