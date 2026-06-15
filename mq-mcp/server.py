@@ -535,7 +535,7 @@ def git_diff(relative_path: str | None = None) -> str:
 
 
 @mcp.tool()
-def release_gate_run(repo: str = ".", target: str = "v1.4.0", test_command: str = "") -> dict[str, Any]:
+def release_gate_run(repo: str = ".", target: str = "v1.4.0", test_command: str = "", lint_command: str = "") -> dict[str, Any]:
     """Run Release Gate v2 for a repo. Read-only deterministic validation."""
     try:
         from release_gate import run_release_gate
@@ -544,7 +544,13 @@ def release_gate_run(repo: str = ".", target: str = "v1.4.0", test_command: str 
         if not repo_path.is_absolute():
             repo_path = (REPO_ROOT / repo_path).resolve()
         parsed_test_command = shlex.split(test_command) if test_command else None
-        result = run_release_gate(repo_path, target, test_command=parsed_test_command)
+        parsed_lint_command = shlex.split(lint_command) if lint_command else None
+        result = run_release_gate(
+            repo_path,
+            target,
+            test_command=parsed_test_command,
+            lint_command=parsed_lint_command,
+        )
         return result.to_dict()
     except Exception as exc:
         return {
@@ -690,7 +696,7 @@ def shell_exec(command: str, working_dir: str = "") -> str:
     try:
         result = subprocess.run(
             command,
-            shell=True,
+            shell=True,  # nosec
             executable="/bin/zsh",
             capture_output=True,
             text=True,

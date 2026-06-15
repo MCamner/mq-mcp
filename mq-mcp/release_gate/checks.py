@@ -1,8 +1,11 @@
 """Deterministic Release Gate v2 checks."""
 from __future__ import annotations
 
+import io
 import json
+import re
 import subprocess
+import tokenize
 from pathlib import Path
 
 from .models import GateCheck
@@ -45,6 +48,48 @@ def check_tests_pass(repo: Path, test_command: list[str] | None = None) -> GateC
         message="Tests failed.",
         blocker=True,
         next_action="Fix failing tests and rerun Release Gate v2.",
+    )
+
+
+def check_lint_type_quality(repo: Path, lint_command: list[str] | None = None) -> GateCheck:
+    """Run an optional lint/type command and report repo quality readiness.
+
+    Mirrors check_tests_pass: a warning when no command is supplied (the gate
+    cannot vouch for quality it did not run), pass on a clean exit, blocked on a
+    non-zero exit. Deterministic — no quality tooling is assumed or installed.
+    """
+    if not lint_command:
+        return GateCheck(
+            name="lint_type_quality",
+            status="warning",
+            message="Lint/type checks were not run for this gate invocation.",
+            next_action="Run Release Gate v2 with a lint command (e.g. 'ruff check . && mypy .') before release.",
+        )
+    try:
+        result = subprocess.run(
+            lint_command,
+            cwd=repo,
+            text=True,
+            capture_output=True,
+            timeout=180,
+            check=False,
+        )
+    except Exception as exc:
+        return GateCheck(
+            name="lint_type_quality",
+            status="blocked",
+            message=f"Lint/type command failed to run: {exc}",
+            blocker=True,
+            next_action="Fix the lint/type command and rerun.",
+        )
+    if result.returncode == 0:
+        return GateCheck("lint_type_quality", "pass", "Lint/type checks passed.")
+    return GateCheck(
+        name="lint_type_quality",
+        status="blocked",
+        message="Lint/type checks failed.",
+        blocker=True,
+        next_action="Fix lint/type findings and rerun Release Gate v2.",
     )
 
 
@@ -467,19 +512,210 @@ def check_release_notes_present(repo: Path, target: str) -> GateCheck:
     )
 
 
-def run_p0_checks(repo: Path, target: str, test_command: list[str] | None = None) -> list[GateCheck]:
+def check_perception_review(repo: Path) -> GateCheck:
+    """Read-only review of mq-image-analyze perception output.
+
+    Schema validation lives in check_perception_artifacts_valid. This check is
+    the read-only *review*: it reads valid perception artifacts and surfaces the
+    risk signals mq-image-analyze flagged, so they are visible before release. It
+    never mutates anything and never blocks — perception risk is advisory input,
+    not a deterministic release blocker.
+    """
+    candidates = _find_perception_artifacts(repo)
+    if not candidates:
+        return GateCheck(
+            "perception_review",
+            "pass",
+            "No perception artifacts found; nothing to review.",
+        )
+
+    signals: list[str] = []
+    for path in candidates:
+        if _validate_perception_artifact(path):
+            continue  # invalid artifacts are already reported by the validity check
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for signal in payload.get("risk_signals", []) or []:
+            signals.append(f"{path.relative_to(repo)}: {signal}")
+
+    if not signals:
+        return GateCheck(
+            "perception_review",
+            "pass",
+            f"Reviewed {len(candidates)} perception artifact(s); no risk signals reported.",
+        )
+    return GateCheck(
+        "perception_review",
+        "warning",
+        f"Perception review surfaced {len(signals)} risk signal(s): {'; '.join(signals[:3])}",
+        next_action="Review mq-image-analyze risk signals before release.",
+    )
+
+
+def check_contract_drift(repo: Path) -> GateCheck:
+    """Detect tool-contract drift between the MCP server and tool_contracts.json.
+
+    Drift means the runtime exposes a different number of @mcp.tool() functions
+    than docs/tool_contracts.json declares — a release blocker, because callers
+    and safety docs would describe a surface that no longer matches the runtime.
+    Skips repos that do not expose MCP tools.
+    """
+    server = None
+    for candidate in (repo / "mq-mcp" / "server.py", repo / "server.py"):
+        if candidate.is_file():
+            server = candidate
+            break
+    if server is None:
+        return GateCheck("contract_drift", "pass", "No MCP server detected; contract drift check skipped.")
+
+    server_text = server.read_text(encoding="utf-8", errors="replace")
+    decorator_count = len(re.findall(r"@mcp\.tool\(", server_text))
+    if decorator_count == 0:
+        return GateCheck("contract_drift", "pass", "No @mcp.tool() definitions found; contract drift check skipped.")
+
+    contracts = repo / "docs" / "tool_contracts.json"
+    if not contracts.is_file():
+        return GateCheck(
+            "contract_drift",
+            "blocked",
+            "Runtime exposes MCP tools but docs/tool_contracts.json is missing.",
+            blocker=True,
+            next_action="Generate docs/tool_contracts.json with scripts/generate_tool_contracts.py.",
+        )
+    try:
+        contract_count = len(json.loads(contracts.read_text(encoding="utf-8")).get("tools", []))
+    except Exception as exc:
+        return GateCheck(
+            "contract_drift",
+            "blocked",
+            f"Cannot parse docs/tool_contracts.json: {exc}",
+            blocker=True,
+            next_action="Fix docs/tool_contracts.json.",
+        )
+    if decorator_count != contract_count:
+        return GateCheck(
+            "contract_drift",
+            "blocked",
+            f"Tool contract drift: server.py defines {decorator_count} @mcp.tool() functions "
+            f"but docs/tool_contracts.json declares {contract_count}.",
+            blocker=True,
+            next_action="Regenerate tool contracts so they match the runtime tool count.",
+        )
+    return GateCheck(
+        "contract_drift",
+        "pass",
+        f"No tool contract drift: {decorator_count} tools in server and contracts.",
+    )
+
+
+def _blank_string_literals(source: str) -> str:
+    """Blank the content of Python string literals, preserving line structure.
+
+    Line-based pattern scans must not match dangerous tokens that only appear
+    inside string literals — for example the security-pattern *definitions* in
+    server.py. tokenize handles raw, multi-line, and adjacent strings correctly;
+    falls back to the original source if tokenization fails.
+    """
+    try:
+        chars = [list(line) for line in source.splitlines(keepends=True)]
+        for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+            if tok.type != tokenize.STRING:
+                continue
+            (srow, scol), (erow, ecol) = tok.start, tok.end
+            for row in range(srow, erow + 1):
+                idx = row - 1
+                if idx >= len(chars):
+                    continue
+                start = scol if row == srow else 0
+                end = ecol if row == erow else len(chars[idx])
+                for col in range(start, min(end, len(chars[idx]))):
+                    if chars[idx][col] not in "\r\n":
+                        chars[idx][col] = " "
+        return "".join("".join(line) for line in chars)
+    except Exception:
+        return source
+
+
+_UNSAFE_COMMAND_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"os\.system\s*\("), "os.system()"),
+    (re.compile(r"os\.popen\s*\("), "os.popen()"),
+    (re.compile(r"shell\s*=\s*True"), "subprocess shell=True"),
+    (re.compile(r"\beval\s*\("), "eval()"),
+    (re.compile(r"\bexec\s*\("), "exec()"),
+]
+
+
+def check_unsafe_commands(repo: Path) -> GateCheck:
+    """Detect ungated unsafe command execution in the tool-exposed surface.
+
+    Scans the MCP server and bridge entrypoints for shell/eval/exec patterns.
+    String-literal content is blanked first so pattern *definitions* do not
+    match, and a line may be explicitly exempted with a trailing `# nosec`
+    comment for audited, gated calls. Any remaining match is a release blocker.
+    """
+    sources = [
+        repo / "mq-mcp" / "server.py",
+        repo / "server.py",
+        repo / "mq-mcp" / "bridge.py",
+        repo / "bridge.py",
+    ]
+    existing = [path for path in sources if path.is_file()]
+    if not existing:
+        return GateCheck("unsafe_commands", "pass", "No MCP server/bridge surface detected; unsafe command check skipped.")
+
+    findings: list[str] = []
+    for path in existing:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        blanked = _blank_string_literals(text).splitlines()
+        raw = text.splitlines()
+        for lineno, line in enumerate(blanked, start=1):
+            original = raw[lineno - 1] if lineno - 1 < len(raw) else ""
+            if original.rstrip().endswith("# nosec"):
+                continue
+            for pattern, label in _UNSAFE_COMMAND_PATTERNS:
+                if pattern.search(line):
+                    findings.append(f"{path.relative_to(repo)}:{lineno} {label}")
+                    break
+
+    if not findings:
+        return GateCheck(
+            "unsafe_commands",
+            "pass",
+            f"No ungated unsafe command execution found in {len(existing)} entrypoint file(s).",
+        )
+    return GateCheck(
+        "unsafe_commands",
+        "blocked",
+        f"Ungated unsafe command execution: {', '.join(findings[:3])}",
+        blocker=True,
+        next_action="Gate or remove unsafe command execution, or mark an audited line with `# nosec`.",
+    )
+
+
+def run_p0_checks(
+    repo: Path,
+    target: str,
+    test_command: list[str] | None = None,
+    lint_command: list[str] | None = None,
+) -> list[GateCheck]:
     return [
         check_tests_pass(repo, test_command),
+        check_lint_type_quality(repo, lint_command),
         check_version_consistent(repo, target),
         check_file_mentions_target(repo, "CHANGELOG.md", target, blocker=True),
         check_file_mentions_target(repo, "README.md", target, blocker=False),
         check_file_mentions_target(repo, "ROADMAP.md", target, blocker=False),
         check_contracts_valid(repo),
         check_safety_classes_valid(repo),
+        check_contract_drift(repo),
+        check_unsafe_commands(repo),
         check_learn_contract_valid(repo),
         check_learn_alias_tools_present(repo),
         check_learn_hygiene_pass(repo),
         check_perception_artifacts_valid(repo),
+        check_perception_review(repo),
         check_repo_signal_readiness_export(repo),
         check_release_notes_present(repo, target),
     ]

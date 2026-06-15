@@ -318,6 +318,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--test-command",
         help="Optional shell-style test command to run, e.g. 'python -m pytest -q'.",
     )
+    release_gate_run.add_argument(
+        "--lint-command",
+        help="Optional shell-style lint/type command to run, e.g. 'ruff check . && mypy .'.",
+    )
 
     return parser
 
@@ -492,7 +496,10 @@ def main(argv: list[str] | None = None) -> int:
             from release_gate import render_release_gate, run_release_gate  # noqa: PLC0415
 
             test_command = shlex.split(args.test_command) if args.test_command else None
-            result = run_release_gate(args.repo, args.target, test_command=test_command)
+            lint_command = shlex.split(args.lint_command) if args.lint_command else None
+            result = run_release_gate(
+                args.repo, args.target, test_command=test_command, lint_command=lint_command
+            )
             if args.json:
                 print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
             else:

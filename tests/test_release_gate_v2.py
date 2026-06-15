@@ -71,7 +71,7 @@ def test_release_gate_can_return_pass(tmp_path):
     runner = load_release_gate_module("runner")
     repo = write_repo(tmp_path)
 
-    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"], lint_command=["true"])
 
     assert result.status == "pass"
     assert result.blockers == []
@@ -197,7 +197,7 @@ def test_release_gate_validates_perception_artifacts(tmp_path):
         encoding="utf-8",
     )
 
-    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+    result = runner.run_release_gate(repo, "v1.4.0", test_command=["true"], lint_command=["true"])
 
     assert result.status == "pass"
     assert any(
@@ -249,6 +249,142 @@ def test_release_gate_blocks_invalid_repo_signal_export(tmp_path):
         check.name == "repo_signal_readiness_export" and check.status == "blocked"
         for check in result.checks
     )
+
+
+def test_lint_type_quality_warns_when_not_run(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+
+    result = checks.check_lint_type_quality(repo)
+
+    assert result.status == "warning"
+    assert result.blocker is False
+    assert "were not run" in result.message
+
+
+def test_lint_type_quality_passes_and_blocks(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+
+    assert checks.check_lint_type_quality(repo, ["true"]).status == "pass"
+    blocked = checks.check_lint_type_quality(repo, ["false"])
+    assert blocked.status == "blocked"
+    assert blocked.blocker is True
+
+
+def test_perception_review_surfaces_risk_signals(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    fixture = repo / "tests" / "fixtures" / "sample_perception_output.json"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text(
+        json.dumps(
+            {
+                "source_type": "screenshot",
+                "source_path": "docs/screenshot.png",
+                "ocr_text": "DELETE ALL",
+                "visual_summary": "Destructive action button visible.",
+                "risk_signals": ["destructive action exposed without confirm"],
+                "confidence": "high",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = checks.check_perception_review(repo)
+
+    assert result.status == "warning"
+    assert result.blocker is False
+    assert "destructive action" in result.message
+
+
+def test_perception_review_passes_with_no_signals(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+
+    assert checks.check_perception_review(repo).status == "pass"
+
+
+def test_contract_drift_passes_when_counts_match(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text(
+        "@mcp.tool()\ndef read_repo_file(): pass\n"
+        "@mcp.tool()\ndef learn_status(): pass\n"
+        "@mcp.tool()\ndef search_learned_patterns(): pass\n"
+        "@mcp.tool()\ndef explain_learned_pattern(): pass\n",
+        encoding="utf-8",
+    )
+
+    result = checks.check_contract_drift(repo)
+
+    assert result.status == "pass"
+    assert "No tool contract drift" in result.message
+
+
+def test_contract_drift_blocks_on_mismatch(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text(
+        "@mcp.tool()\ndef read_repo_file(): pass\n"
+        "@mcp.tool()\ndef extra_tool(): pass\n",
+        encoding="utf-8",
+    )
+
+    result = checks.check_contract_drift(repo)
+
+    assert result.status == "blocked"
+    assert result.blocker is True
+    assert "drift" in result.message.lower()
+
+
+def test_contract_drift_skips_non_mcp_server(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+
+    # write_repo's server.py has plain defs, no @mcp.tool() decorators
+    assert checks.check_contract_drift(repo).status == "pass"
+
+
+def test_unsafe_commands_blocks_ungated_call(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text(
+        "import os\ndef run(cmd):\n    os.system(cmd)\n",
+        encoding="utf-8",
+    )
+
+    result = checks.check_unsafe_commands(repo)
+
+    assert result.status == "blocked"
+    assert result.blocker is True
+    assert "os.system()" in result.message
+
+
+def test_unsafe_commands_nosec_exempts_audited_line(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text(
+        "import subprocess\ndef run(cmd):\n"
+        "    subprocess.run(cmd, shell=True)  # nosec\n",
+        encoding="utf-8",
+    )
+
+    assert checks.check_unsafe_commands(repo).status == "pass"
+
+
+def test_unsafe_commands_ignores_string_literals(tmp_path):
+    checks = load_release_gate_module("checks")
+    repo = write_repo(tmp_path)
+    (repo / "mq-mcp" / "server.py").write_text(
+        'PATTERNS = [\n'
+        '    "os.system() — shell injection risk",\n'
+        '    "subprocess with shell=True is dangerous",\n'
+        ']\n',
+        encoding="utf-8",
+    )
+
+    assert checks.check_unsafe_commands(repo).status == "pass"
 
 
 def test_release_gate_render_includes_operator_sections(tmp_path):

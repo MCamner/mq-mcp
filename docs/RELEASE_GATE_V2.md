@@ -37,19 +37,33 @@ The first gate includes only these checks:
 
 ```text
 tests_pass
+lint_type_quality
 version_consistent
 changelog_updated
 readme_current
 roadmap_current
 contracts_valid
 safety_classes_valid
+contract_drift
+unsafe_commands
 learn_contract_valid
 learn_alias_tools_present
 learn_hygiene_pass
 perception_artifacts_valid
+perception_review
 repo_signal_readiness_export
 release_notes_present
 ```
+
+`lint_type_quality` and `tests_pass` run only the commands you pass in
+(`--lint-command` / `--test-command`); without one they warn rather than vouch
+for quality that was not run. `contract_drift` blocks when the runtime exposes a
+different number of `@mcp.tool()` functions than `docs/tool_contracts.json`
+declares. `unsafe_commands` blocks on ungated shell/eval/exec in the server and
+bridge entrypoints; string-literal pattern definitions are ignored and an
+audited, gated line may be exempted with a trailing `# nosec` comment.
+`perception_review` is a read-only pass that surfaces (never blocks on)
+mq-image-analyze risk signals.
 
 ## CLI
 

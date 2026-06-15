@@ -4,6 +4,14 @@
 
 ### Added
 
+* Release Gate v2: four new deterministic checks completing the v2.0.0 scope —
+  `lint_type_quality` (optional `--lint-command`, warns when not run),
+  `contract_drift` (blocks when `@mcp.tool()` count diverges from
+  `docs/tool_contracts.json`), `unsafe_commands` (blocks ungated shell/eval/exec
+  in server/bridge entrypoints; ignores string-literal pattern definitions and
+  honors `# nosec`), and `perception_review` (read-only surfacing of
+  mq-image-analyze risk signals). `release_gate_run` and `release-gate run` gain
+  a `lint_command` / `--lint-command` argument.
 * Skills: `learn-engine-maintainer` and `brain-maintainer` now own the learning
   engine and Obsidian second-brain surfaces.
 * `scripts/check-skills.sh`: validates skill frontmatter, cross-references,
