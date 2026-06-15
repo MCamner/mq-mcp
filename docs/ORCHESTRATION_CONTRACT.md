@@ -6,14 +6,14 @@ any other MCP client.
 
 The boundary is not aspirational. It is enforced structurally:
 
-- Path resolvers reject access outside declared roots (ADR-001)
-- No tool commits or pushes git state (ADR-002)
-- Every tool has a declared safety class (ADR-003)
-- Every tool output has a predictable structure (PHI-001)
+* Path resolvers reject access outside declared roots (ADR-001)
+* No tool commits or pushes git state (ADR-002)
+* Every tool has a declared safety class (ADR-003)
+* Every tool output has a predictable structure (PHI-001)
 
 Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Architecture memory: `architecture_memory/`
-Last updated: 2026-06-07 (v1.12.0).
+Last updated: 2026-06-15 (v1.12.0).
 
 ---
 
@@ -21,21 +21,21 @@ Last updated: 2026-06-07 (v1.12.0).
 
 ### What callers may do
 
-- Invoke any tool by name with the declared argument types.
-- Rely on tool output being a `str` (plain text or structured text).
-- Pass file paths as repo-relative strings (not absolute paths).
-- Set environment variables listed in `docs/architecture/SYSTEM_OVERVIEW.md`
+* Invoke any tool by name with the declared argument types.
+* Rely on tool output being a `str` (plain text or structured text).
+* Pass file paths as repo-relative strings (not absolute paths).
+* Set environment variables listed in `docs/architecture/SYSTEM_OVERVIEW.md`
   to configure runtime behavior.
 
 ### What callers must not do
 
-- Pass absolute filesystem paths directly — resolvers will reject them unless
+* Pass absolute filesystem paths directly — resolvers will reject them unless
   they fall within `MQ_MCP_ALLOWED_PATHS`.
-- Invoke Class C or D tools without explicit user confirmation in the calling
+* Invoke Class C or D tools without explicit user confirmation in the calling
   orchestrator.
-- Assume that a Class A tool has no side effects on external systems —
+* Assume that a Class A tool has no side effects on external systems —
   review tools make OpenAI API calls which are billable and rate-limited.
-- Chain tool calls that together produce a git commit or push — each tool is
+* Chain tool calls that together produce a git commit or push — each tool is
   independently scoped; the chain does not inherit a broader permission.
 
 ### Approval gate model
@@ -62,9 +62,9 @@ call as failed and not parse the remainder as success output.
 
 Structured output that can be machine-parsed:
 
-- `detect_architecture_drift` — `[SEVERITY] location\nbody` blocks
-- `review_file` / `review_diff` / `review_repo` — `[SEVERITY] file:line\nbody` blocks
-- `validate_orchestration_contract` — `[PASS]` / `[FAIL]` / `[WARN]` lines
+* `detect_architecture_drift` — `[SEVERITY] location\nbody` blocks
+* `review_file` / `review_diff` / `review_repo` — `[SEVERITY] file:line\nbody` blocks
+* `validate_orchestration_contract` — `[PASS]` / `[FAIL]` / `[WARN]` lines
 
 ### Severity labels
 
@@ -90,12 +90,12 @@ current state of the repo without running `build_repo_context` first.
 
 ### What mq-mcp guarantees it will never do automatically
 
-- Commit to git
-- Push to a remote
-- Send network requests outside of explicitly declared API calls
+* Commit to git
+* Push to a remote
+* Send network requests outside of explicitly declared API calls
   (OPENAI_API_KEY tools, `get_public_ip`, repo-signal CLI tools)
-- Modify files outside `REPO_ROOT` and `MQ_MCP_ALLOWED_PATHS`
-- Persist state in a location not declared in the tool docstring
+* Modify files outside `REPO_ROOT` and `MQ_MCP_ALLOWED_PATHS`
+* Persist state in a location not declared in the tool docstring
 
 ### Declared persistent side effects
 
@@ -114,6 +114,12 @@ current state of the repo without running `build_repo_context` first.
 | `export_symbol_index` | Writes symbol map | `generated/symbols/symbol_index.json` |
 | `risk_review_file` | Saves findings | `review_engine/memory/review_history.json` |
 | `risk_review_diff` | Saves findings per file | `review_engine/memory/review_history.json` |
+| `shell_exec` | Runs an arbitrary shell command (env-gated; bridge approval) | local machine |
+| `brain_record_decision` | Writes an ADR | `mqobsidian/decisions/` |
+| `brain_record_review` | Writes a review summary | `mqobsidian/reviews/` |
+| `brain_record_session` | Writes a session note | `mqobsidian/sessions/` |
+| `brain_record_learning` | Writes a learned pattern | `mqobsidian/learn/` |
+| `brain_promote_learning` | Promotes a lesson to verified | `mqobsidian/learn/verified/` |
 
 Any tool not listed here has no persistent side effects.
 
@@ -163,18 +169,18 @@ makes them explicit and verifiable.
 
 mq-agent is the orchestration layer. It may:
 
-- Discover tools via MCP protocol
-- Invoke any Class A/B tool without approval gates
-- Invoke Class C/D tools only after presenting the tool's safety_notes to the user
-- Read `tool_safety_report` to display safety classification
-- Route review and architecture analysis requests to mq-mcp tools
+* Discover tools via MCP protocol
+* Invoke any Class A/B tool without approval gates
+* Invoke Class C/D tools only after presenting the tool's safety_notes to the user
+* Read `tool_safety_report` to display safety classification
+* Route review and architecture analysis requests to mq-mcp tools
 
 mq-agent must not:
 
-- Reimplement review logic locally
-- Construct filesystem paths outside of tool arguments
-- Assume mq-mcp maintains session state between calls
-- Invoke tools in a sequence that collectively produces a git commit
+* Reimplement review logic locally
+* Construct filesystem paths outside of tool arguments
+* Assume mq-mcp maintains session state between calls
+* Invoke tools in a sequence that collectively produces a git commit
 
 #### Tool groups available to mq-agent (v1.11.0)
 
@@ -194,10 +200,10 @@ Authoritative safety metadata: `docs/TOOL_SAFETY.md`.
 
 repo-signal provides read-only repository intelligence:
 
-- `repo_signal_analyze` / `repo_signal_checklist` / `repo_signal_inspect` /
+* `repo_signal_analyze` / `repo_signal_checklist` / `repo_signal_inspect` /
   `repo_signal_doctor_json` — mq-mcp proxies these as Class B tools
-- Expected output: structured text or JSON from repo-signal CLI
-- repo-signal v1.1.0+ writes packs to `.repo-signal/exports/`;
+* Expected output: structured text or JSON from repo-signal CLI
+* repo-signal v1.1.0+ writes packs to `.repo-signal/exports/`;
   `callgraph_builder._try_merge_repo_signal_packs()` merges them automatically
 
 mq-mcp must not: duplicate repo-signal's graph-building logic.
@@ -206,17 +212,17 @@ mq-mcp must not: duplicate repo-signal's graph-building logic.
 
 mq-hal provides runtime and model health summaries:
 
-- `hal_repo_report` — mq-mcp proxies as Class D (runs mq-hal CLI)
-- Expected output: text report from mq-hal
+* `hal_repo_report` — mq-mcp proxies as Class D (runs mq-hal CLI)
+* Expected output: text report from mq-hal
 
 ### zephyr-workbench → mq-mcp
 
 zephyr-workbench provides model-based architecture analysis:
 
-- `zephyr_validate` — schema + internal consistency check for architecture YAML
-- `zephyr_review` — all findings in severity order; optional focused template
-- `zephyr_analyze` — full intelligence analysis (anti-patterns, risks, dependencies)
-- `zephyr_diff` — structured diff between two architecture versions
+* `zephyr_validate` — schema + internal consistency check for architecture YAML
+* `zephyr_review` — all findings in severity order; optional focused template
+* `zephyr_analyze` — full intelligence analysis (anti-patterns, risks, dependencies)
+* `zephyr_diff` — structured diff between two architecture versions
 
 All four are Class B (subprocess; no persistent writes). Path safety enforced by
 `resolve_allowed_local_file`; configure external roots via `MQ_MCP_ALLOWED_PATHS`.
@@ -228,9 +234,9 @@ mq-mcp must not: duplicate zephyr's scoring or lifecycle logic.
 
 mq-image-analyze provides visual analysis:
 
-- `image_observe_architecture` — architecture diagram → `visual_architecture_observation.v1` JSON
-- `image_analyze_ui` — UI screenshot → layout, contrast, hierarchy, accessibility JSON
-- `image_analyze` — general image → objects, style, composition JSON
+* `image_observe_architecture` — architecture diagram → `visual_architecture_observation.v1` JSON
+* `image_analyze_ui` — UI screenshot → layout, contrast, hierarchy, accessibility JSON
+* `image_analyze` — general image → objects, style, composition JSON
 
 All three are Class B (subprocess; no persistent writes). Binary resolved via
 `MQ_IMAGE_BIN` env or `~/mq-image-analyze/.venv/bin/mq-image`.
@@ -241,11 +247,11 @@ or `review_file` for enriched architecture review.
 
 mq-mcp guarantees to callers:
 
-- All tool output is a `str`
-- Error output begins with `{tool_name} failed:` or `ERROR:`
-- Review output uses the fixed severity vocabulary
-- No output contains API keys, tokens, or local machine paths in cleartext
-- Tool names are stable across patch versions; breaking renames require a minor bump
+* All tool output is a `str`
+* Error output begins with `{tool_name} failed:` or `ERROR:`
+* Review output uses the fixed severity vocabulary
+* No output contains API keys, tokens, or local machine paths in cleartext
+* Tool names are stable across patch versions; breaking renames require a minor bump
 
 ---
 
@@ -308,9 +314,9 @@ findings that do not block a release but signal potential drift.
 
 ### When a WARN requires action
 
-- WARN lists specific tool names as "new tools since last contract update" → update the contract.
-- WARN fires after adding a new tool class or safety boundary → update `RUNTIME_CONTRACT.md`.
-- WARN persists across multiple commits with new tools → treat as FAIL for release purposes.
+* WARN lists specific tool names as "new tools since last contract update" → update the contract.
+* WARN fires after adding a new tool class or safety boundary → update `RUNTIME_CONTRACT.md`.
+* WARN persists across multiple commits with new tools → treat as FAIL for release purposes.
 
 The release gate (`scripts/release-check.sh`) does not block on WARNs, but
 they should be reviewed and resolved before tagging a release.
