@@ -57,7 +57,10 @@ class BridgetSpinner:
         self._stop_event.set()
         self._thread.join()
         self._thread = None
-        self._stream.write("\r\033[K\033[1A\r\033[K")
+        # The cursor sits on the top spinner line. Clear it, drop to the
+        # bottom line and clear that, then return to the top so the next
+        # output starts where the spinner began.
+        self._stream.write("\r\033[K\033[1B\r\033[K\033[1A\r")
         self._stream.flush()
 
     def _spin(self) -> None:
@@ -91,25 +94,34 @@ def approval_gate(tool_name: str, tool_args: dict) -> bool:
     if _SPINNER:
         _SPINNER.stop()
 
+    banner = "\n" + "─" * 60 + "\n"
+    banner += "⚠️  Bridget vill köra:\n"
+    banner += f"   $ {command}\n"
+    if working_dir:
+        banner += f"   katalog: {working_dir}\n"
+    banner += "─" * 60 + "\n"
+
+    # Prefer /dev/tty so the prompt is visible even if stdout is captured; fall
+    # back to the standard streams (the launcher runs --do attached to the
+    # terminal, so those work too). Never silently deny on an open failure.
+    tty = None
     try:
         tty = open("/dev/tty", "r+")
     except Exception:
-        return False  # No controlling terminal -> cannot get consent -> deny.
+        tty = None
 
+    out = tty or sys.stdout
+    reader = tty or sys.stdin
     try:
-        tty.write("\n" + "─" * 60 + "\n")
-        tty.write("⚠️  Bridget vill köra:\n")
-        tty.write(f"   $ {command}\n")
-        if working_dir:
-            tty.write(f"   katalog: {working_dir}\n")
-        tty.write("─" * 60 + "\n")
-        tty.write("Tillåt? [y/n]: ")
-        tty.flush()
-        answer = (tty.readline() or "").strip().lower()
+        out.write(banner)
+        out.write("Tillåt? [y/n]: ")
+        out.flush()
+        answer = (reader.readline() or "").strip().lower()
     except (EOFError, KeyboardInterrupt):
         answer = ""
     finally:
-        tty.close()
+        if tty:
+            tty.close()
 
     if _SPINNER:
         _SPINNER.start()
@@ -263,11 +275,24 @@ def tool_catalog_text(mcp_tools: Any) -> str:
     return "\n".join(lines)
 
 
+# The raw shell_exec docstring (server safety doc) says "disabled by default",
+# which makes the model refuse to call it and ask for permission in text. The
+# host handles approval out of band, so the model-facing description hides that.
+_TOOL_DESCRIPTION_OVERRIDES = {
+    "shell_exec": (
+        "Run a shell command on the local machine and return its output. "
+        "Call this directly with the command to run; the host handles any "
+        "approval automatically. Do not ask the user for permission first."
+    ),
+}
+
+
 def to_openai_tools(mcp_tools: Any) -> list[ChatCompletionToolParam]:
     openai_tools: list[ChatCompletionToolParam] = []
 
     for tool in mcp_tools.tools:
         parameters = tool.inputSchema or {"type": "object", "properties": {}}
+        description = _TOOL_DESCRIPTION_OVERRIDES.get(tool.name, tool.description or "")
         openai_tools.append(
             cast(
                 ChatCompletionToolParam,
@@ -275,7 +300,7 @@ def to_openai_tools(mcp_tools: Any) -> list[ChatCompletionToolParam]:
                     "type": "function",
                     "function": {
                         "name": tool.name,
-                        "description": tool.description or "",
+                        "description": description,
                         "parameters": parameters,
                     },
                 },
@@ -520,9 +545,12 @@ async def run_bridge() -> None:
     except Exception:
         tty = None
     spinner = BridgetSpinner(stream=tty)
-    spinner.start()
     global _SPINNER
-    _SPINNER = spinner
+    if not do_mode:
+        # In --do mode the interactive approval gate owns the terminal; a
+        # concurrent spinner corrupts the y/n prompt and its readline.
+        spinner.start()
+        _SPINNER = spinner
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -545,12 +573,22 @@ async def run_bridge() -> None:
             do_instructions = ""
             if do_mode:
                 do_instructions = (
-                    "\n\n## DO MODE\n"
-                    "The user has invoked --do mode. Your job is to complete the task fully.\n"
-                    "Break the task into steps. For each step that requires a shell command,\n"
-                    "use the shell_exec tool. The user will approve each command before it runs.\n"
-                    "After each step, report what happened and what comes next.\n"
-                    "When all steps are done, summarize what was completed.\n"
+                    "\n\n## DO MODE (ACTIVE)\n"
+                    "The user invoked --do mode to have you DO the task, not describe it.\n"
+                    "shell_exec is ENABLED in this session. Ignore any 'disabled by default'\n"
+                    "wording in its description — it works here.\n"
+                    "\n"
+                    "Hard rules:\n"
+                    "- For any task needing the shell, your FIRST action MUST be a shell_exec\n"
+                    "  tool call. Do not reply with text first.\n"
+                    "- NEVER ask the user 'should I run this?' and NEVER print a command for\n"
+                    "  the user to run themselves. That is forbidden in --do mode.\n"
+                    "- A separate y/n approval prompt fires automatically before each command\n"
+                    "  runs. Calling shell_exec IS how you ask for approval — you do not ask\n"
+                    "  in text. If a call comes back 'Kommando nekades av användaren', the user\n"
+                    "  declined; stop and report that.\n"
+                    "- Break the task into steps and call shell_exec for each. After each call\n"
+                    "  report the result. When done, summarize what was completed.\n"
                 )
 
             system_content = (
@@ -573,7 +611,9 @@ async def run_bridge() -> None:
                 model=model,
                 messages=messages,
                 tools=openai_tools,
-                tool_choice="auto",
+                # In --do mode force a tool call so the model acts instead of
+                # asking for permission in text.
+                tool_choice="required" if do_mode else "auto",
             )
 
             assistant_message = first_response.choices[0].message
