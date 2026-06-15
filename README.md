@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-1.11.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v1.11.0)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.0.0)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -14,7 +14,7 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v1.11.0 — brain/Obsidian tools, local Ollama learn provider scaffolding, mq-agent learn compatibility aliases, and release-gate hardening.
+v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift, unsafe-command, and read-only perception-review checks complete the deterministic release gate, on top of the brain/Obsidian tools, local Ollama learn provider, and mq-agent learn compatibility aliases.
 
 This repository is useful as:
 

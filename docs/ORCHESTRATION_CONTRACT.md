@@ -182,7 +182,7 @@ mq-agent must not:
 * Assume mq-mcp maintains session state between calls
 * Invoke tools in a sequence that collectively produces a git commit
 
-#### Tool groups available to mq-agent (v1.11.0)
+#### Tool groups available to mq-agent (v2.0.0)
 
 | Group | Tools | Class | Notes |
 | ----- | ----- | ----- | ----- |

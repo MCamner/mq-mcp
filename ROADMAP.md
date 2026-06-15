@@ -35,8 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v1.10.0 - Learning Contract Layer (done)
-Next:    v1.11.0 - Ollama-backed learn extraction hardening
+v2.0.0 - Release Gate v2 + deterministic readiness (done)
+Next:   v1.11.0 mq-learn integration (Fas 0-2) + v1.12.0 repo-snapshot evidence
 ```
 
 Completed foundation:
@@ -200,8 +200,8 @@ This is not a problem to solve. It is a tension to design.
 | v1.6.0  | Generated artifacts + repo-signal merge     | Done          |
 | v1.9.0  | Semantic hygiene + orchestration boundary   | Done          |
 | v1.10.0 | Learning Contract Layer                     | Done          |
-| v1.11.0 | Ollama-backed learn extraction hardening    | In progress   |
-| v2.0.0  | Release Gate v2 + deterministic readiness   | Planned       |
+| v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
+| v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
 
 ---
 

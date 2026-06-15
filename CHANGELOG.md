@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.0.0 - 2026-06-15
+
+Release Gate v2 + deterministic readiness.
+
 ### Added
 
 * Release Gate v2: four new deterministic checks completing the v2.0.0 scope —
