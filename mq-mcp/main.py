@@ -29,7 +29,19 @@ STABILITY_FILE = REPO_ROOT / "docs" / "stability.json"
 
 
 def read_version() -> str:
-    return VERSION_FILE.read_text(encoding="utf-8").strip()
+    # Source checkouts read the repo VERSION file. Wheel/sdist installs do not
+    # ship the root VERSION file, so fall back to installed package metadata
+    # rather than crashing on a missing file.
+    if VERSION_FILE.is_file():
+        return VERSION_FILE.read_text(encoding="utf-8").strip()
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version("mq-mcp")
+    except PackageNotFoundError:
+        return "unknown"
+    except Exception:
+        return "unknown"
 
 
 def run_command(args: list[str], cwd: Path, env: dict[str, str] | None = None) -> int:
