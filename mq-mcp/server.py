@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import re
 import os
@@ -21,6 +22,12 @@ from starlette.responses import JSONResponse
 # Load .env from the same directory as server.py (mq-mcp/mq-mcp/.env).
 # override=False keeps any env vars already set in the shell.
 load_dotenv(Path(__file__).parent / ".env", override=False)
+
+# Silence the MCP SDK's per-request INFO logging ("Processing request of
+# type ListToolsRequest/CallToolRequest"). Over stdio the server's stderr is
+# merged into the bridge output, so these leak into Bridget's answer. Setting
+# the parent "mcp" logger covers all mcp.* child loggers.
+logging.getLogger("mcp").setLevel(logging.WARNING)
 
 # Initiera servern. mq-agent expects the local HTTP/SSE bridge on :8765.
 MCP_HOST = os.getenv("MQ_MCP_HOST", "127.0.0.1")
