@@ -20,7 +20,9 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolPara
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-logging.getLogger("mcp").setLevel(logging.WARNING)
+logging.getLogger("mcp").setLevel(logging.CRITICAL)
+logging.getLogger("mcp.client").setLevel(logging.CRITICAL)
+logging.getLogger("mcp.client.stdio").setLevel(logging.CRITICAL)
 
 
 class BridgetSpinner:
@@ -50,11 +52,11 @@ class BridgetSpinner:
         self._thread.start()
 
     def stop(self) -> None:
-        if not self._enabled:
+        if not self._enabled or self._thread is None:
             return
         self._stop_event.set()
-        if self._thread:
-            self._thread.join()
+        self._thread.join()
+        self._thread = None
         self._stream.write("\r\033[K\033[1A\r\033[K")
         self._stream.flush()
 
@@ -250,8 +252,6 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
         args = json.loads(raw_args or "{}")
     except json.JSONDecodeError:
         return f"Tool argument JSON could not be parsed: {raw_args}"
-
-    print(f"-> MCP tool call: {name}({args})")
 
     try:
         result = await session.call_tool(name, args)
@@ -451,7 +451,15 @@ async def run_bridge() -> None:
         env=os.environ.copy(),
     )
 
-    print("--- mq-mcp bridge: Model Context Protocol <-> OpenAI ---")
+    # Spinner status goes to /dev/tty so it never interleaves with the answer
+    # on stdout; falls back to stdout (and no-ops when piped). It runs from
+    # before the MCP server connects until the answer is ready.
+    try:
+        tty = open("/dev/tty", "w")
+    except Exception:
+        tty = None
+    spinner = BridgetSpinner(stream=tty)
+    spinner.start()
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -462,10 +470,11 @@ async def run_bridge() -> None:
             openai_tools = to_openai_tools(mcp_tools)
 
             if list_tools_only:
+                spinner.stop()
                 print(catalog)
+                if tty:
+                    tty.close()
                 return
-
-            print(f"Model: {model}\n")
 
             ctx = BridgetContext()
             session_context = ctx.load()
@@ -485,29 +494,18 @@ async def run_bridge() -> None:
 
             client = OpenAI()
 
-            # Spinner status goes to /dev/tty so it never interleaves with the
-            # answer on stdout; falls back to stdout (and no-ops when piped).
-            try:
-                tty = open("/dev/tty", "w")
-            except Exception:
-                tty = None
-            spinner = BridgetSpinner(stream=tty)
-
-            spinner.start()
-            try:
-                first_response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    tools=openai_tools,
-                    tool_choice="auto",
-                )
-            finally:
-                spinner.stop()
+            first_response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=openai_tools,
+                tool_choice="auto",
+            )
 
             assistant_message = first_response.choices[0].message
 
             if not assistant_message.tool_calls:
                 answer = assistant_message.content or ""
+                spinner.stop()
                 sys.stdout.write("Bridget: ")
                 sys.stdout.flush()
                 scramble_print(answer)
@@ -530,48 +528,45 @@ async def run_bridge() -> None:
                 )
             )
 
-            spinner.start()
-            try:
-                for tool_call in assistant_message.tool_calls:
-                    tool_name, tool_args = tool_call_name_and_args(tool_call)
-                    if not tool_name:
-                        messages.append(
-                            cast(
-                                ChatCompletionMessageParam,
-                                {
-                                    "role": "tool",
-                                    "tool_call_id": tool_call.id,
-                                    "content": "Tool call missing function name.",
-                                },
-                            )
-                        )
-                        continue
-
-                    tool_result = await call_mcp_tool(
-                        session=session,
-                        name=tool_name,
-                        raw_args=tool_args,
-                    )
-
+            for tool_call in assistant_message.tool_calls:
+                tool_name, tool_args = tool_call_name_and_args(tool_call)
+                if not tool_name:
                     messages.append(
                         cast(
                             ChatCompletionMessageParam,
                             {
                                 "role": "tool",
                                 "tool_call_id": tool_call.id,
-                                "content": tool_result,
+                                "content": "Tool call missing function name.",
                             },
                         )
                     )
+                    continue
 
-                final_response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
+                tool_result = await call_mcp_tool(
+                    session=session,
+                    name=tool_name,
+                    raw_args=tool_args,
                 )
-            finally:
-                spinner.stop()
+
+                messages.append(
+                    cast(
+                        ChatCompletionMessageParam,
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": tool_result,
+                        },
+                    )
+                )
+
+            final_response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+            )
 
             answer = final_response.choices[0].message.content or ""
+            spinner.stop()
             sys.stdout.write("\nBridget: ")
             sys.stdout.flush()
             scramble_print(answer)
