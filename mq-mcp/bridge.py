@@ -70,6 +70,52 @@ class BridgetSpinner:
             self._stop_event.wait(self.INTERVAL)
 
 
+DO_MODE = False  # Set True by parse_prompt() when --do is passed.
+_SPINNER: "BridgetSpinner | None" = None  # Set by run_bridge so the gate can pause it.
+
+
+def approval_gate(tool_name: str, tool_args: dict) -> bool:
+    """y/n approval gate for shell_exec; all other tools pass through.
+
+    Prompts on /dev/tty rather than stdout: the bridget launcher captures
+    stdout (`out=$(command bridget ... 2>&1)`), so a stdout prompt would be
+    invisible and input() would deadlock. Pauses the spinner while waiting so
+    the two don't write to the terminal at once. Denies if there is no tty.
+    """
+    if tool_name != "shell_exec":
+        return True
+
+    command = tool_args.get("command", "")
+    working_dir = tool_args.get("working_dir", "")
+
+    if _SPINNER:
+        _SPINNER.stop()
+
+    try:
+        tty = open("/dev/tty", "r+")
+    except Exception:
+        return False  # No controlling terminal -> cannot get consent -> deny.
+
+    try:
+        tty.write("\n" + "─" * 60 + "\n")
+        tty.write("⚠️  Bridget vill köra:\n")
+        tty.write(f"   $ {command}\n")
+        if working_dir:
+            tty.write(f"   katalog: {working_dir}\n")
+        tty.write("─" * 60 + "\n")
+        tty.write("Tillåt? [y/n]: ")
+        tty.flush()
+        answer = (tty.readline() or "").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        answer = ""
+    finally:
+        tty.close()
+
+    if _SPINNER:
+        _SPINNER.start()
+    return answer in {"y", "yes", "j", "ja"}
+
+
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 SERVER_COMMAND = os.getenv("MQ_MCP_SERVER_COMMAND", "uv")
 SERVER_ARGS = os.getenv("MQ_MCP_SERVER_ARGS", "run mcp run server.py").split()
@@ -165,15 +211,21 @@ Examples:
     )
 
 
-def parse_prompt() -> tuple[str, bool, str, bool, bool]:
+def parse_prompt() -> tuple[str, bool, bool, str, bool, bool]:
     argv = sys.argv[1:]
+
+    do_mode = "--do" in argv
+    if do_mode:
+        argv = [a for a in argv if a != "--do"]
+        global DO_MODE
+        DO_MODE = True
 
     if not argv or argv[0] in {"-h", "--help", "help"}:
         usage()
         raise SystemExit(0)
 
     if argv[0] == "--tools":
-        return "", True, MODEL, False, False
+        return "", True, do_mode, MODEL, False, False
 
     model = MODEL
     if argv[0] in {"-m", "--model"}:
@@ -198,7 +250,7 @@ def parse_prompt() -> tuple[str, bool, str, bool, bool]:
         print('ERROR: no prompt given. Usage: bridget "your prompt"')
         raise SystemExit(1)
 
-    return prompt, False, model, search, search_global
+    return prompt, False, do_mode, model, search, search_global
 
 
 def tool_catalog_text(mcp_tools: Any) -> str:
@@ -252,6 +304,9 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
         args = json.loads(raw_args or "{}")
     except json.JSONDecodeError:
         return f"Tool argument JSON could not be parsed: {raw_args}"
+
+    if not approval_gate(name, args):
+        return "Kommando nekades av användaren."
 
     try:
         result = await session.call_tool(name, args)
@@ -426,7 +481,13 @@ def is_bridget_face_prompt(prompt: str) -> bool:
 
 
 async def run_bridge() -> None:
-    prompt, list_tools_only, model, search, search_global = parse_prompt()
+    prompt, list_tools_only, do_mode, model, search, search_global = parse_prompt()
+
+    # In --do mode, enable the server's shell_exec tool for the child process
+    # only. Set before server_params copies the environment. Other clients,
+    # which never set this, get shell_exec disabled server-side.
+    if do_mode:
+        os.environ["MQ_MCP_ALLOW_SHELL_EXEC"] = "1"
 
     if handle_voice_command(prompt):
         return
@@ -460,6 +521,8 @@ async def run_bridge() -> None:
         tty = None
     spinner = BridgetSpinner(stream=tty)
     spinner.start()
+    global _SPINNER
+    _SPINNER = spinner
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -479,9 +542,21 @@ async def run_bridge() -> None:
             ctx = BridgetContext()
             session_context = ctx.load()
 
+            do_instructions = ""
+            if do_mode:
+                do_instructions = (
+                    "\n\n## DO MODE\n"
+                    "The user has invoked --do mode. Your job is to complete the task fully.\n"
+                    "Break the task into steps. For each step that requires a shell command,\n"
+                    "use the shell_exec tool. The user will approve each command before it runs.\n"
+                    "After each step, report what happened and what comes next.\n"
+                    "When all steps are done, summarize what was completed.\n"
+                )
+
             system_content = (
                 SYSTEM_PROMPT.strip()
                 + session_context
+                + do_instructions
                 + "\n\nThis is the actual tool catalog from the connected MCP server. "
                 "Use this catalog as ground truth.\n\n"
                 + catalog
