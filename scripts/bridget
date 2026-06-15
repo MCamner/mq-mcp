@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# bridget — launcher for the mq-mcp <-> OpenAI bridge.
+#
+# Installed to ~/bin/bridget by scripts/install.sh. For the goto/CD feature and
+# for --do mode to work interactively, also add the _bridget zsh wrapper printed
+# by install.sh to your ~/.zshrc.
+set -euo pipefail
+
+MQ_MCP_HOME="${MQ_MCP_HOME:-$HOME/mq-mcp}"
+
+if [[ ! -d "$MQ_MCP_HOME/mq-mcp" ]]; then
+  echo "ERROR: mq-mcp app folder not found: $MQ_MCP_HOME/mq-mcp"
+  echo "Set MQ_MCP_HOME if your repo lives somewhere else."
+  exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+  echo 'Usage: bridget "your prompt"'
+  echo 'Example: bridget "Show git status."'
+  echo '         bridget --do "create a folder test123 and list it"'
+  exit 0
+fi
+
+cd "$MQ_MCP_HOME/mq-mcp"
+
+if [[ -f ".env" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source .env
+  set +a
+fi
+
+# Handle goto triggers locally — no API call needed.
+# Outputs CD:/path so the _bridget shell wrapper in .zshrc can cd there.
+prompt="$*"
+_lower="${prompt,,}"
+_goto_name=""
+case "$_lower" in
+  "gå till "*)    _goto_name="${_lower#gå till }" ;;
+  "go to "*)      _goto_name="${_lower#go to }" ;;
+  "cd "*)         _goto_name="${_lower#cd }" ;;
+  "öppna repo "*) _goto_name="${_lower#öppna repo }" ;;
+esac
+_goto_name="${_goto_name%!}"
+_goto_name="${_goto_name%.}"
+_goto_name="${_goto_name# }"
+_goto_name="${_goto_name% }"
+
+if [[ -n "$_goto_name" ]]; then
+  _repos="mq-mcp:$MQ_MCP_HOME"
+  IFS=',' read -ra _extra <<< "${MQ_MCP_LOCAL_REPOS:-}"
+  for _p in "${_extra[@]}"; do
+    _p="${_p# }"; _p="${_p% }"
+    [[ -z "$_p" ]] && continue
+    _name="${_p##*/}"
+    _repos="$_repos,$_name:$_p"
+  done
+
+  IFS=',' read -ra _pairs <<< "$_repos"
+  for _pair in "${_pairs[@]}"; do
+    _n="${_pair%%:*}"
+    _path="${_pair#*:}"
+    if [[ "${_n,,}" == "${_goto_name,,}" ]]; then
+      echo "CD:$_path"
+      exit 0
+    fi
+  done
+
+  echo "Unknown repo: '$_goto_name'"
+  echo "Available: $(echo "$_repos" | tr ',' '\n' | cut -d: -f1 | sort | tr '\n' ' ')"
+  exit 1
+fi
+
+# Pass the original args through unchanged so flags (--do, --search, -m …)
+# survive as separate argv elements. $prompt above is only for goto detection.
+exec env PYTHONUNBUFFERED=1 uv run python -u bridge.py "$@"
