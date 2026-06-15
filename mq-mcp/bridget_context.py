@@ -14,6 +14,7 @@ Usage (from bridge.py):
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import textwrap
@@ -25,6 +26,10 @@ CONTEXT_DIR = Path.home() / ".mq"
 CONTEXT_FILE = CONTEXT_DIR / "bridget-context.md"
 MAX_ANSWER_CHARS = 400   # truncate long answers when saving
 MAX_TOOLS_SHOWN = 5      # max tool calls shown per session
+
+# Learn store lives at the repo root next to this package (mq-mcp/mq-mcp/).
+LESSONS_FILE = Path(__file__).resolve().parents[1] / "learn_engine" / "memory" / "lessons.jsonl"
+MAX_LESSONS = 6          # how many lessons to inject into the system prompt
 
 
 class BridgetContext:
@@ -60,6 +65,73 @@ class BridgetContext:
             "Reference it when the user asks about previous work, "
             "open tasks, or earlier decisions. "
             "Do not repeat it back verbatim unless asked.\n---\n"
+        )
+
+    def load_lessons(self, limit: int = MAX_LESSONS) -> str:
+        """Return medium/high-risk lessons to inject into the system prompt.
+
+        Reads the learn store directly (no shelling out) so Bridget applies
+        prior lessons without being asked. Cross-repo lessons are included on
+        purpose — release-hygiene and JSON-output guidance apply everywhere.
+        Returns an empty string when there is nothing worth injecting.
+        """
+        if not LESSONS_FILE.exists():
+            return ""
+        try:
+            raw = LESSONS_FILE.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+
+        lessons: list[dict] = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                lessons.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+        def risk_of(d: dict) -> str:
+            return str(d.get("risk") or d.get("risk_level") or "").lower()
+
+        def text_of(d: dict) -> str:
+            for key in ("summary", "lesson", "title", "pattern_name"):
+                val = d.get(key)
+                if val:
+                    return " ".join(str(val).split())
+            return ""
+
+        items: list[str] = []
+        seen_words: list[set[str]] = []
+        # Most recent lessons are appended last; walk newest-first.
+        for d in reversed(lessons):
+            if risk_of(d) not in {"medium", "high"}:
+                continue
+            text = text_of(d)
+            if not text:
+                continue
+            # Collapse near-identical paraphrases (e.g. the same contract-update
+            # lesson stored several times) by word-overlap similarity.
+            words = set(re.findall(r"[a-z0-9_]+", text.lower()))
+            if any(
+                prev and len(words & prev) / len(words | prev) > 0.6
+                for prev in seen_words
+            ):
+                continue
+            seen_words.append(words)
+            items.append(f"- [{d.get('repo', '?')}] {text}")
+            if len(items) >= limit:
+                break
+
+        if not items:
+            return ""
+        return (
+            "\n\n---\n"
+            "## Lessons learned (apply proactively)\n\n"
+            + "\n".join(items)
+            + "\n\nApply these lessons without being asked; do not repeat them "
+            "verbatim unless relevant.\n---\n"
         )
 
     def record(

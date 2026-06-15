@@ -569,6 +569,7 @@ async def run_bridge() -> None:
 
             ctx = BridgetContext()
             session_context = ctx.load()
+            lessons_context = ctx.load_lessons()
 
             do_instructions = ""
             if do_mode:
@@ -594,6 +595,7 @@ async def run_bridge() -> None:
             system_content = (
                 SYSTEM_PROMPT.strip()
                 + session_context
+                + lessons_context
                 + do_instructions
                 + "\n\nThis is the actual tool catalog from the connected MCP server. "
                 "Use this catalog as ground truth.\n\n"
