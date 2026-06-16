@@ -4237,6 +4237,132 @@ def learn_inbox(limit: int = 20) -> str:
     return "\n".join(lines)
 
 
+def _log_inbox_drop(removed: dict) -> None:
+    """Best-effort audit line recording an inbox candidate removal."""
+    from datetime import datetime as _dt
+    log = REPO_ROOT / "learn_engine" / "memory" / "inbox-actions.log"
+    try:
+        log.parent.mkdir(parents=True, exist_ok=True)
+        ts = _dt.now().strftime("%Y-%m-%d %H:%M:%S")
+        with log.open("a", encoding="utf-8") as handle:
+            handle.write(
+                f"{ts} drop "
+                f"{removed.get('commit', '-')} "
+                f"{removed.get('pattern_name', '-')}\n"
+            )
+    except OSError:
+        pass
+
+
+@mcp.tool()
+def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = False) -> str:
+    """Remove one pending candidate from the learn inbox after promotion/skip.
+
+    Closes the manual gap in the curation flow: once a candidate surfaced by
+    learn_inbox has been promoted (record_learning) or deliberately skipped,
+    its pending row in learn_engine/memory/inbox.jsonl must be cleared. This
+    tool removes exactly one row, selected by commit SHA (prefix match) and/or
+    pattern_name. It never touches the curated lessons store.
+
+    Safety guards:
+      * Acts only when the selector matches exactly one row — zero or multiple
+        matches abort with no write (no destructive guessing).
+      * Defaults to a dry-run preview; pass apply=True to actually remove.
+      * Writes atomically (temp file + replace) and appends an audit line.
+
+    Args:
+        commit:       Source commit SHA (full or short) to match.
+        pattern_name: Candidate pattern_name to match (case-insensitive).
+        apply:        False (default) previews; True performs the removal.
+
+    Safety: Class C — local write to REPO_ROOT/learn_engine/memory/inbox.jsonl
+    (pending queue only), no curated-store write, no command execution.
+    """
+    eng = _learn_engine()
+    result = eng.drop_inbox_candidate(
+        REPO_ROOT, commit=commit, pattern_name=pattern_name, apply=apply
+    )
+    status = result.get("status")
+    if status == "no-selector":
+        return "Specify commit and/or pattern_name to identify the candidate to drop."
+    if status == "empty":
+        return "Learn inbox is empty — nothing to drop."
+    if status == "no-match":
+        return result.get("message", "No matching candidate.")
+    if status == "ambiguous":
+        lines = [result.get("message", "Selector matched multiple rows.")]
+        for cand in result.get("candidates", []):
+            lines.append(f"  - {cand.get('pattern_name', '-')} ({cand.get('commit', '-')})")
+        return "\n".join(lines)
+
+    removed = result.get("removed", {})
+    desc = (
+        f"{removed.get('pattern_name', '-')} "
+        f"[{removed.get('confidence', '-')}] "
+        f"({removed.get('commit', '-')} @ {removed.get('captured_at', '-')})"
+    )
+    if status == "preview":
+        return (
+            f"Dry run — would remove 1 candidate, {result.get('remaining')} would remain:\n"
+            f"  {desc}\n"
+            "Re-run with apply=True to remove it."
+        )
+    # status == ok
+    _log_inbox_drop(removed)
+    return (
+        f"Removed 1 candidate from the learn inbox, {result.get('remaining')} remaining:\n"
+        f"  {desc}"
+    )
+
+
+@mcp.tool()
+def learn_inbox_draft(commit: str = "", pattern_name: str = "") -> str:
+    """Preview a review-ready record_learning draft for one inbox candidate.
+
+    Standardizes the inbox-candidate -> record_learning mapping so curation has
+    less manual variation, without auto-promoting. Selects exactly one pending
+    candidate (by commit SHA prefix and/or pattern_name) and returns a draft with
+    the fields a reviewer confirms before any write: task, lesson, validation,
+    risk, repo, source, tags.
+
+    This is preview-first: it writes nothing. The curated lessons store and the
+    inbox queue are untouched, and validation is emitted as a MANUAL VALIDATION
+    REQUIRED instruction — never an auto-filled truth claim — so promotion stays
+    a human decision. To actually store, a human reviews the draft and calls
+    record_learning; to clear the candidate afterward, use learn_inbox_drop.
+
+    Args:
+        commit:       Source commit SHA (full or short prefix) to match.
+        pattern_name: Candidate pattern_name to match (case-insensitive).
+
+    Safety: Class A — read-only; reads the inbox queue only, no write, no
+    command execution. write_performed is always false.
+    """
+    eng = _learn_engine()
+    result = eng.draft_inbox_candidate(
+        REPO_ROOT, commit=commit, pattern_name=pattern_name
+    )
+    status = result.get("status")
+    if status == "no-selector":
+        return "Specify commit and/or pattern_name to identify the candidate to preview."
+    if status == "empty":
+        return "Learn inbox is empty — no candidate to preview."
+    if status == "no-match":
+        return result.get("message", "No matching candidate.")
+    if status == "ambiguous":
+        lines = [result.get("message", "Selector matched multiple rows.")]
+        for cand in result.get("candidates", []):
+            lines.append(f"  - {cand.get('pattern_name', '-')} ({cand.get('commit', '-')})")
+        return "\n".join(lines)
+
+    payload = {
+        "candidate": result.get("candidate"),
+        "draft": result.get("draft"),
+        "write_performed": result.get("write_performed", False),
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
 @mcp.tool()
 def ollama_learn_status() -> str:
     """Report optional Ollama learn provider availability.

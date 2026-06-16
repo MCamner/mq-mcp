@@ -121,6 +121,7 @@ TOOL_META: dict[str, dict] = {
 
     # Learn layer (v1.9.0 / v1.10.0)
     "record_learning":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
+    "learn_inbox_drop":            {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "list_learnings":              {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "get_learning":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "explain_learned_pattern":     {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
@@ -132,6 +133,7 @@ TOOL_META: dict[str, dict] = {
     "learning_status":             {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_status":                {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_inbox":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "learn_inbox_draft":         {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_from_review":           {"class": "C", "resolver": "resolve_repo_file",      "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "learn_from_diff":             {"class": "C", "resolver": "none",                   "write": True,  "subprocess": True,  "side_effects": ["file-write"]},
     "bootstrap_learning_memory":   {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},

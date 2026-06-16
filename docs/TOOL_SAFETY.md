@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 115 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 125 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -64,6 +64,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
 | `learn_inbox` | List pending learn candidates queued by the post-commit hook | Write, network |
+| `learn_inbox_draft` | Map one inbox candidate to a review-ready record_learning draft (task/lesson/validation/risk/repo/source/tags) | Write any store, network, execute; validation is always a MANUAL VALIDATION REQUIRED instruction, never auto-filled |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -126,6 +127,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `bootstrap_semantic_memory` | Ingest key mq-mcp docs into semantic memory | Write outside repo, commit |
 | `export_symbol_index` | Write callgraph symbol map to generated/symbols/symbol_index.json | Write outside repo, commit |
 | `record_learning` | Append a verified lesson to REPO_ROOT/learn_engine/memory/lessons.jsonl | Write outside repo, commit, execute; secrets are redacted before write |
+| `learn_inbox_drop` | Remove exactly one pending candidate from REPO_ROOT/learn_engine/memory/inbox.jsonl after promotion/skip | Touch the curated lessons store, write outside repo, commit, execute; aborts unless the selector matches exactly one row |
 | `learn_from_review` | Create a learning record from the last review findings for a file | Write outside repo, commit |
 | `learn_from_diff` | Create a learning record with current git diff as context | Write outside repo, commit |
 | `bootstrap_learning_memory` | Seed the learn layer from architecture memory ADRs | Write outside repo, commit |
@@ -278,6 +280,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `release_gate_run` | A | REPO_ROOT (release gate checks) | No | No |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
 | `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
+| `learn_inbox_drop` | C | REPO_ROOT/learn_engine/memory/inbox.jsonl | Yes | No |
 | `learn_from_review` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `learn_from_diff` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `bootstrap_learning_memory` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
@@ -292,6 +295,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_inbox` | A | REPO_ROOT/learn_engine/memory/inbox.jsonl (read) | No | No |
+| `learn_inbox_draft` | A | REPO_ROOT/learn_engine/memory/inbox.jsonl (read) | No | No |
 | `ollama_learn_status` | B | <http://localhost:11434/api/tags> (read) | No | No |
 | `ollama_learn_extract` | B | <http://localhost:11434/api/generate> (read) | No | No |
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |

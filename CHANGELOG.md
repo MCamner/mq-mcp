@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+* `learn_inbox_draft` (Class A, read-only): standardizes the inbox-candidate →
+  `record_learning` mapping. Selects exactly one pending candidate (commit SHA
+  prefix and/or `pattern_name`) and returns a review-ready draft
+  (`task`/`lesson`/`validation`/`risk`/`repo`/`source`/`tags`). Preview-first —
+  it writes neither the curated lessons store nor the inbox queue, and
+  `validation` is always emitted as a `MANUAL VALIDATION REQUIRED` instruction,
+  never an auto-filled truth claim, so promotion stays a human decision. Backed
+  by pure mappers in `learn_engine.py` (`build_record_learning_draft`,
+  `draft_inbox_candidate`) and `tests/test_learn_inbox_draft.py`.
+
 ## 2.0.0 - 2026-06-15
 
 Release Gate v2 + deterministic readiness.

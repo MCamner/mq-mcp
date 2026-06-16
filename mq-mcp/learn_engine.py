@@ -626,6 +626,286 @@ def load_learnings(repo_root: Path) -> list[dict[str, Any]]:
     return records
 
 
+def inbox_path(repo_root: Path) -> Path:
+    """Path to the pending learn-candidate queue (never the curated store)."""
+    return learning_dir(repo_root) / "inbox.jsonl"
+
+
+def load_inbox(repo_root: Path) -> list[dict[str, Any]]:
+    """Read pending candidates from inbox.jsonl, skipping malformed lines."""
+    path = inbox_path(repo_root)
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return records
+
+
+def _inbox_commit_matches(row_commit: str, query: str) -> bool:
+    """SHA prefix match in either direction (inbox stores sha[:12])."""
+    a = (row_commit or "").strip().lower()
+    b = (query or "").strip().lower()
+    if not a or not b:
+        return False
+    n = min(len(a), len(b))
+    if n < 7:  # too short to be an unambiguous SHA selector
+        return a == b
+    return a[:n] == b[:n]
+
+
+def select_inbox_candidates(
+    records: list[dict[str, Any]],
+    *,
+    commit: str = "",
+    pattern_name: str = "",
+) -> list[int]:
+    """Return indices of inbox rows matching every non-empty selector (AND).
+
+    commit matches by SHA prefix in either direction; pattern_name matches
+    case-insensitively on the exact value.
+    """
+    commit = (commit or "").strip()
+    pattern_name = (pattern_name or "").strip().lower()
+    matches: list[int] = []
+    for index, record in enumerate(records):
+        if commit and not _inbox_commit_matches(str(record.get("commit", "")), commit):
+            continue
+        if pattern_name and str(record.get("pattern_name", "")).strip().lower() != pattern_name:
+            continue
+        matches.append(index)
+    return matches
+
+
+def drop_inbox_candidate(
+    repo_root: Path,
+    *,
+    commit: str = "",
+    pattern_name: str = "",
+    apply: bool = False,
+) -> dict[str, Any]:
+    """Remove exactly one pending candidate from the inbox queue.
+
+    Never touches the curated lessons store. Refuses to act unless the
+    selectors identify exactly one row — zero or multiple matches abort with
+    no write (no destructive guessing). When apply is False, reports the
+    matched row without modifying the file. The write is atomic (temp file
+    plus replace) so a crash cannot leave a half-written queue.
+    """
+    commit = (commit or "").strip()
+    pattern_name = (pattern_name or "").strip()
+    if not commit and not pattern_name:
+        return {
+            "status": "no-selector",
+            "message": "Specify commit and/or pattern_name.",
+        }
+    path = inbox_path(repo_root)
+    if not path.exists():
+        return {"status": "empty", "message": "Inbox file does not exist."}
+    records = load_inbox(repo_root)
+    if not records:
+        return {"status": "empty", "message": "Inbox is empty."}
+    matches = select_inbox_candidates(records, commit=commit, pattern_name=pattern_name)
+    if not matches:
+        return {
+            "status": "no-match",
+            "matched": 0,
+            "message": "No pending candidate matches the given selector(s).",
+        }
+    if len(matches) > 1:
+        return {
+            "status": "ambiguous",
+            "matched": len(matches),
+            "candidates": [
+                {
+                    "commit": records[i].get("commit", ""),
+                    "pattern_name": records[i].get("pattern_name", ""),
+                }
+                for i in matches
+            ],
+            "message": "Selector matched multiple rows; refine to target exactly one.",
+        }
+    target = records[matches[0]]
+    if not apply:
+        return {
+            "status": "preview",
+            "matched": 1,
+            "removed": target,
+            "remaining": len(records) - 1,
+            "message": "Dry run — pass apply=True to remove this row.",
+        }
+    remaining = [r for i, r in enumerate(records) if i != matches[0]]
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8") as handle:
+        for record in remaining:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    tmp.replace(path)
+    return {
+        "status": "ok",
+        "matched": 1,
+        "removed": target,
+        "remaining": len(remaining),
+        "path": str(path),
+    }
+
+
+# --- Priority 2: inbox candidate -> review-ready record_learning draft --------
+#
+# These helpers turn a pending inbox candidate into a *draft* for human review.
+# They are deliberately preview-only: nothing here writes the curated lessons
+# store or the inbox queue, and validation is never auto-filled as truth — it is
+# emitted as a MANUAL VALIDATION REQUIRED instruction so the approval gate stays
+# human-anchored.
+
+_DRAFT_REPO = "mq-mcp"
+_DRAFT_SOURCE = "manual"
+_DRAFT_RISK = "low"
+
+# Normalized pattern_name -> tags. Keys are matched after lowercasing and
+# folding '_' to '-', so "learn_inbox" and "learn-inbox" hit the same row.
+_DRAFT_TAG_MAP: dict[str, list[str]] = {
+    "release-gate-v2": ["release", "gate"],
+    "learn-inbox": ["learn", "inbox", "curation"],
+    "orchestration-contract-update": ["orchestration", "contract"],
+}
+_DRAFT_FALLBACK_TAGS = ["learn"]
+
+
+def _draft_norm_pattern(pattern_name: str) -> str:
+    return str(pattern_name or "").strip().lower().replace("_", "-")
+
+
+def _draft_is_concrete(text: str) -> bool:
+    """A recommended_action is concrete enough to be a task if it is a short
+    multi-word imperative rather than a stub like 'n/a' or 'review'."""
+    cleaned = str(text or "").strip()
+    return len(cleaned) >= 12 and " " in cleaned
+
+
+def _draft_task(candidate: dict[str, Any]) -> str:
+    action = str(candidate.get("recommended_action") or "").strip()
+    if _draft_is_concrete(action):
+        return action
+    name = str(candidate.get("pattern_name") or "").strip()
+    if name:
+        readable = name.replace("_", " ").replace("-", " ").strip()
+        return f"Apply the '{readable}' pattern in day-to-day work"
+    return "Review and apply the captured pattern"
+
+
+def _draft_normalize_lesson(summary: str) -> str:
+    """Whitespace-normalize the summary into a lesson without reinterpreting it.
+
+    Deliberately minimal — collapsing whitespace is the only transform. Keeping
+    the lesson faithful to the candidate avoids subtle drift or hallucination
+    creeping in during the preview step; the reviewer generalizes by hand if
+    needed. Idempotent.
+    """
+    return " ".join(str(summary or "").split()).strip()
+
+
+def _draft_lesson(candidate: dict[str, Any]) -> str:
+    lesson = _draft_normalize_lesson(str(candidate.get("summary") or ""))
+    if lesson:
+        return lesson
+    name = str(candidate.get("pattern_name") or "").strip() or "this pattern"
+    return f"General lesson pending review for '{name}'."
+
+
+def _draft_validation(candidate: dict[str, Any]) -> str:
+    """Always a manual-gate instruction — never an auto-filled truth claim.
+
+    When evidence exists it is surfaced for the reviewer to check against, but
+    the MANUAL VALIDATION REQUIRED marker is unconditional so promotion stays a
+    human decision.
+    """
+    evidence = candidate.get("evidence") or []
+    items = [str(e).strip() for e in evidence if isinstance(e, (str, int, float)) and str(e).strip()]
+    if items:
+        return "MANUAL VALIDATION REQUIRED: verify against evidence — " + "; ".join(items)
+    return "MANUAL VALIDATION REQUIRED: confirm evidence before promotion."
+
+
+def _draft_tags(candidate: dict[str, Any]) -> list[str]:
+    key = _draft_norm_pattern(str(candidate.get("pattern_name") or ""))
+    return list(_DRAFT_TAG_MAP.get(key, _DRAFT_FALLBACK_TAGS))
+
+
+def build_record_learning_draft(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Map one inbox candidate to a review-ready record_learning draft.
+
+    Pure and preview-only: writes nothing (no curated store, no inbox), makes no
+    network or command calls, and never auto-fills validation as truth. The
+    returned shape is stable for the preview tool and downstream tests:
+
+        {"candidate": <pattern_name>, "draft": {...}, "write_performed": False}
+
+    The draft carries the record_learning fields a reviewer will confirm before
+    any write: task, lesson, validation, risk, repo, source, tags.
+    """
+    if not isinstance(candidate, dict):
+        raise ValueError("candidate must be a JSON object")
+
+    pattern_name = str(candidate.get("pattern_name") or "").strip() or "unknown"
+    draft = {
+        "task": _draft_task(candidate),
+        "lesson": _draft_lesson(candidate),
+        "validation": _draft_validation(candidate),
+        "risk": _DRAFT_RISK,
+        "repo": _DRAFT_REPO,
+        "source": _DRAFT_SOURCE,
+        "tags": _draft_tags(candidate),
+    }
+    return {
+        "candidate": pattern_name,
+        "draft": redact_secrets(draft),
+        "write_performed": False,
+    }
+
+
+def draft_inbox_candidate(
+    repo_root: Path,
+    *,
+    commit: str = "",
+    pattern_name: str = "",
+) -> dict[str, Any]:
+    """Select exactly one inbox candidate and return its record_learning draft.
+
+    Mirrors drop_inbox_candidate's single-match safety: zero or multiple matches
+    refuse without acting. Reads the inbox only — never writes any store.
+    """
+    commit = (commit or "").strip()
+    pattern_name = (pattern_name or "").strip()
+    if not commit and not pattern_name:
+        return {"status": "no-selector", "message": "Specify commit and/or pattern_name."}
+    records = load_inbox(repo_root)
+    if not records:
+        return {"status": "empty", "message": "Inbox is empty."}
+    matches = select_inbox_candidates(records, commit=commit, pattern_name=pattern_name)
+    if not matches:
+        return {"status": "no-match", "matched": 0, "message": "No pending candidate matches."}
+    if len(matches) > 1:
+        return {
+            "status": "ambiguous",
+            "matched": len(matches),
+            "candidates": [
+                {
+                    "commit": records[i].get("commit", ""),
+                    "pattern_name": records[i].get("pattern_name", ""),
+                }
+                for i in matches
+            ],
+            "message": "Selector matched multiple rows; refine to target exactly one.",
+        }
+    preview = build_record_learning_draft(records[matches[0]])
+    return {"status": "ok", **preview}
+
+
 def hygiene_report(repo_root: Path) -> dict[str, Any]:
     """Return read-only hygiene metrics for the local learn store."""
     records = load_learnings(repo_root)
