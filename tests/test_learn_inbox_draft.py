@@ -135,7 +135,7 @@ def test_non_dict_candidate_rejected():
         engine.build_record_learning_draft(["not", "a", "dict"])
 
 
-# --- preview_inbox_candidate: selection + no-write guarantee -------------------
+# --- draft_inbox_candidate: selection + no-write guarantee -------------------
 
 
 def _rows():
@@ -153,7 +153,7 @@ def _rows():
 def test_preview_selects_one_and_returns_draft(tmp_path):
     engine = _load_engine()
     _seed_inbox(engine, tmp_path, _rows())
-    result = engine.preview_inbox_candidate(tmp_path, pattern_name="release-gate-v2")
+    result = engine.draft_inbox_candidate(tmp_path, pattern_name="release-gate-v2")
     assert result["status"] == "ok"
     assert result["candidate"] == "release-gate-v2"
     assert result["write_performed"] is False
@@ -168,7 +168,7 @@ def test_preview_does_not_write_inbox_or_lessons(tmp_path):
     lessons.write_text('{"id":"keep"}\n', encoding="utf-8")
     inbox_before = inbox.read_text()
 
-    engine.preview_inbox_candidate(tmp_path, commit="abc123d")
+    engine.draft_inbox_candidate(tmp_path, commit="abc123d")
 
     assert inbox.read_text() == inbox_before
     assert lessons.read_text() == '{"id":"keep"}\n'
@@ -177,13 +177,13 @@ def test_preview_does_not_write_inbox_or_lessons(tmp_path):
 def test_preview_no_selector_aborts(tmp_path):
     engine = _load_engine()
     _seed_inbox(engine, tmp_path, _rows())
-    assert engine.preview_inbox_candidate(tmp_path)["status"] == "no-selector"
+    assert engine.draft_inbox_candidate(tmp_path)["status"] == "no-selector"
 
 
 def test_preview_no_match(tmp_path):
     engine = _load_engine()
     _seed_inbox(engine, tmp_path, _rows())
-    assert engine.preview_inbox_candidate(tmp_path, pattern_name="nope")["status"] == "no-match"
+    assert engine.draft_inbox_candidate(tmp_path, pattern_name="nope")["status"] == "no-match"
 
 
 def test_preview_ambiguous_refuses(tmp_path):
@@ -192,11 +192,11 @@ def test_preview_ambiguous_refuses(tmp_path):
     rows.append({"status": "pending", "commit": "abc123def456",
                  "pattern_name": "dup", "summary": "y", "confidence": "low"})
     _seed_inbox(engine, tmp_path, rows)
-    result = engine.preview_inbox_candidate(tmp_path, commit="abc123def456")
+    result = engine.draft_inbox_candidate(tmp_path, commit="abc123def456")
     assert result["status"] == "ambiguous"
     assert result["matched"] == 2
 
 
 def test_preview_empty_inbox(tmp_path):
     engine = _load_engine()
-    assert engine.preview_inbox_candidate(tmp_path, pattern_name="x")["status"] == "empty"
+    assert engine.draft_inbox_candidate(tmp_path, pattern_name="x")["status"] == "empty"

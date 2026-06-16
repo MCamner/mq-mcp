@@ -30,7 +30,7 @@ auto-filling it as truth is a failure mode, not a shortcut.
 ## Flow
 
 1. **List** — `learn_inbox` shows pending candidates (reads the queue only).
-2. **Preview** — `learn_inbox_preview` (select by `commit` prefix and/or
+2. **Preview** — `learn_inbox_draft` (select by `commit` prefix and/or
    `pattern_name`; must match exactly one) returns a draft with
    `task` / `lesson` / `validation` / `risk` / `repo` / `source` / `tags`.
    Writes nothing.
@@ -50,11 +50,11 @@ auto-filling it as truth is a failure mode, not a shortcut.
 
 ## Core Files
 
-* `mq-mcp/learn_engine.py` — `build_record_learning_draft`, `preview_inbox_candidate`, `drop_inbox_candidate`
-* `mq-mcp/server.py` — `learn_inbox`, `learn_inbox_preview`, `learn_inbox_drop` tools
+* `mq-mcp/learn_engine.py` — `build_record_learning_draft`, `draft_inbox_candidate`, `drop_inbox_candidate`
+* `mq-mcp/server.py` — `learn_inbox`, `learn_inbox_draft`, `learn_inbox_drop` tools
 * `learn_engine/memory/inbox.jsonl` — pending queue
 * `learn_engine/memory/lessons.jsonl` — curated store
-* `tests/test_learn_inbox_preview.py`
+* `tests/test_learn_inbox_draft.py`
 * `tests/test_learn_inbox_drop.py`
 * `RUNBOOK.md` — "Learn inbox curation (SOP)" section
 

@@ -455,6 +455,16 @@
       "examples": []
     },
     {
+      "name": "learn_inbox_draft",
+      "class": "A",
+      "description": "Preview a review-ready record_learning draft for one inbox candidate.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
       "name": "learn_inbox_drop",
       "class": "C",
       "description": "Remove one pending candidate from the learn inbox after promotion/skip.",
@@ -464,16 +474,6 @@
       "side_effects": [
         "file-write"
       ],
-      "examples": []
-    },
-    {
-      "name": "learn_inbox_preview",
-      "class": "A",
-      "description": "Preview a review-ready record_learning draft for one inbox candidate.",
-      "resolver": "none",
-      "write": false,
-      "subprocess": false,
-      "side_effects": [],
       "examples": []
     },
     {

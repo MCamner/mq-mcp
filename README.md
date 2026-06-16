@@ -331,7 +331,7 @@ The local MCP server exposes 125 tools across five safety classes. See [`docs/TO
 * `learn_status` — mq-agent-compatible alias for `learning_status` (Class A)
 * `learn_inbox` — lists pending learn candidates auto-extracted from commits by the post-commit hook, awaiting review (Class A)
 * `learn_inbox_drop` — removes exactly one pending candidate from the inbox after promotion/skip; previews by default, `apply=True` to remove; never touches the curated store (Class C)
-* `learn_inbox_preview` — maps one inbox candidate to a review-ready `record_learning` draft (task/lesson/validation/risk/repo/source/tags); preview-only, writes nothing, validation is always a MANUAL VALIDATION REQUIRED instruction so promotion stays a human decision (Class A)
+* `learn_inbox_draft` — maps one inbox candidate to a review-ready `record_learning` draft (task/lesson/validation/risk/repo/source/tags); preview-only, writes nothing, validation is always a MANUAL VALIDATION REQUIRED instruction so promotion stays a human decision (Class A)
 * `ollama_learn_status` — reports whether the local Ollama server is running and the mq-learn model is installed; read-only (Class B)
 * `ollama_learn_extract` — dry-run extraction of a learn pattern from review findings via local Ollama; no storage, preview only (Class B)
 * `learn_extract_from_last_review` — loads stored review findings for a file, runs dry-run Ollama extraction, returns a preview candidate; no storage (Class B)

@@ -44,7 +44,7 @@ is written until a human confirms the draft and calls `record_learning`.
 
 1. **List** pending candidates — `learn_inbox`. Reads
    `learn_engine/memory/inbox.jsonl` only.
-2. **Preview** one candidate — `learn_inbox_preview` (select by `commit` SHA
+2. **Preview** one candidate — `learn_inbox_draft` (select by `commit` SHA
    prefix and/or `pattern_name`; must match exactly one). Returns a review-ready
    draft (`task`/`lesson`/`validation`/`risk`/`repo`/`source`/`tags`). Writes
    nothing. `validation` is always a `MANUAL VALIDATION REQUIRED` instruction —

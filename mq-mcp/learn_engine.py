@@ -875,7 +875,7 @@ def build_record_learning_draft(candidate: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def preview_inbox_candidate(
+def draft_inbox_candidate(
     repo_root: Path,
     *,
     commit: str = "",

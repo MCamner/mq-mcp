@@ -4316,7 +4316,7 @@ def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = Fal
 
 
 @mcp.tool()
-def learn_inbox_preview(commit: str = "", pattern_name: str = "") -> str:
+def learn_inbox_draft(commit: str = "", pattern_name: str = "") -> str:
     """Preview a review-ready record_learning draft for one inbox candidate.
 
     Standardizes the inbox-candidate -> record_learning mapping so curation has
@@ -4339,7 +4339,7 @@ def learn_inbox_preview(commit: str = "", pattern_name: str = "") -> str:
     command execution. write_performed is always false.
     """
     eng = _learn_engine()
-    result = eng.preview_inbox_candidate(
+    result = eng.draft_inbox_candidate(
         REPO_ROOT, commit=commit, pattern_name=pattern_name
     )
     status = result.get("status")
