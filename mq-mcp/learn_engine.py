@@ -754,6 +754,165 @@ def drop_inbox_candidate(
     }
 
 
+# --- Priority 2: inbox candidate -> review-ready record_learning draft --------
+#
+# These helpers turn a pending inbox candidate into a *draft* for human review.
+# They are deliberately preview-only: nothing here writes the curated lessons
+# store or the inbox queue, and validation is never auto-filled as truth — it is
+# emitted as a MANUAL VALIDATION REQUIRED instruction so the approval gate stays
+# human-anchored.
+
+_DRAFT_REPO = "mq-mcp"
+_DRAFT_SOURCE = "manual"
+_DRAFT_RISK = "low"
+
+# Normalized pattern_name -> tags. Keys are matched after lowercasing and
+# folding '_' to '-', so "learn_inbox" and "learn-inbox" hit the same row.
+_DRAFT_TAG_MAP: dict[str, list[str]] = {
+    "release-gate-v2": ["release", "gate"],
+    "learn-inbox": ["learn", "inbox", "curation"],
+    "orchestration-contract-update": ["orchestration", "contract"],
+}
+_DRAFT_FALLBACK_TAGS = ["learn"]
+
+_COMMIT_REF_RE = re.compile(r"(?i)\b(?:in |for |from )?commit\s+[0-9a-f]{7,40}\b[:,]?\s*")
+_BARE_SHA_RE = re.compile(r"\b[0-9a-f]{7,40}\b")
+
+
+def _draft_norm_pattern(pattern_name: str) -> str:
+    return str(pattern_name or "").strip().lower().replace("_", "-")
+
+
+def _draft_is_concrete(text: str) -> bool:
+    """A recommended_action is concrete enough to be a task if it is a short
+    multi-word imperative rather than a stub like 'n/a' or 'review'."""
+    cleaned = str(text or "").strip()
+    return len(cleaned) >= 12 and " " in cleaned
+
+
+def _draft_task(candidate: dict[str, Any]) -> str:
+    action = str(candidate.get("recommended_action") or "").strip()
+    if _draft_is_concrete(action):
+        return action
+    name = str(candidate.get("pattern_name") or "").strip()
+    if name:
+        readable = name.replace("_", " ").replace("-", " ").strip()
+        return f"Apply the '{readable}' pattern in day-to-day work"
+    return "Review and apply the captured pattern"
+
+
+def _draft_generalize_lesson(summary: str) -> str:
+    """Gently lift a summary toward a general lesson without inventing meaning.
+
+    Strips local commit references and bare SHAs (the most common source of
+    over-local phrasing) and normalizes whitespace/casing. Idempotent.
+    """
+    text = str(summary or "").strip()
+    text = _COMMIT_REF_RE.sub("", text)
+    text = _BARE_SHA_RE.sub("a recent change", text)
+    text = re.sub(r"\s+", " ", text).strip(" :,-")
+    if text:
+        text = text[0].upper() + text[1:]
+    return text
+
+
+def _draft_lesson(candidate: dict[str, Any]) -> str:
+    lesson = _draft_generalize_lesson(str(candidate.get("summary") or ""))
+    if lesson:
+        return lesson
+    name = str(candidate.get("pattern_name") or "").strip() or "this pattern"
+    return f"General lesson pending review for '{name}'."
+
+
+def _draft_validation(candidate: dict[str, Any]) -> str:
+    """Always a manual-gate instruction — never an auto-filled truth claim.
+
+    When evidence exists it is surfaced for the reviewer to check against, but
+    the MANUAL VALIDATION REQUIRED marker is unconditional so promotion stays a
+    human decision.
+    """
+    evidence = candidate.get("evidence") or []
+    items = [str(e).strip() for e in evidence if isinstance(e, (str, int, float)) and str(e).strip()]
+    if items:
+        return "MANUAL VALIDATION REQUIRED: verify against evidence — " + "; ".join(items)
+    return "MANUAL VALIDATION REQUIRED: confirm evidence before promotion."
+
+
+def _draft_tags(candidate: dict[str, Any]) -> list[str]:
+    key = _draft_norm_pattern(str(candidate.get("pattern_name") or ""))
+    return list(_DRAFT_TAG_MAP.get(key, _DRAFT_FALLBACK_TAGS))
+
+
+def build_record_learning_draft(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Map one inbox candidate to a review-ready record_learning draft.
+
+    Pure and preview-only: writes nothing (no curated store, no inbox), makes no
+    network or command calls, and never auto-fills validation as truth. The
+    returned shape is stable for the preview tool and downstream tests:
+
+        {"candidate": <pattern_name>, "draft": {...}, "write_performed": False}
+
+    The draft carries the record_learning fields a reviewer will confirm before
+    any write: task, lesson, validation, risk, repo, source, tags.
+    """
+    if not isinstance(candidate, dict):
+        raise ValueError("candidate must be a JSON object")
+
+    pattern_name = str(candidate.get("pattern_name") or "").strip() or "unknown"
+    draft = {
+        "task": _draft_task(candidate),
+        "lesson": _draft_lesson(candidate),
+        "validation": _draft_validation(candidate),
+        "risk": _DRAFT_RISK,
+        "repo": _DRAFT_REPO,
+        "source": _DRAFT_SOURCE,
+        "tags": _draft_tags(candidate),
+    }
+    return {
+        "candidate": pattern_name,
+        "draft": redact_secrets(draft),
+        "write_performed": False,
+    }
+
+
+def preview_inbox_candidate(
+    repo_root: Path,
+    *,
+    commit: str = "",
+    pattern_name: str = "",
+) -> dict[str, Any]:
+    """Select exactly one inbox candidate and return its record_learning draft.
+
+    Mirrors drop_inbox_candidate's single-match safety: zero or multiple matches
+    refuse without acting. Reads the inbox only — never writes any store.
+    """
+    commit = (commit or "").strip()
+    pattern_name = (pattern_name or "").strip()
+    if not commit and not pattern_name:
+        return {"status": "no-selector", "message": "Specify commit and/or pattern_name."}
+    records = load_inbox(repo_root)
+    if not records:
+        return {"status": "empty", "message": "Inbox is empty."}
+    matches = select_inbox_candidates(records, commit=commit, pattern_name=pattern_name)
+    if not matches:
+        return {"status": "no-match", "matched": 0, "message": "No pending candidate matches."}
+    if len(matches) > 1:
+        return {
+            "status": "ambiguous",
+            "matched": len(matches),
+            "candidates": [
+                {
+                    "commit": records[i].get("commit", ""),
+                    "pattern_name": records[i].get("pattern_name", ""),
+                }
+                for i in matches
+            ],
+            "message": "Selector matched multiple rows; refine to target exactly one.",
+        }
+    preview = build_record_learning_draft(records[matches[0]])
+    return {"status": "ok", **preview}
+
+
 def hygiene_report(repo_root: Path) -> dict[str, Any]:
     """Return read-only hygiene metrics for the local learn store."""
     records = load_learnings(repo_root)

@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 124 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 125 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -64,6 +64,7 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
 | `learn_inbox` | List pending learn candidates queued by the post-commit hook | Write, network |
+| `learn_inbox_preview` | Map one inbox candidate to a review-ready record_learning draft (task/lesson/validation/risk/repo/source/tags) | Write any store, network, execute; validation is always a MANUAL VALIDATION REQUIRED instruction, never auto-filled |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -294,6 +295,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `learning_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_status` | A | REPO_ROOT/learn_engine/memory/lessons.jsonl (read) | No | No |
 | `learn_inbox` | A | REPO_ROOT/learn_engine/memory/inbox.jsonl (read) | No | No |
+| `learn_inbox_preview` | A | REPO_ROOT/learn_engine/memory/inbox.jsonl (read) | No | No |
 | `ollama_learn_status` | B | <http://localhost:11434/api/tags> (read) | No | No |
 | `ollama_learn_extract` | B | <http://localhost:11434/api/generate> (read) | No | No |
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |

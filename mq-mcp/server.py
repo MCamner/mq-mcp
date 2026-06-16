@@ -4316,6 +4316,54 @@ def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = Fal
 
 
 @mcp.tool()
+def learn_inbox_preview(commit: str = "", pattern_name: str = "") -> str:
+    """Preview a review-ready record_learning draft for one inbox candidate.
+
+    Standardizes the inbox-candidate -> record_learning mapping so curation has
+    less manual variation, without auto-promoting. Selects exactly one pending
+    candidate (by commit SHA prefix and/or pattern_name) and returns a draft with
+    the fields a reviewer confirms before any write: task, lesson, validation,
+    risk, repo, source, tags.
+
+    This is preview-first: it writes nothing. The curated lessons store and the
+    inbox queue are untouched, and validation is emitted as a MANUAL VALIDATION
+    REQUIRED instruction — never an auto-filled truth claim — so promotion stays
+    a human decision. To actually store, a human reviews the draft and calls
+    record_learning; to clear the candidate afterward, use learn_inbox_drop.
+
+    Args:
+        commit:       Source commit SHA (full or short prefix) to match.
+        pattern_name: Candidate pattern_name to match (case-insensitive).
+
+    Safety: Class A — read-only; reads the inbox queue only, no write, no
+    command execution. write_performed is always false.
+    """
+    eng = _learn_engine()
+    result = eng.preview_inbox_candidate(
+        REPO_ROOT, commit=commit, pattern_name=pattern_name
+    )
+    status = result.get("status")
+    if status == "no-selector":
+        return "Specify commit and/or pattern_name to identify the candidate to preview."
+    if status == "empty":
+        return "Learn inbox is empty — no candidate to preview."
+    if status == "no-match":
+        return result.get("message", "No matching candidate.")
+    if status == "ambiguous":
+        lines = [result.get("message", "Selector matched multiple rows.")]
+        for cand in result.get("candidates", []):
+            lines.append(f"  - {cand.get('pattern_name', '-')} ({cand.get('commit', '-')})")
+        return "\n".join(lines)
+
+    payload = {
+        "candidate": result.get("candidate"),
+        "draft": result.get("draft"),
+        "write_performed": result.get("write_performed", False),
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
 def ollama_learn_status() -> str:
     """Report optional Ollama learn provider availability.
 

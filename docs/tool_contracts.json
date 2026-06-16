@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.0.0",
-  "tool_count": 124,
+  "tool_count": 125,
   "tools": [
     {
       "name": "analyze_csv",
@@ -464,6 +464,16 @@
       "side_effects": [
         "file-write"
       ],
+      "examples": []
+    },
+    {
+      "name": "learn_inbox_preview",
+      "class": "A",
+      "description": "Preview a review-ready record_learning draft for one inbox candidate.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {
