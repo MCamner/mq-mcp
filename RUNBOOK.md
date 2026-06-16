@@ -41,11 +41,11 @@ uv --directory mq-mcp run pytest ../tests -v
 
 Review:
 
-- git status
-- VERSION
-- CHANGELOG.md
-- README.md
-- validation result
-- tests
-- docs
-- secrets
+* git status
+* VERSION
+* CHANGELOG.md
+* README.md
+* validation result
+* tests
+* docs
+* secrets
