@@ -3,14 +3,28 @@
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
 [![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.0.0)
 
-Local MCP server experiments and tooling for macOS.
+Deterministic MCP runtime for safe tool execution, policy gates, tool
+contracts, memory workflows, and local-first AI governance.
 
-`mq-mcp` is a small local-first lab for building, testing, and documenting MCP-related workflows on macOS. The goal is to make local MCP setup easier to understand, repeat, validate, and publish safely.
+`mq-mcp` is a local-first runtime for building, validating, and governing
+MCP-based workflows on macOS. The goal is to make tool execution explicit,
+bounded, reviewable, and safe to repeat across local AI and operator flows.
 
 In the MQ stack, `mq-mcp` is the execution runtime: it exposes bounded tools,
 safety metadata, review, memory, and bridge calls. Planning, routing, dry-runs,
 and approval UX belong in `mq-agent`; repo health scoring belongs in
 `repo-signal`; operator reports belong in `mq-hal`.
+
+## Portfolio snapshot
+
+* Runtime governance: safety classes, approval boundaries, and explicit tool
+  contracts
+* Local-first AI execution: MCP tools, bridge calls, review flows, and bounded
+  memory writes
+* Deterministic release readiness: contract drift, unsafe-command, lint/type,
+  and perception-review gates
+* Ecosystem role: execution runtime under `mq-agent`, `repo-signal`, and
+  `mq-hal`
 
 ## Status
 
