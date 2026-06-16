@@ -775,9 +775,6 @@ _DRAFT_TAG_MAP: dict[str, list[str]] = {
 }
 _DRAFT_FALLBACK_TAGS = ["learn"]
 
-_COMMIT_REF_RE = re.compile(r"(?i)\b(?:in |for |from )?commit\s+[0-9a-f]{7,40}\b[:,]?\s*")
-_BARE_SHA_RE = re.compile(r"\b[0-9a-f]{7,40}\b")
-
 
 def _draft_norm_pattern(pattern_name: str) -> str:
     return str(pattern_name or "").strip().lower().replace("_", "-")
@@ -801,23 +798,19 @@ def _draft_task(candidate: dict[str, Any]) -> str:
     return "Review and apply the captured pattern"
 
 
-def _draft_generalize_lesson(summary: str) -> str:
-    """Gently lift a summary toward a general lesson without inventing meaning.
+def _draft_normalize_lesson(summary: str) -> str:
+    """Whitespace-normalize the summary into a lesson without reinterpreting it.
 
-    Strips local commit references and bare SHAs (the most common source of
-    over-local phrasing) and normalizes whitespace/casing. Idempotent.
+    Deliberately minimal — collapsing whitespace is the only transform. Keeping
+    the lesson faithful to the candidate avoids subtle drift or hallucination
+    creeping in during the preview step; the reviewer generalizes by hand if
+    needed. Idempotent.
     """
-    text = str(summary or "").strip()
-    text = _COMMIT_REF_RE.sub("", text)
-    text = _BARE_SHA_RE.sub("a recent change", text)
-    text = re.sub(r"\s+", " ", text).strip(" :,-")
-    if text:
-        text = text[0].upper() + text[1:]
-    return text
+    return " ".join(str(summary or "").split()).strip()
 
 
 def _draft_lesson(candidate: dict[str, Any]) -> str:
-    lesson = _draft_generalize_lesson(str(candidate.get("summary") or ""))
+    lesson = _draft_normalize_lesson(str(candidate.get("summary") or ""))
     if lesson:
         return lesson
     name = str(candidate.get("pattern_name") or "").strip() or "this pattern"

@@ -97,28 +97,26 @@ def test_unknown_pattern_gets_fallback_tags():
     assert draft["tags"] == ["learn"]
 
 
-def test_local_summary_is_generalized_gently():
+def test_summary_is_preserved_minimally():
     engine = _load_engine()
     candidate = {
         "pattern_name": "some_pattern",
-        "summary": "In commit ef24cc0a1b2c the post-commit hook queued candidates.",
+        "summary": "In commit   ef24cc0a1b2c the post-commit hook\nqueued candidates.",
         "evidence": ["scripts/post_commit_learn.py"],
     }
     draft = engine.build_record_learning_draft(candidate)["draft"]
     lesson = draft["lesson"]
-    # The local "commit <sha>" reference is lifted out, meaning is preserved.
-    # ("post-commit hook" is a real term and must survive.)
-    assert "ef24cc0" not in lesson
-    assert "commit ef24cc0" not in lesson.lower()
-    assert lesson.startswith("The post-commit hook queued candidates")
-    assert lesson[0].isupper()
+    # Minimal normalization: only whitespace is collapsed. The content — SHA
+    # included — is preserved verbatim; the reviewer generalizes by hand.
+    assert lesson == "In commit ef24cc0a1b2c the post-commit hook queued candidates."
 
 
-def test_generalize_is_idempotent():
+def test_normalize_is_idempotent():
     engine = _load_engine()
-    once = engine._draft_generalize_lesson("In commit abc1234 a thing happened.")
-    twice = engine._draft_generalize_lesson(once)
+    once = engine._draft_normalize_lesson("In commit  abc1234   a thing happened.")
+    twice = engine._draft_normalize_lesson(once)
     assert once == twice
+    assert once == "In commit abc1234 a thing happened."
 
 
 def test_missing_summary_yields_pending_lesson():
