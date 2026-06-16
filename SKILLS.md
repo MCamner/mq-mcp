@@ -17,6 +17,7 @@ This file is generated from SKILL.md frontmatter by
 | ----- | ----------- |
 | [brain-maintainer](skills/brain-maintainer/SKILL.md) | Use when changing the mqobsidian second brain, `brain_*` MCP tools, the Obsidian writer, vault schemas, or the knowledge contract. |
 | [bridget-bridge-maintainer](skills/bridget-bridge-maintainer/SKILL.md) | Use when changing Bridget, bridge.py, OpenAI tool calling, MCP tool discovery, search modes, image behavior, or voice behavior. |
+| [curate-learn-inbox](skills/curate-learn-inbox/SKILL.md) | Use when reviewing, drafting, promoting, or clearing pending learn candidates in the inbox queue — the preview-first inbox -> record_learning curation flow. |
 | [docs-maintainer](skills/docs-maintainer/SKILL.md) | Use when keeping mq-mcp README, GitHub Pages docs, installation guides, demo docs, safety docs, tool docs, changelog, roadmap, or semantic docs consistent with code. |
 | [integration-stack-maintainer](skills/integration-stack-maintainer/SKILL.md) | Use when working on mq-mcp integrations with mq-hal, repo-signal, MQ_MCP_LOCAL_REPOS, semantic repo analysis, global docs, or cross-repo workflows. |
 | [learn-engine-maintainer](skills/learn-engine-maintainer/SKILL.md) | Use when changing the mq-mcp learning engine, `learn_*` or `ollama_learn_*` tools, learning schemas, lesson storage, the Ollama provider, or learning contract docs. |
