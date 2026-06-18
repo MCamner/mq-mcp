@@ -39,7 +39,6 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `get_last_review` | Return last review findings for a repo file from local memory | Write, access outside repo |
 | `detect_architecture_drift` | Detect drift between declared docs and actual runtime state | Write, access outside repo |
 | `review_diff` | Review git-changed files using review_file | Write, modify code; calls git + OpenAI API |
-| `review_repo` | Review least-recently-reviewed repo files using review_file | Write, modify code; calls OpenAI API |
 | `review_runtime_contract` | Verify RUNTIME_CONTRACT.md claims against actual server state | Write, modify server |
 | `validate_orchestration_contract` | Verify tool set satisfies orchestration contract (profiles, classes, error prefixes) | Write, commit, network |
 | `list_architecture_docs` | List docs/architecture/ files with freshness status relative to server.py | Write, access outside repo |
@@ -78,6 +77,7 @@ These tools cannot write files and cannot run processes. They can read files out
 | --- | --- | --- |
 | `get_system_resources` | Read CPU, memory, disk stats via psutil | Write, access files |
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
+| `review_repo` | Review least-recently-reviewed Python files in the mq-mcp repo or, with repo_path, an allowed external repo | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_inspect` | Run repo-signal inspect --json on an allowed repo path | Write, access outside allowed roots |
@@ -259,7 +259,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `get_last_review` | A | REPO_ROOT (fixed path) | No | No |
 | `detect_architecture_drift` | A | REPO_ROOT (AST + file reads) | No | No |
 | `review_diff` | A | resolve_repo_file (per file) | No | No (git + OpenAI API) |
-| `review_repo` | A | REPO_ROOT walk + resolve_repo_file | No | No (OpenAI API) |
+| `review_repo` | B | review_root walk + resolve_repo_file (repo_path via resolve_allowed_local_file) | No | No (OpenAI API) |
 | `review_runtime_contract` | A | REPO_ROOT (reads contract + server.py) | No | No (OpenAI API) |
 | `validate_orchestration_contract` | A | REPO_ROOT (reads contract, profiles, server.py) | No | No |
 | `list_architecture_docs` | A | REPO_ROOT/docs/architecture/ | No | No |
