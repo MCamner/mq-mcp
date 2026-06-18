@@ -3738,11 +3738,11 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
         try:
             root = resolve_allowed_local_file(repo_path)
         except ValueError as exc:
-            return f"review_repo blocked: {exc}"
+            return f"review_repo failed: {exc}"
         if not root.exists():
-            return f"review_repo: repo_path not found: {repo_path}"
+            return f"review_repo failed: repo_path not found: {repo_path}"
         if not root.is_dir():
-            return f"review_repo: repo_path is not a directory: {repo_path}"
+            return f"review_repo failed: repo_path is not a directory: {repo_path}"
     else:
         root = REPO_ROOT.resolve()
 
@@ -3782,7 +3782,10 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
     finally:
         _REVIEW_ROOT.reset(token)
 
-    header = f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}  repo={root.name}"
+    header = (
+        f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}  "
+        f"repo={root.name}  review_root={root}"
+    )
     return header + "\n\n" + "\n\n".join(results)
 
 

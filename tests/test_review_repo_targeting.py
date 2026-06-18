@@ -60,6 +60,8 @@ def test_external_repo_reviewed(echo_review_file, monkeypatch, tmp_path):
     monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
     out = review_repo(repo_path=str(target), max_files=5)
     assert "repo=repo-signal" in out
+    # Output carries the full review root so downstream can verify targeting.
+    assert f"review_root={target.resolve()}" in out
     assert echo_review_file
     for p in echo_review_file:
         assert str(p).startswith(str(target.resolve()))
@@ -71,6 +73,7 @@ def test_missing_path_fails(echo_review_file, monkeypatch, tmp_path):
     monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
     missing = tmp_path / "does-not-exist"
     out = review_repo(repo_path=str(missing))
+    assert out.startswith("review_repo failed:")
     assert "not found" in out
     assert echo_review_file == []
 
@@ -81,6 +84,7 @@ def test_file_path_fails(echo_review_file, monkeypatch, tmp_path):
     f = tmp_path / "thing.py"
     f.write_text("x = 1\n", encoding="utf-8")
     out = review_repo(repo_path=str(f))
+    assert out.startswith("review_repo failed:")
     assert "not a directory" in out
     assert echo_review_file == []
 
@@ -91,7 +95,8 @@ def test_outside_allowlist_fails(echo_review_file, monkeypatch, tmp_path):
     monkeypatch.delenv("MQ_MCP_LOCAL_REPOS", raising=False)
     target = _make_repo(tmp_path, "secret-repo", ["a.py"])
     out = review_repo(repo_path=str(target))
-    assert "blocked" in out.lower()
+    assert out.startswith("review_repo failed:")
+    assert "outside allowed roots" in out.lower() or "blocked" in out.lower()
     assert echo_review_file == []
 
 
