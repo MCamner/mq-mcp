@@ -1,3 +1,4 @@
+import contextvars
 import json
 import logging
 import random
@@ -38,6 +39,15 @@ APP_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = APP_ROOT.parent
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
+
+# Active review root override. Defaults to None (→ REPO_ROOT, the mq-mcp repo
+# itself). review_repo sets this for the duration of an external-repo review so
+# that resolve_repo_file resolves and validates file paths against the target
+# repo instead of mq-mcp. Set per-call via a ContextVar token so concurrent or
+# nested calls cannot leak each other's root.
+_REVIEW_ROOT: contextvars.ContextVar[Path | None] = contextvars.ContextVar(
+    "mq_mcp_review_root", default=None
+)
 _CONTRACTS_PATH = REPO_ROOT / "docs" / "tool_contracts.json"
 _STARTED_AT = time.time()
 
@@ -250,11 +260,17 @@ async def call_http_tool(request: Request) -> JSONResponse:
     return JSONResponse(jsonable(result))
 
 def resolve_repo_file(relative_path: str) -> Path:
-    """Resolve a path safely inside the repository root."""
-    target = (REPO_ROOT / relative_path).resolve()
+    """Resolve a path safely inside the active review root.
+
+    The active root is REPO_ROOT (the mq-mcp repo) unless review_repo has set a
+    validated external target via the _REVIEW_ROOT ContextVar, in which case
+    paths resolve against and are confined to that target repo.
+    """
+    base = (_REVIEW_ROOT.get() or REPO_ROOT).resolve()
+    target = (base / relative_path).resolve()
 
     try:
-        target.relative_to(REPO_ROOT.resolve())
+        target.relative_to(base)
     except ValueError:
         raise ValueError(f"Blocked path outside repo: {relative_path}")
 
@@ -3694,32 +3710,53 @@ def bootstrap_semantic_memory() -> str:
 
 
 @mcp.tool()
-def review_repo(mode: str = "comment", max_files: int = 5) -> str:
-    """Review the least-recently-reviewed Python files in the repo.
+def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None = None) -> str:
+    """Review the least-recently-reviewed Python files in a repo.
 
     Uses review history to prioritize files that have never been reviewed or
     were reviewed longest ago. Falls back to all .py files if no history exists.
     Requires OPENAI_API_KEY.
 
+    By default reviews the mq-mcp repo itself. Pass repo_path to review an
+    external repo instead. An explicit repo_path is validated and confined to
+    MQ_MCP_ALLOWED_PATHS / MQ_MCP_LOCAL_REPOS; if it is missing, not a
+    directory, or outside the allowlist the call fails — it never silently
+    falls back to the mq-mcp self-review.
+
     Args:
         mode: Review mode. Defaults to 'comment'.
         max_files: Number of files to review. Capped at 20. Defaults to 5.
+        repo_path: Optional absolute or repo-relative path to an external repo
+            to review. When omitted, reviews the mq-mcp repo.
     """
     import sys as _sys
     if str(REPO_ROOT) not in _sys.path:
         _sys.path.insert(0, str(REPO_ROOT))
 
+    # Resolve and validate the review root. Explicit repo_path → no fallback.
+    if repo_path is not None:
+        try:
+            root = resolve_allowed_local_file(repo_path)
+        except ValueError as exc:
+            return f"review_repo failed: {exc}"
+        if not root.exists():
+            return f"review_repo failed: repo_path not found: {repo_path}"
+        if not root.is_dir():
+            return f"review_repo failed: repo_path is not a directory: {repo_path}"
+    else:
+        root = REPO_ROOT.resolve()
+
     cap = min(max(1, max_files), 20)
 
     ignore_parts = {"__pycache__", ".venv", "node_modules", ".git"}
     py_files = [
-        str(p.relative_to(REPO_ROOT))
-        for p in REPO_ROOT.rglob("*.py")
-        if not any(part in ignore_parts or part.startswith(".") for part in p.parts[len(REPO_ROOT.parts):])
+        str(p.relative_to(root))
+        for p in root.rglob("*.py")
+        if not any(part in ignore_parts or part.startswith(".") for part in p.parts[len(root.parts):])
     ]
 
     if not py_files:
-        return "review_repo: no Python files found in repo."
+        return f"review_repo: no Python files found in repo ({root.name})."
 
     history: dict[str, list[dict]] = {}
     try:
@@ -3734,12 +3771,21 @@ def review_repo(mode: str = "comment", max_files: int = 5) -> str:
 
     to_review = sorted(py_files, key=last_ts)[:cap]
 
-    results = []
-    for path in to_review:
-        output = review_file(path, mode=mode, deep=False)
-        results.append(f"--- {path} ---\n{output}")
+    # Confine review_file's path resolution to the target root for this call
+    # only. None when reviewing mq-mcp itself (default REPO_ROOT behavior).
+    token = _REVIEW_ROOT.set(root if repo_path is not None else None)
+    try:
+        results = []
+        for path in to_review:
+            output = review_file(path, mode=mode, deep=False)
+            results.append(f"--- {path} ---\n{output}")
+    finally:
+        _REVIEW_ROOT.reset(token)
 
-    header = f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}"
+    header = (
+        f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}  "
+        f"repo={root.name}  review_root={root}"
+    )
     return header + "\n\n" + "\n\n".join(results)
 
 
