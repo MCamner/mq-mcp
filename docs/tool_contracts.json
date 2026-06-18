@@ -932,7 +932,7 @@
     {
       "name": "review_repo",
       "class": "B",
-      "description": "Review the least-recently-reviewed Python files in a repo. Optional repo_path targets an external repo within the allowlist.",
+      "description": "Review the least-recently-reviewed Python files in a repo.",
       "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": false,
