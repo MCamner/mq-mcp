@@ -931,7 +931,7 @@
     },
     {
       "name": "review_repo",
-      "class": "A",
+      "class": "B",
       "description": "Review the least-recently-reviewed Python files in a repo. Optional repo_path targets an external repo within the allowlist.",
       "resolver": "resolve_allowed_local_file",
       "write": false,
