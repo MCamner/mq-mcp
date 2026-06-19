@@ -918,9 +918,9 @@
     },
     {
       "name": "review_file",
-      "class": "A",
+      "class": "B",
       "description": "Run an AI review on a repo file using the configured review contract.",
-      "resolver": "resolve_repo_file",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": false,
       "side_effects": [
