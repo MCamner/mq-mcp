@@ -931,9 +931,9 @@
     },
     {
       "name": "review_repo",
-      "class": "A",
-      "description": "Review the least-recently-reviewed Python files in the repo.",
-      "resolver": "none",
+      "class": "B",
+      "description": "Review the least-recently-reviewed Python files in a repo.",
+      "resolver": "resolve_allowed_local_file",
       "write": false,
       "subprocess": false,
       "side_effects": [
