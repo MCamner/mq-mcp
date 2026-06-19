@@ -36,8 +36,18 @@ def echo_review_file(monkeypatch):
     """Replace review_file with a probe that records the resolved absolute path."""
     seen: list[Path] = []
 
-    def _fake_review_file(relative_path, mode="comment", deep=False):
-        resolved = resolve_repo_file(relative_path)
+    def _fake_review_file(relative_path, mode="comment", deep=False, repo_path=None):
+        # Mirror real review_file: confine resolution to the external repo via
+        # the review-root ContextVar for the duration of the lookup.
+        if repo_path is not None:
+            root = _mod.resolve_allowed_local_file(repo_path)
+            tok = _mod._REVIEW_ROOT.set(root)
+            try:
+                resolved = resolve_repo_file(relative_path)
+            finally:
+                _mod._REVIEW_ROOT.reset(tok)
+        else:
+            resolved = resolve_repo_file(relative_path)
         seen.append(resolved)
         return f"OK {relative_path}"
 

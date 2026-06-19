@@ -33,7 +33,6 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `list_local_repos` | List registered repos from MQ_MCP_LOCAL_REPOS | Write, access outside repo |
 | `list_openable_apps` | Return static list of apps Bridget can open | Write, subprocess, file access |
 | `list_review_contracts` | List available review contracts from reviews/contracts/ | Write, access outside repo |
-| `review_file` | Run AI review on a repo file using a review contract | Write, modify code; calls OpenAI API |
 | `build_repo_context` | Rebuild architecture_map.json and file_summary_index.json | Write outside repo, modify repo files |
 | `list_review_history` | List all files with review history and last review summary | Write, access outside repo |
 | `get_last_review` | Return last review findings for a repo file from local memory | Write, access outside repo |
@@ -77,6 +76,7 @@ These tools cannot write files and cannot run processes. They can read files out
 | --- | --- | --- |
 | `get_system_resources` | Read CPU, memory, disk stats via psutil | Write, access files |
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
+| `review_file` | Run AI review on a file in the mq-mcp repo or, with repo_path, an allowed external repo | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `review_repo` | Review least-recently-reviewed Python files in the mq-mcp repo or, with repo_path, an allowed external repo | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
@@ -253,7 +253,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `set_wallpaper` | D | open path | No | Yes |
 | `run_tests` | D | MQ_MCP_LOCAL_REPOS (fixed paths) | No | Yes |
 | `list_review_contracts` | A | REPO_ROOT (fixed path) | No | No |
-| `review_file` | A | resolve_repo_file | No | No (OpenAI API) |
+| `review_file` | B | resolve_repo_file (repo_path via resolve_allowed_local_file) | No | No (OpenAI API) |
 | `build_repo_context` | D | fixed script path | No | Yes |
 | `list_review_history` | A | REPO_ROOT (fixed path) | No | No |
 | `get_last_review` | A | REPO_ROOT (fixed path) | No | No |

@@ -58,10 +58,18 @@ def _last_review_timestamp(file_path: str, review_memory_path: Path) -> float | 
     if not review_memory_path.exists():
         return None
     try:
-        data: dict[str, list[dict]] = json.loads(
-            review_memory_path.read_text(encoding="utf-8")
-        )
-        entries = data.get(file_path, [])
+        data: dict = json.loads(review_memory_path.read_text(encoding="utf-8"))
+        # Supports both the legacy flat store ({path: [entries]}) and the
+        # repo-namespaced store ({repo: {path: [entries]}}).
+        val = data.get(file_path)
+        if isinstance(val, list):
+            entries = val
+        else:
+            entries = []
+            for repo_map in data.values():
+                if isinstance(repo_map, dict) and file_path in repo_map:
+                    entries = repo_map[file_path]
+                    break
         if entries:
             return entries[0].get("timestamp")
     except Exception:
