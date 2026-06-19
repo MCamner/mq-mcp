@@ -81,7 +81,7 @@ TOOL_META: dict[str, dict] = {
     "validate_project":       {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
 
     # Review engine tools (v1.1.0–v1.4.0)
-    "review_file":            {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
+    "review_file":            {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
     "review_diff":            {"class": "A", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": ["openai-api"]},
     "review_repo":            {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": False, "side_effects": ["review-memory-write", "openai-api"]},
     "get_last_review":        {"class": "A", "resolver": "resolve_repo_file",           "write": False, "subprocess": False, "side_effects": []},

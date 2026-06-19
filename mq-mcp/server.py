@@ -1928,7 +1928,7 @@ def _detect_security_patterns(file_path: str, content: str) -> str:
 # ── review_file ───────────────────────────────────────────────────────────────
 
 @mcp.tool()
-def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -> str:
+def review_file(relative_path: str, mode: str = "comment", deep: bool = False, repo_path: str | None = None) -> str:
     """Run an AI review on a repo file using the configured review contract.
 
     Uses the OpenAI API (OPENAI_API_KEY must be set). The review contract
@@ -1942,11 +1942,33 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
         deep: If True, runs a two-pass review: Pass 1 produces a structural
               analysis of the file; Pass 2 uses that analysis to ground the
               contract-driven review. Higher quality, ~2x API calls. Defaults to False.
+        repo_path: Optional path to an external repo (within the allowlist) that
+              relative_path lives in. When set, the file resolves within that repo
+              and the review is recorded under that repo in review memory. When
+              omitted, the file is the mq-mcp repo's own.
     """
     import openai as _openai
 
+    # Resolve the target file. With repo_path, confine resolution to that
+    # allowlisted external repo just for the lookup; the review is then recorded
+    # under that repo. Without it, the file belongs to the mq-mcp repo itself.
+    repo_name: str | None = None
     try:
-        target = resolve_repo_file(relative_path)
+        if repo_path is not None:
+            try:
+                _root = resolve_allowed_local_file(repo_path)
+            except ValueError as exc:
+                return f"review_file failed: {exc}"
+            if not _root.exists() or not _root.is_dir():
+                return f"review_file failed: repo_path is not a directory: {repo_path}"
+            repo_name = _root.name
+            _tok = _REVIEW_ROOT.set(_root)
+            try:
+                target = resolve_repo_file(relative_path)
+            finally:
+                _REVIEW_ROOT.reset(_tok)
+        else:
+            target = resolve_repo_file(relative_path)
     except ValueError as exc:
         return f"review_file blocked: {exc}"
 
@@ -1984,7 +2006,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
     try:
         from review_engine.review_memory import ReviewMemory as _ReviewMemory
         _mem = _ReviewMemory()
-        past_context = _mem.format_past_context(relative_path)
+        past_context = _mem.format_past_context(relative_path, repo=repo_name)
     except Exception:
         pass
 
@@ -2079,6 +2101,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                         severity_counts=scounts,
                         model=model,
                         skill=skill_name,
+                        repo=repo_name,
                     )
             except Exception:
                 pass
@@ -2152,6 +2175,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False) -
                         severity_counts=scounts,
                         model=model,
                         skill=skill_name,
+                        repo=repo_name,
                     )
             except Exception:
                 pass
@@ -3758,29 +3782,24 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
     if not py_files:
         return f"review_repo: no Python files found in repo ({root.name})."
 
-    history: dict[str, list[dict]] = {}
-    try:
-        from review_engine.review_memory import ReviewMemory as _ReviewMemory
-        history = _ReviewMemory()._data
-    except Exception:
-        pass
+    repo_name = root.name
 
     def last_ts(path: str) -> float:
-        entries = history.get(path, [])
-        return entries[0].get("timestamp", 0.0) if entries else 0.0
+        try:
+            from review_engine.review_memory import ReviewMemory as _ReviewMemory
+            return _ReviewMemory().get_last_timestamp(path, repo=repo_name)
+        except Exception:
+            return 0.0
 
     to_review = sorted(py_files, key=last_ts)[:cap]
 
-    # Confine review_file's path resolution to the target root for this call
-    # only. None when reviewing mq-mcp itself (default REPO_ROOT behavior).
-    token = _REVIEW_ROOT.set(root if repo_path is not None else None)
-    try:
-        results = []
-        for path in to_review:
-            output = review_file(path, mode=mode, deep=False)
-            results.append(f"--- {path} ---\n{output}")
-    finally:
-        _REVIEW_ROOT.reset(token)
+    # review_file manages the per-call review-root override and repo-tagged
+    # memory; forward repo_path so each file resolves and records under the
+    # right repo (None → the mq-mcp repo itself).
+    results = []
+    for path in to_review:
+        output = review_file(path, mode=mode, deep=False, repo_path=repo_path)
+        results.append(f"--- {path} ---\n{output}")
 
     header = (
         f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}  "
@@ -4495,12 +4514,17 @@ def ollama_learn_extract(review_findings: str) -> str:
 
 
 @mcp.tool()
-def learn_extract_from_last_review(relative_path: str) -> str:
+def learn_extract_from_last_review(relative_path: str, repo_path: str | None = None) -> str:
     """Dry-run extraction of a learn pattern from the last review for a file.
 
     Loads stored review findings for the given repo-relative path, passes them
     to the local Ollama mq-learn model, and returns a preview candidate.
     Always dry-run — no storage, no mutations.
+
+    Args:
+        relative_path: Repo-relative path of the reviewed file.
+        repo_path: Optional external repo (within the allowlist) the file lives
+            in; selects that repo's review-memory namespace. Defaults to mq-mcp.
 
     Safety: Class B — reads local review memory + local HTTP to Ollama only.
     """
@@ -4508,10 +4532,20 @@ def learn_extract_from_last_review(relative_path: str) -> str:
     if str(REPO_ROOT) not in _sys.path:
         _sys.path.insert(0, str(REPO_ROOT))
 
+    repo_name = REPO_ROOT.name
+    if repo_path is not None:
+        try:
+            _root = resolve_allowed_local_file(repo_path)
+        except ValueError as exc:
+            return f"learn_extract_from_last_review failed: {exc}"
+        if not _root.is_dir():
+            return f"learn_extract_from_last_review failed: repo_path is not a directory: {repo_path}"
+        repo_name = _root.name
+
     def _review_loader(path: str) -> str | None:
         try:
             from review_engine.review_memory import ReviewMemory as _ReviewMemory
-            entry = _ReviewMemory().get_last(path)
+            entry = _ReviewMemory().get_last(path, repo=repo_name)
             return entry.findings_text if entry is not None else None
         except Exception:
             return None
@@ -4569,7 +4603,7 @@ def learn_extract_from_last_review(relative_path: str) -> str:
 
 
 @mcp.tool()
-def learn_from_review(relative_path: str, task: str = "", risk: str = "low") -> str:
+def learn_from_review(relative_path: str, task: str = "", risk: str = "low", repo_path: str | None = None) -> str:
     """Create a learning record from the last review findings for a file.
 
     Loads the most recent review from review memory, extracts the first
@@ -4581,21 +4615,40 @@ def learn_from_review(relative_path: str, task: str = "", risk: str = "low") -> 
         relative_path: Repo-relative path of the reviewed file.
         task:          What was being worked on (defaults to file name).
         risk:          low | medium | high | unknown.
+        repo_path:     Optional external repo (within the allowlist) the file
+                       lives in. The lesson is attributed to that repo but
+                       always stored in mq-mcp's central learn layer. Defaults
+                       to the mq-mcp repo.
 
     Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
     """
-    target = resolve_repo_file(relative_path)
-    rel = str(target.relative_to(REPO_ROOT.resolve()))
+    # Resolve repo namespace + repo-relative path (no fallback on bad repo_path).
+    if repo_path is not None:
+        try:
+            _root = resolve_allowed_local_file(repo_path)
+        except ValueError as exc:
+            return f"learn_from_review failed: {exc}"
+        if not _root.is_dir():
+            return f"learn_from_review failed: repo_path is not a directory: {repo_path}"
+        repo_name = _root.name
+        rel = relative_path
+    else:
+        try:
+            target = resolve_repo_file(relative_path)
+        except ValueError as exc:
+            return f"learn_from_review blocked: {exc}"
+        rel = str(target.relative_to(REPO_ROOT.resolve()))
+        repo_name = REPO_ROOT.name
 
     try:
         from review_engine.review_memory import ReviewMemory as _ReviewMemory
         mem = _ReviewMemory()
-        past = mem.format_past_context(rel)
+        past = mem.format_past_context(rel, repo=repo_name)
     except Exception as exc:
         return f"learn_from_review failed: could not load review memory: {exc}"
 
     if not past.strip():
-        return f"No review history found for {rel}. Run review_file first."
+        return f"No review history found for {rel} in {repo_name}. Run review_file first."
 
     # Extract first non-empty finding line as lesson
     lesson_lines = [
@@ -4608,17 +4661,17 @@ def learn_from_review(relative_path: str, task: str = "", risk: str = "low") -> 
     eng = _learn_engine()
     record = eng.make_learning(
         REPO_ROOT,
-        repo="mq-mcp",
+        repo=repo_name,
         source="review",
         task=task,
         lesson=lesson[:500],
-        validation=f"review_file ran on {rel}",
+        validation=f"review_file ran on {rel} ({repo_name})",
         tags=["review", "auto"],
         risk=risk,
     )
     result = eng.record_learning(REPO_ROOT, record)
     return (
-        f"Saved learning {result['id']} from review of {rel}.\n"
+        f"Saved learning {result['id']} from review of {rel} ({repo_name}).\n"
         f"  lesson: {lesson[:80]}"
     )
 
