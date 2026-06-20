@@ -2692,11 +2692,17 @@ def validate_orchestration_contract() -> str:
                             _old_tree = _ast.parse(_r2.stdout)
                             _old_tools: set[str] = set()
                             for _n in _ast.walk(_old_tree):
-                                if isinstance(_n, _ast.FunctionDef):
+                                if isinstance(_n, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
                                     for _d in _n.decorator_list:
                                         _attr = _d.func if isinstance(_d, _ast.Call) else _d
-                                        if (isinstance(_attr, _ast.Attribute)
-                                                and _attr.attr == "tool"):
+                                        # Match the same mcp.tool predicate used for
+                                        # registered_tools so the delta is symmetric.
+                                        if (
+                                            isinstance(_attr, _ast.Attribute)
+                                            and _attr.attr == "tool"
+                                            and isinstance(_attr.value, _ast.Name)
+                                            and _attr.value.id == "mcp"
+                                        ):
                                             _old_tools.add(_n.name)
                             _added_tools = sorted(registered_tools - _old_tools)
                             _removed_tools = sorted(_old_tools - registered_tools)

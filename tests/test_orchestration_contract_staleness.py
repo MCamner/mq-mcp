@@ -90,3 +90,28 @@ def test_warn_when_tool_added_since_contract(monkeypatch):
     assert "[WARN] docs/ORCHESTRATION_CONTRACT.md" in out
     assert "no longer reflects the current tool set" in out
     assert dropped in out
+
+
+def test_pass_with_note_when_git_history_unavailable(monkeypatch):
+    # Contract older than server.py, but the tool delta cannot be computed (no git
+    # history) → must PASS-with-note, never WARN on raw mtime alone.
+    s = SERVER_PATH.stat()
+    os.utime(CONTRACT_PATH, (s.st_atime - 100, s.st_mtime - 100))
+    real_run = subprocess.run
+
+    def fake_run(cmd, *a, **k):
+        class _R:
+            returncode = 1
+            stdout = ""
+
+        if cmd[:2] == ["git", "log"]:
+            _R.stdout = ""  # no commit found for the contract
+            return _R
+        if cmd[:2] == ["git", "show"]:
+            return _R
+        return real_run(cmd, *a, **k)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    out = server.validate_orchestration_contract()
+    assert "[WARN] docs/ORCHESTRATION_CONTRACT.md" not in out
+    assert "tool-drift unverified" in out
