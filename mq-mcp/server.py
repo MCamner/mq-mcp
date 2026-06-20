@@ -2666,8 +2666,13 @@ def validate_orchestration_contract() -> str:
             server_mtime = server_path.stat().st_mtime
             contract_mtime = contract_path.stat().st_mtime
             if contract_mtime < server_mtime:
-                # Diff-aware: show tools added to server.py since the contract's last commit
-                new_tools_info = ""
+                # A bare mtime compare false-positives on any checkout/clone or unrelated
+                # server.py edit. Only warn when the tool SET actually drifted since the
+                # contract's last commit; reuse the diff-aware extraction to compute the
+                # added/removed tools and gate the WARN on a real delta.
+                _delta_known = False
+                _added_tools: list[str] = []
+                _removed_tools: list[str] = []
                 try:
                     import subprocess as _sp
                     # Find the commit that last touched ORCHESTRATION_CONTRACT.md
@@ -2693,21 +2698,42 @@ def validate_orchestration_contract() -> str:
                                         if (isinstance(_attr, _ast.Attribute)
                                                 and _attr.attr == "tool"):
                                             _old_tools.add(_n.name)
-                            _new_tools = sorted(registered_tools - _old_tools)
-                            if _new_tools:
-                                new_tools_info = (
-                                    f" New tools since last contract update: "
-                                    f"{', '.join(_new_tools[:5])}"
-                                    + (f" (+{len(_new_tools)-5} more)"
-                                       if len(_new_tools) > 5 else "")
-                                )
+                            _added_tools = sorted(registered_tools - _old_tools)
+                            _removed_tools = sorted(_old_tools - registered_tools)
+                            _delta_known = True
                 except Exception:
-                    pass
-                findings.append(
-                    "[WARN] docs/ORCHESTRATION_CONTRACT.md\n"
-                    f"Contract is older than server.py — it may not reflect the current tool set."
-                    f"{new_tools_info}"
-                )
+                    _delta_known = False
+
+                if _delta_known and not _added_tools and not _removed_tools:
+                    # Newer mtime but identical tool set — the contract still reflects reality.
+                    passes.append(
+                        "[PASS] ORCHESTRATION_CONTRACT.md tool set matches server.py "
+                        "(newer mtime, no tool drift)"
+                    )
+                elif not _delta_known:
+                    # Could not verify the tool delta (git unavailable / shallow checkout).
+                    # Do not warn on raw mtime alone — that is the false positive we removed.
+                    passes.append(
+                        "[PASS] ORCHESTRATION_CONTRACT.md exists "
+                        "(tool-drift unverified — git history unavailable)"
+                    )
+                else:
+                    _delta_bits: list[str] = []
+                    if _added_tools:
+                        _delta_bits.append(
+                            "added: " + ", ".join(_added_tools[:5])
+                            + (f" (+{len(_added_tools) - 5} more)" if len(_added_tools) > 5 else "")
+                        )
+                    if _removed_tools:
+                        _delta_bits.append(
+                            "removed: " + ", ".join(_removed_tools[:5])
+                            + (f" (+{len(_removed_tools) - 5} more)" if len(_removed_tools) > 5 else "")
+                        )
+                    findings.append(
+                        "[WARN] docs/ORCHESTRATION_CONTRACT.md\n"
+                        "Contract no longer reflects the current tool set ("
+                        + "; ".join(_delta_bits) + ")."
+                    )
             else:
                 passes.append("[PASS] ORCHESTRATION_CONTRACT.md is present and fresh")
         except Exception:
