@@ -5439,7 +5439,7 @@ def brain_record_review(
     confidence: str = "medium",
     raw_summary: str = "",
 ) -> dict:
-    """Write a code review summary to mqobsidian/reviews/.
+    """Write a code review summary to mqobsidian/memory/reviews/.
 
     Class C — writes to local mqobsidian vault. Requires user approval.
     Schema: review.v1
@@ -5486,7 +5486,7 @@ def brain_record_learning(
     recommended_action: str,
     confidence: str = "medium",
 ) -> dict:
-    """Write a learned engineering pattern to mqobsidian/learn/.
+    """Write a learned engineering pattern to mqobsidian/memory/learn/.
 
     Class C — writes to local mqobsidian vault. Requires user approval.
     Schema: learn.v1
@@ -5505,14 +5505,14 @@ def brain_record_learning(
 
 @mcp.tool()
 def brain_promote_learning(slug: str) -> dict:
-    """Promote learn/<slug>.md to learn/verified/.
+    """Promote memory/learn/<slug>.md to memory/learn/verified/.
 
     Class C — writes to local mqobsidian vault. Requires user approval.
 
     Validates required frontmatter (pattern_name, pattern_type) and body sections
     (## Summary, ## Evidence, ## Recommended action), then:
-    - Writes learn/verified/<timestamp>-<slug>.md with status: verified and promoted_at
-    - Marks the original learn/<slug>.md as status: promoted
+    - Writes memory/learn/verified/<timestamp>-<slug>.md with status: verified and promoted_at
+    - Marks the original learn note as status: promoted
 
     slug: filename without path or .md extension (e.g. "atlas-one-release-gap-pattern")
     """

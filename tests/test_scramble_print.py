@@ -56,3 +56,33 @@ def test_tty_output_animates_and_resolves(bridge, monkeypatch):
         else:
             rendered.append(ch)
     assert "".join(rendered) == "ab\n"
+
+
+class _StopAfterWaits:
+    def __init__(self, max_waits: int = 1):
+        self.max_waits = max_waits
+        self.calls = 0
+
+    def is_set(self) -> bool:
+        return self.calls >= self.max_waits
+
+    def wait(self, _interval: float) -> None:
+        self.calls += 1
+
+
+def test_bridget_spinner_uses_one_line_green_four_dot_blink(bridge):
+    buf = _Tty()
+    spinner = bridge.BridgetSpinner(stream=buf)
+    spinner._stop_event = _StopAfterWaits(max_waits=5)
+
+    spinner._spin()
+
+    raw = buf.getvalue()
+    assert "\033[38;5;82m" in raw
+    assert "    \033[0m" in raw
+    assert "•   \033[0m" in raw
+    assert "••  \033[0m" in raw
+    assert "••• \033[0m" in raw
+    assert "••••\033[0m" in raw
+    assert "\n" not in raw
+    assert "\033[1A" not in raw

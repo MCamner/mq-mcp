@@ -34,8 +34,10 @@ class BridgetSpinner:
     through. Pass the /dev/tty handle so it never touches stdout.
     """
 
-    FRAMES = ["▪▫\n▫▫", "▫▪\n▫▫", "▫▫\n▫▪", "▫▫\n▪▫"]
-    INTERVAL = 0.12
+    DOT_COLOR = "\033[38;5;82m"
+    RESET_COLOR = "\033[0m"
+    FRAMES = ["    ", "•   ", "••  ", "••• ", "••••"]
+    INTERVAL = 0.14
 
     def __init__(self, stream: Any = None) -> None:
         self._stream = stream or sys.stdout
@@ -57,17 +59,15 @@ class BridgetSpinner:
         self._stop_event.set()
         self._thread.join()
         self._thread = None
-        # The cursor sits on the top spinner line. Clear it, drop to the
-        # bottom line and clear that, then return to the top so the next
-        # output starts where the spinner began.
-        self._stream.write("\r\033[K\033[1B\r\033[K\033[1A\r")
+        # Clear the one-line dot mark so Bridget's answer starts where it began.
+        self._stream.write("\r\033[K")
         self._stream.flush()
 
     def _spin(self) -> None:
         idx = 0
         while not self._stop_event.is_set():
-            top, bottom = self.FRAMES[idx % len(self.FRAMES)].split("\n")
-            self._stream.write(f"\r{top}\n{bottom}\033[1A")
+            frame = self.FRAMES[idx % len(self.FRAMES)]
+            self._stream.write(f"\r{self.DOT_COLOR}{frame}{self.RESET_COLOR}")
             self._stream.flush()
             idx += 1
             self._stop_event.wait(self.INTERVAL)

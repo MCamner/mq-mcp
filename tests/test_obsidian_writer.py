@@ -52,7 +52,7 @@ def test_record_review_creates_file(vault: Path) -> None:
     assert result["ok"] is True
     created = Path(result["path"])
     assert created.exists()
-    assert created.parent == vault / "reviews"
+    assert created.parent == vault / "memory" / "reviews"
     content = created.read_text()
     assert "review.v1" in content
     assert "mq-mcp/server.py" in content
@@ -78,7 +78,7 @@ def test_record_learning_creates_file(vault: Path) -> None:
     assert result["ok"] is True
     created = Path(result["path"])
     assert created.exists()
-    assert created.parent == vault / "learn"
+    assert created.parent == vault / "memory" / "learn"
     content = created.read_text()
     assert "learn.v1" in content
     assert "release-gate-contracts" in content
@@ -90,7 +90,7 @@ def test_record_learning_overwrites_same_pattern(vault: Path) -> None:
     assert result["ok"] is True
     content = Path(result["path"]).read_text()
     assert "v2 updated" in content
-    assert len(list((vault / "learn").glob("dup-pattern.md"))) == 1
+    assert len(list((vault / "memory" / "learn").glob("dup-pattern.md"))) == 1
 
 
 def test_record_session_creates_file(vault: Path) -> None:
@@ -174,26 +174,26 @@ After tagging, run gh release list to confirm the release exists.
 
 
 def test_promote_learning_creates_verified_file(vault: Path) -> None:
-    learn_dir = vault / "learn"
-    learn_dir.mkdir()
+    learn_dir = vault / "memory" / "learn"
+    learn_dir.mkdir(parents=True)
     (learn_dir / "test-pattern.md").write_text(_VALID_LEARN_CONTENT)
 
     result = promote_learning("test-pattern")
 
     assert result["ok"] is True
-    verified_dir = vault / "learn" / "verified"
+    verified_dir = vault / "memory" / "learn" / "verified"
     assert verified_dir.exists()
     promoted_files = list(verified_dir.glob("*test-pattern.md"))
     assert len(promoted_files) == 1
     content = promoted_files[0].read_text()
     assert "status: verified" in content
     assert "promoted_at:" in content
-    assert "promoted_from: learn/test-pattern.md" in content
+    assert "promoted_from: memory/learn/test-pattern.md" in content
 
 
 def test_promote_learning_marks_original_as_promoted(vault: Path) -> None:
-    learn_dir = vault / "learn"
-    learn_dir.mkdir()
+    learn_dir = vault / "memory" / "learn"
+    learn_dir.mkdir(parents=True)
     source = learn_dir / "test-pattern.md"
     source.write_text(_VALID_LEARN_CONTENT)
 
@@ -204,16 +204,30 @@ def test_promote_learning_marks_original_as_promoted(vault: Path) -> None:
 
 
 def test_promote_learning_accepts_learn_prefix_and_md_suffix(vault: Path) -> None:
-    (vault / "learn").mkdir()
-    (vault / "learn" / "test-pattern.md").write_text(_VALID_LEARN_CONTENT)
+    (vault / "memory" / "learn").mkdir(parents=True)
+    (vault / "memory" / "learn" / "test-pattern.md").write_text(_VALID_LEARN_CONTENT)
 
     r1 = promote_learning("learn/test-pattern.md")
     assert r1["ok"] is True
 
 
-def test_promote_learning_fails_missing_fields(vault: Path) -> None:
+def test_promote_learning_reads_legacy_learn_path(vault: Path) -> None:
     (vault / "learn").mkdir()
-    (vault / "learn" / "incomplete.md").write_text(
+    source = vault / "learn" / "legacy-pattern.md"
+    source.write_text(_VALID_LEARN_CONTENT.replace("test-pattern", "legacy-pattern"))
+
+    result = promote_learning("legacy-pattern")
+
+    assert result["ok"] is True
+    assert Path(result["source"]) == source
+    assert (vault / "memory" / "learn" / "verified").exists()
+    promoted = next((vault / "memory" / "learn" / "verified").glob("*legacy-pattern.md"))
+    assert "promoted_from: learn/legacy-pattern.md" in promoted.read_text()
+
+
+def test_promote_learning_fails_missing_fields(vault: Path) -> None:
+    (vault / "memory" / "learn").mkdir(parents=True)
+    (vault / "memory" / "learn" / "incomplete.md").write_text(
         "---\nschema_version: learn.v1\n---\n## Summary\n\ntext\n\n## Evidence\n\n- x\n\n## Recommended action\n\nfix it\n"
     )
     result = promote_learning("incomplete")
@@ -222,8 +236,8 @@ def test_promote_learning_fails_missing_fields(vault: Path) -> None:
 
 
 def test_promote_learning_fails_missing_sections(vault: Path) -> None:
-    (vault / "learn").mkdir()
-    (vault / "learn" / "no-sections.md").write_text(
+    (vault / "memory" / "learn").mkdir(parents=True)
+    (vault / "memory" / "learn" / "no-sections.md").write_text(
         "---\npattern_name: x\npattern_type: release\n---\n# Pattern: x\n\nNo required sections here.\n"
     )
     result = promote_learning("no-sections")
@@ -232,7 +246,7 @@ def test_promote_learning_fails_missing_sections(vault: Path) -> None:
 
 
 def test_promote_learning_fails_if_slug_not_found(vault: Path) -> None:
-    (vault / "learn").mkdir()
+    (vault / "memory" / "learn").mkdir(parents=True)
     result = promote_learning("nonexistent-slug")
     assert result["ok"] is False
     assert "Not found" in result["error"]
