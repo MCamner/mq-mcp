@@ -123,6 +123,14 @@ cd mq-mcp
 uv run python bridge.py "List the available MCP tools."
 ```
 
+Or start an interactive session, where follow-up answers keep context (reply with
+just `mq-mcp`, `ja`, or a filename) and a class-based gate asks for approval before
+any Class C/D tool runs:
+
+```bash
+uv run python bridge.py --repl
+```
+
 ## Requirements
 
 The Python project currently declares:
