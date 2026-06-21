@@ -633,6 +633,11 @@ def build_system_content(catalog: str, ctx: BridgetContext, do_mode: bool) -> st
     )
 
 
+# Cap on tool-call rounds in a single turn. Lets multi-step tasks (add ->
+# commit -> push) chain in one invocation while bounding a runaway model.
+MAX_TOOL_ROUNDS = 10
+
+
 async def run_turn(
     session: ClientSession,
     client: OpenAI,
@@ -645,89 +650,95 @@ async def run_turn(
 ) -> tuple[str, list[str]]:
     """Run one assistant turn against `messages` (last item = new user input).
 
-    Mutates `messages` in place (appends the assistant reply, any tool calls and
-    their results, and the final answer) and returns (answer, called_tools). The
-    accumulated `messages` are what give the REPL its follow-up continuity. Runs
-    a single round of tool calls — enough for v0.5. Manages the thinking spinner;
+    Loops the model up to MAX_TOOL_ROUNDS times: each round it may call tools
+    (executed here, results appended) or return a text answer that ends the turn.
+    This lets a single request chain steps (e.g. git add -> commit -> push). When
+    the cap is hit, a final tool-free call forces a closing summary. Mutates
+    `messages` in place (the accumulated history gives the REPL its follow-up
+    continuity) and returns (answer, called_tools). Manages the thinking spinner;
     the caller owns the "Bridget: " prefix and output stream.
     """
     if spinner:
         spinner.start()
 
-    first_response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        tools=openai_tools,
-        # In --do mode force a tool call so the model acts instead of asking for
-        # permission in text.
-        tool_choice="required" if do_mode else "auto",
-    )
-
-    assistant_message = first_response.choices[0].message
-
-    if not assistant_message.tool_calls:
-        if spinner:
-            spinner.stop()
-        answer = assistant_message.content or ""
-        messages.append({"role": "assistant", "content": answer})
-        return answer, []
-
-    note = assistant_message.content or ""
-    messages.append(
-        cast(
-            ChatCompletionMessageParam,
-            {
-                "role": "assistant",
-                "content": note,
-                "tool_calls": [
-                    tool_call.model_dump(exclude_none=True)
-                    for tool_call in assistant_message.tool_calls
-                ],
-            },
-        )
-    )
-
     called_tools: list[str] = []
-    for tool_call in assistant_message.tool_calls:
-        tool_name, tool_args = tool_call_name_and_args(tool_call)
-        if not tool_name:
+    try:
+        for round_idx in range(MAX_TOOL_ROUNDS):
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=openai_tools,
+                # In --do mode force a tool call on the first round so the model
+                # acts instead of asking for permission in text. Later rounds use
+                # "auto" so it can stop once the work is done.
+                tool_choice="required" if (do_mode and round_idx == 0) else "auto",
+            )
+
+            assistant_message = response.choices[0].message
+
+            if not assistant_message.tool_calls:
+                answer = assistant_message.content or ""
+                messages.append({"role": "assistant", "content": answer})
+                return answer, called_tools
+
+            note = assistant_message.content or ""
             messages.append(
                 cast(
                     ChatCompletionMessageParam,
                     {
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": "Tool call missing function name.",
+                        "role": "assistant",
+                        "content": note,
+                        "tool_calls": [
+                            tool_call.model_dump(exclude_none=True)
+                            for tool_call in assistant_message.tool_calls
+                        ],
                     },
                 )
             )
-            continue
 
-        called_tools.append(tool_name)
-        tool_result = await call_mcp_tool(
-            session=session,
-            name=tool_name,
-            raw_args=tool_args,
-            assistant_note=note,
-        )
+            for tool_call in assistant_message.tool_calls:
+                tool_name, tool_args = tool_call_name_and_args(tool_call)
+                if not tool_name:
+                    messages.append(
+                        cast(
+                            ChatCompletionMessageParam,
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": "Tool call missing function name.",
+                            },
+                        )
+                    )
+                    continue
 
-        messages.append(
-            cast(
-                ChatCompletionMessageParam,
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": tool_result,
-                },
-            )
-        )
+                called_tools.append(tool_name)
+                tool_result = await call_mcp_tool(
+                    session=session,
+                    name=tool_name,
+                    raw_args=tool_args,
+                    assistant_note=note,
+                )
 
-    final_response = client.chat.completions.create(model=model, messages=messages)
-    answer = final_response.choices[0].message.content or ""
-    messages.append({"role": "assistant", "content": answer})
-    if spinner:
-        spinner.stop()
-    return answer, called_tools
+                messages.append(
+                    cast(
+                        ChatCompletionMessageParam,
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": tool_result,
+                        },
+                    )
+                )
+
+        # Cap reached: every round still wanted tools. Force a tool-free call so
+        # the turn ends with a textual summary instead of dangling tool output.
+        final_response = client.chat.completions.create(model=model, messages=messages)
+        answer = final_response.choices[0].message.content or ""
+        messages.append({"role": "assistant", "content": answer})
+        return answer, called_tools
+    finally:
+        if spinner:
+            spinner.stop()
 
 
 async def run_repl(model: str, do_mode: bool) -> None:

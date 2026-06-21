@@ -138,6 +138,65 @@ def test_tool_call_path_records_result(bridge, monkeypatch):
     )
 
 
+def test_multi_round_chains_until_text(bridge, monkeypatch):
+    """A turn keeps calling tools across rounds until the model returns text."""
+    client = _FakeClient(
+        [
+            _Msg("adding", tool_calls=[_FakeToolCall("c1", "shell_exec", "{}")]),
+            _Msg("committing", tool_calls=[_FakeToolCall("c2", "shell_exec", "{}")]),
+            _Msg("klart, pushat"),
+        ]
+    )
+    seen = []
+
+    async def fake_call(session, name, raw_args, assistant_note=""):
+        seen.append(name)
+        return "ok"
+
+    monkeypatch.setattr(bridge, "call_mcp_tool", fake_call)
+
+    messages = [
+        {"role": "system", "content": "sys"},
+        {"role": "user", "content": "commit och push"},
+    ]
+    answer, called = asyncio.run(
+        bridge.run_turn(None, client, messages, "m", [], do_mode=False, spinner=None)
+    )
+
+    assert answer == "klart, pushat"
+    assert called == ["shell_exec", "shell_exec"]
+    assert seen == ["shell_exec", "shell_exec"]
+    assert len(client.calls) == 3  # two tool rounds + the final text round
+
+
+def test_round_cap_limits_tool_rounds(bridge, monkeypatch):
+    """A model that never stops requesting tools is capped at MAX_TOOL_ROUNDS."""
+    responses = [
+        _Msg(f"r{i}", tool_calls=[_FakeToolCall(f"c{i}", "git_status", "{}")])
+        for i in range(bridge.MAX_TOOL_ROUNDS)
+    ]
+    responses.append(_Msg("tvångsavslut"))  # final tool-free call after the cap
+    client = _FakeClient(responses)
+
+    async def fake_call(session, name, raw_args, assistant_note=""):
+        return "ok"
+
+    monkeypatch.setattr(bridge, "call_mcp_tool", fake_call)
+
+    messages = [
+        {"role": "system", "content": "sys"},
+        {"role": "user", "content": "loopa för evigt"},
+    ]
+    answer, called = asyncio.run(
+        bridge.run_turn(None, client, messages, "m", [], do_mode=False, spinner=None)
+    )
+
+    assert answer == "tvångsavslut"
+    assert len(called) == bridge.MAX_TOOL_ROUNDS
+    # MAX_TOOL_ROUNDS tool rounds + one forced summary call.
+    assert len(client.calls) == bridge.MAX_TOOL_ROUNDS + 1
+
+
 class _ACM:
     """Minimal async context manager yielding a fixed value."""
 
