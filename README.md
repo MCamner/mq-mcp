@@ -197,19 +197,56 @@ GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integr
 
 ## Ecosystem
 
-`mq-mcp` is the execution runtime in the MQ ecosystem — it exposes tools and enforces safety boundaries. It does not plan or orchestrate.
+`mq-mcp` is the execution runtime in the MQ ecosystem. It exposes tools, enforces safety boundaries, and applies approval rules. It does not plan, orchestrate, or own domain-specific scoring logic.
 
-| Repo               | Use when you need to…                                                  |
-|--------------------|------------------------------------------------------------------------|
-| `mq-mcp`           | Execute a tool, run a review, read a file, check safety metadata       |
-| `mq-agent`         | Plan a multi-step workflow or route a request across repos             |
-| `mq-hal`           | Get a system status report, release brief, or operator summary         |
-| `repo-signal`      | Score a repo's publish readiness or run a documentation quality check  |
-| `mq-image-analyze` | Analyze a screenshot, diagram, or visual render                        |
+### Standalone systems
 
-**Which tools run automatically (no approval needed):** Class A and B — all read-only tools. Examples: `read_repo_file`, `git_status`, `repo_signal_analyze`, `get_system_resources`.
+| Repo       | Type    | Use when you need to…                               |
+|------------|---------|-----------------------------------------------------|
+| `mq-mcp`   | runtime | Execute tools, run reviews, read files, or evaluate safety metadata |
+| `mq-agent` | planner | Plan multi-step work or route requests across repos |
 
-**Which tools require explicit human approval:** Class C (writes files) and Class D (opens apps or runs subprocesses). Examples: `update_repo_file`, `run_tests`, `open_terminal`, `set_reminder`.
+### Capabilities surfaced through `mq-mcp`
+
+These repos own their own domain logic. `mq-mcp` does not reimplement it — it proxies them as tools and owns only execution, safety boundaries, and approval handling.
+
+| Capability         | Owns logic         | Surfaced as                         | Use when you need to…                                       |
+|--------------------|--------------------|-------------------------------------|-------------------------------------------------------------|
+| `repo-signal`      | `repo-signal` (CLI)| `repo_signal_*` (Class B)           | Score publish readiness or run documentation-quality checks |
+| `mq-hal`           | `mq-hal` (CLI)     | `hal_repo_report` (Class D)         | Produce status reports, release briefs, or operator summaries |
+| `mq-image-analyze` | `mq-image-analyze` | `image_analyze*` (Class B)          | Analyze screenshots, diagrams, or visual renders            |
+| `mq-ums`           | `mq-ums`           | `ums_command_catalog`, `ums_audit_log` (Class B) | Read the UMS command catalog or audit logs     |
+
+> Note: none of these are standalone MCP servers. Their logic lives in their own repos (often as a CLI) and is exposed through `mq-mcp` tools. `mq-mcp` owns execution, safety boundaries, and approval handling; each capability owns its underlying scoring and analysis logic.
+
+### Approval model
+
+**Runs automatically (no approval needed):** Class A and B — all read-only tools. Examples: `read_repo_file`, `git_status`, `repo_signal_analyze`, `get_system_resources`.
+
+**Requires explicit human approval:** Class C (writes files) and Class D (opens apps or runs subprocesses). Examples: `update_repo_file`, `run_tests`, `open_terminal`, `set_reminder`.
+
+### Boundary rules
+
+* `mq-mcp` executes tools and enforces safety policy.
+* `mq-agent` plans and routes work, but does not own execution policy.
+* `mq-hal` summarizes system and operator state, but does not own execution policy.
+* A capability may own domain logic while being surfaced through `mq-mcp`.
+
+### What this repo is not
+
+* `mq-mcp` is not a planner or orchestration layer.
+* `mq-agent` is not the execution runtime.
+* `mq-hal` is not the source of truth for tool safety or approval rules.
+* `repo-signal`, `mq-image-analyze`, and `mq-ums` are not standalone MCP servers.
+* No capability repo is the shared safety-policy layer.
+
+### Documentation placement rule
+
+Use this section in `mq-mcp` when the goal is to define execution, exposure, and approval boundaries. Put related summaries elsewhere only when they are clearly secondary:
+
+* `mq-agent` for planning/routing views
+* `mq-hal` for operator-facing summaries
+* `mqobsidian` for cross-repo reference material
 
 See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the full boundary definition and profile-to-class mapping.
 
