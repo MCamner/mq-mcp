@@ -1994,6 +1994,40 @@
         "findings_text": "Review findings — mq_agent/agents/docs_agent.py: 6 total  [MISSING=2  SUGGESTION=2  NOTE=2]\n\n[MISSING] mq_agent/agents/docs_agent.py:12\nDocsAgent.__init__ method is missing a docstring; add a one-line summary describing its purpose and parameters.\n\n[MISSING] mq_agent/agents/docs_agent.py:17\nDocsAgent.audit method lacks a docstring; include a description of parameters, return type, and what the dict contains.\n\n[SUGGESTION] mq_agent/agents/docs_agent.py:21\nstate.plan is assigned the result of planner.create_plan; adding a comment briefly explaining what this plan represents could improve clarity.\n\n[SUGGESTION] mq_agent/agents/docs_agent.py:33\nThe returned dictionary from audit could be better documented via a docstring or comment to clarify the structure and meaning of \"steps\" and \"verification\".\n\n[NOTE] mq_agent/agents/docs_agent.py:12\nClass DocsAgent has a concise docstring describing its role in auditing and summarizing repository documentation.\n\n[NOTE] mq_agent/agents/docs_agent.py:23\nThe goal string passed to AgentState clearly describes the auditing intent and scope.",
         "skill": "python-comment-review"
       }
+    ],
+    "AGENTS.md": [
+      {
+        "file_path": "AGENTS.md",
+        "mode": "comment",
+        "timestamp": 1782091451.896428,
+        "timestamp_iso": "2026-06-22T01:24:11Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 16,
+        "severity_counts": {
+          "MISSING": 8,
+          "SUGGESTION": 7,
+          "NOTE": 1
+        },
+        "findings_text": "Review findings — AGENTS.md: 16 total  [MISSING=8  SUGGESTION=7  NOTE=1]\n\n[MISSING] AGENTS.md:1\nThe file lacks a top-level heading that clearly identifies it as AGENTS.md or describes its purpose.\n\n[MISSING] AGENTS.md:1\nThere is no table of contents or navigation aid despite document length and complexity.\n\n[MISSING] AGENTS.md:16\nThe embedded HTML comment block describing generation and ownership model should be accompanied by a brief summary or docstring explaining its purpose in Markdown context.\n\n[MISSING] AGENTS.md:16\nNo license or contributor guidance is included in the header comment block about this generated document.\n\n[MISSING] AGENTS.md:23\nSections such as \"Semantic memory context\" and \"Relevant architecture decisions\" have only brief notes and acronyms without explanation or reference links.\n\n[MISSING] AGENTS.md:37\nNo mention that placeholder values like `<path-to-mqobsidian>` in the generation command are placeholders needing substitution.\n\n[MISSING] AGENTS.md:47\nRules section lists rules without introductory text explaining their scope or intent in the repo.\n\n[MISSING] AGENTS.md:81\nThe file ends abruptly without a concluding section or summary, which would aid reader orientation.\n\n[SUGGESTION] AGENTS.md:7\nThe section titled \"roadmap-summary  [roadmap, phases, mq-mcp]\" contains text but lacks consistent heading level usage, making the structure confusing.\n\n[SUGGESTION] AGENTS.md:9\nTagging keywords like [roadmap, phases, mq-mcp] in headings may confuse readers; a separate 'tags' metadata section could be clearer.\n\n[SUGGESTION] AGENTS.md:14\nCode snippet starting with <!-- and ending with --> might be better fenced as a code block explicitly for clarity.\n\n[SUGGESTION] AGENTS.md:28\nFile paths and environment variables like `$MQ_OBSIDIAN_DIR` should be fenced in inline code formatting (`...`) for clarity and consistency.\n\n[SUGGESTION] AGENTS.md:59\nThe term `mqobsidian` is introduced without clear definition or inline link.\n\n[SUGGESTION] AGENTS.md:66\n\"Source Intelligence\" section references `.codegraph/` but lacks a code fence or command example showing usage.\n\n[SUGGESTION] AGENTS.md:75\nThe \"MQ Skills\" section lists skill directories and descriptions but would benefit from examples or usage notes.\n\n[NOTE] AGENTS.md:28\nThe \"Read First\" section provides ordered instructions but does not include any code examples or formatting to distinguish file paths and variables clearly.",
+        "skill": "markdown-review"
+      }
+    ],
+    "CLAUDE.md": [
+      {
+        "file_path": "CLAUDE.md",
+        "mode": "comment",
+        "timestamp": 1782091456.195065,
+        "timestamp_iso": "2026-06-22T01:24:16Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 13,
+        "severity_counts": {
+          "MISSING": 7,
+          "SUGGESTION": 3,
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — CLAUDE.md: 13 total  [MISSING=7  SUGGESTION=3  NOTE=3]\n\n[MISSING] CLAUDE.md:1\nTop-level heading is missing at the start of the document; add a clear title to match the file name and purpose.\n\n[MISSING] CLAUDE.md:1\nFile does not contain prerequisites or setup instructions for readers who might be unfamiliar with the project scope or usage.\n\n[MISSING] CLAUDE.md:4\nNo explanation or context is given for the tags in square brackets (e.g., [roadmap, phases, mq-mcp]); a brief note explaining their meaning would improve accessibility.\n\n[MISSING] CLAUDE.md:12\nMissing explicit document version or date metadata near the top for maintenance tracking.\n\n[MISSING] CLAUDE.md:16\nThe code block at line 16 contains a comment block with metadata and instructions but is missing a language specifier; add ```plaintext or ```comment for clarity.\n\n[MISSING] CLAUDE.md:38\nThe file lacks a table of contents or explicit navigation for the multiple sections, which could help in a long document.\n\n[MISSING] CLAUDE.md:45\nCode block at the end lacks a language specifier, which should be added (likely ```bash or ```shell) for correct rendering and readability.\n\n[SUGGESTION] CLAUDE.md:2\nThe heading \"Semantic memory context\" is level 2 but followed directly by level 3 headings, which is acceptable, but consistency with other sections should be verified.\n\n[SUGGESTION] CLAUDE.md:5\nThe \"roadmap-summary\" section contains truncated paragraphs (\"too…\"); expand or clarify placeholder text to improve clarity.\n\n[SUGGESTION] CLAUDE.md:11\nThe \"orchestration-contract\" section also has truncated content (\"cli…\"); complete or clarify content to avoid confusion.\n\n[NOTE] CLAUDE.md:20\nThe inline comment block states that the file is auto-generated from templates, which is useful and appropriate documentation.\n\n[NOTE] CLAUDE.md:35\nThe instructions about reading specific context files in order are helpful operational guidance.\n\n[NOTE] CLAUDE.md:42\nUse of @AGENTS.md is presumably a link or placeholder; clarity on its intended use or link target would be helpful but is possibly clear in context.",
+        "skill": "markdown-review"
+      }
     ]
   },
   "mq-hal": {
