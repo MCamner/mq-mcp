@@ -34,3 +34,4 @@ backups/
 # Auto-extracted learn candidates (machine-local, pending review)
 learn_engine/memory/inbox.jsonl
 learn_engine/memory/post-commit.log
+.codegraph/
