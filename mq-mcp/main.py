@@ -414,12 +414,14 @@ def main(argv: list[str] | None = None) -> int:
                     export_profile_index,
                     export_release_state,
                 )
+                from tool_policy import export_tool_policies  # noqa: PLC0415
                 idx = export_tool_index()
                 saf = export_tool_safety()
                 rc = export_runtime_contract()
                 rs = export_release_state()
                 pi = export_profile_index()
-                for p in (idx, saf, rc, rs, pi):
+                tp = export_tool_policies()
+                for p in (idx, saf, rc, rs, pi, tp):
                     print(f"written: {p.relative_to(REPO_ROOT)}")
                 return 0
         return run_command(["uv", "run", "python", "bridge.py", "--tools"], APP_DIR)

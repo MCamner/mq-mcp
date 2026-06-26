@@ -235,6 +235,43 @@ async def serve_tool_contracts(request: Request) -> JSONResponse:
         return JSONResponse({"error": str(exc)}, status_code=500)
 
 
+@mcp.custom_route("/tool-policies", methods=["GET"])
+async def serve_tool_policies(request: Request) -> JSONResponse:
+    """Serve the workflow tool policy for every tool (Phase 5).
+
+    Lets a workflow runner ask which tools may run in a workflow, what approval
+    each needs, and whether they are safe to retry — without a hardcoded list.
+    """
+    try:
+        import tool_policy
+
+        policies = tool_policy.all_policies()
+        return JSONResponse(
+            {
+                "schema": tool_policy.POLICY_SCHEMA,
+                "tool_count": len(policies),
+                "tools": policies,
+            }
+        )
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+
+@mcp.custom_route("/tool-policies/{name}", methods=["GET"])
+async def serve_tool_policy(request: Request) -> JSONResponse:
+    """Serve the workflow policy for a single tool."""
+    name = request.path_params["name"]
+    try:
+        import tool_policy
+
+        policy = tool_policy.get_policy(name)
+        if policy is None:
+            return JSONResponse({"error": f"Unknown tool: {name}"}, status_code=404)
+        return JSONResponse(policy)
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+
 @mcp.custom_route("/tools", methods=["GET"])
 async def list_http_tools(request: Request) -> JSONResponse:
     tools = await mcp.list_tools()
