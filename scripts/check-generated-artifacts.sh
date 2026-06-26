@@ -6,6 +6,7 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
 
 FAILED=0
 
@@ -36,6 +37,7 @@ EXPECTED_SCHEMAS=(
   "generated/runtime-contract.json:runtime-contract.v1"
   "generated/release-state.json:release-state.v1"
   "generated/profile-index.json:profile-index.v1"
+  "generated/tool-policies.json:tool-policy.v1"
 )
 
 for entry in "${EXPECTED_SCHEMAS[@]}"; do

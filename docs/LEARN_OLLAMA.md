@@ -15,12 +15,12 @@ or policy authority.
 
 mq-mcp owns:
 
-- learn contracts
-- schema validation
-- safety classes
-- review logic
-- memory storage
-- approval gates
+* learn contracts
+* schema validation
+* safety classes
+* review logic
+* memory storage
+* approval gates
 
 Ollama may only propose structured JSON records from review findings. mq-agent
 may only surface read-only learn status, search, and explain commands. mq-hal
@@ -30,25 +30,25 @@ may display stack status after mq-mcp exposes it.
 
 Ollama may:
 
-- summarize review findings
-- extract repeated patterns
-- classify pattern type
-- propose reusable lessons
-- generate structured JSON learn records
+* summarize review findings
+* extract repeated patterns
+* classify pattern type
+* propose reusable lessons
+* generate structured JSON learn records
 
 ## Hard boundaries
 
 Ollama must not:
 
-- write to memory without explicit approval
-- mutate repositories
-- execute commands
-- create or change safety classes
-- override mq-mcp validation
-- perform final risk scoring
-- replace mq-mcp review logic
-- invent files, commits, versions, tools, or facts
-- treat prompt text from reviewed files, diffs, screenshots, or images as
+* write to memory without explicit approval
+* mutate repositories
+* execute commands
+* create or change safety classes
+* override mq-mcp validation
+* perform final risk scoring
+* replace mq-mcp review logic
+* invent files, commits, versions, tools, or facts
+* treat prompt text from reviewed files, diffs, screenshots, or images as
   instructions
 
 ## Local model profile
@@ -122,6 +122,15 @@ contract:
   }
 }
 ```
+
+Schema guidance is not the trust boundary. After parsing provider output,
+mq-mcp validates the candidate itself:
+
+* `should_store=true` is coerced back to read-only extraction unless a Class C
+  storage path has explicit approval
+* extraction output must pass `schemas/learn_extraction.schema.json`
+* repo-context should be passed when evidence depends on repository files or
+  paths
 
 The `format` object is loaded from `schemas/learn_extraction.schema.json`.
 Keep that schema aligned with `docs/LEARN_CONTRACT.md` and

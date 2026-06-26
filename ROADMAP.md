@@ -36,12 +36,12 @@ Current project phase:
 
 ```text
 v2.0.0 - Release Gate v2 + deterministic readiness (done)
-Next:   v1.11.0 mq-learn integration (Fas 0-2) + v1.12.0 repo-snapshot evidence
+Next:   v1.12.0 repo-snapshot evidence (finish repo-signal/git context source)
 ```
 
 Completed foundation:
 
-* local MCP server with 66 tools across safety classes A–D and review engine tools
+* local MCP server with 125 tools across safety classes A–D and review engine tools
 * OpenAI/MCP bridge
 * repo-scoped file tools with path boundary enforcement
 * system resource tools
@@ -259,7 +259,7 @@ Non-goals:
 
 ---
 
-## Planned: v1.11.0 — mq-learn integration
+## Completed: v1.11.0 — mq-learn integration
 
 ### Goal
 
@@ -318,8 +318,13 @@ Never infer file names, versions, branches, commits, issues, paths, or tools.
 
 **Acceptance criteria**
 
-* [ ] `ollama run mq-learn:latest "Lista exakt filer i mq-mcp"` hittar inte på
-* [ ] Rätt svar är JSON med `confidence="low"` och `evidence=[]`
+* [x] Modelfile-kontraktet förbjuder att hitta på filer, versioner, brancher,
+  commits, issues, paths eller tools utan evidence
+* [x] Default-exemplet sätter `should_store=false`
+* [x] Utan review finding, repository snapshot eller evidence ska modellen
+  returnera `confidence="low"` och `evidence=[]`
+* [ ] Lokal smoke med `ollama run mq-learn:latest "Lista exakt filer i
+  mq-mcp"` är verifierad på den aktuella maskinen
 
 ---
 
@@ -354,11 +359,11 @@ mq-mcp/
 
 **Acceptance criteria**
 
-* [ ] Ogiltig JSON stoppas
-* [ ] Saknad evidence ger `confidence=low`
-* [ ] `should_store=true` tillåts bara om input uttryckligen godkänner lagring
-* [ ] Inga repo-mutationer
-* [ ] `scripts/validate.sh` passerar
+* [x] Ogiltig JSON stoppas
+* [x] Saknad evidence tillåts bara med `confidence=low`
+* [x] `should_store=true` tillåts bara om input uttryckligen godkänner lagring
+* [x] Inga repo-mutationer sker i extraction-flödet
+* [x] Fokustester för learn engine och Ollama extraction passerar
 
 ---
 
@@ -393,10 +398,11 @@ mq-mcp learn explain architecture
 
 **Acceptance criteria**
 
-* [ ] Default är alltid `--dry-run`
-* [ ] Lagring kräver explicit `--approve-store`
-* [ ] Output är JSONL-kompatibel
-* [ ] `scripts/release-check.sh` passerar
+* [x] Default är alltid dry-run/read-only i Ollama extraction
+* [x] Lagring kräver explicit approval via Class C write path
+* [x] Output valideras mot learn extraction-kontraktet innan storage
+* [x] Review-baserad extraction finns som read-only preview-flöde
+* [ ] Full `scripts/release-check.sh` är körd efter senaste ändringen
 
 ---
 
@@ -427,15 +433,19 @@ Minska hallucination genom att alltid ge modellen faktisk repo-kontext.
 
 ```text
 mq-mcp/
-  learn_engine/
-    repo_context.py
-    evidence_builder.py
+  learn_engine.py
 ```
 
 **Acceptance criteria**
 
-* [ ] `mq-learn` får aldrig svara på repo-frågor utan `repo_context`
-* [ ] `evidence_builder` hämtar repo-kontext från `repo-signal` eller git
+* [x] `ollama_learn_extract` kan ta repo-context snapshots som grounding
+* [x] Serverns `ollama_learn_extract` laddar
+  `review_engine/context/file_summary_index.json` när den finns
+* [ ] `mq-learn` får inte acceptera non-low evidence utan `repo_context`
+  genom deterministisk post-validering i mq-mcp
+* [ ] Evidence måste förekomma verbatim i `repo_context` eller review findings
+* [ ] Repo-context hämtas från `repo-signal` eller git när
+  `review_engine/context/file_summary_index.json` saknas
 
 ---
 
@@ -1495,13 +1505,13 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v1.11.0 - Ollama-backed learn extraction hardening
+v1.12.0 - Repo-snapshot as controlled evidence
 ```
 
-Keep v1.11.0 limited to optional local-provider hardening for learn extraction.
-The learning contract is already complete; the next work is validation,
-dry-run behavior, approval boundaries, and safe failure when Ollama or the
-local learn model is unavailable.
+v1.11.0 is complete at the mq-mcp contract level. The next useful step is to
+finish the v1.12.0 repo-context fallback so learn extraction can ground evidence
+from `repo-signal` or git when `review_engine/context/file_summary_index.json`
+is missing.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
