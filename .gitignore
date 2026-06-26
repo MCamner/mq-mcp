@@ -9,6 +9,9 @@ __pycache__/
 venv/
 .env
 
+# Local code intelligence index
+.codegraph/
+
 # Node
 node_modules/
 npm-debug.log*
