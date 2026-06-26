@@ -116,10 +116,10 @@ current state of the repo without running `build_repo_context` first.
 | `risk_review_diff` | Saves findings per file | `review_engine/memory/review_history.json` |
 | `shell_exec` | Runs an arbitrary shell command (env-gated; bridge approval) | local machine |
 | `brain_record_decision` | Writes an ADR | `mqobsidian/decisions/` |
-| `brain_record_review` | Writes a review summary | `mqobsidian/reviews/` |
+| `brain_record_review` | Writes a review summary | `mqobsidian/memory/reviews/` |
 | `brain_record_session` | Writes a session note | `mqobsidian/sessions/` |
-| `brain_record_learning` | Writes a learned pattern | `mqobsidian/learn/` |
-| `brain_promote_learning` | Promotes a lesson to verified | `mqobsidian/learn/verified/` |
+| `brain_record_learning` | Writes a learned pattern | `mqobsidian/memory/learn/` |
+| `brain_promote_learning` | Promotes a lesson to verified | `mqobsidian/memory/learn/verified/` |
 
 Any tool not listed here has no persistent side effects.
 

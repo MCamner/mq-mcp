@@ -146,7 +146,7 @@ def record_review(
     confidence: str = "medium",
     raw_summary: str = "",
 ) -> dict[str, Any]:
-    """Write a code review summary to reviews/.
+    """Write a code review summary to memory/reviews/.
 
     Returns {"ok": True, "path": "..."} or {"ok": False, "error": "..."}.
     """
@@ -169,7 +169,7 @@ def record_review(
     sections = [("Summary", meta), ("Top risks", risks_md), ("Suggested next steps", steps_md)]
     if raw_summary:
         sections.append(("Full summary", raw_summary))
-    return _write("reviews", filename, fm + f"# Review: {source}\n\n" + _body(*sections))
+    return _write("memory/reviews", filename, fm + f"# Review: {source}\n\n" + _body(*sections))
 
 
 def record_session(
@@ -265,12 +265,24 @@ def _set_frontmatter_field(content: str, key: str, value: str) -> str:
     return "---\n" + "\n".join(new_lines) + "\n---\n" + body_after
 
 
-def promote_learning(slug: str) -> dict[str, Any]:
-    """Promote learn/<slug>.md to learn/verified/.
+def _learning_source_path(slug_clean: str) -> tuple[Path, str] | None:
+    """Find a learn note in the standard path, falling back to legacy root learn/."""
+    candidates = [
+        ("memory/learn", _vault() / "memory" / "learn" / f"{slug_clean}.md"),
+        ("learn", _vault() / "learn" / f"{slug_clean}.md"),
+    ]
+    for prefix, path in candidates:
+        if path.exists():
+            return path, f"{prefix}/{slug_clean}.md"
+    return None
 
-    1. Reads learn/<slug>.md
+
+def promote_learning(slug: str) -> dict[str, Any]:
+    """Promote memory/learn/<slug>.md to memory/learn/verified/.
+
+    1. Reads memory/learn/<slug>.md, with legacy learn/<slug>.md fallback
     2. Validates required frontmatter fields and body sections
-    3. Writes learn/verified/<timestamp>-<slug>.md with promoted_at + status: verified
+    3. Writes memory/learn/verified/<timestamp>-<slug>.md with promoted_at + status: verified
     4. Marks original as status: promoted
 
     Returns {"ok": True, "path": "...", "source": "..."} or {"ok": False, "error": "..."}.
@@ -278,11 +290,12 @@ def promote_learning(slug: str) -> dict[str, Any]:
     if not vault_exists():
         return {"ok": False, "error": f"Vault not found: {_vault()}"}
 
-    slug_clean = slug.removeprefix("learn/").removesuffix(".md")
-    source_path = _vault() / "learn" / f"{slug_clean}.md"
+    slug_clean = slug.removeprefix("memory/learn/").removeprefix("learn/").removesuffix(".md")
+    found = _learning_source_path(slug_clean)
 
-    if not source_path.exists():
-        return {"ok": False, "error": f"Not found: learn/{slug_clean}.md"}
+    if found is None:
+        return {"ok": False, "error": f"Not found: memory/learn/{slug_clean}.md or learn/{slug_clean}.md"}
+    source_path, source_ref = found
 
     content = source_path.read_text(encoding="utf-8")
     fm_fields, body = _parse_frontmatter(content)
@@ -306,9 +319,9 @@ def promote_learning(slug: str) -> dict[str, Any]:
     promoted_fm = dict(fm_fields)
     promoted_fm["status"] = "verified"
     promoted_fm["promoted_at"] = now
-    promoted_fm["promoted_from"] = f"learn/{slug_clean}.md"
+    promoted_fm["promoted_from"] = source_ref
 
-    result = _write("learn/verified", promoted_filename, _frontmatter(**promoted_fm) + body)
+    result = _write("memory/learn/verified", promoted_filename, _frontmatter(**promoted_fm) + body)
     if not result.get("ok"):
         return result
 
@@ -326,7 +339,7 @@ def record_learning(
     recommended_action: str,
     confidence: str = "medium",
 ) -> dict[str, Any]:
-    """Write a learned pattern to learn/.
+    """Write a learned pattern to memory/learn/.
 
     Overwrites existing file — patterns are updated, not duplicated.
     Returns {"ok": True, "path": "..."} or {"ok": False, ...}.
@@ -352,4 +365,4 @@ def record_learning(
         ("Evidence", evidence_md),
         ("Recommended action", recommended_action),
     ]
-    return _write("learn", filename, fm + f"# Pattern: {pattern_name}\n\n" + _body(*sections))
+    return _write("memory/learn", filename, fm + f"# Pattern: {pattern_name}\n\n" + _body(*sections))

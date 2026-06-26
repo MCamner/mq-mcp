@@ -1436,12 +1436,94 @@ Other ideas:
 * local event history
 * repo health history
 * MCP tool marketplace
-* integration with mq-ums
 * cross-repo tool inventory
 * visual safety map — runtime dependency graph, orchestration topology
 * generated architecture diagrams from architecture_memory
 * drift visualization: doc vs implementation divergence over time
 * demo videos or GIFs
+
+---
+
+## Planned: mq-ums-first-class-mq-provider
+
+Goal:
+
+Promote `mq-ums` from an adjacent enterprise tool to a first-class MQ signal
+provider that can participate in read-only stack checks, truth export, and
+operator status views without moving PowerShell or browser logic into
+`mq-mcp`.
+
+Why this matters:
+
+Today `mq-mcp` already exposes two safe mq-ums surfaces:
+
+* `ums_command_catalog` — read the allowlisted mq-ums command catalog
+* `ums_audit_log` — read local mq-ums audit history
+
+That is useful, but it is not yet a canonical MQ contract. The missing piece is
+a stable, read-only readiness signal that other MQ repos can consume without
+reimplementing mq-ums internals.
+
+Target flow:
+
+```text
+mq-ums live validation
+-> ums_status.v1
+-> mq-mcp read-only wrapper
+-> mq-agent stack endpoint-check
+-> mqobsidian truth export
+-> mq-agent dashboard / mq-hal brief
+```
+
+Phase 1 — mq-ums contract:
+
+Add a stable JSON output in `mq-ums`, tentatively `ums_status.v1`, with checks
+such as PSIGEL availability, credential load, session creation, key read-only
+commands, and redaction/safety flags.
+
+Phase 2 — mq-agent consumption:
+
+Add a read-only `mq-agent stack endpoint-check --repo mq-ums --json` command
+that consumes only the JSON contract output. No PowerShell or UMS command logic
+should move into `mq-agent`.
+
+Phase 3 — mq-mcp wrappers:
+
+Expose read-only wrappers such as:
+
+* `ums_status`
+* `ums_firmware`
+* `ums_device_lookup`
+* `ums_audit_tail`
+
+Start all of them as read-only integrations with explicit safety metadata.
+
+Phase 4 — truth export:
+
+Export endpoint readiness into an MQ memory surface, for example an
+`endpoint-truth` path in mqobsidian, so live UMS validation can be compared
+over time like other stack signals.
+
+Phase 5 — operator views:
+
+Show endpoint/UMS readiness in `mq-agent` dashboard and `mq-hal` summaries so
+the enterprise endpoint layer becomes visible in the same control plane as repo
+health, runtime safety, and release status.
+
+Non-goals:
+
+* no raw PowerShell execution in `mq-agent`
+* no bypass of mq-ums allowlists or dry-run controls
+* no automatic writes through mq-mcp in the first phase
+* no duplication of the mq-ums browser/API ownership boundary
+
+Success condition:
+
+The MQ stack can treat UMS readiness as a first-class signal:
+
+```text
+structured endpoint signal -> reviewed action
+```
 
 ---
 

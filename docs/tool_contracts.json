@@ -50,7 +50,7 @@
     {
       "name": "brain_promote_learning",
       "class": "C",
-      "description": "Promote learn/<slug>.md to learn/verified/.",
+      "description": "Promote memory/learn/<slug>.md to memory/learn/verified/.",
       "resolver": "none",
       "write": true,
       "subprocess": false,
@@ -74,7 +74,7 @@
     {
       "name": "brain_record_learning",
       "class": "C",
-      "description": "Write a learned engineering pattern to mqobsidian/learn/.",
+      "description": "Write a learned engineering pattern to mqobsidian/memory/learn/.",
       "resolver": "none",
       "write": true,
       "subprocess": false,
@@ -86,7 +86,7 @@
     {
       "name": "brain_record_review",
       "class": "C",
-      "description": "Write a code review summary to mqobsidian/reviews/.",
+      "description": "Write a code review summary to mqobsidian/memory/reviews/.",
       "resolver": "none",
       "write": true,
       "subprocess": false,

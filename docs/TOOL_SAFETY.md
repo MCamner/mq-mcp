@@ -132,10 +132,10 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `learn_from_diff` | Create a learning record with current git diff as context | Write outside repo, commit |
 | `bootstrap_learning_memory` | Seed the learn layer from architecture memory ADRs | Write outside repo, commit |
 | `brain_record_decision` | Write an ADR to mqobsidian/decisions/ | Write outside repo (vault) |
-| `brain_record_review` | Write a code review summary to mqobsidian/reviews/ | Write outside repo (vault) |
+| `brain_record_review` | Write a code review summary to mqobsidian/memory/reviews/ | Write outside repo (vault) |
 | `brain_record_session` | Write a session note to mqobsidian/sessions/ | Write outside repo (vault) |
-| `brain_record_learning` | Write a learned engineering pattern to mqobsidian/learn/ | Write outside repo (vault) |
-| `brain_promote_learning` | Promote learn/<slug>.md to learn/verified/ | Write outside repo (vault) |
+| `brain_record_learning` | Write a learned engineering pattern to mqobsidian/memory/learn/ | Write outside repo (vault) |
+| `brain_promote_learning` | Promote memory/learn/<slug>.md to memory/learn/verified/ | Write outside repo (vault) |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -301,10 +301,10 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |
 | `brain_status` | A | ~/mqobsidian (read-only) | No | No |
 | `brain_record_decision` | C | ~/mqobsidian/decisions/ | Yes | No |
-| `brain_record_review` | C | ~/mqobsidian/reviews/ | Yes | No |
+| `brain_record_review` | C | ~/mqobsidian/memory/reviews/ | Yes | No |
 | `brain_record_session` | C | ~/mqobsidian/sessions/ | Yes | No |
-| `brain_record_learning` | C | ~/mqobsidian/learn/ | Yes | No |
-| `brain_promote_learning` | C | ~/mqobsidian/learn/verified/ | Yes | No |
+| `brain_record_learning` | C | ~/mqobsidian/memory/learn/ | Yes | No |
+| `brain_promote_learning` | C | ~/mqobsidian/memory/learn/verified/ | Yes | No |
 | `run_mqlaunch_doctor` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_selftest` | D | subprocess (mqlaunch) | No | Yes |
 | `run_mqlaunch_release_check` | D | subprocess (mqlaunch) | No | Yes |
