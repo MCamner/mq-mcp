@@ -183,7 +183,7 @@ section "Generated artifacts"
 GENERATED="$REPO_ROOT/generated"
 if cd mq-mcp && uv run python main.py tools --export >/dev/null 2>&1; then
   pass "Tool registry export succeeded"
-  for artifact in tool-index.json tool-safety.json runtime-contract.json; do
+  for artifact in tool-index.json tool-safety.json runtime-contract.json tool-policies.json; do
     if python3 -c "import json; json.load(open('../generated/$artifact'))" 2>/dev/null; then
       pass "generated/$artifact is valid JSON"
     else
