@@ -253,6 +253,20 @@ mq-mcp guarantees to callers:
 * No output contains API keys, tokens, or local machine paths in cleartext
 * Tool names are stable across patch versions; breaking renames require a minor bump
 
+### mq-mcp (Bridget) → mq-agent (workflow delegation)
+
+`bridget --workflow "<goal>"` is a thin operator entrypoint that *delegates* to
+`mq-agent workflow`. It does not make mq-mcp an orchestrator:
+
+* Bridget may map the goal to one known template (deterministic keyword map),
+  identify the repo, ask mq-agent to `plan`, present it, and — after explicit
+  approval — ask mq-agent to `run` it and present the result.
+* Bridget must not hold run state, retry, write workflow state, select tools, or
+  bypass tool policy. All orchestration and state remain in mq-agent.
+* Recursion is denied: Bridget refuses to start a workflow when
+  `MQ_WORKFLOW_DEPTH` is set, and sets it in the mq-agent child env. A
+  `run_mqlaunch_*` tool may not start `mqlaunch flow`.
+
 ---
 
 ## 6. Profile access model

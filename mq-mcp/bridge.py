@@ -14,6 +14,7 @@ from typing import Any, Optional, cast
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 from bridget_context import BridgetContext
+import bridget_workflow
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -212,6 +213,7 @@ def usage() -> None:
   uv run python bridge.py "your prompt"
   uv run python bridge.py -m <model> "your prompt"
   uv run python bridge.py --tools
+  uv run python bridge.py --workflow "your goal" [-y]
   uv run python bridge.py --help
 
 Examples:
@@ -219,8 +221,27 @@ Examples:
   uv run python bridge.py -m o3 "Explain this repo."
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
+  uv run python bridge.py --workflow "preflight ~/macos-scripts"
 """
     )
+
+
+def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
+    """Extract the workflow goal and an assume-yes flag from argv.
+
+    Bridget's ``--workflow`` is a thin entrypoint that delegates to
+    ``mq-agent workflow``; it never selects tools or holds run state. Returns
+    (goal, assume_yes).
+    """
+    rest = [a for a in argv if a != "--workflow"]
+    assume_yes = False
+    kept: list[str] = []
+    for a in rest:
+        if a in ("-y", "--yes"):
+            assume_yes = True
+        else:
+            kept.append(a)
+    return " ".join(kept).strip(), assume_yes
 
 
 def parse_prompt() -> tuple[str, bool, bool, str, bool, bool]:
@@ -706,6 +727,13 @@ if __name__ == "__main__":
     reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
     if reconfigure_stdout:
         reconfigure_stdout(line_buffering=True)
+
+    # Workflow mode is fully synchronous and delegates to mq-agent; it needs
+    # neither the OpenAI client nor the MCP session, so intercept it before the
+    # async bridge starts.
+    if "--workflow" in sys.argv[1:]:
+        _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
+        sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
 
     try:
         asyncio.run(run_bridge())

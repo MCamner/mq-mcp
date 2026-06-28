@@ -4868,6 +4868,12 @@ _TUI_SPLASH = re.compile(r"PHOSPHOR GRID|███|╔═|╚═|═══")
 
 def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
     """Run a mqlaunch command headless. Returns (clean_output, returncode)."""
+    # Defense in depth: a run_mqlaunch_* MCP tool must never start a workflow via
+    # `mqlaunch flow`. That would let an mq-mcp tool recursively kick off the
+    # orchestration layer, bypassing the workflow depth guard. All legitimate
+    # callers pass fixed, non-flow args, so this only blocks the abuse vector.
+    if args and args[0] == "flow":
+        return ("ERROR: run_mqlaunch tools may not start 'mqlaunch flow'.", 1)
     env = {**os.environ, "TERM": "xterm", "COLUMNS": "120", "LINES": "40"}
     try:
         result = subprocess.run(
