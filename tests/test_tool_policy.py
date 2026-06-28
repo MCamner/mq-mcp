@@ -74,6 +74,29 @@ def test_write_tool_requires_step_and_is_not_retry_safe():
     assert policy["retry_safe"] is False
 
 
+@pytest.mark.parametrize("name", ["review_diff", "review_file", "review_repo"])
+def test_readonly_network_review_tools_are_plan_not_step(name):
+    # A non-writing network (OpenAI) call is billable but read-only, so it is
+    # PLAN — never STEP. STEP is reserved for mutation; treating network as STEP
+    # made the read-only workflow runner reject the whole review tool family.
+    policy = tool_policy.get_policy(name)
+    assert policy["write"] is False
+    assert policy["network"] is True
+    assert policy["approval"] == tool_policy.APPROVAL_PLAN
+    assert policy["workflow_allowed"] is True
+
+
+def test_step_approval_is_reserved_for_writes():
+    # No read-only (non-writing) tool may carry STEP approval — otherwise the
+    # read-only runner would refuse it as if it were a mutation.
+    offenders = [
+        p["name"]
+        for p in tool_policy.all_policies()
+        if p["approval"] == tool_policy.APPROVAL_STEP and not p["write"]
+    ]
+    assert offenders == [], f"read-only tools wrongly marked STEP: {offenders}"
+
+
 def test_read_only_no_subprocess_is_approval_none():
     policy = tool_policy.get_policy("repo_signal_status")
     assert policy["approval"] == tool_policy.APPROVAL_NONE
