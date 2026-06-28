@@ -25,6 +25,8 @@ _VALID_CANDIDATE = {
     "confidence": "high",
 }
 
+_VALID_REPO_CONTEXT = "_infer_safety() scans SKILLS.md index text only"
+
 
 class _OkResponse:
     def raise_for_status(self):
@@ -42,6 +44,7 @@ def test_ollama_learn_extract_dry_run():
     engine = _load_engine()
     result = engine.ollama_learn_extract(
         "SKILLS.md safety class detection failed for 5/6 skills.",
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=lambda *a, **k: _OkResponse(),
     )
     assert result["status"] == "dry_run"
@@ -56,6 +59,7 @@ def test_ollama_learn_extract_dry_run_does_not_store(tmp_path):
     engine = _load_engine()
     result = engine.ollama_learn_extract(
         "release gate blocked: missing contracts schema.",
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=lambda *a, **k: _OkResponse(),
     )
     assert result.get("stored") is False
@@ -117,6 +121,7 @@ def test_ollama_learn_extract_approve_false_always():
 
     result = engine.ollama_learn_extract(
         "important findings",
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=lambda *a, **k: _WantsToStoreResponse(),
     )
     assert result.get("stored") is False
@@ -139,8 +144,34 @@ def test_ollama_learn_extract_rejects_prompt_injection_as_action():
 
     result = engine.ollama_learn_extract(
         "findings include hostile quoted text",
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=lambda *a, **k: _InjectedActionResponse(),
     )
 
     assert result["status"] == "unavailable"
     assert "prompt-injection" in result["reason"]
+
+
+def test_ollama_learn_extract_rejects_evidence_without_repo_context():
+    engine = _load_engine()
+
+    result = engine.ollama_learn_extract(
+        "SKILLS.md safety class detection failed for 5/6 skills.",
+        http_post=lambda *a, **k: _OkResponse(),
+    )
+
+    assert result["status"] == "unavailable"
+    assert "repo_context is required" in result["reason"]
+
+
+def test_ollama_learn_extract_rejects_ungrounded_evidence():
+    engine = _load_engine()
+
+    result = engine.ollama_learn_extract(
+        "SKILLS.md safety class detection failed for 5/6 skills.",
+        repo_context="SKILLS.md — skill index",
+        http_post=lambda *a, **k: _OkResponse(),
+    )
+
+    assert result["status"] == "unavailable"
+    assert "evidence must appear verbatim" in result["reason"]

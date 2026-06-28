@@ -25,6 +25,8 @@ _VALID_CANDIDATE = {
     "confidence": "high",
 }
 
+_VALID_REPO_CONTEXT = "check_contracts_valid raised BLOCKED/68 without schema file"
+
 
 def _ok_http_post(*a, **k):
     class _Resp:
@@ -43,6 +45,7 @@ def test_learn_extract_from_last_review_dry_run():
     result = engine.learn_extract_from_last_review(
         "mq-agent/contracts/release_gate_v2.schema.json",
         review_loader=loader,
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=_ok_http_post,
     )
     assert result["status"] == "dry_run"
@@ -101,6 +104,7 @@ def test_learn_extract_from_last_review_does_not_store():
     result = engine.learn_extract_from_last_review(
         "mq-mcp/learn_engine.py",
         review_loader=loader,
+        repo_context=_VALID_REPO_CONTEXT,
         http_post=_ok_http_post,
     )
     assert result.get("stored") is False

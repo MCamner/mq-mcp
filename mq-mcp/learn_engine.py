@@ -270,6 +270,25 @@ def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
     return "\n".join(lines)
 
 
+def _validate_grounded_candidate(
+    candidate: dict[str, Any],
+    *,
+    review_findings: str,
+    repo_context: str,
+) -> dict[str, Any]:
+    """Ensure model evidence is grounded in the provided deterministic inputs."""
+    evidence = candidate.get("evidence", [])
+    confidence = candidate.get("confidence", "low")
+    if not repo_context.strip() and (evidence or confidence != "low"):
+        raise ValueError("repo_context is required for non-low learn evidence")
+
+    grounded_text = f"{repo_context}\n{review_findings}"
+    missing = [item for item in evidence if item not in grounded_text]
+    if missing:
+        raise ValueError("learn evidence must appear verbatim in repo_context or review findings")
+    return candidate
+
+
 def ollama_learn_status(
     *,
     endpoint: str = "http://localhost:11434/api/tags",
@@ -332,6 +351,7 @@ def learn_extract_from_last_review(
     model: str = "mq-learn",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
+    repo_context: str = "",
     http_post: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Dry-run extraction of a learn pattern from the last stored review for a file.
@@ -351,6 +371,7 @@ def learn_extract_from_last_review(
         model=model,
         endpoint=endpoint,
         timeout=timeout,
+        repo_context=repo_context,
         http_post=http_post,
     )
     result["file"] = relative_path
@@ -411,6 +432,11 @@ def ollama_learn_extract(
 
     try:
         candidate = validate_learn_record(generated, approve=False)
+        candidate = _validate_grounded_candidate(
+            candidate,
+            review_findings=review_findings.strip(),
+            repo_context=repo_context,
+        )
     except ValueError as exc:
         return {"status": "unavailable", "reason": str(exc)}
 
@@ -474,7 +500,12 @@ def learn_extract_pattern(
     if isinstance(generated, dict) and generated.get("should_store"):
         generated = {**generated, "should_store": False}
 
-    return validate_learn_record(generated, approve=approve)
+    candidate = validate_learn_record(generated, approve=approve)
+    return _validate_grounded_candidate(
+        candidate,
+        review_findings=review_findings.strip(),
+        repo_context=repo_context,
+    )
 
 
 def store_learn_record(
