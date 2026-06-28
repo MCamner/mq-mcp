@@ -18,6 +18,7 @@ if [[ $# -eq 0 ]]; then
   echo 'Usage: bridget "your prompt"'
   echo 'Example: bridget "Show git status."'
   echo '         bridget --do "create a folder test123 and list it"'
+  echo '         bridget --workflow "preflight ~/macos-scripts"'
   exit 0
 fi
 

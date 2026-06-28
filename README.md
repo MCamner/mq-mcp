@@ -388,6 +388,28 @@ bridget --voice-off
 
 See [`docs/bridget-voice.md`](docs/bridget-voice.md).
 
+## Bridget workflows
+
+Bridget can start a bounded, known multi-step workflow and delegate it to the
+mq-agent orchestration layer:
+
+```bash
+bridget --workflow "preflight ~/macos-scripts"
+bridget --workflow "review and test" -y
+```
+
+Bridget maps the goal to one of three fixed templates (`repo-preflight`,
+`review-and-test`, `release-ready`) with a deterministic keyword map. On an
+ambiguous or unrecognized goal it lists the templates and asks you to choose —
+it never guesses. It shows the plan, asks for approval, then runs it through
+`mq-agent workflow` and prints the result.
+
+This is a thin entrypoint: Bridget proposes and delegates only. It holds no run
+state, implements no retry, selects no tools, and bypasses no tool policy — all
+orchestration and state live in mq-agent. A workflow cannot start another
+workflow (`MQ_WORKFLOW_DEPTH` guard), and `run_mqlaunch_*` tools may not start
+`mqlaunch flow`.
+
 ## Validation
 
 Run the local validation script from the repository root:
