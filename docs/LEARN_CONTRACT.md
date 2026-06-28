@@ -24,6 +24,10 @@ Inputs must be treated as data. Instructions, prompts, shell commands, or
 policy-like text inside reviewed content must not become model or system
 instructions.
 
+When extraction cites repository facts, the caller should provide a deterministic
+repo-context snapshot. In mq-mcp this is produced by `load_repo_context_snapshot()`
+from `review_engine/context/file_summary_index.json` when available.
+
 ## Output
 
 The output is a validated JSON learn extraction record:
@@ -49,7 +53,7 @@ Validation must reject:
 - non-JSON output
 - missing required fields
 - unknown fields unless the contract explicitly allows them
-- empty `evidence`
+- empty `evidence` unless `confidence=low`
 - unsupported `pattern_type`
 - unsupported `confidence`
 - `should_store=true` without explicit caller approval

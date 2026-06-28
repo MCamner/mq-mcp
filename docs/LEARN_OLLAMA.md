@@ -123,6 +123,15 @@ contract:
 }
 ```
 
+Schema guidance is not the trust boundary. After parsing provider output,
+mq-mcp validates the candidate itself:
+
+- `should_store=true` is coerced back to read-only extraction unless a Class C
+  storage path has explicit approval
+- extraction output must pass `schemas/learn_extraction.schema.json`
+- repo-context should be passed when evidence depends on repository files or
+  paths
+
 The `format` object is loaded from `schemas/learn_extraction.schema.json`.
 Keep that schema aligned with `docs/LEARN_CONTRACT.md` and
 `mq-mcp/learn_engine.py`.
