@@ -61,10 +61,15 @@ def _derive_approval(entry: dict[str, Any]) -> str:
     name = entry["name"]
     if name in FORBIDDEN_TOOLS:
         return APPROVAL_FORBIDDEN
+    # STEP (per-step approval) is reserved for genuine mutation. A non-writing
+    # network call (e.g. an OpenAI review) is billable but read-only, so it is
+    # PLAN, not STEP — otherwise it conflates with file writes and the read-only
+    # workflow runner refuses it (it treats STEP as mutation), which blocked the
+    # whole review/risk tool family from any read-only workflow.
     if entry["writes_files"]:
         return APPROVAL_STEP
     if entry["uses_network"]:
-        return APPROVAL_STEP  # external side effect — approve per step
+        return APPROVAL_PLAN  # read-only external call — plan-level approval
     if entry["uses_subprocess"]:
         return APPROVAL_PLAN  # read-only subprocess / test run
     return APPROVAL_NONE
