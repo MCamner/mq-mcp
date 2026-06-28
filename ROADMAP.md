@@ -36,7 +36,7 @@ Current project phase:
 
 ```text
 v2.0.0 - Release Gate v2 + deterministic readiness (done)
-Next:   v1.11.0 mq-learn integration (Fas 0-2) + v1.12.0 repo-snapshot evidence
+Next:   Phase 12D - Evidence-Based Memory System integration for mq-mcp
 ```
 
 Completed foundation:
@@ -202,6 +202,7 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
+| Phase 12 | Evidence-Based Memory System, cross-repo   | Proposed      |
 
 ---
 
@@ -474,6 +475,164 @@ memory/learn/patterns/<pattern_name>.md
 * [x] Obsidian är bara storage/display — exekverar inget (`brain_record_learning` / `brain_promote_learning` skriver markdown, kör inget)
 * [x] `mq-mcp` äger valideringen (`validate_learn_record` i `learn_engine.py`)
 * [x] Export kräver explicit approve (`brain_record_learning` är Class C, kräver `--approve` via mq-agent)
+
+---
+
+## Phase 12 — Evidence-Based Memory System
+
+Status: proposed cross-repo capability.
+
+Goal:
+
+Build a self-improving long-term memory system that promotes valuable knowledge
+into permanent memory from repeated evidence and multi-model observations.
+
+This is not a local `mq-mcp` feature. It is a stack capability with
+`mqobsidian` as the owner, `mq-agent` as the runtime orchestrator, and `mq-mcp`
+as the review intelligence and feedback-signal producer.
+
+### Capability owners
+
+| Repository | Phase | Responsibility |
+| ---------- | ----- | -------------- |
+| `mqobsidian` | 12A | Memory schemas, storage, promotion pipeline, dashboards, permanent memory |
+| `mq-agent` | 12B | Observation generation, memory querying, workflow integration, context packs |
+| `repo-signal` | 12C | Repo-state observations, freshness, frequency, repeated workflow signals |
+| `mq-mcp` | 12D | Review signals, recommendation feedback, pattern extraction, anti-pattern detection |
+| `mqlaunch` | 12E | Human dashboards, review queue, manual promotion, memory search |
+| `mq-hal` | Optional | Cross-session continuity, personal preferences, operator memory |
+
+### Dependency flow
+
+```text
+mqlaunch UI/TUI
+      |
+      v
+mq-agent orchestration <----- repo-signal repo context
+      |
+      | observations + memory queries
+      v
+mqobsidian Evidence Memory OS
+      |
+      | feedback
+      v
+mq-mcp review and signals
+```
+
+### Cross-repo capability matrix
+
+| Capability | mqobsidian | mq-agent | repo-signal | mq-mcp | mqlaunch |
+| ---------- | ---------- | -------- | ----------- | ------ | -------- |
+| Inbox | Owner | Producer | Producer | Producer | Viewer |
+| Scoring | Owner | Consumer | Consumer | Consumer | Viewer |
+| Promotion | Owner | Consumer | - | - | Moderator |
+| Feedback | Owner | Producer | Producer | Producer | Moderator |
+| Dashboards | Owner | Consumer | Consumer | Consumer | Owner |
+| Permanent memory | Owner | Consumer | Consumer | Consumer | Viewer |
+
+### Phase 12A — mqobsidian foundation
+
+Dependencies: none.
+
+Checklist:
+
+* [ ] Create memory folder structure:
+  `memory/inbox`, `memory/candidates`, `memory/patterns`,
+  `memory/permanent`, `memory/archive`
+* [ ] Create `memory-observation.v1` schema
+* [ ] Create `memory-score.v1` schema
+* [ ] Create `feedback-signal.v1` schema
+* [ ] Create dashboard views for inbox, candidates, promotions, and permanent
+  memory
+* [ ] Define metadata for source repo, evidence, confidence, freshness,
+  promotion state, and provenance
+* [ ] Define scoring specification and moderation rules
+
+### Phase 12B — mq-agent integration
+
+Dependencies: Phase 12A.
+
+Checklist:
+
+* [ ] Read permanent memory for relevant workflows
+* [ ] Read curated patterns before planning multi-step work
+* [ ] Write `memory-observation.v1` records
+* [ ] Write `feedback-signal.v1` records
+* [ ] Integrate memory context into context packs
+* [ ] Keep orchestration decisions in `mq-agent`, not in `mq-mcp`
+
+### Phase 12C — repo-signal integration
+
+Dependencies: Phase 12B.
+
+Checklist:
+
+* [ ] Generate repo-state observations
+* [ ] Detect repeated issues across scans
+* [ ] Detect repeated workflows and file clusters
+* [ ] Emit freshness signals for stale or conflicting repo facts
+* [ ] Emit cross-project pattern candidates
+* [ ] Keep repo scoring internals in `repo-signal`
+
+### Phase 12D — mq-mcp integration
+
+Dependencies: Phase 12C.
+
+`mq-mcp` owns the runtime-safe review and signal-producing part of Phase 12.
+It must not own durable Obsidian curation, workflow orchestration, or
+repo-signal scoring.
+
+Checklist:
+
+* [x] Define `mq-mcp` producer mapping for `memory-observation.v1`
+* [x] Define `mq-mcp` producer mapping for `feedback-signal.v1`
+* [x] Add review-signal payload mapping from parsed review findings
+* [x] Add repeated bug-class observation payload output
+* [x] Add anti-pattern observation payload output
+* [x] Add architecture recommendation feedback payload output
+* [x] Add recommendation-quality feedback payload output
+* [x] Validate all emitted records against Phase 12 schema drafts
+* [x] Keep storage writes behind existing Class C approval boundaries
+* [x] Add contract tests for emitted observation and feedback payloads
+* [x] Expose read-only Phase 12D MCP tools for mq-agent/mqlaunch command surfaces
+* [x] Document the Phase 12D boundary in integration docs
+
+Non-goals:
+
+* No promotion pipeline inside `mq-mcp`
+* No permanent-memory dashboard inside `mq-mcp`
+* No autonomous learning or silent writes
+* No repo-health scoring duplication from `repo-signal`
+* No workflow orchestration logic from `mq-agent`
+
+### Phase 12E — mqlaunch integration
+
+Dependencies: Phase 12D.
+
+Checklist:
+
+* [ ] Add dashboard view
+* [ ] Add top-candidates view
+* [ ] Add review queue
+* [ ] Add manual promotion flow
+* [ ] Add memory search entrypoint
+* [ ] Keep `mqlaunch` as a thin human surface over `mq-agent` and
+  `mqobsidian`
+
+### Phase 12F — Production rollout
+
+Dependencies: Phase 12E.
+
+Definition of done:
+
+* [ ] Inbox receives observations from at least three producer repos
+* [ ] Automatic scoring works from `memory-score.v1`
+* [ ] Promotion pipeline works with human moderation
+* [ ] Permanent memory is queryable by `mq-agent`
+* [ ] Dashboard is available from `mqlaunch`
+* [ ] Feedback loop updates candidate rankings
+* [ ] Manual moderation takes less than 10 minutes per week
+* [ ] `mq-mcp` Phase 12D tests pass in release checks
 
 ---
 

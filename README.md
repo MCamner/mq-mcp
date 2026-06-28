@@ -50,7 +50,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 125 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 129 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -285,7 +285,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 125 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 129 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -396,6 +396,13 @@ The local MCP server exposes 125 tools across five safety classes. See [`docs/TO
 * `learn_extract_from_last_review` — loads stored review findings for a file, runs dry-run Ollama extraction, returns a preview candidate; no storage (Class B)
 * `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
 
+**Phase 12 signal tools (Class A):**
+
+* `phase12_review_observation` — builds a validated `memory-observation.v1` payload from a review finding
+* `phase12_repeated_bug_observation` — builds a validated repeated-bug-class observation payload
+* `phase12_anti_pattern_observation` — builds a validated anti-pattern observation payload
+* `phase12_architecture_feedback` — builds a validated `feedback-signal.v1` payload for architecture recommendation feedback
+
 **Brain tools (Class A/C):**
 
 * `brain_status` — reports mqobsidian vault availability and top-level folders (Class A)
@@ -491,7 +498,11 @@ uv --directory mq-mcp run pytest ../tests -v
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for planned MCP setup, validation, troubleshooting, documentation, and release work.
+See [ROADMAP.md](ROADMAP.md) for completed release-gate work and the proposed
+Phase 12 cross-repo Evidence-Based Memory System. In that plan, `mq-mcp` owns
+the Phase 12D review-signal and feedback-producing runtime work, while
+`mqobsidian`, `mq-agent`, `repo-signal`, and `mqlaunch` own the surrounding
+memory, orchestration, repo-state, and human-review surfaces.
 
 ## Troubleshooting
 

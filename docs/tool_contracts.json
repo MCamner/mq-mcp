@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.0.0",
-  "tool_count": 125,
+  "tool_count": 129,
   "tools": [
     {
       "name": "analyze_csv",
@@ -756,6 +756,46 @@
       "side_effects": [
         "app-launch"
       ],
+      "examples": []
+    },
+    {
+      "name": "phase12_anti_pattern_observation",
+      "class": "A",
+      "description": "Build a Phase 12 anti-pattern observation payload.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "phase12_architecture_feedback",
+      "class": "A",
+      "description": "Build a Phase 12 feedback-signal.v1 payload for architecture advice.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "phase12_repeated_bug_observation",
+      "class": "A",
+      "description": "Build a Phase 12 repeated-bug-class observation payload.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "phase12_review_observation",
+      "class": "A",
+      "description": "Build a Phase 12 memory-observation.v1 payload from a review finding.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {

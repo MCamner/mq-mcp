@@ -140,6 +140,10 @@ TOOL_META: dict[str, dict] = {
     "ollama_learn_status":         {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "ollama_learn_extract":        {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_extract_from_last_review": {"class": "B", "resolver": "resolve_repo_file",  "write": False, "subprocess": False, "side_effects": []},
+    "phase12_review_observation":  {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "phase12_repeated_bug_observation": {"class": "A", "resolver": "none",             "write": False, "subprocess": False, "side_effects": []},
+    "phase12_anti_pattern_observation": {"class": "A", "resolver": "none",             "write": False, "subprocess": False, "side_effects": []},
+    "phase12_architecture_feedback": {"class": "A", "resolver": "none",                 "write": False, "subprocess": False, "side_effects": []},
 
     # Brain / mqobsidian tools (v1.11.0)
     "brain_status":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},

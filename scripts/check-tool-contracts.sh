@@ -24,7 +24,7 @@ fi
 ok "Found docs/tool_contracts.json"
 
 # Extract tool names from server.py (@mcp.tool decorated functions).
-server_tools="$(grep -A1 '@mcp\.tool' "$SERVER" | grep 'def ' | sed 's/.*def \([a-z_]*\).*/\1/' | sort)"
+server_tools="$(grep -A1 '@mcp\.tool' "$SERVER" | grep 'def ' | sed 's/.*def \([A-Za-z0-9_]*\).*/\1/' | sort)"
 
 # Extract tool names from contract JSON.
 contract_tools="$(python3 -c "

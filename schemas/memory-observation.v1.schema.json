@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcamner.github.io/mq-mcp/schemas/memory-observation.v1.schema.json",
+  "title": "MQ Memory Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "producer",
+    "repo",
+    "observation_type",
+    "title",
+    "summary",
+    "evidence",
+    "confidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "memory-observation.v1"
+    },
+    "producer": {
+      "const": "mq-mcp"
+    },
+    "repo": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_type": {
+      "type": "string",
+      "enum": [
+        "review_signal",
+        "repeated_bug_class",
+        "anti_pattern",
+        "architecture_recommendation"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "quote"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    }
+  }
+}

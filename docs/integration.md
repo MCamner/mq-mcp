@@ -62,6 +62,39 @@ The `mq-agent` profile (`profiles/mq-agent.json`) limits auto-invocation to
 Class A/B tools. Class C/D tools require explicit user approval from within
 the calling orchestration layer.
 
+### Phase 12 memory-system boundary
+
+Phase 12, the Evidence-Based Memory System, is a cross-repo capability rather
+than a local `mq-mcp` feature.
+
+| Repo | Phase 12 responsibility |
+|------|-------------------------|
+| `mqobsidian` | Capability owner: schemas, storage, scoring, promotion, permanent memory |
+| `mq-agent` | Primary runtime: observation writing, memory queries, workflow integration |
+| `repo-signal` | Repo-state producer: freshness, repeated issue, and repeated workflow signals |
+| `mq-mcp` | Review intelligence: review signals, feedback, pattern extraction, anti-pattern detection |
+| `mqlaunch` | Human surface: dashboard, review queue, manual promotion, memory search |
+
+`mq-mcp` may emit validated `memory-observation.v1` and `feedback-signal.v1`
+records once the upstream schemas exist. It must not own the promotion pipeline,
+durable Obsidian curation, repo-health scoring, or workflow orchestration.
+
+Local Phase 12D draft contracts live in:
+
+* `schemas/memory-observation.v1.schema.json`
+* `schemas/feedback-signal.v1.schema.json`
+
+The runtime helper for producing validated, redacted payloads is
+`mq-mcp/phase12_signals.py`.
+
+Read-only MCP tools expose the same payload builders to orchestration and
+launcher surfaces:
+
+* `phase12_review_observation`
+* `phase12_repeated_bug_observation`
+* `phase12_anti_pattern_observation`
+* `phase12_architecture_feedback`
+
 ---
 
 ## mq-mcp + mq-ums integration

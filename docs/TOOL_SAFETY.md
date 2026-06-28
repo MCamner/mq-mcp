@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 125 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 129 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -63,6 +63,10 @@ These tools cannot write files, cannot run processes, and cannot access anything
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
 | `learn_inbox` | List pending learn candidates queued by the post-commit hook | Write, network |
 | `learn_inbox_draft` | Map one inbox candidate to a review-ready record_learning draft (task/lesson/validation/risk/repo/source/tags) | Write any store, network, execute; validation is always a MANUAL VALIDATION REQUIRED instruction, never auto-filled |
+| `phase12_review_observation` | Build a validated memory-observation.v1 payload from a review finding | Write, promote, score, execute |
+| `phase12_repeated_bug_observation` | Build a validated repeated-bug-class observation payload | Write, promote, score, execute |
+| `phase12_anti_pattern_observation` | Build a validated anti-pattern observation payload | Write, promote, score, execute |
+| `phase12_architecture_feedback` | Build a validated feedback-signal.v1 payload for architecture advice | Write, promote, score, execute |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
@@ -135,7 +139,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `brain_record_review` | Write a code review summary to mqobsidian/memory/reviews/ | Write outside repo (vault) |
 | `brain_record_session` | Write a session note to mqobsidian/sessions/ | Write outside repo (vault) |
 | `brain_record_learning` | Write a learned engineering pattern to mqobsidian/memory/learn/ | Write outside repo (vault) |
-| `brain_promote_learning` | Promote memory/learn/<slug>.md to memory/learn/verified/ | Write outside repo (vault) |
+| `brain_promote_learning` | Promote `memory/learn/<slug>.md` to `memory/learn/verified/` | Write outside repo (vault) |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -299,6 +303,10 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `ollama_learn_status` | B | <http://localhost:11434/api/tags> (read) | No | No |
 | `ollama_learn_extract` | B | <http://localhost:11434/api/generate> (read) | No | No |
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |
+| `phase12_review_observation` | A | local payload validation only | No | No |
+| `phase12_repeated_bug_observation` | A | local payload validation only | No | No |
+| `phase12_anti_pattern_observation` | A | local payload validation only | No | No |
+| `phase12_architecture_feedback` | A | local payload validation only | No | No |
 | `brain_status` | A | ~/mqobsidian (read-only) | No | No |
 | `brain_record_decision` | C | ~/mqobsidian/decisions/ | Yes | No |
 | `brain_record_review` | C | ~/mqobsidian/memory/reviews/ | Yes | No |

@@ -235,6 +235,43 @@ async def serve_tool_contracts(request: Request) -> JSONResponse:
         return JSONResponse({"error": str(exc)}, status_code=500)
 
 
+@mcp.custom_route("/tool-policies", methods=["GET"])
+async def serve_tool_policies(request: Request) -> JSONResponse:
+    """Serve the workflow tool policy for every tool (Phase 5).
+
+    Lets a workflow runner ask which tools may run in a workflow, what approval
+    each needs, and whether they are safe to retry — without a hardcoded list.
+    """
+    try:
+        import tool_policy
+
+        policies = tool_policy.all_policies()
+        return JSONResponse(
+            {
+                "schema": tool_policy.POLICY_SCHEMA,
+                "tool_count": len(policies),
+                "tools": policies,
+            }
+        )
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+
+@mcp.custom_route("/tool-policies/{name}", methods=["GET"])
+async def serve_tool_policy(request: Request) -> JSONResponse:
+    """Serve the workflow policy for a single tool."""
+    name = request.path_params["name"]
+    try:
+        import tool_policy
+
+        policy = tool_policy.get_policy(name)
+        if policy is None:
+            return JSONResponse({"error": f"Unknown tool: {name}"}, status_code=404)
+        return JSONResponse(policy)
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+
 @mcp.custom_route("/tools", methods=["GET"])
 async def list_http_tools(request: Request) -> JSONResponse:
     tools = await mcp.list_tools()
@@ -3935,6 +3972,23 @@ def _learn_engine():
     return mod
 
 
+def _phase12_signals():
+    """Lazy-import Phase 12D signal helpers."""
+    import importlib.util, sys as _sys
+    mod_path = Path(__file__).parent / "phase12_signals.py"
+    if not mod_path.exists():
+        raise RuntimeError("phase12_signals.py not found")
+    if "phase12_signals" in _sys.modules:
+        return _sys.modules["phase12_signals"]
+    spec = importlib.util.spec_from_file_location("phase12_signals", mod_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not create module spec for phase12_signals")
+    mod = importlib.util.module_from_spec(spec)
+    _sys.modules["phase12_signals"] = mod
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    return mod
+
+
 @mcp.tool()
 def record_learning(
     task: str,
@@ -4600,6 +4654,104 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         "  use record_learning or approved store path if this should become memory",
     ]
     return "\n".join(lines)
+
+
+@mcp.tool()
+def phase12_review_observation(
+    severity: str,
+    location: str,
+    body: str,
+    repo: str = "mq-mcp",
+) -> dict:
+    """Build a Phase 12 memory-observation.v1 payload from a review finding.
+
+    Read-only helper for mq-agent/mqlaunch workflows. It validates and redacts
+    the payload but does not write to mqobsidian, promote memory, or score it.
+
+    Safety: Class A — local payload validation only, no storage, no execution.
+    """
+    from types import SimpleNamespace
+
+    phase12 = _phase12_signals()
+    finding = SimpleNamespace(severity=severity, location=location, body=body)
+    return phase12.observation_from_review_finding(finding, repo=repo)
+
+
+@mcp.tool()
+def phase12_repeated_bug_observation(
+    bug_class: str,
+    summary: str,
+    evidence: list[dict[str, str]],
+    repo: str = "mq-mcp",
+    confidence: str = "medium",
+) -> dict:
+    """Build a Phase 12 repeated-bug-class observation payload.
+
+    The evidence list must contain objects with source, quote, and optional
+    location. This validates and redacts only; it never writes durable memory.
+
+    Safety: Class A — local payload validation only, no storage, no execution.
+    """
+    phase12 = _phase12_signals()
+    return phase12.repeated_bug_class_observation(
+        repo=repo,
+        bug_class=bug_class,
+        summary=summary,
+        evidence=list(evidence),
+        confidence=confidence,
+    )
+
+
+@mcp.tool()
+def phase12_anti_pattern_observation(
+    pattern_name: str,
+    summary: str,
+    evidence: list[dict[str, str]],
+    repo: str = "mq-mcp",
+    confidence: str = "medium",
+) -> dict:
+    """Build a Phase 12 anti-pattern observation payload.
+
+    The evidence list must contain objects with source, quote, and optional
+    location. This validates and redacts only; it never writes durable memory.
+
+    Safety: Class A — local payload validation only, no storage, no execution.
+    """
+    phase12 = _phase12_signals()
+    return phase12.anti_pattern_observation(
+        repo=repo,
+        pattern_name=pattern_name,
+        summary=summary,
+        evidence=list(evidence),
+        confidence=confidence,
+    )
+
+
+@mcp.tool()
+def phase12_architecture_feedback(
+    target: str,
+    summary: str,
+    evidence: list[str],
+    repo: str = "mq-mcp",
+    signal: str = "neutral",
+    confidence: str = "medium",
+) -> dict:
+    """Build a Phase 12 feedback-signal.v1 payload for architecture advice.
+
+    Read-only helper for recommendation-quality feedback. It validates and
+    redacts only; promotion and scoring stay in mqobsidian.
+
+    Safety: Class A — local payload validation only, no storage, no execution.
+    """
+    phase12 = _phase12_signals()
+    return phase12.architecture_recommendation_feedback_signal(
+        repo=repo,
+        target=target,
+        signal=signal,
+        summary=summary,
+        evidence=list(evidence),
+        confidence=confidence,
+    )
 
 
 @mcp.tool()

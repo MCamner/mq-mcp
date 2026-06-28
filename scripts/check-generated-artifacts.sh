@@ -36,6 +36,7 @@ EXPECTED_SCHEMAS=(
   "generated/runtime-contract.json:runtime-contract.v1"
   "generated/release-state.json:release-state.v1"
   "generated/profile-index.json:profile-index.v1"
+  "generated/tool-policies.json:tool-policy.v1"
 )
 
 for entry in "${EXPECTED_SCHEMAS[@]}"; do
