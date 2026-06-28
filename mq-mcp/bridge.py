@@ -14,6 +14,7 @@ from typing import Any, Optional, cast
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 from bridget_context import BridgetContext
+import bridget_runtime
 import bridget_workflow
 
 from openai import OpenAI
@@ -214,6 +215,9 @@ def usage() -> None:
   uv run python bridge.py -m <model> "your prompt"
   uv run python bridge.py --tools
   uv run python bridge.py --workflow "your goal" [-y]
+  uv run python bridge.py --project [repo]
+  uv run python bridge.py --continue
+  uv run python bridge.py --history [N]
   uv run python bridge.py --help
 
 Examples:
@@ -222,6 +226,9 @@ Examples:
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
   uv run python bridge.py --workflow "preflight ~/macos-scripts"
+  uv run python bridge.py --project mq-mcp     # pin working project
+  uv run python bridge.py --continue           # resume: branch, changes, last review
+  uv run python bridge.py --history 10         # recent sessions
 """
     )
 
@@ -591,6 +598,7 @@ async def run_bridge() -> None:
             ctx = BridgetContext()
             session_context = ctx.load()
             lessons_context = ctx.load_lessons()
+            project_context = bridget_runtime.project_context_block()
 
             do_instructions = ""
             if do_mode:
@@ -617,6 +625,7 @@ async def run_bridge() -> None:
                 SYSTEM_PROMPT.strip()
                 + session_context
                 + lessons_context
+                + project_context
                 + do_instructions
                 + "\n\nThis is the actual tool catalog from the connected MCP server. "
                 "Use this catalog as ground truth.\n\n"
@@ -717,7 +726,18 @@ async def run_bridge() -> None:
                     for tc in assistant_message.tool_calls
                     if tool_call_name_and_args(tc)[0]
                 ]
-            ctx.record(prompt, called_tools, answer)
+            _pinned = bridget_runtime.get_project()
+            _proj_name = _pinned["name"] if _pinned else None
+            _proj_branch = (
+                bridget_runtime.current_branch(_pinned["path"]) if _pinned else None
+            )
+            ctx.record(
+                prompt,
+                called_tools,
+                answer,
+                project=_proj_name,
+                branch=_proj_branch,
+            )
 
             if tty:
                 tty.close()
@@ -734,6 +754,11 @@ if __name__ == "__main__":
     if "--workflow" in sys.argv[1:]:
         _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
         sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
+
+    # Runtime commands (--project / --continue / --history) are read-only and
+    # synchronous; intercept them here so they never spin up OpenAI or MCP.
+    if bridget_runtime.maybe_handle_runtime_command(sys.argv[1:]):
+        sys.exit(0)
 
     try:
         asyncio.run(run_bridge())

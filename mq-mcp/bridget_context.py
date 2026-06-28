@@ -24,6 +24,9 @@ from pathlib import Path
 MAX_SESSIONS = 5
 CONTEXT_DIR = Path.home() / ".mq"
 CONTEXT_FILE = CONTEXT_DIR / "bridget-context.md"
+# Append-only, full-depth session log for `bridget --history`. Separate from the
+# rolling markdown store above, which stays the bounded prompt-injection layer.
+HISTORY_FILE = CONTEXT_DIR / "bridget-history.jsonl"
 MAX_ANSWER_CHARS = 400   # truncate long answers when saving
 MAX_TOOLS_SHOWN = 5      # max tool calls shown per session
 
@@ -37,9 +40,11 @@ class BridgetContext:
         self,
         path: Path = CONTEXT_FILE,
         max_sessions: int = MAX_SESSIONS,
+        history_path: Path = HISTORY_FILE,
     ) -> None:
         self.path = path
         self.max_sessions = max_sessions
+        self.history_path = history_path
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------
@@ -139,14 +144,49 @@ class BridgetContext:
         prompt: str,
         tool_calls: list[str],
         answer: str,
+        *,
+        project: str | None = None,
+        branch: str | None = None,
     ) -> None:
         """
-        Append this session to the context file and rotate old sessions out.
+        Append this session to the rolling context file (rotating old sessions
+        out) and to the append-only history log.
+
+        The markdown store stays bounded for prompt injection; the jsonl log
+        keeps full depth for ``bridget --history``. The history append is
+        best-effort — it never raises, so a logging failure cannot break a run.
         """
         session_block = self._format_session(prompt, tool_calls, answer)
         existing = self._read_sessions()
         updated = (existing + [session_block])[-self.max_sessions :]
         self._write_sessions(updated)
+        self._append_history(prompt, tool_calls, answer, project, branch)
+
+    def read_history(self, limit: int = 20) -> list[dict]:
+        """Return the most recent recorded sessions, newest first.
+
+        Reads the append-only jsonl log; tolerates malformed lines. Returns an
+        empty list when no history exists.
+        """
+        if not self.history_path.exists():
+            return []
+        try:
+            raw = self.history_path.read_text(encoding="utf-8")
+        except OSError:
+            return []
+        entries: list[dict] = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                entries.append(obj)
+        entries.reverse()
+        return entries[:limit] if limit else entries
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -176,6 +216,30 @@ class BridgetContext:
             f"{tools_line}"
             f"- Summary: {short_answer}\n"
         )
+
+    def _append_history(
+        self,
+        prompt: str,
+        tool_calls: list[str],
+        answer: str,
+        project: str | None,
+        branch: str | None,
+    ) -> None:
+        """Append one JSON line to the full-depth history log. Never raises."""
+        entry = {
+            "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "project": project,
+            "branch": branch,
+            "prompt": prompt.strip(),
+            "tools": tool_calls,
+            "summary": self._truncate(answer, MAX_ANSWER_CHARS),
+        }
+        try:
+            self.history_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.history_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except OSError:
+            return
 
     def _truncate(self, text: str, max_chars: int) -> str:
         text = text.strip().replace("\n", " ")
