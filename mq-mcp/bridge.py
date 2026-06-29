@@ -16,6 +16,7 @@ from ask import run_ask
 from bridget_context import BridgetContext
 import bridget_runtime
 import bridget_workflow
+import codegraph_cochange
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -218,6 +219,7 @@ def usage() -> None:
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
+  uv run python bridge.py --co-change <file> [--window N]
   uv run python bridge.py --help
 
 Examples:
@@ -229,6 +231,7 @@ Examples:
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: branch, changes, last review
   uv run python bridge.py --history 10         # recent sessions
+  uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
 """
     )
 
@@ -758,6 +761,11 @@ if __name__ == "__main__":
     # Runtime commands (--project / --continue / --history) are read-only and
     # synchronous; intercept them here so they never spin up OpenAI or MCP.
     if bridget_runtime.maybe_handle_runtime_command(sys.argv[1:]):
+        sys.exit(0)
+
+    # Co-change (CG-2.1) is read-only and synchronous (git + read-only graph);
+    # intercept it here so it never spins up OpenAI or MCP.
+    if codegraph_cochange.maybe_handle_cochange(sys.argv[1:]):
         sys.exit(0)
 
     try:
