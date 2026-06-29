@@ -220,7 +220,7 @@ def usage() -> None:
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
-  uv run python bridge.py --co-change <file> [--window N]
+  uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
   uv run python bridge.py --help
