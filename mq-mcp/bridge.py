@@ -17,6 +17,7 @@ from bridget_context import BridgetContext
 import bridget_runtime
 import bridget_workflow
 import codegraph_cochange
+import codegraph_snapshot
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -220,6 +221,8 @@ def usage() -> None:
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
   uv run python bridge.py --co-change <file> [--window N]
+  uv run python bridge.py --snapshot [repo]
+  uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
   uv run python bridge.py --help
 
 Examples:
@@ -232,6 +235,8 @@ Examples:
   uv run python bridge.py --continue           # resume: branch, changes, last review
   uv run python bridge.py --history 10         # recent sessions
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
+  uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
+  uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots
 """
     )
 
@@ -766,6 +771,11 @@ if __name__ == "__main__":
     # Co-change (CG-2.1) is read-only and synchronous (git + read-only graph);
     # intercept it here so it never spins up OpenAI or MCP.
     if codegraph_cochange.maybe_handle_cochange(sys.argv[1:]):
+        sys.exit(0)
+
+    # Graph snapshots / diff (CG-2.2) are synchronous (git + read-only graph,
+    # writes only its own snapshot JSON); intercept before OpenAI or MCP.
+    if codegraph_snapshot.maybe_handle_snapshot(sys.argv[1:]):
         sys.exit(0)
 
     try:
