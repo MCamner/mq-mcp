@@ -69,6 +69,44 @@ Completed foundation:
 
 ---
 
+## CG-2 — Context Arc v2 (git history the static graph cannot provide)
+
+CodeGraph (`.codegraph/codegraph.db`) is purely structural — files / nodes /
+edges, current state only, no git history. CG-2 owns the temporal dimension,
+derived from git and joined read-only into the graph.
+
+* **CG-2.1 — co-change** (done): `bridget --co-change <file>` — which files
+  historically change together, confidence-scored from `git log`, optionally
+  enriched read-only from the graph.
+* **CG-2.2 — graph snapshots + diff** (this round): `bridget --snapshot [repo]`
+  persists a `graph-snapshot.v1` (totals + per-file symbol counts / content
+  hashes, pinned to the current commit) under `~/.mq/graph-snapshots/`;
+  `bridget --graph-diff [repo]` reports files/symbols added/removed/changed
+  between two snapshots. Snapshots are the genuine MQ-owned artifact — the static
+  DB cannot reconstruct historical structure.
+* **CG-2.2+ — timeline** (deferred): a thin view over the snapshot series.
+
+### Producer boundary (locked)
+
+CG-2 reaches mqobsidian's cross-producer memory engine as an **evidence source**,
+never as a producer:
+
+```text
+Bridget/CG-2  = evidence source (derives co-change; exposes a stable run_id
+                and machine-readable `--json`; writes nothing to mqobsidian)
+mq-agent      = the producer that emits memory-observation.v1 co-change records
+                (producer: mq-agent, evidence:[{source:"bridget/cg-2",
+                reference:<cochange-run-id>}])
+mqobsidian    = scores, promotes, audits (sole owner of memory-score.v1 /
+                promotion-event.v1)
+```
+
+Only MQ-owned components produce `memory-observation.v1`. The mq-agent emitter and
+the mqobsidian validation/scoring of the (currently fixture-only)
+`cochange-cluster-core` are explicit follow-ons in those repos.
+
+---
+
 ## Ecosystem position
 
 ```text

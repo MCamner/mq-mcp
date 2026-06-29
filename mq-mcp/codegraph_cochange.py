@@ -7,17 +7,25 @@ structural — files / nodes / edges, no git history — so the temporal co-chan
 dimension is derived here from `git log`, then optionally enriched read-only
 from the graph for symbol context.
 
-Boundary: this is **context only, not evidence, not a producer**. It reads git
-and reads the graph; it writes nothing, emits no observation, and promotes no
-learning. Surfaced as the synchronous CLI flag `bridget --co-change <file>`
+Boundary: Bridget/CG-2 is **not a memory producer** — it is an **evidence
+source**. It reads git and reads the graph; it writes nothing, emits no
+observation, and promotes no learning. mq-agent is the producer that may wrap a
+co-change result as a `memory-observation.v1` record (`producer: mq-agent`,
+`evidence:[{source:"bridget/cg-2", reference:<run_id>}]`); mqobsidian alone
+scores, promotes, and audits. To serve as a clean evidence source this module
+exposes a stable `run_id` and a machine-readable `--json` output for mq-agent to
+reference. Surfaced as the synchronous CLI flag `bridget --co-change <file>`
 (no OpenAI client, no MCP session), intercepted in bridge.py like --workflow /
 --history.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import bridget_runtime
@@ -73,6 +81,18 @@ def _norm(path: str) -> str:
     """Normalize a path to the repo-relative, forward-slash form git emits."""
     p = path.replace("\\", "/").strip()
     return p[2:] if p.startswith("./") else p
+
+
+def run_id(repo: str | Path, target: str, *, now: datetime | None = None) -> str:
+    """Stable id for a co-change run, referenced by mq-agent as evidence.
+
+    Form ``cochange-run-<YYYYMMDDTHHMMSSZ>-<8hex>`` where the hex is a digest of
+    (repo, target) so the same query at the same second is reproducible and two
+    different queries never collide.
+    """
+    now = now or datetime.now(timezone.utc)
+    digest = hashlib.sha1(f"{repo}\x1f{target}".encode()).hexdigest()[:8]
+    return f"cochange-run-{now.strftime('%Y%m%dT%H%M%SZ')}-{digest}"
 
 
 # ----------------------------------------------------------------------
@@ -272,13 +292,29 @@ def _rel_to_repo(repo_path: str | Path, target: str) -> str:
 # ----------------------------------------------------------------------
 
 
-def handle_cochange(target: str, *, window: int = _DEFAULT_WINDOW) -> int:
+def handle_cochange(
+    target: str, *, window: int = _DEFAULT_WINDOW, as_json: bool = False
+) -> int:
     repo_path = _resolve_repo(target)
     if not repo_path:
         print("Not inside a git repo and no project pinned.")
         return 1
     rel = _rel_to_repo(repo_path, target)
     rows = co_change(repo_path, rel, window=window)
+    if as_json:
+        # Machine-readable evidence-source output for mq-agent (the producer).
+        # No enrichment, no side effects — just the derived rows + a stable id.
+        now = datetime.now(timezone.utc)
+        payload = {
+            "run_id": run_id(repo_path, rel, now=now),
+            "repo": Path(repo_path).name,
+            "target": rel,
+            "window": window,
+            "generated_at": now.isoformat(),
+            "rows": rows,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
     emap = enrich(repo_path, [rel, *[r["path"] for r in rows]])
     print(format_cochange(rel, rows, emap, window=window))
     return 0
@@ -302,7 +338,7 @@ def maybe_handle_cochange(argv: list[str]) -> bool:
         if j + 1 < len(argv) and argv[j + 1].isdigit():
             window = int(argv[j + 1])
     if not target:
-        print("Usage: bridget --co-change <file> [--window N]")
+        print("Usage: bridget --co-change <file> [--window N] [--json]")
         return True
-    handle_cochange(target, window=window)
+    handle_cochange(target, window=window, as_json="--json" in argv)
     return True

@@ -199,14 +199,15 @@ def test_maybe_handle_routes_co_change(tmp_path, capsys, monkeypatch):
 def test_maybe_handle_parses_window(tmp_path, monkeypatch):
     captured = {}
 
-    def fake_handle(target, *, window):
+    def fake_handle(target, *, window, as_json=False):
         captured["target"] = target
         captured["window"] = window
+        captured["as_json"] = as_json
         return 0
 
     monkeypatch.setattr(cc, "handle_cochange", fake_handle)
     assert cc.maybe_handle_cochange(["--co-change", "a.py", "--window", "50"]) is True
-    assert captured == {"target": "a.py", "window": 50}
+    assert captured == {"target": "a.py", "window": 50, "as_json": False}
 
 
 def test_maybe_handle_ignores_unrelated_argv():
@@ -217,3 +218,47 @@ def test_maybe_handle_ignores_unrelated_argv():
 def test_maybe_handle_missing_target_prints_usage(capsys):
     assert cc.maybe_handle_cochange(["--co-change"]) is True
     assert "Usage" in capsys.readouterr().out
+
+
+# --- evidence source: run_id + --json (CG-2.2) ------------------------------
+
+
+def test_run_id_shape_is_stable_and_parseable():
+    from datetime import datetime, timezone
+
+    now = datetime(2026, 6, 29, 1, 2, 3, tzinfo=timezone.utc)
+    rid = cc.run_id("/repos/mq-mcp", "mq-mcp/bridge.py", now=now)
+    assert rid.startswith("cochange-run-20260629T010203Z-")
+    # deterministic for the same (repo, target, time); distinct for a different target
+    assert rid == cc.run_id("/repos/mq-mcp", "mq-mcp/bridge.py", now=now)
+    assert rid != cc.run_id("/repos/mq-mcp", "mq-mcp/server.py", now=now)
+
+
+def test_json_output_emits_run_id_and_rows(tmp_path, capsys, monkeypatch):
+    import json as _json
+
+    repo = _repo(tmp_path)
+    _commit(repo, {"a.py": "1", "b.py": "1"}, "c1")
+    _commit(repo, {"a.py": "2", "b.py": "2"}, "c2")
+    monkeypatch.chdir(repo)
+
+    assert cc.maybe_handle_cochange(["--co-change", "a.py", "--json"]) is True
+    payload = _json.loads(capsys.readouterr().out)
+    assert payload["run_id"].startswith("cochange-run-")
+    assert payload["target"] == "a.py"
+    assert payload["window"] == cc._DEFAULT_WINDOW
+    assert "generated_at" in payload
+    paths = {r["path"] for r in payload["rows"]}
+    assert "b.py" in paths
+
+
+def test_human_output_unchanged_without_json(tmp_path, capsys, monkeypatch):
+    repo = _repo(tmp_path)
+    _commit(repo, {"a.py": "1", "b.py": "1"}, "c1")
+    _commit(repo, {"a.py": "2", "b.py": "2"}, "c2")
+    monkeypatch.chdir(repo)
+
+    cc.handle_cochange("a.py")
+    out = capsys.readouterr().out
+    assert "Files that change with" in out
+    assert out.lstrip()[0] != "{"  # not JSON
