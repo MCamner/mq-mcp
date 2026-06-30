@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.0.0",
-  "tool_count": 125,
+  "tool_count": 127,
   "tools": [
     {
       "name": "analyze_csv",
@@ -45,6 +45,28 @@
       "side_effects": [
         "file-write"
       ],
+      "examples": []
+    },
+    {
+      "name": "brain_apply_memory_scores",
+      "class": "C",
+      "description": "Write mqobsidian memory-score.v1 records and promotion-event.v1 audit.",
+      "resolver": "none",
+      "write": true,
+      "subprocess": false,
+      "side_effects": [
+        "file-write"
+      ],
+      "examples": []
+    },
+    {
+      "name": "brain_preview_memory_scores",
+      "class": "A",
+      "description": "Preview mqobsidian memory scoring from real memory-observation.v1 records.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {

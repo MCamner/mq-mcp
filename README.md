@@ -18,7 +18,7 @@ v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift,
 
 This repository is useful as:
 
-* a local MCP server with 125 documented, safety-classified tools
+* a local MCP server with 127 documented, safety-classified tools
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -36,7 +36,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 125 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 127 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -164,7 +164,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 125 MCP tools with descriptions.
+Expected response lists all 127 MCP tools with descriptions.
 
 ## Integration map
 
@@ -226,7 +226,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 125 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 127 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -340,6 +340,8 @@ The local MCP server exposes 125 tools across five safety classes. See [`docs/TO
 **Brain tools (Class A/C):**
 
 * `brain_status` — reports mqobsidian vault availability and top-level folders (Class A)
+* `brain_preview_memory_scores` — previews memory-score.v1 records from real mqobsidian memory observations; no writes (Class A)
+* `brain_apply_memory_scores` — writes memory-score.v1 records and promotion-event.v1 audit from real mqobsidian observations (Class C)
 * `brain_record_decision` — writes an ADR to mqobsidian/decisions/ (Class C)
 * `brain_record_review` — writes a review summary to mqobsidian/reviews/ (Class C)
 * `brain_record_session` — writes a session note to mqobsidian/sessions/ (Class C)

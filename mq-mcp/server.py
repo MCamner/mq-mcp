@@ -5453,6 +5453,8 @@ def ums_audit_log(days: int = 7, command_id: str = "", status: str = "") -> dict
 # ---------------------------------------------------------------------------
 
 from runtime.memory.obsidian_writer import (
+    apply_memory_scores as _obsidian_apply_memory_scores,
+    preview_memory_scores as _obsidian_preview_memory_scores,
     record_decision as _obsidian_record_decision,
     record_review as _obsidian_record_review,
     record_session as _obsidian_record_session,
@@ -5479,6 +5481,27 @@ def brain_status() -> dict:
         for folder in folders
     }
     return {"ok": True, "vault": str(vp), "folders": folders, "file_counts": counts}
+
+
+@mcp.tool()
+def brain_preview_memory_scores() -> dict:
+    """Preview mqobsidian memory scoring from real memory-observation.v1 records.
+
+    Class A — read-only. Reads mqobsidian/memory/observations/*.jsonl and returns
+    the memory-score.v1 records that would be written by brain_apply_memory_scores.
+    """
+    return _obsidian_preview_memory_scores()
+
+
+@mcp.tool()
+def brain_apply_memory_scores() -> dict:
+    """Write mqobsidian memory-score.v1 records and promotion-event.v1 audit.
+
+    Class C — writes to local mqobsidian vault. Requires user approval.
+    Reads real memory-observation.v1 records, writes memory/scores/<id>.json,
+    and appends promotion tier changes to memory/promotions/promotion-events.jsonl.
+    """
+    return _obsidian_apply_memory_scores()
 
 
 @mcp.tool()

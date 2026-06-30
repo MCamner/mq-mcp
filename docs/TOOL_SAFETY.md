@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 125 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 127 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -136,6 +136,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `brain_record_session` | Write a session note to mqobsidian/sessions/ | Write outside repo (vault) |
 | `brain_record_learning` | Write a learned engineering pattern to mqobsidian/learn/ | Write outside repo (vault) |
 | `brain_promote_learning` | Promote learn/<slug>.md to learn/verified/ | Write outside repo (vault) |
+| `brain_apply_memory_scores` | Write memory-score.v1 records and promotion-event.v1 audit to mqobsidian/memory/ | Write outside repo (vault) |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
@@ -300,6 +301,8 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `ollama_learn_extract` | B | <http://localhost:11434/api/generate> (read) | No | No |
 | `learn_extract_from_last_review` | B | review_memory (read) + <http://localhost:11434/api/generate> (read) | No | No |
 | `brain_status` | A | ~/mqobsidian (read-only) | No | No |
+| `brain_preview_memory_scores` | A | ~/mqobsidian/memory/observations/ (read-only) | No | No |
+| `brain_apply_memory_scores` | C | ~/mqobsidian/memory/scores/ + ~/mqobsidian/memory/promotions/ | Yes | No |
 | `brain_record_decision` | C | ~/mqobsidian/decisions/ | Yes | No |
 | `brain_record_review` | C | ~/mqobsidian/reviews/ | Yes | No |
 | `brain_record_session` | C | ~/mqobsidian/sessions/ | Yes | No |

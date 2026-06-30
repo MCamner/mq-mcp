@@ -143,6 +143,8 @@ TOOL_META: dict[str, dict] = {
 
     # Brain / mqobsidian tools (v1.11.0)
     "brain_status":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "brain_preview_memory_scores":  {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
+    "brain_apply_memory_scores":    {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "brain_record_decision":        {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "brain_record_review":          {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "brain_record_session":         {"class": "C", "resolver": "none",                   "write": True,  "subprocess": False, "side_effects": ["file-write"]},

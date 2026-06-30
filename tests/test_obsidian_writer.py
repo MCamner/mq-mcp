@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "mq-mcp"))
 
 from runtime.memory.obsidian_writer import (
+    apply_memory_scores,
+    preview_memory_scores,
     record_decision,
     record_learning,
     record_review,
@@ -140,6 +143,81 @@ def test_record_decision_optional_consequences_omitted(vault: Path) -> None:
     assert result["ok"] is True
     content = Path(result["path"]).read_text()
     assert "Consequences" not in content
+
+
+# ── memory observation scoring ──────────────────────────────────────────────
+
+def _write_observation(vault: Path, record: dict) -> None:
+    observations = vault / "memory" / "observations"
+    observations.mkdir(parents=True, exist_ok=True)
+    with (observations / "repo-signal.observations.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record) + "\n")
+
+
+def _observation(index: int, *, key: str = "readonly-network-plan-approval") -> dict:
+    return {
+        "schema": "memory-observation.v1",
+        "id": f"obs-{index}",
+        "timestamp": f"2026-06-2{index}T12:00:00Z",
+        "producer": "repo-signal",
+        "repository": "mq-mcp",
+        "title": "Readonly network plan approval",
+        "observation": "Network-bound release planning should request approval before execution.",
+        "category": "workflow",
+        "confidence": 0.8,
+        "evidence": [{"source": "repo-signal", "reference": f"inspect-{index}"}],
+        "proposed_memory_key": key,
+    }
+
+
+def test_preview_memory_scores_groups_observations_without_writing(vault: Path) -> None:
+    for index in range(1, 4):
+        _write_observation(vault, _observation(index))
+
+    result = preview_memory_scores()
+
+    assert result["ok"] is True
+    assert len(result["scores"]) == 1
+    score = result["scores"][0]
+    assert score["schema"] == "memory-score.v1"
+    assert score["memory_id"] == "readonly-network-plan-approval"
+    assert score["status"] == "candidate"
+    assert score["factors"]["frequency"] == 3.0
+    assert not (vault / "memory" / "scores").exists()
+
+
+def test_apply_memory_scores_writes_score_and_promotion_event(vault: Path) -> None:
+    for index in range(1, 4):
+        _write_observation(vault, _observation(index))
+
+    result = apply_memory_scores()
+
+    assert result["ok"] is True
+    assert result["scored"] == 1
+    assert result["promotion_events"] == 1
+    score_path = vault / "memory" / "scores" / "readonly-network-plan-approval.json"
+    assert score_path.exists()
+    score = json.loads(score_path.read_text())
+    assert score["status"] == "candidate"
+    assert "observation_ids" not in score
+    events_path = vault / "memory" / "promotions" / "promotion-events.jsonl"
+    event = json.loads(events_path.read_text().strip())
+    assert event["schema"] == "promotion-event.v1"
+    assert event["from"] == "observed"
+    assert event["to"] == "candidate"
+
+
+def test_apply_memory_scores_does_not_repeat_unchanged_events(vault: Path) -> None:
+    for index in range(1, 4):
+        _write_observation(vault, _observation(index))
+
+    first = apply_memory_scores()
+    second = apply_memory_scores()
+
+    assert first["promotion_events"] == 1
+    assert second["promotion_events"] == 0
+    events_path = vault / "memory" / "promotions" / "promotion-events.jsonl"
+    assert len(events_path.read_text().splitlines()) == 1
 
 
 # ── promote_learning ────────────────────────────────────────────────────────

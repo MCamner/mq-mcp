@@ -17,6 +17,7 @@ Contract:   mq-mcp/docs/KNOWLEDGE_CONTRACT.md
 from __future__ import annotations
 
 import os
+import json
 import re
 import textwrap
 from datetime import datetime, timezone
@@ -27,6 +28,8 @@ SCHEMA_VERSION_DECISION = "decision.v1"
 SCHEMA_VERSION_REVIEW = "review.v1"
 SCHEMA_VERSION_SESSION = "session.v1"
 SCHEMA_VERSION_LEARN = "learn.v1"
+SCHEMA_MEMORY_SCORE = "memory-score.v1"
+SCHEMA_PROMOTION_EVENT = "promotion-event.v1"
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +70,10 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _today_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 # ---------------------------------------------------------------------------
 # Low-level write
 # ---------------------------------------------------------------------------
@@ -78,6 +85,10 @@ def _write(folder: str, filename: str, content: str) -> dict[str, Any]:
     target = target_dir / filename
     target.write_text(content, encoding="utf-8")
     return {"ok": True, "path": str(target)}
+
+
+def _write_json(folder: str, filename: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return _write(folder, filename, json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
 def _frontmatter(**fields: Any) -> str:
@@ -105,6 +116,270 @@ def _body(*sections: tuple[str, str]) -> str:
     for heading, content in sections:
         parts.append(f"## {heading}\n\n{content}")
     return "\n\n".join(parts) + "\n"
+
+
+def _load_observations() -> tuple[list[dict[str, Any]], list[str]]:
+    observations_dir = _vault() / "memory" / "observations"
+    observations: list[dict[str, Any]] = []
+    errors: list[str] = []
+    if not observations_dir.exists():
+        return observations, [f"Not found: {observations_dir}"]
+
+    for path in sorted(observations_dir.rglob("*.jsonl")):
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            errors.append(f"{path.name}: {exc}")
+            continue
+
+        for line_no, line in enumerate(lines, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                errors.append(f"{path.name}:{line_no}: invalid JSON: {exc.msg}")
+                continue
+            if record.get("schema") != "memory-observation.v1":
+                errors.append(f"{path.name}:{line_no}: unsupported schema")
+                continue
+            if not record.get("id") or not record.get("timestamp"):
+                errors.append(f"{path.name}:{line_no}: missing id or timestamp")
+                continue
+            observations.append(record)
+    return observations, errors
+
+
+def _memory_key(record: dict[str, Any]) -> str:
+    key = str(record.get("proposed_memory_key") or "").strip()
+    if key:
+        return key
+    title = str(record.get("title") or record.get("id") or "memory").strip()
+    return _slug(title, max_len=80) or str(record["id"])
+
+
+def _parse_datetime(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _recency_factor(last_seen: str) -> float:
+    seen_at = _parse_datetime(last_seen)
+    if seen_at is None:
+        return 0.25
+    age_days = (datetime.now(timezone.utc) - seen_at).days
+    if age_days <= 7:
+        return 1.0
+    if age_days <= 30:
+        return 0.75
+    if age_days <= 90:
+        return 0.5
+    return 0.25
+
+
+def _source_count(records: list[dict[str, Any]]) -> int:
+    sources: set[str] = set()
+    for record in records:
+        producer = str(record.get("producer") or "").strip()
+        if producer:
+            sources.add(producer)
+        for evidence in record.get("evidence") or []:
+            if isinstance(evidence, dict):
+                source = str(evidence.get("source") or "").strip()
+                if source:
+                    sources.add(source)
+    return len(sources)
+
+
+def _needs_human_review(records: list[dict[str, Any]]) -> bool:
+    risk_words = {
+        "architecture",
+        "boundary",
+        "boundaries",
+        "credential",
+        "credentials",
+        "delete",
+        "deletion",
+        "global",
+        "public",
+        "safety",
+        "secret",
+        "secrets",
+        "write",
+    }
+    for record in records:
+        category = str(record.get("category") or "").lower()
+        if category in {"architecture", "decision"}:
+            return True
+        haystack = json.dumps(record, ensure_ascii=False).lower()
+        if any(word in haystack for word in risk_words):
+            return True
+    return False
+
+
+def _score_status(factors: dict[str, float], *, needs_review: bool, negative: int) -> str:
+    if negative > 0:
+        return "deprecated"
+    if (
+        factors["frequency"] >= 8
+        and factors["confidence"] >= 0.75
+        and factors["source_count"] >= 2
+        and factors["usage_score"] > 0
+        and not needs_review
+    ):
+        return "promoted"
+    if (
+        factors["frequency"] >= 3
+        and factors["confidence"] >= 0.65
+        and factors["source_count"] >= 1
+    ):
+        return "candidate"
+    return "observed"
+
+
+def _existing_score_status(memory_id: str) -> str | None:
+    path = _vault() / "memory" / "scores" / f"{_slug(memory_id, max_len=80)}.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    status = payload.get("status")
+    return status if isinstance(status, str) else None
+
+
+def _build_memory_scores() -> tuple[list[dict[str, Any]], list[str]]:
+    observations, errors = _load_observations()
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for record in observations:
+        grouped.setdefault(_memory_key(record), []).append(record)
+
+    scores: list[dict[str, Any]] = []
+    for memory_id, records in sorted(grouped.items()):
+        timestamps = sorted(str(r.get("timestamp")) for r in records if r.get("timestamp"))
+        confidences = [
+            float(r.get("confidence"))
+            for r in records
+            if isinstance(r.get("confidence"), (int, float))
+        ]
+        confidence = sum(confidences) / len(confidences) if confidences else 0.0
+        factors = {
+            "frequency": float(len(records)),
+            "source_count": float(_source_count(records)),
+            "confidence": round(confidence, 3),
+            "recency": _recency_factor(timestamps[-1]) if timestamps else 0.25,
+            "usage_score": 0.0,
+            "manual_boost": 0.0,
+        }
+        feedback = {"positive": 0, "negative": 0}
+        needs_review = _needs_human_review(records)
+        score = (
+            factors["frequency"]
+            + factors["source_count"] * 2
+            + factors["confidence"] * 4
+            + factors["recency"]
+            + factors["usage_score"]
+            + factors["manual_boost"]
+            - feedback["negative"] * 3
+        )
+        status = _score_status(factors, needs_review=needs_review, negative=feedback["negative"])
+        first_seen = timestamps[0][:10] if timestamps else _today_iso()
+        last_seen = timestamps[-1][:10] if timestamps else _today_iso()
+        scores.append(
+            {
+                "schema": SCHEMA_MEMORY_SCORE,
+                "memory_id": memory_id,
+                "timestamp": _now_iso(),
+                "status": status,
+                "score": round(score, 3),
+                "factors": factors,
+                "observed_by": sorted(
+                    {
+                        str(record.get("producer"))
+                        for record in records
+                        if str(record.get("producer") or "").strip()
+                    }
+                ),
+                "feedback": feedback,
+                "first_seen": first_seen,
+                "last_seen": last_seen,
+            }
+        )
+    return scores, errors
+
+
+def preview_memory_scores() -> dict[str, Any]:
+    """Score real memory observations without writing mqobsidian files."""
+    if not vault_exists():
+        return {"ok": False, "error": f"Vault not found: {_vault()}"}
+    scores, errors = _build_memory_scores()
+    return {
+        "ok": True,
+        "vault": str(_vault()),
+        "scores": scores,
+        "errors": errors,
+        "would_write": {
+            "scores": "memory/scores/<memory_id>.json",
+            "promotion_events": "memory/promotions/promotion-events.jsonl",
+        },
+    }
+
+
+def apply_memory_scores() -> dict[str, Any]:
+    """Score observations and write memory-score.v1 plus promotion-event.v1 audit."""
+    preview = preview_memory_scores()
+    if not preview.get("ok"):
+        return preview
+
+    score_paths: list[str] = []
+    events: list[dict[str, Any]] = []
+    for score in preview["scores"]:
+        memory_id = str(score["memory_id"])
+        previous = _existing_score_status(memory_id) or "observed"
+        filename = f"{_slug(memory_id, max_len=80)}.json"
+        result = _write_json("memory/scores", filename, score)
+        score_paths.append(result["path"])
+        if previous != score["status"]:
+            events.append(
+                {
+                    "schema": SCHEMA_PROMOTION_EVENT,
+                    "id": f"{_today_iso()}-{_slug(memory_id, max_len=60)}-{previous}-to-{score['status']}",
+                    "timestamp": _now_iso(),
+                    "producer": "mq-mcp/obsidian_writer",
+                    "memory_id": memory_id,
+                    "from": previous,
+                    "to": score["status"],
+                    "reason": "Policy scoring from real memory-observation.v1 records.",
+                    "score": score["score"],
+                    "evidence": {
+                        "frequency": score["factors"]["frequency"],
+                        "source_count": score["factors"]["source_count"],
+                        "confidence": score["factors"]["confidence"],
+                        "feedback": score["feedback"]["positive"] - score["feedback"]["negative"],
+                    },
+                }
+            )
+
+    events_path = _vault() / "memory" / "promotions" / "promotion-events.jsonl"
+    if events:
+        events_path.parent.mkdir(parents=True, exist_ok=True)
+        with events_path.open("a", encoding="utf-8") as fh:
+            for event in events:
+                fh.write(json.dumps(event, sort_keys=True) + "\n")
+
+    return {
+        "ok": True,
+        "vault": str(_vault()),
+        "scored": len(preview["scores"]),
+        "score_paths": score_paths,
+        "promotion_events": len(events),
+        "promotion_events_path": str(events_path) if events else "",
+        "errors": preview["errors"],
+    }
 
 
 def record_decision(
