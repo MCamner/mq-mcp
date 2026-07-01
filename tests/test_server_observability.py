@@ -1,12 +1,19 @@
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_PATH = ROOT / "mq-mcp" / "server.py"
+
+
+def _req(host: str | None = "127.0.0.1:8765", path: str = "/health"):
+    """Minimal stand-in for a Starlette Request carrying a Host header."""
+    headers = {} if host is None else {"host": host}
+    return SimpleNamespace(headers=headers, url=SimpleNamespace(path=path))
 
 
 @pytest.fixture(scope="module")
@@ -20,13 +27,43 @@ def server():
 
 @pytest.mark.anyio
 async def test_health_endpoint_reports_version_and_tool_count(server):
-    response = await server.health_check(object())
+    response = await server.health_check(_req())
     payload = json.loads(response.body)
 
     assert payload["status"] == "ok"
     assert payload["version"] == "2.0.0"
     assert payload["tool_count"] == 125
     assert "elapsed_ms" in payload
+
+
+@pytest.mark.parametrize(
+    "host",
+    ["127.0.0.1:8765", "localhost:8765", "127.0.0.1", "[::1]:8765", "LOCALHOST:8765"],
+)
+def test_loopback_hosts_are_allowed(server, host):
+    assert server._is_loopback_request(_req(host)) is True
+
+
+@pytest.mark.parametrize(
+    "host",
+    ["evil.com", "attacker.example:8765", "192.168.1.10:8765", "", None],
+)
+def test_non_loopback_hosts_are_rejected(server, host):
+    assert server._is_loopback_request(_req(host)) is False
+
+
+@pytest.mark.anyio
+async def test_call_http_tool_rejects_dns_rebinding_origin(server):
+    """A DNS-rebinding page carries a foreign Host and must get a 403, not a tool call."""
+    response = await server.call_http_tool(_req(host="evil.com", path="/tools/get_public_ip"))
+    assert response.status_code == 403
+    assert "loopback" in json.loads(response.body)["error"]
+
+
+@pytest.mark.anyio
+async def test_health_endpoint_rejects_foreign_host(server):
+    response = await server.health_check(_req(host="evil.com"))
+    assert response.status_code == 403
 
 
 def test_redacted_env_hides_api_key(server, monkeypatch):
