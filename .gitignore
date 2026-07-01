@@ -28,6 +28,9 @@ settings.local.json
 *.log
 logs/
 
+# Local source index
+.codegraph/
+
 # Local backups
 backups/
 
