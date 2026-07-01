@@ -30,6 +30,11 @@ load_dotenv(Path(__file__).parent / ".env", override=False)
 # the parent "mcp" logger covers all mcp.* child loggers.
 logging.getLogger("mcp").setLevel(logging.WARNING)
 
+# Module logger for server-side audit/observability (bridge access, dangerous
+# tool execution). Goes to stderr; under stdio transport that is merged into the
+# bridge, so keep it to WARNING and above.
+_LOG = logging.getLogger("mq-mcp")
+
 # Initiera servern. mq-agent expects the local HTTP/SSE bridge on :8765.
 MCP_HOST = os.getenv("MQ_MCP_HOST", "127.0.0.1")
 MCP_PORT = int(os.getenv("MQ_MCP_PORT", "8765"))
@@ -146,8 +151,49 @@ def _enrich_tool(tool_dict: dict[str, Any]) -> dict[str, Any]:
     return tool_dict
 
 
+# Hostnames accepted by the local HTTP bridge. The bridge binds 127.0.0.1 only,
+# but that alone does not stop a browser page from using DNS rebinding to point a
+# public domain at 127.0.0.1 and POST to /tools/{name} (which invokes any tool,
+# including write/subprocess ones). Validating the Host header against this
+# allowlist is the standard rebinding/CSRF defense.
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+def _is_loopback_request(request: Request) -> bool:
+    """True when the request's Host header names a loopback address.
+
+    Genuine localhost clients (mq-agent, mqlaunch) reach the bridge as
+    127.0.0.1:PORT and send a matching Host header; a DNS-rebinding page still
+    carries the attacker's domain in Host and is rejected. Fails closed: a
+    missing or unparseable Host is treated as non-loopback.
+    """
+    try:
+        raw = request.headers.get("host", "") or ""
+    except AttributeError:
+        raw = ""
+    hostname = raw.rsplit(":", 1)[0].strip("[]").lower() if raw else ""
+    return hostname in _LOOPBACK_HOSTS
+
+
+def _guard_loopback(request: Request) -> JSONResponse | None:
+    """Return a 403 for non-loopback requests, else None (request allowed)."""
+    if _is_loopback_request(request):
+        return None
+    _LOG.warning(
+        "mq-mcp bridge rejected non-loopback request path=%s host=%r",
+        getattr(getattr(request, "url", None), "path", "?"),
+        getattr(request, "headers", {}).get("host", "") if hasattr(request, "headers") else "",
+    )
+    return JSONResponse(
+        {"error": "mq-mcp bridge accepts loopback requests only"},
+        status_code=403,
+    )
+
+
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     started = time.time()
     tools = await mcp.list_tools()
     payload = {
@@ -166,6 +212,8 @@ async def health_check(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/tool-count", methods=["GET"])
 async def tool_count(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     started = time.time()
     tools = await mcp.list_tools()
     payload = {
@@ -180,6 +228,8 @@ async def tool_count(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/server-info", methods=["GET"])
 async def server_info(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     started = time.time()
     tools = await mcp.list_tools()
     classes: dict[str, int] = {}
@@ -203,6 +253,8 @@ async def server_info(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/diagnostics", methods=["GET"])
 async def diagnostics(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     started = time.time()
     tools = await mcp.list_tools()
     payload = {
@@ -228,6 +280,8 @@ async def diagnostics(request: Request) -> JSONResponse:
 @mcp.custom_route("/tool-contracts", methods=["GET"])
 async def serve_tool_contracts(request: Request) -> JSONResponse:
     """Serve the machine-readable tool contract schema."""
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     try:
         data = json.loads(_CONTRACTS_PATH.read_text(encoding="utf-8"))
         return JSONResponse(data)
@@ -242,6 +296,8 @@ async def serve_tool_policies(request: Request) -> JSONResponse:
     Lets a workflow runner ask which tools may run in a workflow, what approval
     each needs, and whether they are safe to retry — without a hardcoded list.
     """
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     try:
         import tool_policy
 
@@ -260,6 +316,8 @@ async def serve_tool_policies(request: Request) -> JSONResponse:
 @mcp.custom_route("/tool-policies/{name}", methods=["GET"])
 async def serve_tool_policy(request: Request) -> JSONResponse:
     """Serve the workflow policy for a single tool."""
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     name = request.path_params["name"]
     try:
         import tool_policy
@@ -274,6 +332,8 @@ async def serve_tool_policy(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/tools", methods=["GET"])
 async def list_http_tools(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     tools = await mcp.list_tools()
     enriched = [_enrich_tool(jsonable(t)) for t in tools]
     return JSONResponse({"tools": enriched})
@@ -281,6 +341,8 @@ async def list_http_tools(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/tools/{name}", methods=["GET"])
 async def describe_http_tool(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     name = request.path_params["name"]
     tools = await mcp.list_tools()
     for tool in tools:
@@ -291,6 +353,8 @@ async def describe_http_tool(request: Request) -> JSONResponse:
 
 @mcp.custom_route("/tools/{name}", methods=["POST"])
 async def call_http_tool(request: Request) -> JSONResponse:
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
     name = request.path_params["name"]
     arguments = await request.json()
     result = await mcp.call_tool(name, arguments)
@@ -745,6 +809,11 @@ def shell_exec(command: str, working_dir: str = "") -> str:
     cwd = Path(working_dir).expanduser().resolve() if working_dir else Path.cwd()
     if not cwd.exists():
         return f"ERROR: working_dir does not exist: {cwd}"
+
+    # Audit trail: shell_exec is Class D (arbitrary local execution). Record every
+    # actual invocation so there is a server-side record even when the caller
+    # bypasses the bridge's y/n prompt (e.g. a non-bridge client with the env set).
+    _LOG.warning("shell_exec running command=%r cwd=%s", command, cwd)
 
     try:
         result = subprocess.run(
