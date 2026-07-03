@@ -655,6 +655,11 @@ async def execute_tool_calls(
         )
 
 
+# Upper bound on model↔tool round-trips in a single turn so the loop can never
+# run forever. When exceeded, run_turn stops and returns a clear message.
+MAX_TOOL_ROUNDS = 10
+
+
 async def run_turn(
     client: OpenAI,
     model: str,
@@ -665,39 +670,45 @@ async def run_turn(
 ) -> tuple[str, list[str], bool]:
     """Run one Bridget turn and return (answer, called_tool_names, did_tool_round).
 
-    Behavior is intentionally identical to the pre-refactor run_bridge flow: one
-    model call, then at most a single tool round plus one final model call. Phase 1
-    replaces this fixed round with a bounded loop; this Phase 0 extraction keeps
-    the current single-round limit so existing one-shot behavior is unchanged.
+    Bounded multi-round tool loop: the model may call tools, see their results,
+    and call more tools, until it produces a final text answer or MAX_TOOL_ROUNDS
+    is reached. Every model call offers ``tools`` so chained calls are possible.
+
+    In --do mode the first round forces a tool call (``tool_choice="required"``)
+    so the model acts instead of asking for permission in text; every later round
+    uses ``tool_choice="auto"`` so it can stop and answer. Per-command approval is
+    still enforced inside execute_tool_calls -> call_mcp_tool for every call.
     """
-    first_response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        tools=openai_tools,
-        # In --do mode force a tool call so the model acts instead of asking for
-        # permission in text.
-        tool_choice="required" if do_mode else "auto",
+    called_tools: list[str] = []
+    did_tool_round = False
+
+    for round_index in range(MAX_TOOL_ROUNDS):
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            tools=openai_tools,
+            tool_choice="required" if (do_mode and round_index == 0) else "auto",
+        )
+
+        assistant_message = response.choices[0].message
+
+        if not assistant_message.tool_calls:
+            return assistant_message.content or "", called_tools, did_tool_round
+
+        did_tool_round = True
+        called_tools.extend(
+            name
+            for tc in assistant_message.tool_calls
+            if (name := tool_call_name_and_args(tc)[0])
+        )
+        await execute_tool_calls(session, assistant_message, messages)
+
+    return (
+        f"Stannade: nådde MAX_TOOL_ROUNDS ({MAX_TOOL_ROUNDS}) utan ett slutgiltigt "
+        f"svar. Verktyg som kördes: {', '.join(called_tools) or 'inga'}.",
+        called_tools,
+        did_tool_round,
     )
-
-    assistant_message = first_response.choices[0].message
-
-    if not assistant_message.tool_calls:
-        return assistant_message.content or "", [], False
-
-    await execute_tool_calls(session, assistant_message, messages)
-
-    final_response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-    )
-
-    answer = final_response.choices[0].message.content or ""
-    called_tools = [
-        tool_call_name_and_args(tc)[0]
-        for tc in assistant_message.tool_calls
-        if tool_call_name_and_args(tc)[0]
-    ]
-    return answer, called_tools, True
 
 
 def print_response(answer: str, prefix_newline: bool = False) -> None:
