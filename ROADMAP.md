@@ -36,7 +36,9 @@ Current project phase:
 
 ```text
 v2.0.0 - Release Gate v2 + deterministic readiness (done)
-Next:   v1.11.0 mq-learn integration (Fas 0-2) + v1.12.0 repo-snapshot evidence
+Next:   v2.1.0  Bridget interactive session (Phase 1 multi-round loop = bugfix, first)
+        v2.2.0  mq-learn integration (Fas 0-2)
+        v1.12.0 repo-snapshot evidence
 ```
 
 Completed foundation:
@@ -240,6 +242,9 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
+| v2.1.0  | Bridget interactive session foundation      | Planned       |
+| v2.2.0  | mq-learn integration                        | Planned       |
+| v1.12.0 | Repo-snapshot as controlled evidence        | Planned       |
 
 ---
 
@@ -423,7 +428,7 @@ Non-goals:
 
 ---
 
-## Planned: v1.11.0 — mq-learn integration
+## Planned: v2.2.0 — mq-learn integration
 
 ### Goal
 
@@ -1659,13 +1664,13 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v1.11.0 - Ollama-backed learn extraction hardening
+v2.1.0 - Bridget interactive session foundation
 ```
 
-Keep v1.11.0 limited to optional local-provider hardening for learn extraction.
-The learning contract is already complete; the next work is validation,
-dry-run behavior, approval boundaries, and safe failure when Ollama or the
-local learn model is unavailable.
+Start with Phase 1 (multi-round tool loop) — it is a bugfix and can ship as its
+own PR ahead of the REPL work. Phases 2–5 are feature work, and `--chat` must not
+become the default in this release. The prior v1.11.0 Ollama-backed learn
+extraction hardening is already complete.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
