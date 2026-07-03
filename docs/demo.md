@@ -40,6 +40,45 @@ Bridget: Here are the available MCP tools:
 19. edit_image — edits an image (resize, rotate, grayscale)
 ```
 
+## Interactive session (`--chat`)
+
+One-shot is the default. For a multi-turn conversation that keeps context
+between turns, use `--chat`:
+
+```bash
+uv --directory mq-mcp run python bridge.py --chat
+```
+
+```text
+Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för att avsluta.
+
+du> which tools can read git state?
+Bridget: git_status and git_diff …
+
+du> use git_status here
+Bridget: …
+
+du> exit
+Hej då.
+```
+
+Notes:
+
+* One MCP session and one system message stay alive for the whole session;
+  tools are discovered once at start.
+* Context is bounded automatically for long sessions (oldest turns are trimmed;
+  the system prompt is always kept). Override the budget with
+  `BRIDGET_CONTEXT_BUDGET`.
+* The session is recorded once at exit, not per turn. `bridget --history` tags
+  it with its turn count and `bridget --continue` shows its summary.
+* An initial prompt is optional: `bridget --chat "start here"` runs that first
+  turn, then drops into the prompt.
+* Piped input works for scripting: `printf 'list tools\nexit\n' | bridget --chat`.
+
+`--chat` is not the default and does not own workflow orchestration — it only
+holds conversational context. Planning, routing, and retries remain `mq-agent`'s
+job (see [orchestration-boundary.md](orchestration-boundary.md)).
+
 ## Bridget Identity
 
 Bridget has local image identity prompts that render a random JPG when available.
@@ -111,9 +150,9 @@ uv --directory mq-mcp run python bridge.py "Use tool_safety_report and summarize
 
 Expected behavior:
 
-- Bridget reads `docs/TOOL_SAFETY.md` through `tool_safety_report`.
-- The response summarizes tool scope, access type, and risk level.
-- No files are modified. No external paths are accessed.
+* Bridget reads `docs/TOOL_SAFETY.md` through `tool_safety_report`.
+* The response summarizes tool scope, access type, and risk level.
+* No files are modified. No external paths are accessed.
 
 ### Targeted safety questions
 
@@ -126,9 +165,9 @@ uv --directory mq-mcp run python bridge.py "Which MCP tools can access explicitl
 
 Expected behavior:
 
-- Read-only tools (Class A/B) are identified separately from write-capable tools (Class C).
-- Subprocess tools (Class D) are called out clearly.
-- Tools using `MQ_MCP_ALLOWED_PATHS` are identified as allowlist-scoped.
+* Read-only tools (Class A/B) are identified separately from write-capable tools (Class C).
+* Subprocess tools (Class D) are called out clearly.
+* Tools using `MQ_MCP_ALLOWED_PATHS` are identified as allowlist-scoped.
 
 ### Safety rule
 

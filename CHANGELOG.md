@@ -4,6 +4,30 @@
 
 ### Added
 
+* Bridget interactive session foundation (v2.1.0, `mq-mcp/bridge.py`):
+  * `bridget --chat` — an explicit interactive REPL. One MCP `ClientSession`
+    and one system message stay alive for the whole session; tools are
+    discovered once at start. Per turn: read a line → `run_turn` → print →
+    keep context. Exits on `exit`/`quit`/`q`/Ctrl-D/Ctrl-C. Input is read from
+    stdin and prompts/answers go to `/dev/tty` (falling back to stdout), so
+    piped input works and output survives a captured stdout. Not the default —
+    one-shot stays the default for scripts, aliases, and automation.
+  * Multi-round tool loop (bugfix): `run_turn` now runs a bounded loop
+    (`MAX_TOOL_ROUNDS = 10`) that passes `tools=` on every model call, so DO
+    MODE can chain several sequential tool calls instead of one round plus a
+    final answer. `--do` forces a tool only on the first round; per-command
+    approval and the `--do`-gated `shell_exec` are unchanged.
+  * REPL context-window management: rough token estimate, per-model budget
+    (`BRIDGET_CONTEXT_BUDGET`), whole-turn-block trimming that never drops the
+    system message and preserves tool_call/tool pairing, plus
+    `MAX_MESSAGES` / `MAX_TOOL_OUTPUT_CHARS` truncation of oversized tool output.
+  * REPL persistence: a `--chat` session is recorded once at exit (not per
+    turn) as a single memory entry — last prompt/answer plus turn count,
+    duration, tools across all turns, `do_mode`, `chat_mode` — so short
+    sessions do not push older one-shot sessions out of the five-session
+    rolling window. `bridget --history` tags REPL sessions with their turn
+    count; `bridget --continue` surfaces the previous REPL session summary.
+    One-shot history keeps its existing stored shape.
 * `learn_inbox_draft` (Class A, read-only): standardizes the inbox-candidate →
   `record_learning` mapping. Selects exactly one pending candidate (commit SHA
   prefix and/or `pattern_name`) and returns a review-ready draft

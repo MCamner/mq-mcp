@@ -1,6 +1,6 @@
 ---
 name: bridget-bridge-maintainer
-description: Use when changing Bridget, bridge.py, OpenAI tool calling, MCP tool discovery, search modes, image behavior, or voice behavior.
+description: Use when changing Bridget, bridge.py, OpenAI tool calling, MCP tool discovery, search modes, the --chat REPL, the multi-round tool loop, session persistence, image behavior, or voice behavior.
 ---
 
 # Bridget Bridge Maintainer
@@ -13,6 +13,8 @@ calls, and the local MCP bridge experience.
 * Changing `bridge.py`, Bridget behavior, OpenAI tool calling schema, or MCP tool discovery
 * Debugging bridge startup, tool discovery, or `content_to_text()` conversion
 * Modifying `--tools`, `--search`, or `--search-global` behavior
+* Changing the `--chat` REPL, the multi-round tool loop (`run_turn`,
+  `MAX_TOOL_ROUNDS`), context trimming, or REPL session persistence
 * Changing Bridget voice or image response behavior
 
 ## When not to use
@@ -42,12 +44,17 @@ calls, and the local MCP bridge experience.
 * `mq-mcp/bridge.py`
 * `mq-mcp/ask.py`
 * `mq-mcp/bridget_voice.py`
+* `mq-mcp/bridget_context.py`
+* `mq-mcp/bridget_runtime.py`
 * `mq-mcp/server.py`
 * `docs/bridget-voice.md`
 * `docs/demo.md`
 * `README.md`
 * `tests/test_bridget_images.py`
 * `tests/test_bridget_voice.py`
+* `tests/test_bridge_refactor.py`
+* `tests/test_bridget_context.py`
+* `tests/test_bridget_runtime.py`
 * `scripts/check-bridge-tool-discovery.sh`
 
 ## Key Behavior
@@ -58,6 +65,10 @@ The bridge:
 * discovers actual MCP tools before answering
 * converts MCP tool schemas into OpenAI tool definitions
 * handles `--tools`, `--search`, and `--search-global`
+* runs a bounded multi-round tool loop in `run_turn` (`MAX_TOOL_ROUNDS`), passing
+  `tools=` on every model call so DO MODE can chain tool calls
+* offers an interactive REPL via `--chat` (one session + system message alive,
+  context trimmed for long sessions, recorded once at exit — not per turn)
 * prints tool calls for visibility
 * supports Bridget image responses and optional local macOS speech
 
@@ -86,13 +97,23 @@ Check:
 ## Verification
 
 ```bash
-python -m compileall mq-mcp/bridge.py mq-mcp/ask.py mq-mcp/bridget_voice.py -q
+python -m compileall mq-mcp/bridge.py mq-mcp/ask.py mq-mcp/bridget_voice.py \
+  mq-mcp/bridget_context.py mq-mcp/bridget_runtime.py -q
 uv --directory mq-mcp run python bridge.py --tools
 ./scripts/check-bridge-tool-discovery.sh
 uv --directory mq-mcp run pytest \
   ../tests/test_bridget_images.py \
   ../tests/test_bridget_voice.py \
+  ../tests/test_bridge_refactor.py \
+  ../tests/test_bridget_context.py \
+  ../tests/test_bridget_runtime.py \
   -q
+```
+
+If `OPENAI_API_KEY` is available and the task touched the REPL, smoke it:
+
+```bash
+uv --directory mq-mcp run python bridge.py --chat <<< 'exit'   # must greet and exit 0
 ```
 
 If `OPENAI_API_KEY` is available and the task touched prompt flow:
