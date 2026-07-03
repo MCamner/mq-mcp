@@ -36,7 +36,9 @@ Current project phase:
 
 ```text
 v2.0.0 - Release Gate v2 + deterministic readiness (done)
-Next:   v1.11.0 mq-learn integration (Fas 0-2) + v1.12.0 repo-snapshot evidence
+v2.1.0 - Bridget interactive session foundation (done)
+Next:   v2.2.0  mq-learn integration (Fas 0-2)
+        v1.12.0 repo-snapshot evidence
 ```
 
 Completed foundation:
@@ -240,6 +242,138 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
+| v2.1.0  | Bridget interactive session foundation      | Done          |
+| v2.2.0  | mq-learn integration                        | Planned       |
+| v1.12.0 | Repo-snapshot as controlled evidence        | Planned       |
+
+---
+
+## v2.1.0 — Bridget interactive session foundation (done)
+
+> **Scope split (as shipped):**
+>
+> * **Phase 1 = bugfix** — the multi-round tool loop. Shipped as its own PR
+>   (#30), ahead of the REPL work.
+> * **Phase 2–5 = feature work** — REPL mode, context management, persistence,
+>   docs.
+> * **`--chat` did NOT become the default in this release.** One-shot behavior
+>   stays the default for scripts, aliases, launchers, and automation.
+
+Shipped as: Phase 0 #27, Phase 1 #30, Phase 2 #29, Phase 3 #34, Phase 4 #36,
+Phase 5 #37. README `--chat` documentation landed in #33.
+
+Goal:
+
+Make Bridget capable of multi-round tool execution and interactive sessions
+without breaking its current role as a thin bridge. Bridget may keep a live
+prompt session, but it must not become the orchestrator. Planning, retries,
+workflow state, and policy ownership stay in `mq-agent` and `mq-mcp`.
+
+Core principle:
+
+```text
+Bridget may hold conversational context.
+Bridget must not own workflow orchestration.
+```
+
+Target file: `bridge.py`.
+
+### Phase 0 — Bridge execution refactor (done)
+
+Prepare `bridge.py` so multi-round execution and REPL mode can be added without
+turning the file into a fragile monolith.
+
+* [x] Extract `build_system_content(...)`
+* [x] Extract `discover_tools(...)`
+* [x] Extract `run_turn(...)`
+* [x] Extract `execute_tool_calls(...)`
+* [x] Extract `print_response(...)`
+* [x] Keep approval gate behavior unchanged
+* [x] Keep voice, spinner, workflow, goto-repo, and face-trigger behavior unchanged
+* [x] Add small regression tests or smoke checks for existing one-shot behavior
+
+### Phase 1 — Multi-round tool loop (bugfix — own PR, done)
+
+Fix the current single-round tool limitation so DO MODE can actually perform
+multi-step execution. Today the follow-up/final model call does not consistently
+pass `tools=...`, so chained tool calls are effectively impossible — DO MODE
+promises multi-step but delivers one tool round plus a final answer.
+
+* [x] Replace the fixed first-response/final-response pattern with a bounded loop
+* [x] Use `while assistant_message.tool_calls:`
+* [x] Pass `tools=openai_tools` in every model call
+* [x] Add `MAX_TOOL_ROUNDS = 10`; stop with a clear error if exceeded
+* [x] In `--do` mode use `tool_choice="required"` only on the first round
+* [x] Use `tool_choice="auto"` after the first round so the model can finish
+* [x] Collect `called_tools` across all rounds
+* [x] Preserve per-command approval for Class C/D style actions
+* [x] Ensure `shell_exec` still requires `--do` and explicit approval
+
+Definition of done: one prompt can trigger several sequential tool calls; DO MODE
+can perform a multi-step shell task; every shell command still passes approval;
+the loop cannot run forever; existing one-shot behavior still works.
+
+### Phase 2 — REPL mode with `--chat` (feature, done)
+
+Add an explicit interactive Bridget session mode. **Do not make `--chat` the
+default.**
+
+* [x] Add `--chat` flag; make the initial prompt optional under `--chat`
+* [x] Keep one `ClientSession` open for the whole chat session
+* [x] Discover MCP tools once and build system content once at session start
+* [x] Keep the system message at `messages[0]`
+* [x] Per turn: read input → append user message → `run_turn(...)` → print → keep
+  `messages` alive
+* [x] Exit cleanly on `exit` / `quit` / `q` / Ctrl-D / Ctrl-C
+* [x] Spinner per turn; voice optional per turn
+* [x] Route intercepts still work per turn (face trigger, goto-repo, voice, workflow handoff)
+* [x] Use `/dev/tty` for REPL input if launcher stdout is captured
+* [x] Verify `scripts/bridget` passes `--chat` through correctly
+
+### Phase 3 — Context window management (feature, done)
+
+Prevent long REPL sessions from poisoning or overflowing the model context.
+
+* [x] Rough token estimate via `len(chars) / 4`
+* [x] Add `BRIDGET_CONTEXT_BUDGET` with sane per-model default
+* [x] Never drop `messages[0]`; keep system + latest N turns + latest important tool results
+* [x] Drop or summarize middle history when budget is exceeded
+* [x] Add `MAX_MESSAGES`, `MAX_TOOL_OUTPUT_CHARS`; truncate oversized tool output
+* [x] Optional: compress dropped turns under `## Earlier in this Bridget session`
+
+Design rule: REPL history is temporary; `BridgetContext` remains summary-based.
+
+### Phase 4 — Persistence integration (feature, done)
+
+Record once per REPL session at exit — not once per turn — so short interactive
+sessions do not pollute the five-session rolling memory window.
+
+* [x] Call `ctx.record()` once when the REPL exits
+* [x] Store: last answer summary, last user prompt, turn count, duration, called
+  tools across all turns, `do_mode`, `chat_mode`
+* [x] Do not store the full transcript
+* [x] `--continue` reads the previous REPL session summary correctly
+* [x] `--history` shows REPL sessions with turn count
+
+### Phase 5 — Docs, skills, and validation (feature, done)
+
+* [x] Update `usage()`, `README.md`, `docs/demo.md`
+* [x] Update `docs/bridget-voice.md` if voice behavior changes in REPL
+* [x] Update `docs/orchestration-boundary.md`
+* [x] Update `skills/bridget-bridge-maintainer/SKILL.md`
+* [x] Add REPL smoke check to `scripts/validate.sh`
+* [x] Add CHANGELOG entry
+
+Non-goals:
+
+* no `--chat` default in this release
+* no orchestration state, workflow retries, or tool-policy bypass in Bridget
+* no persisted full REPL transcripts by default
+* no unbounded tool loops or unbounded tool output in message history
+
+Future decision (not in v2.1.0): whether bare `bridget` should open interactive
+mode with `bridget -1 "prompt"` for one-shot. Decide only after `--chat` proves
+stable in real use.
 
 ---
 
@@ -297,7 +431,7 @@ Non-goals:
 
 ---
 
-## Planned: v1.11.0 — mq-learn integration
+## Planned: v2.2.0 — mq-learn integration
 
 ### Goal
 
@@ -1533,13 +1667,15 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v1.11.0 - Ollama-backed learn extraction hardening
+v2.2.0 - mq-learn integration (Fas 0-2)
 ```
 
-Keep v1.11.0 limited to optional local-provider hardening for learn extraction.
-The learning contract is already complete; the next work is validation,
-dry-run behavior, approval boundaries, and safe failure when Ollama or the
-local learn model is unavailable.
+The v2.1.0 Bridget interactive session foundation is complete (Phases 0–5
+shipped; `--chat` is opt-in and did not become the default). The prior v1.11.0
+Ollama-backed learn extraction hardening is also complete. v2.2.0 moves the
+`mq-learn` extractor to the right place in the stack and wires it to the
+review pipeline, repo context, and Obsidian; v1.12.0 (repo-snapshot evidence)
+follows.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
