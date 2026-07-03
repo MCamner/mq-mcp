@@ -3,6 +3,7 @@ import io
 import sys
 import types
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -13,13 +14,19 @@ sys.path.insert(0, str(ROOT / "mq-mcp"))
 
 @pytest.fixture()
 def bridge():
-    sys.modules.setdefault("mcp", types.SimpleNamespace(ClientSession=object, StdioServerParameters=object))
+    # Stub the mcp package so bridge.py imports without the real dependency.
+    # Typed Any because these are dynamic module stubs, not real modules.
+    mcp_stub: Any = types.ModuleType("mcp")
+    mcp_stub.ClientSession = object
+    mcp_stub.StdioServerParameters = object
+    sys.modules.setdefault("mcp", mcp_stub)
     sys.modules.setdefault("mcp.client", types.ModuleType("mcp.client"))
-    stdio = types.ModuleType("mcp.client.stdio")
+    stdio: Any = types.ModuleType("mcp.client.stdio")
     stdio.stdio_client = object
     sys.modules.setdefault("mcp.client.stdio", stdio)
 
     spec = importlib.util.spec_from_file_location("mq_mcp_bridge_scramble", BRIDGE_PATH)
+    assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
