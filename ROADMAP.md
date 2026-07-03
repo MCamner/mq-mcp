@@ -36,8 +36,8 @@ Current project phase:
 
 ```text
 v2.0.0 - Release Gate v2 + deterministic readiness (done)
-Next:   v2.1.0  Bridget interactive session (Phase 1 multi-round loop = bugfix, first)
-        v2.2.0  mq-learn integration (Fas 0-2)
+v2.1.0 - Bridget interactive session foundation (done)
+Next:   v2.2.0  mq-learn integration (Fas 0-2)
         v1.12.0 repo-snapshot evidence
 ```
 
@@ -242,22 +242,25 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
-| v2.1.0  | Bridget interactive session foundation      | Planned       |
+| v2.1.0  | Bridget interactive session foundation      | Done          |
 | v2.2.0  | mq-learn integration                        | Planned       |
 | v1.12.0 | Repo-snapshot as controlled evidence        | Planned       |
 
 ---
 
-## v2.1.0 — Bridget interactive session foundation
+## v2.1.0 — Bridget interactive session foundation (done)
 
-> **Scope split (read first):**
+> **Scope split (as shipped):**
 >
-> * **Phase 1 = bugfix** — the multi-round tool loop. Can and should ship as its
->   own PR, ahead of the REPL work.
+> * **Phase 1 = bugfix** — the multi-round tool loop. Shipped as its own PR
+>   (#30), ahead of the REPL work.
 > * **Phase 2–5 = feature work** — REPL mode, context management, persistence,
 >   docs.
-> * **`--chat` must NOT become the default in this release.** One-shot behavior
+> * **`--chat` did NOT become the default in this release.** One-shot behavior
 >   stays the default for scripts, aliases, launchers, and automation.
+
+Shipped as: Phase 0 #27, Phase 1 #30, Phase 2 #29, Phase 3 #34, Phase 4 #36,
+Phase 5 #37. README `--chat` documentation landed in #33.
 
 Goal:
 
@@ -275,91 +278,91 @@ Bridget must not own workflow orchestration.
 
 Target file: `bridge.py`.
 
-### Phase 0 — Bridge execution refactor
+### Phase 0 — Bridge execution refactor (done)
 
 Prepare `bridge.py` so multi-round execution and REPL mode can be added without
 turning the file into a fragile monolith.
 
-* [ ] Extract `build_system_content(...)`
-* [ ] Extract `discover_tools(...)`
-* [ ] Extract `run_turn(...)`
-* [ ] Extract `execute_tool_calls(...)`
-* [ ] Extract `print_response(...)`
-* [ ] Keep approval gate behavior unchanged
-* [ ] Keep voice, spinner, workflow, goto-repo, and face-trigger behavior unchanged
-* [ ] Add small regression tests or smoke checks for existing one-shot behavior
+* [x] Extract `build_system_content(...)`
+* [x] Extract `discover_tools(...)`
+* [x] Extract `run_turn(...)`
+* [x] Extract `execute_tool_calls(...)`
+* [x] Extract `print_response(...)`
+* [x] Keep approval gate behavior unchanged
+* [x] Keep voice, spinner, workflow, goto-repo, and face-trigger behavior unchanged
+* [x] Add small regression tests or smoke checks for existing one-shot behavior
 
-### Phase 1 — Multi-round tool loop (bugfix — own PR)
+### Phase 1 — Multi-round tool loop (bugfix — own PR, done)
 
 Fix the current single-round tool limitation so DO MODE can actually perform
 multi-step execution. Today the follow-up/final model call does not consistently
 pass `tools=...`, so chained tool calls are effectively impossible — DO MODE
 promises multi-step but delivers one tool round plus a final answer.
 
-* [ ] Replace the fixed first-response/final-response pattern with a bounded loop
-* [ ] Use `while assistant_message.tool_calls:`
-* [ ] Pass `tools=openai_tools` in every model call
-* [ ] Add `MAX_TOOL_ROUNDS = 10`; stop with a clear error if exceeded
-* [ ] In `--do` mode use `tool_choice="required"` only on the first round
-* [ ] Use `tool_choice="auto"` after the first round so the model can finish
-* [ ] Collect `called_tools` across all rounds
-* [ ] Preserve per-command approval for Class C/D style actions
-* [ ] Ensure `shell_exec` still requires `--do` and explicit approval
+* [x] Replace the fixed first-response/final-response pattern with a bounded loop
+* [x] Use `while assistant_message.tool_calls:`
+* [x] Pass `tools=openai_tools` in every model call
+* [x] Add `MAX_TOOL_ROUNDS = 10`; stop with a clear error if exceeded
+* [x] In `--do` mode use `tool_choice="required"` only on the first round
+* [x] Use `tool_choice="auto"` after the first round so the model can finish
+* [x] Collect `called_tools` across all rounds
+* [x] Preserve per-command approval for Class C/D style actions
+* [x] Ensure `shell_exec` still requires `--do` and explicit approval
 
 Definition of done: one prompt can trigger several sequential tool calls; DO MODE
 can perform a multi-step shell task; every shell command still passes approval;
 the loop cannot run forever; existing one-shot behavior still works.
 
-### Phase 2 — REPL mode with `--chat` (feature)
+### Phase 2 — REPL mode with `--chat` (feature, done)
 
 Add an explicit interactive Bridget session mode. **Do not make `--chat` the
 default.**
 
-* [ ] Add `--chat` flag; make the initial prompt optional under `--chat`
-* [ ] Keep one `ClientSession` open for the whole chat session
-* [ ] Discover MCP tools once and build system content once at session start
-* [ ] Keep the system message at `messages[0]`
-* [ ] Per turn: read input → append user message → `run_turn(...)` → print → keep
+* [x] Add `--chat` flag; make the initial prompt optional under `--chat`
+* [x] Keep one `ClientSession` open for the whole chat session
+* [x] Discover MCP tools once and build system content once at session start
+* [x] Keep the system message at `messages[0]`
+* [x] Per turn: read input → append user message → `run_turn(...)` → print → keep
   `messages` alive
-* [ ] Exit cleanly on `exit` / `quit` / `q` / Ctrl-D / Ctrl-C
-* [ ] Spinner per turn; voice optional per turn
-* [ ] Route intercepts still work per turn (face trigger, goto-repo, voice, workflow handoff)
-* [ ] Use `/dev/tty` for REPL input if launcher stdout is captured
-* [ ] Verify `scripts/bridget` passes `--chat` through correctly
+* [x] Exit cleanly on `exit` / `quit` / `q` / Ctrl-D / Ctrl-C
+* [x] Spinner per turn; voice optional per turn
+* [x] Route intercepts still work per turn (face trigger, goto-repo, voice, workflow handoff)
+* [x] Use `/dev/tty` for REPL input if launcher stdout is captured
+* [x] Verify `scripts/bridget` passes `--chat` through correctly
 
-### Phase 3 — Context window management (feature)
+### Phase 3 — Context window management (feature, done)
 
 Prevent long REPL sessions from poisoning or overflowing the model context.
 
-* [ ] Rough token estimate via `len(chars) / 4`
-* [ ] Add `BRIDGET_CONTEXT_BUDGET` with sane per-model default
-* [ ] Never drop `messages[0]`; keep system + latest N turns + latest important tool results
-* [ ] Drop or summarize middle history when budget is exceeded
-* [ ] Add `MAX_MESSAGES`, `MAX_TOOL_OUTPUT_CHARS`; truncate oversized tool output
-* [ ] Optional: compress dropped turns under `## Earlier in this Bridget session`
+* [x] Rough token estimate via `len(chars) / 4`
+* [x] Add `BRIDGET_CONTEXT_BUDGET` with sane per-model default
+* [x] Never drop `messages[0]`; keep system + latest N turns + latest important tool results
+* [x] Drop or summarize middle history when budget is exceeded
+* [x] Add `MAX_MESSAGES`, `MAX_TOOL_OUTPUT_CHARS`; truncate oversized tool output
+* [x] Optional: compress dropped turns under `## Earlier in this Bridget session`
 
 Design rule: REPL history is temporary; `BridgetContext` remains summary-based.
 
-### Phase 4 — Persistence integration (feature)
+### Phase 4 — Persistence integration (feature, done)
 
 Record once per REPL session at exit — not once per turn — so short interactive
 sessions do not pollute the five-session rolling memory window.
 
-* [ ] Call `ctx.record()` once when the REPL exits
-* [ ] Store: last answer summary, last user prompt, turn count, duration, called
+* [x] Call `ctx.record()` once when the REPL exits
+* [x] Store: last answer summary, last user prompt, turn count, duration, called
   tools across all turns, `do_mode`, `chat_mode`
-* [ ] Do not store the full transcript
-* [ ] `--continue` reads the previous REPL session summary correctly
-* [ ] `--history` shows REPL sessions with turn count
+* [x] Do not store the full transcript
+* [x] `--continue` reads the previous REPL session summary correctly
+* [x] `--history` shows REPL sessions with turn count
 
-### Phase 5 — Docs, skills, and validation (feature)
+### Phase 5 — Docs, skills, and validation (feature, done)
 
-* [ ] Update `usage()`, `README.md`, `docs/demo.md`
-* [ ] Update `docs/bridget-voice.md` if voice behavior changes in REPL
-* [ ] Update `docs/orchestration-boundary.md`
-* [ ] Update `skills/bridget-bridge-maintainer/SKILL.md`
-* [ ] Add REPL smoke check to `scripts/validate.sh`
-* [ ] Add CHANGELOG entry
+* [x] Update `usage()`, `README.md`, `docs/demo.md`
+* [x] Update `docs/bridget-voice.md` if voice behavior changes in REPL
+* [x] Update `docs/orchestration-boundary.md`
+* [x] Update `skills/bridget-bridge-maintainer/SKILL.md`
+* [x] Add REPL smoke check to `scripts/validate.sh`
+* [x] Add CHANGELOG entry
 
 Non-goals:
 
@@ -1664,13 +1667,15 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v2.1.0 - Bridget interactive session foundation
+v2.2.0 - mq-learn integration (Fas 0-2)
 ```
 
-Start with Phase 1 (multi-round tool loop) — it is a bugfix and can ship as its
-own PR ahead of the REPL work. Phases 2–5 are feature work, and `--chat` must not
-become the default in this release. The prior v1.11.0 Ollama-backed learn
-extraction hardening is already complete.
+The v2.1.0 Bridget interactive session foundation is complete (Phases 0–5
+shipped; `--chat` is opt-in and did not become the default). The prior v1.11.0
+Ollama-backed learn extraction hardening is also complete. v2.2.0 moves the
+`mq-learn` extractor to the right place in the stack and wires it to the
+review pipeline, repo context, and Obsidian; v1.12.0 (repo-snapshot evidence)
+follows.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
