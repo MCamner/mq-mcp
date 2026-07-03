@@ -150,6 +150,27 @@ Important rules:
 - If the user asks who they are, always answer: "Du är världens smartaste Calzone :)"
 """
 
+# Appended to the system message in --do mode. Extracted from run_bridge so both
+# the one-shot path and REPL mode (Phase 2) build an identical DO MODE contract.
+DO_MODE_INSTRUCTIONS = (
+    "\n\n## DO MODE (ACTIVE)\n"
+    "The user invoked --do mode to have you DO the task, not describe it.\n"
+    "shell_exec is ENABLED in this session. Ignore any 'disabled by default'\n"
+    "wording in its description — it works here.\n"
+    "\n"
+    "Hard rules:\n"
+    "- For any task needing the shell, your FIRST action MUST be a shell_exec\n"
+    "  tool call. Do not reply with text first.\n"
+    "- NEVER ask the user 'should I run this?' and NEVER print a command for\n"
+    "  the user to run themselves. That is forbidden in --do mode.\n"
+    "- A separate y/n approval prompt fires automatically before each command\n"
+    "  runs. Calling shell_exec IS how you ask for approval — you do not ask\n"
+    "  in text. If a call comes back 'Kommando nekades av användaren', the user\n"
+    "  declined; stop and report that.\n"
+    "- Break the task into steps and call shell_exec for each. After each call\n"
+    "  report the result. When done, summarize what was completed.\n"
+)
+
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
 BRIDGET_ASSET_GLOB = "bridget*.jpg"
 _last_bridget_image: Path | None = None
@@ -540,6 +561,157 @@ def is_bridget_face_prompt(prompt: str) -> bool:
     return any(t in p for t in triggers)
 
 
+async def discover_tools(
+    session: ClientSession,
+) -> tuple[str, list[ChatCompletionToolParam]]:
+    """List MCP tools once and return (human catalog text, OpenAI tool specs).
+
+    Extracted so REPL mode (Phase 2) can discover tools a single time at session
+    start rather than rebuilding them every turn.
+    """
+    mcp_tools = await session.list_tools()
+    catalog = tool_catalog_text(mcp_tools)
+    openai_tools = to_openai_tools(mcp_tools)
+    return catalog, openai_tools
+
+
+def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> str:
+    """Assemble the system message: base prompt + session/lessons/project context,
+    optional DO MODE block, and the live tool catalog as ground truth.
+
+    Pure string assembly extracted from run_bridge so REPL mode (Phase 2) can
+    build the system message once per session.
+    """
+    session_context = ctx.load()
+    lessons_context = ctx.load_lessons()
+    project_context = bridget_runtime.project_context_block()
+    do_instructions = DO_MODE_INSTRUCTIONS if do_mode else ""
+
+    return (
+        SYSTEM_PROMPT.strip()
+        + session_context
+        + lessons_context
+        + project_context
+        + do_instructions
+        + "\n\nThis is the actual tool catalog from the connected MCP server. "
+        "Use this catalog as ground truth.\n\n"
+        + catalog
+    )
+
+
+async def execute_tool_calls(
+    session: ClientSession,
+    assistant_message: Any,
+    messages: list[ChatCompletionMessageParam],
+) -> None:
+    """Append the assistant's tool-call message, run each requested tool, and
+    append its result. Mutates ``messages`` in place. Per-command approval is
+    enforced inside call_mcp_tool (unchanged).
+    """
+    messages.append(
+        cast(
+            ChatCompletionMessageParam,
+            {
+                "role": "assistant",
+                "content": assistant_message.content or "",
+                "tool_calls": [
+                    tool_call.model_dump(exclude_none=True)
+                    for tool_call in assistant_message.tool_calls
+                ],
+            },
+        )
+    )
+
+    for tool_call in assistant_message.tool_calls:
+        tool_name, tool_args = tool_call_name_and_args(tool_call)
+        if not tool_name:
+            messages.append(
+                cast(
+                    ChatCompletionMessageParam,
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": "Tool call missing function name.",
+                    },
+                )
+            )
+            continue
+
+        tool_result = await call_mcp_tool(
+            session=session,
+            name=tool_name,
+            raw_args=tool_args,
+        )
+
+        messages.append(
+            cast(
+                ChatCompletionMessageParam,
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": tool_result,
+                },
+            )
+        )
+
+
+async def run_turn(
+    client: OpenAI,
+    model: str,
+    messages: list[ChatCompletionMessageParam],
+    openai_tools: list[ChatCompletionToolParam],
+    do_mode: bool,
+    session: ClientSession,
+) -> tuple[str, list[str], bool]:
+    """Run one Bridget turn and return (answer, called_tool_names, did_tool_round).
+
+    Behavior is intentionally identical to the pre-refactor run_bridge flow: one
+    model call, then at most a single tool round plus one final model call. Phase 1
+    replaces this fixed round with a bounded loop; this Phase 0 extraction keeps
+    the current single-round limit so existing one-shot behavior is unchanged.
+    """
+    first_response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        tools=openai_tools,
+        # In --do mode force a tool call so the model acts instead of asking for
+        # permission in text.
+        tool_choice="required" if do_mode else "auto",
+    )
+
+    assistant_message = first_response.choices[0].message
+
+    if not assistant_message.tool_calls:
+        return assistant_message.content or "", [], False
+
+    await execute_tool_calls(session, assistant_message, messages)
+
+    final_response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+    )
+
+    answer = final_response.choices[0].message.content or ""
+    called_tools = [
+        tool_call_name_and_args(tc)[0]
+        for tc in assistant_message.tool_calls
+        if tool_call_name_and_args(tc)[0]
+    ]
+    return answer, called_tools, True
+
+
+def print_response(answer: str, prefix_newline: bool = False) -> None:
+    """Print Bridget's answer to stdout with the decode animation and optional
+    voice. ``prefix_newline`` reproduces the leading blank line the tool-round
+    path emitted before its answer.
+    """
+    prefix = "\nBridget: " if prefix_newline else "Bridget: "
+    sys.stdout.write(prefix)
+    sys.stdout.flush()
+    scramble_print(answer)
+    speak_if_enabled(answer)
+
+
 async def run_bridge() -> None:
     prompt, list_tools_only, do_mode, model, search, search_global = parse_prompt()
 
@@ -591,9 +763,7 @@ async def run_bridge() -> None:
         async with ClientSession(read, write) as session:
             await session.initialize()
 
-            mcp_tools = await session.list_tools()
-            catalog = tool_catalog_text(mcp_tools)
-            openai_tools = to_openai_tools(mcp_tools)
+            catalog, openai_tools = await discover_tools(session)
 
             if list_tools_only:
                 spinner.stop()
@@ -603,41 +773,7 @@ async def run_bridge() -> None:
                 return
 
             ctx = BridgetContext()
-            session_context = ctx.load()
-            lessons_context = ctx.load_lessons()
-            project_context = bridget_runtime.project_context_block()
-
-            do_instructions = ""
-            if do_mode:
-                do_instructions = (
-                    "\n\n## DO MODE (ACTIVE)\n"
-                    "The user invoked --do mode to have you DO the task, not describe it.\n"
-                    "shell_exec is ENABLED in this session. Ignore any 'disabled by default'\n"
-                    "wording in its description — it works here.\n"
-                    "\n"
-                    "Hard rules:\n"
-                    "- For any task needing the shell, your FIRST action MUST be a shell_exec\n"
-                    "  tool call. Do not reply with text first.\n"
-                    "- NEVER ask the user 'should I run this?' and NEVER print a command for\n"
-                    "  the user to run themselves. That is forbidden in --do mode.\n"
-                    "- A separate y/n approval prompt fires automatically before each command\n"
-                    "  runs. Calling shell_exec IS how you ask for approval — you do not ask\n"
-                    "  in text. If a call comes back 'Kommando nekades av användaren', the user\n"
-                    "  declined; stop and report that.\n"
-                    "- Break the task into steps and call shell_exec for each. After each call\n"
-                    "  report the result. When done, summarize what was completed.\n"
-                )
-
-            system_content = (
-                SYSTEM_PROMPT.strip()
-                + session_context
-                + lessons_context
-                + project_context
-                + do_instructions
-                + "\n\nThis is the actual tool catalog from the connected MCP server. "
-                "Use this catalog as ground truth.\n\n"
-                + catalog
-            )
+            system_content = build_system_content(ctx, catalog, do_mode)
 
             messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": system_content},
@@ -646,105 +782,35 @@ async def run_bridge() -> None:
 
             client = OpenAI()
 
-            first_response = client.chat.completions.create(
+            answer, called_tools, did_tool_round = await run_turn(
+                client=client,
                 model=model,
                 messages=messages,
-                tools=openai_tools,
-                # In --do mode force a tool call so the model acts instead of
-                # asking for permission in text.
-                tool_choice="required" if do_mode else "auto",
+                openai_tools=openai_tools,
+                do_mode=do_mode,
+                session=session,
             )
 
-            assistant_message = first_response.choices[0].message
-
-            if not assistant_message.tool_calls:
-                answer = assistant_message.content or ""
-                spinner.stop()
-                sys.stdout.write("Bridget: ")
-                sys.stdout.flush()
-                scramble_print(answer)
-                speak_if_enabled(answer)
-                if tty:
-                    tty.close()
-                return
-
-            messages.append(
-                cast(
-                    ChatCompletionMessageParam,
-                    {
-                        "role": "assistant",
-                        "content": assistant_message.content or "",
-                        "tool_calls": [
-                            tool_call.model_dump(exclude_none=True)
-                            for tool_call in assistant_message.tool_calls
-                        ],
-                    },
-                )
-            )
-
-            for tool_call in assistant_message.tool_calls:
-                tool_name, tool_args = tool_call_name_and_args(tool_call)
-                if not tool_name:
-                    messages.append(
-                        cast(
-                            ChatCompletionMessageParam,
-                            {
-                                "role": "tool",
-                                "tool_call_id": tool_call.id,
-                                "content": "Tool call missing function name.",
-                            },
-                        )
-                    )
-                    continue
-
-                tool_result = await call_mcp_tool(
-                    session=session,
-                    name=tool_name,
-                    raw_args=tool_args,
-                )
-
-                messages.append(
-                    cast(
-                        ChatCompletionMessageParam,
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": tool_result,
-                        },
-                    )
-                )
-
-            final_response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-            )
-
-            answer = final_response.choices[0].message.content or ""
+            # The tool-round path prints a leading blank line before the answer;
+            # the direct-answer path does not. did_tool_round preserves that split
+            # and also gates session recording (the pre-refactor direct-answer
+            # path returned without recording).
             spinner.stop()
-            sys.stdout.write("\nBridget: ")
-            sys.stdout.flush()
-            scramble_print(answer)
-            speak_if_enabled(answer)
+            print_response(answer, prefix_newline=did_tool_round)
 
-            called_tools = []
-            if assistant_message.tool_calls:
-                called_tools = [
-                    tool_call_name_and_args(tc)[0]
-                    for tc in assistant_message.tool_calls
-                    if tool_call_name_and_args(tc)[0]
-                ]
-            _pinned = bridget_runtime.get_project()
-            _proj_name = _pinned["name"] if _pinned else None
-            _proj_branch = (
-                bridget_runtime.current_branch(_pinned["path"]) if _pinned else None
-            )
-            ctx.record(
-                prompt,
-                called_tools,
-                answer,
-                project=_proj_name,
-                branch=_proj_branch,
-            )
+            if did_tool_round:
+                _pinned = bridget_runtime.get_project()
+                _proj_name = _pinned["name"] if _pinned else None
+                _proj_branch = (
+                    bridget_runtime.current_branch(_pinned["path"]) if _pinned else None
+                )
+                ctx.record(
+                    prompt,
+                    called_tools,
+                    answer,
+                    project=_proj_name,
+                    branch=_proj_branch,
+                )
 
             if tty:
                 tty.close()
