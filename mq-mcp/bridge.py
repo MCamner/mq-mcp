@@ -865,8 +865,45 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
 CHAT_EXIT_WORDS = {"exit", "quit", "q"}
 
 
+def record_chat_session(
+    ctx: BridgetContext,
+    *,
+    do_mode: bool,
+    turns: int,
+    tools: list[str],
+    last_prompt: str,
+    last_answer: str,
+    start: float,
+) -> None:
+    """Record a whole REPL session once, at exit (Phase 4).
+
+    A REPL session collapses to a single memory entry — last prompt/answer plus
+    session-level metadata — so a short interactive session does not push older
+    one-shot sessions out of the five-session rolling window one turn at a time.
+    A session that never ran a model turn records nothing.
+    """
+    if turns <= 0:
+        return
+    pinned = bridget_runtime.get_project()
+    proj_name = pinned["name"] if pinned else None
+    proj_branch = (
+        bridget_runtime.current_branch(pinned["path"]) if pinned else None
+    )
+    ctx.record(
+        last_prompt,
+        tools,
+        last_answer,
+        project=proj_name,
+        branch=proj_branch,
+        turns=turns,
+        duration_s=round(time.monotonic() - start, 1),
+        do_mode=do_mode,
+        chat_mode=True,
+    )
+
+
 async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
-    """Interactive Bridget REPL (Phase 2).
+    """Interactive Bridget REPL (Phase 2 + Phase 4 persistence).
 
     Keeps one MCP session and one system message alive for the whole session and
     runs run_turn per line, so context is retained across turns. Not the default:
@@ -877,8 +914,8 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
     answers are written to /dev/tty so they stay visible even when a launcher
     captures stdout; falls back to stdout when /dev/tty is unavailable (CI).
 
-    Persisting the session is deliberately left to Phase 4 (record once at exit);
-    this phase does not call ctx.record().
+    Persistence (Phase 4): the session is recorded once when the loop exits — on
+    an exit word, EOF, Ctrl-C, or an error — via a finally block, never per turn.
     """
     server_params = StdioServerParameters(
         command=SERVER_COMMAND,
@@ -913,79 +950,108 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 )
                 out.flush()
 
-                pending = initial_prompt.strip()
-                while True:
-                    if pending:
-                        user_input = pending
-                        pending = ""
-                    else:
-                        out.write("\ndu> ")
-                        out.flush()
-                        try:
-                            line = sys.stdin.readline()
-                        except KeyboardInterrupt:
-                            out.write("\nHej då.\n")
+                # Phase 4: accumulate whole-session state; recorded once in the
+                # finally below so every exit path (exit word, EOF, Ctrl-C,
+                # error) persists exactly one session entry.
+                session_start = time.monotonic()
+                turn_count = 0
+                all_called_tools: list[str] = []
+                last_prompt = ""
+                last_answer = ""
+
+                try:
+                    pending = initial_prompt.strip()
+                    while True:
+                        if pending:
+                            user_input = pending
+                            pending = ""
+                        else:
+                            out.write("\ndu> ")
+                            out.flush()
+                            try:
+                                line = sys.stdin.readline()
+                            except KeyboardInterrupt:
+                                out.write("\nHej då.\n")
+                                out.flush()
+                                break
+                            if line == "":  # EOF / Ctrl-D
+                                out.write("\nHej då.\n")
+                                out.flush()
+                                break
+                            user_input = line.strip()
+
+                        if not user_input:
+                            continue
+                        if user_input.lower() in CHAT_EXIT_WORDS:
+                            out.write("Hej då.\n")
                             out.flush()
                             break
-                        if line == "":  # EOF / Ctrl-D
-                            out.write("\nHej då.\n")
-                            out.flush()
-                            break
-                        user_input = line.strip()
 
-                    if not user_input:
-                        continue
-                    if user_input.lower() in CHAT_EXIT_WORDS:
-                        out.write("Hej då.\n")
-                        out.flush()
-                        break
+                        # Per-turn route intercepts, same as the one-shot path:
+                        # voice command, face trigger, goto-repo. Each handles
+                        # its own output and the turn continues, no model call.
+                        if handle_voice_command(user_input):
+                            continue
+                        if is_bridget_face_prompt(user_input):
+                            show_bridget_face()
+                            speak_if_enabled("Jag är Bridget. Lokal MCP-brygga online.")
+                            continue
+                        goto, repo_name = is_goto_repo_prompt(user_input)
+                        if goto:
+                            handle_goto_repo(repo_name)
+                            continue
 
-                    # Per-turn route intercepts, same as the one-shot path: voice
-                    # command, face trigger, goto-repo. Each handles its own
-                    # output and the turn continues without a model call.
-                    if handle_voice_command(user_input):
-                        continue
-                    if is_bridget_face_prompt(user_input):
-                        show_bridget_face()
-                        speak_if_enabled("Jag är Bridget. Lokal MCP-brygga online.")
-                        continue
-                    goto, repo_name = is_goto_repo_prompt(user_input)
-                    if goto:
-                        handle_goto_repo(repo_name)
-                        continue
+                        messages.append({"role": "user", "content": user_input})
 
-                    messages.append({"role": "user", "content": user_input})
+                        spinner = BridgetSpinner(stream=tty)
+                        if not do_mode:
+                            # As in one-shot, --do lets the approval gate own the
+                            # terminal; a concurrent spinner corrupts the y/n
+                            # prompt.
+                            spinner.start()
+                            _SPINNER = spinner
 
-                    spinner = BridgetSpinner(stream=tty)
-                    if not do_mode:
-                        # As in one-shot, --do lets the approval gate own the
-                        # terminal; a concurrent spinner corrupts the y/n prompt.
-                        spinner.start()
-                        _SPINNER = spinner
+                        answer, called_tools, did_tool_round = await run_turn(
+                            client=client,
+                            model=model,
+                            messages=messages,
+                            openai_tools=openai_tools,
+                            do_mode=do_mode,
+                            session=session,
+                        )
 
-                    answer, _called_tools, did_tool_round = await run_turn(
-                        client=client,
-                        model=model,
-                        messages=messages,
-                        openai_tools=openai_tools,
+                        spinner.stop()
+                        _SPINNER = None
+
+                        print_response(answer, prefix_newline=did_tool_round, out=out)
+
+                        # Accumulate whole-session state for the single Phase-4
+                        # record at exit: the latest exchange plus every tool
+                        # called across all turns.
+                        turn_count += 1
+                        all_called_tools.extend(called_tools)
+                        last_prompt = user_input
+                        last_answer = answer
+
+                        # Keep the assistant's answer in history so later turns
+                        # have context. run_turn already appended any tool-call
+                        # turns and tool results; the final text answer here.
+                        messages.append({"role": "assistant", "content": answer})
+
+                        # Bound the live history so a long session can't overflow
+                        # or poison the context. Drops oldest whole turns; keeps
+                        # the system prompt and the most recent turn intact.
+                        messages = trim_history(messages, context_budget_for(model))
+                finally:
+                    record_chat_session(
+                        ctx,
                         do_mode=do_mode,
-                        session=session,
+                        turns=turn_count,
+                        tools=all_called_tools,
+                        last_prompt=last_prompt,
+                        last_answer=last_answer,
+                        start=session_start,
                     )
-
-                    spinner.stop()
-                    _SPINNER = None
-
-                    print_response(answer, prefix_newline=did_tool_round, out=out)
-
-                    # Keep the assistant's answer in history so later turns have
-                    # context. run_turn already appended any tool-call turns and
-                    # tool results; the final text answer is appended here.
-                    messages.append({"role": "assistant", "content": answer})
-
-                    # Bound the live history so a long session can't overflow or
-                    # poison the context. Drops oldest whole turns; keeps the
-                    # system prompt and the most recent turn intact.
-                    messages = trim_history(messages, context_budget_for(model))
     finally:
         if tty:
             tty.close()

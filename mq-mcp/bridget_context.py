@@ -147,6 +147,10 @@ class BridgetContext:
         *,
         project: str | None = None,
         branch: str | None = None,
+        turns: int | None = None,
+        duration_s: float | None = None,
+        do_mode: bool = False,
+        chat_mode: bool = False,
     ) -> None:
         """
         Append this session to the rolling context file (rotating old sessions
@@ -155,12 +159,29 @@ class BridgetContext:
         The markdown store stays bounded for prompt injection; the jsonl log
         keeps full depth for ``bridget --history``. The history append is
         best-effort — it never raises, so a logging failure cannot break a run.
+
+        A REPL session (``chat_mode=True``, Phase 4) records once at exit with
+        the last prompt/answer plus session-level metadata (turn count,
+        duration, called tools across all turns). One-shot callers leave the
+        Phase-4 fields at their defaults, so their stored shape is unchanged.
         """
-        session_block = self._format_session(prompt, tool_calls, answer)
+        session_block = self._format_session(
+            prompt, tool_calls, answer, turns=turns, chat_mode=chat_mode
+        )
         existing = self._read_sessions()
         updated = (existing + [session_block])[-self.max_sessions :]
         self._write_sessions(updated)
-        self._append_history(prompt, tool_calls, answer, project, branch)
+        self._append_history(
+            prompt,
+            tool_calls,
+            answer,
+            project,
+            branch,
+            turns=turns,
+            duration_s=duration_s,
+            do_mode=do_mode,
+            chat_mode=chat_mode,
+        )
 
     def read_history(self, limit: int = 20) -> list[dict]:
         """Return the most recent recorded sessions, newest first.
@@ -197,9 +218,19 @@ class BridgetContext:
         prompt: str,
         tool_calls: list[str],
         answer: str,
+        *,
+        turns: int | None = None,
+        chat_mode: bool = False,
     ) -> str:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M")
         short_answer = self._truncate(answer, MAX_ANSWER_CHARS)
+
+        # A REPL block names itself and its turn count so a later session can
+        # tell an interactive session apart from a one-shot at a glance.
+        kind_line = ""
+        if chat_mode:
+            turn_part = f", {turns} turns" if turns is not None else ""
+            kind_line = f"- Type: REPL session{turn_part}\n"
 
         tools_line = ""
         if tool_calls:
@@ -212,6 +243,7 @@ class BridgetContext:
 
         return (
             f"## Session {ts}\n"
+            f"{kind_line}"
             f"- Prompt: {prompt.strip()}\n"
             f"{tools_line}"
             f"- Summary: {short_answer}\n"
@@ -224,9 +256,14 @@ class BridgetContext:
         answer: str,
         project: str | None,
         branch: str | None,
+        *,
+        turns: int | None = None,
+        duration_s: float | None = None,
+        do_mode: bool = False,
+        chat_mode: bool = False,
     ) -> None:
         """Append one JSON line to the full-depth history log. Never raises."""
-        entry = {
+        entry: dict = {
             "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "project": project,
             "branch": branch,
@@ -234,6 +271,15 @@ class BridgetContext:
             "tools": tool_calls,
             "summary": self._truncate(answer, MAX_ANSWER_CHARS),
         }
+        # REPL-only metadata. Added only for chat sessions so one-shot history
+        # lines keep their existing shape.
+        if chat_mode:
+            entry["chat_mode"] = True
+            entry["do_mode"] = do_mode
+            if turns is not None:
+                entry["turns"] = turns
+            if duration_s is not None:
+                entry["duration_s"] = duration_s
         try:
             self.history_path.parent.mkdir(parents=True, exist_ok=True)
             with self.history_path.open("a", encoding="utf-8") as fh:

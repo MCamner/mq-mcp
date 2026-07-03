@@ -184,6 +184,32 @@ def project_context_block() -> str:
 # ----------------------------------------------------------------------
 
 
+def _session_kind(entry: dict) -> str:
+    """A short ` (REPL, N turns)` tag for chat sessions; empty for one-shot.
+
+    Reads the Phase-4 metadata written only for REPL sessions, so one-shot
+    history lines render exactly as before.
+    """
+    if not entry.get("chat_mode"):
+        return ""
+    turns = entry.get("turns")
+    turn_part = f", {turns} turns" if isinstance(turns, int) else ""
+    return f" (REPL{turn_part})"
+
+
+def _last_session(entries: list[dict]) -> dict | None:
+    """Most recent REPL session if any, else the most recent session overall.
+
+    ``entries`` is newest-first (as returned by ``read_history``).
+    """
+    if not entries:
+        return None
+    for e in entries:
+        if e.get("chat_mode"):
+            return e
+    return entries[0]
+
+
 def handle_history(limit: int = 20) -> None:
     entries = BridgetContext().read_history(limit=limit)
     if not entries:
@@ -198,7 +224,8 @@ def handle_history(limit: int = 20) -> None:
         tools_s = ", ".join(shown) + (
             f" (+{len(tools) - len(shown)})" if len(tools) > len(shown) else ""
         ) if tools else "-"
-        print(f"  {e.get('ts', '?')}  [{proj}]  {summary}")
+        kind = _session_kind(e)
+        print(f"  {e.get('ts', '?')}  [{proj}]{kind}  {summary}")
         print(f"       tools: {tools_s}")
 
 
@@ -219,6 +246,18 @@ def handle_project(name: str | None) -> None:
 
 
 def handle_continue() -> None:
+    # Surface the previous session first — a REPL session if there was one — so
+    # --continue resumes the last interactive thread even when no project is
+    # pinned. read_history is newest-first and tolerates a missing log.
+    last = _last_session(BridgetContext().read_history(limit=20))
+    if last:
+        kind = _session_kind(last) or " (one-shot)"
+        prompt = (last.get("prompt") or "").strip() or "(no prompt)"
+        summary = (last.get("summary") or "").strip() or "(no summary)"
+        print(f"Last session {last.get('ts', '?')}{kind}")
+        print(f"  prompt:  {prompt}")
+        print(f"  summary: {summary}")
+
     proj = get_project()
     if not proj:
         print("No project pinned. Use: bridget --project <repo> first.")

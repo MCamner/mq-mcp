@@ -210,8 +210,70 @@ def test_handle_project_set_show_and_unknown(tmp_path, monkeypatch, capsys):
 
 def test_handle_continue_without_pin(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "bridget-project")
+    # Isolate the session read to an empty log so no real ~/.mq history leaks in.
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(BridgetContext, history_path=tmp_path / "none.jsonl"),
+    )
     br.handle_continue()
     assert "No project pinned" in capsys.readouterr().out
+
+
+# --- Phase 4: REPL session tagging + --continue resume ----------------------
+
+
+def test_session_kind_repl_and_oneshot():
+    assert br._session_kind({"chat_mode": True, "turns": 3}) == " (REPL, 3 turns)"
+    assert br._session_kind({"chat_mode": True}) == " (REPL)"
+    assert br._session_kind({}) == ""
+    assert br._session_kind({"turns": 5}) == ""  # turns without chat_mode: one-shot
+
+
+def test_last_session_prefers_repl_then_newest():
+    entries = [
+        {"ts": "t3", "summary": "newest one-shot"},
+        {"ts": "t2", "chat_mode": True, "summary": "repl"},
+        {"ts": "t1", "summary": "old"},
+    ]
+    assert br._last_session(entries)["summary"] == "repl"
+    assert br._last_session([{"summary": "only"}])["summary"] == "only"
+    assert br._last_session([]) is None
+
+
+def test_handle_history_tags_repl_turn_count(tmp_path, monkeypatch, capsys):
+    jsonl = tmp_path / "bridget-history.jsonl"
+    ctx = BridgetContext(path=tmp_path / "ctx.md", history_path=jsonl)
+    ctx.record(
+        "p", ["git_status"], "s", project="mq-mcp",
+        turns=5, duration_s=3.0, do_mode=False, chat_mode=True,
+    )
+    monkeypatch.setattr(
+        br, "BridgetContext", functools.partial(BridgetContext, history_path=jsonl)
+    )
+    br.handle_history(limit=10)
+    assert "(REPL, 5 turns)" in capsys.readouterr().out
+
+
+def test_handle_continue_resumes_last_repl_session(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "bridget-project")  # no pin
+    jsonl = tmp_path / "bridget-history.jsonl"
+    ctx = BridgetContext(path=tmp_path / "ctx.md", history_path=jsonl)
+    ctx.record(
+        "resume this", ["git_status"], "did the thing",
+        turns=2, chat_mode=True,
+    )
+    monkeypatch.setattr(
+        br, "BridgetContext", functools.partial(BridgetContext, history_path=jsonl)
+    )
+    br.handle_continue()
+    out = capsys.readouterr().out
+    assert "Last session" in out
+    assert "(REPL, 2 turns)" in out
+    assert "resume this" in out
+    assert "did the thing" in out
+    # Still reports the missing pin after the resume summary.
+    assert "No project pinned" in out
 
 
 # --- pre-flight dispatcher --------------------------------------------------

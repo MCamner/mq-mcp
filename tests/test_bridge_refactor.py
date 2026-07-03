@@ -314,6 +314,92 @@ def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
     assert do_mode is False
 
 
+# --- Phase 4: record_chat_session ----------------------------------------------
+
+
+class _RecordingCtx:
+    """Captures the single record() call a REPL session makes at exit."""
+
+    def __init__(self):
+        self.calls = []
+
+    def record(self, prompt, tools, answer, **kwargs):
+        self.calls.append((prompt, tools, answer, kwargs))
+
+
+def test_record_chat_session_records_once_with_metadata(bridge, monkeypatch):
+    monkeypatch.setattr(
+        bridge.bridget_runtime, "get_project", lambda: {"name": "mq-mcp", "path": "/x"}
+    )
+    monkeypatch.setattr(bridge.bridget_runtime, "current_branch", lambda p: "main")
+    monkeypatch.setattr(bridge.time, "monotonic", lambda: 100.0)
+    ctx = _RecordingCtx()
+
+    bridge.record_chat_session(
+        ctx,
+        do_mode=True,
+        turns=3,
+        tools=["alpha", "beta"],
+        last_prompt="senaste frågan",
+        last_answer="senaste svaret",
+        start=90.0,
+    )
+
+    assert len(ctx.calls) == 1
+    prompt, tools, answer, kw = ctx.calls[0]
+    assert (prompt, tools, answer) == ("senaste frågan", ["alpha", "beta"], "senaste svaret")
+    assert kw["chat_mode"] is True
+    assert kw["do_mode"] is True
+    assert kw["turns"] == 3
+    assert kw["duration_s"] == 10.0
+    assert kw["project"] == "mq-mcp"
+    assert kw["branch"] == "main"
+
+
+def test_record_chat_session_skips_empty_session(bridge, monkeypatch):
+    # A session that never ran a model turn must not touch memory at all —
+    # get_project is never even consulted.
+    monkeypatch.setattr(
+        bridge.bridget_runtime,
+        "get_project",
+        lambda: (_ for _ in ()).throw(AssertionError("should not be called")),
+    )
+    ctx = _RecordingCtx()
+
+    bridge.record_chat_session(
+        ctx,
+        do_mode=False,
+        turns=0,
+        tools=[],
+        last_prompt="",
+        last_answer="",
+        start=0.0,
+    )
+
+    assert ctx.calls == []
+
+
+def test_record_chat_session_no_project_pin(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.bridget_runtime, "get_project", lambda: None)
+    ctx = _RecordingCtx()
+
+    bridge.record_chat_session(
+        ctx,
+        do_mode=False,
+        turns=1,
+        tools=[],
+        last_prompt="p",
+        last_answer="a",
+        start=0.0,
+    )
+
+    assert len(ctx.calls) == 1
+    _, _, _, kw = ctx.calls[0]
+    assert kw["project"] is None
+    assert kw["branch"] is None
+    assert kw["chat_mode"] is True
+
+
 # --- print_response ------------------------------------------------------------
 
 
