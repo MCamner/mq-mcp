@@ -161,6 +161,21 @@ else
   echo "SKIP: OPENAI_API_KEY is not set, skipping OpenAI bridge prompt"
 fi
 
+section "Bridget REPL smoke test"
+if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+  # Feed an immediate 'exit' via a here-string (no pipe -> no SIGPIPE under
+  # pipefail). Exercises REPL setup, the /dev/tty-or-stdout split, the clean
+  # exit path, and the Phase-4 record-at-exit hook (zero turns records nothing)
+  # without spending an OpenAI completion. Must greet and exit 0.
+  repl_out="$(uv run python bridge.py --chat <<< 'exit' 2>&1)" \
+    || fail "Bridget --chat REPL crashed"
+  grep -q "Hej då" <<< "$repl_out" \
+    || fail "Bridget --chat did not exit cleanly"
+  ok "Bridget --chat REPL starts and exits cleanly"
+else
+  echo "SKIP: OPENAI_API_KEY is not set, skipping REPL smoke"
+fi
+
 section "Tests"
 if uv --directory "$ROOT/mq-mcp" run pytest "$ROOT/tests/" -q --tb=short 2>&1; then
   ok "All tests passed"

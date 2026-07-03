@@ -23,12 +23,12 @@ For the formal contract, see `docs/ORCHESTRATION_CONTRACT.md`.
 Use `mq-mcp` when a caller needs one bounded action with a declared tool
 contract:
 
-- read repo files or git state
-- inspect tool safety metadata
-- run a review through the review engine
-- query or update local semantic, review, architecture, or learning memory
-- invoke a documented local integration tool
-- validate that runtime contracts still match implementation
+* read repo files or git state
+* inspect tool safety metadata
+* run a review through the review engine
+* query or update local semantic, review, architecture, or learning memory
+* invoke a documented local integration tool
+* validate that runtime contracts still match implementation
 
 Use `mq-agent` when the task requires deciding which tools to call, sequencing
 work, presenting dry-runs, or asking the user for approval.
@@ -55,19 +55,35 @@ explicit review actions even when the tool is Class A.
 
 An agent should choose `mq-mcp` only when all of these are true:
 
-- the requested action maps to a named MCP tool
-- the input path is repo-relative or inside an allowed root
-- the tool safety class is acceptable for the current approval state
-- the caller can consume a string result or documented structured text
+* the requested action maps to a named MCP tool
+* the input path is repo-relative or inside an allowed root
+* the tool safety class is acceptable for the current approval state
+* the caller can consume a string result or documented structured text
 
 An agent should not choose `mq-mcp` when it needs to:
 
-- commit, push, tag, or merge
-- choose a release strategy
-- score repo health locally instead of calling `repo-signal`
-- duplicate review severity, risk, architecture, or drift logic outside
+* commit, push, tag, or merge
+* choose a release strategy
+* score repo health locally instead of calling `repo-signal`
+* duplicate review severity, risk, architecture, or drift logic outside
   `mq-mcp`
-- maintain hidden session state across tool calls
+* maintain hidden session state across tool calls
+
+## Bridget Interactive Sessions
+
+`bridget --chat` keeps a conversation alive across turns and records a short
+summary at exit. This is **conversational context**, not orchestration state:
+
+* Bridget may remember what was said earlier in the session and reference prior
+  session summaries. This improves answers; it is not a workflow engine.
+* Bridget must not own planning, task sequencing, retries, or approval flow.
+  Those remain `mq-agent`'s job. A REPL turn is still a single bounded request
+  against the same tool surface, with the same safety classes and approval
+  gates as one-shot mode.
+* The "do not maintain hidden session state across tool calls" rule above is
+  about orchestration state (plans, retry counters, routing decisions). A
+  visible, summary-only conversational transcript that never bypasses approval
+  is not that.
 
 ## Boundary Examples
 
@@ -85,11 +101,11 @@ An agent should not choose `mq-mcp` when it needs to:
 Profiles in `profiles/` are client templates, not runtime enforcement. The
 client must still enforce approval gates.
 
-- `read-only.json` is the default for inspection.
-- `repo-only.json` is for repo-scoped reads and controlled writes.
-- `mq-agent.json` is for orchestration clients that need discovery and safety
+* `read-only.json` is the default for inspection.
+* `repo-only.json` is for repo-scoped reads and controlled writes.
+* `mq-agent.json` is for orchestration clients that need discovery and safety
   metadata before invoking tools.
-- `developer.json` and `local-macos.json` may expose Class C/D tools and should
+* `developer.json` and `local-macos.json` may expose Class C/D tools and should
   only be used in trusted local sessions.
 
 Run these checks after changing the boundary:

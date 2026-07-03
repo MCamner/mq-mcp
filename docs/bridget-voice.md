@@ -54,9 +54,15 @@ Voice state is stored in `~/.mq-mcp/`:
 ~/.mq-mcp/bridget_voice_name
 ```
 
+## Interactive session
+
+Voice behavior is unchanged in the `--chat` REPL: it applies per turn, using the
+same enabled state and voice name as one-shot mode. Each answer is spoken as it
+is printed; nothing about voice is REPL-specific.
+
 ## Safety
 
-- Voice is local-only — `say` is a macOS built-in.
-- Code blocks are stripped before speech.
-- Long answers are truncated before speech.
-- Voice errors are silently suppressed and never break Bridget output.
+* Voice is local-only — `say` is a macOS built-in.
+* Code blocks are stripped before speech.
+* Long answers are truncated before speech.
+* Voice errors are silently suppressed and never break Bridget output.
