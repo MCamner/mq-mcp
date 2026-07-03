@@ -243,6 +243,132 @@ This is not a problem to solve. It is a tension to design.
 
 ---
 
+## v2.1.0 — Bridget interactive session foundation
+
+> **Scope split (read first):**
+>
+> * **Phase 1 = bugfix** — the multi-round tool loop. Can and should ship as its
+>   own PR, ahead of the REPL work.
+> * **Phase 2–5 = feature work** — REPL mode, context management, persistence,
+>   docs.
+> * **`--chat` must NOT become the default in this release.** One-shot behavior
+>   stays the default for scripts, aliases, launchers, and automation.
+
+Goal:
+
+Make Bridget capable of multi-round tool execution and interactive sessions
+without breaking its current role as a thin bridge. Bridget may keep a live
+prompt session, but it must not become the orchestrator. Planning, retries,
+workflow state, and policy ownership stay in `mq-agent` and `mq-mcp`.
+
+Core principle:
+
+```text
+Bridget may hold conversational context.
+Bridget must not own workflow orchestration.
+```
+
+Target file: `bridge.py`.
+
+### Phase 0 — Bridge execution refactor
+
+Prepare `bridge.py` so multi-round execution and REPL mode can be added without
+turning the file into a fragile monolith.
+
+* [ ] Extract `build_system_content(...)`
+* [ ] Extract `discover_tools(...)`
+* [ ] Extract `run_turn(...)`
+* [ ] Extract `execute_tool_calls(...)`
+* [ ] Extract `print_response(...)`
+* [ ] Keep approval gate behavior unchanged
+* [ ] Keep voice, spinner, workflow, goto-repo, and face-trigger behavior unchanged
+* [ ] Add small regression tests or smoke checks for existing one-shot behavior
+
+### Phase 1 — Multi-round tool loop (bugfix — own PR)
+
+Fix the current single-round tool limitation so DO MODE can actually perform
+multi-step execution. Today the follow-up/final model call does not consistently
+pass `tools=...`, so chained tool calls are effectively impossible — DO MODE
+promises multi-step but delivers one tool round plus a final answer.
+
+* [ ] Replace the fixed first-response/final-response pattern with a bounded loop
+* [ ] Use `while assistant_message.tool_calls:`
+* [ ] Pass `tools=openai_tools` in every model call
+* [ ] Add `MAX_TOOL_ROUNDS = 10`; stop with a clear error if exceeded
+* [ ] In `--do` mode use `tool_choice="required"` only on the first round
+* [ ] Use `tool_choice="auto"` after the first round so the model can finish
+* [ ] Collect `called_tools` across all rounds
+* [ ] Preserve per-command approval for Class C/D style actions
+* [ ] Ensure `shell_exec` still requires `--do` and explicit approval
+
+Definition of done: one prompt can trigger several sequential tool calls; DO MODE
+can perform a multi-step shell task; every shell command still passes approval;
+the loop cannot run forever; existing one-shot behavior still works.
+
+### Phase 2 — REPL mode with `--chat` (feature)
+
+Add an explicit interactive Bridget session mode. **Do not make `--chat` the
+default.**
+
+* [ ] Add `--chat` flag; make the initial prompt optional under `--chat`
+* [ ] Keep one `ClientSession` open for the whole chat session
+* [ ] Discover MCP tools once and build system content once at session start
+* [ ] Keep the system message at `messages[0]`
+* [ ] Per turn: read input → append user message → `run_turn(...)` → print → keep
+  `messages` alive
+* [ ] Exit cleanly on `exit` / `quit` / `q` / Ctrl-D / Ctrl-C
+* [ ] Spinner per turn; voice optional per turn
+* [ ] Route intercepts still work per turn (face trigger, goto-repo, voice, workflow handoff)
+* [ ] Use `/dev/tty` for REPL input if launcher stdout is captured
+* [ ] Verify `scripts/bridget` passes `--chat` through correctly
+
+### Phase 3 — Context window management (feature)
+
+Prevent long REPL sessions from poisoning or overflowing the model context.
+
+* [ ] Rough token estimate via `len(chars) / 4`
+* [ ] Add `BRIDGET_CONTEXT_BUDGET` with sane per-model default
+* [ ] Never drop `messages[0]`; keep system + latest N turns + latest important tool results
+* [ ] Drop or summarize middle history when budget is exceeded
+* [ ] Add `MAX_MESSAGES`, `MAX_TOOL_OUTPUT_CHARS`; truncate oversized tool output
+* [ ] Optional: compress dropped turns under `## Earlier in this Bridget session`
+
+Design rule: REPL history is temporary; `BridgetContext` remains summary-based.
+
+### Phase 4 — Persistence integration (feature)
+
+Record once per REPL session at exit — not once per turn — so short interactive
+sessions do not pollute the five-session rolling memory window.
+
+* [ ] Call `ctx.record()` once when the REPL exits
+* [ ] Store: last answer summary, last user prompt, turn count, duration, called
+  tools across all turns, `do_mode`, `chat_mode`
+* [ ] Do not store the full transcript
+* [ ] `--continue` reads the previous REPL session summary correctly
+* [ ] `--history` shows REPL sessions with turn count
+
+### Phase 5 — Docs, skills, and validation (feature)
+
+* [ ] Update `usage()`, `README.md`, `docs/demo.md`
+* [ ] Update `docs/bridget-voice.md` if voice behavior changes in REPL
+* [ ] Update `docs/orchestration-boundary.md`
+* [ ] Update `skills/bridget-bridge-maintainer/SKILL.md`
+* [ ] Add REPL smoke check to `scripts/validate.sh`
+* [ ] Add CHANGELOG entry
+
+Non-goals:
+
+* no `--chat` default in this release
+* no orchestration state, workflow retries, or tool-policy bypass in Bridget
+* no persisted full REPL transcripts by default
+* no unbounded tool loops or unbounded tool output in message history
+
+Future decision (not in v2.1.0): whether bare `bridget` should open interactive
+mode with `bridget -1 "prompt"` for one-shot. Decide only after `--chat` proves
+stable in real use.
+
+---
+
 ## Planned: v2.0.0 — Release Gate v2 + deterministic readiness
 
 Goal:
