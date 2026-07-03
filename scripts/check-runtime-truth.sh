@@ -166,7 +166,12 @@ for n in sorted(set(names)):
 phantom=0
 while IFS= read -r tool; do
   [[ -z "$tool" ]] && continue
-  if ! printf '%s\n' "$runtime_tools" | grep -qxF "$tool"; then
+  # Use a here-string, not `printf ... | grep -q`: grep -q short-circuits on the
+  # first match and closes the pipe, which SIGPIPEs printf mid-write. Under
+  # `set -o pipefail` that makes the pipeline return 141 even on a match,
+  # falsely flagging early-sorted tools (e.g. get_public_ip) as phantom. Flaky
+  # by timing. A here-string has no upstream writer to kill.
+  if ! grep -qxF "$tool" <<< "$runtime_tools"; then
     fail "tool in $TOOL_SAFETY not found in runtime: $tool"
     phantom=$((phantom + 1))
   fi
