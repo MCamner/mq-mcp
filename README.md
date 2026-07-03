@@ -107,6 +107,7 @@ Run the bridge with a prompt:
 ```bash
 cd mq-mcp
 uv run python bridge.py "List the available MCP tools."
+uv run python bridge.py --chat        # interactive multi-turn session
 ```
 
 ## Requirements
@@ -373,6 +374,26 @@ The local MCP server exposes 125 tools across five safety classes. See [`docs/TO
 * `export_symbol_index` — writes a callgraph symbol map to generated/symbols/symbol_index.json (Class C)
 * `review_diff` — reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY)
 * `review_repo` — reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY)
+
+## Bridget interactive session
+
+Bridget runs one-shot by default — one prompt, one answer — which keeps scripts,
+aliases, and automation stable. Pass `--chat` for an interactive multi-turn
+session that retains context across turns:
+
+```bash
+bridget --chat                 # interactive session, reads turns from stdin
+bridget --chat "first prompt"  # optional initial prompt as the first turn
+bridget --do --chat            # interactive session with shell_exec enabled
+```
+
+The session keeps one MCP connection and one system prompt alive for its whole
+lifetime, and runs each turn through the same bounded multi-round tool loop as
+one-shot mode. Every `shell_exec` still passes the per-command y/n approval gate.
+Exit with `exit`, `quit`, `q`, or Ctrl-D.
+
+Bridget may hold conversational context, but it is not an orchestrator: planning,
+retries, and workflow state stay in mq-agent and mq-mcp.
 
 ## Bridget voice
 
