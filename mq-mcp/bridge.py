@@ -235,6 +235,7 @@ def usage() -> None:
         """Usage:
   uv run python bridge.py "your prompt"
   uv run python bridge.py -m <model> "your prompt"
+  uv run python bridge.py --chat ["your prompt"]
   uv run python bridge.py --tools
   uv run python bridge.py --workflow "your goal" [-y]
   uv run python bridge.py --project [repo]
@@ -247,6 +248,7 @@ def usage() -> None:
 
 Examples:
   uv run python bridge.py "List the available MCP tools."
+  uv run python bridge.py --chat                # interactive multi-turn session
   uv run python bridge.py -m o3 "Explain this repo."
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
@@ -279,7 +281,7 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
     return " ".join(kept).strip(), assume_yes
 
 
-def parse_prompt() -> tuple[str, bool, bool, str, bool, bool]:
+def parse_prompt() -> tuple[str, bool, bool, str, bool, bool, bool]:
     argv = sys.argv[1:]
 
     do_mode = "--do" in argv
@@ -288,15 +290,27 @@ def parse_prompt() -> tuple[str, bool, bool, str, bool, bool]:
         global DO_MODE
         DO_MODE = True
 
-    if not argv or argv[0] in {"-h", "--help", "help"}:
+    # --chat opens an interactive REPL (Phase 2). The initial prompt is optional
+    # in this mode; without one, Bridget reads turns from stdin.
+    chat_mode = "--chat" in argv
+    if chat_mode:
+        argv = [a for a in argv if a != "--chat"]
+
+    if argv and argv[0] in {"-h", "--help", "help"}:
         usage()
         raise SystemExit(0)
 
-    if argv[0] == "--tools":
-        return "", True, do_mode, MODEL, False, False
+    # An empty invocation is only usage() when NOT in chat mode; `--chat` alone
+    # is a valid interactive session with no initial prompt.
+    if not argv and not chat_mode:
+        usage()
+        raise SystemExit(0)
+
+    if argv and argv[0] == "--tools":
+        return "", True, do_mode, MODEL, False, False, chat_mode
 
     model = MODEL
-    if argv[0] in {"-m", "--model"}:
+    if argv and argv[0] in {"-m", "--model"}:
         if len(argv) < 2:
             print("ERROR: -m requires a model name, e.g. -m gpt-4.1")
             raise SystemExit(1)
@@ -314,11 +328,11 @@ def parse_prompt() -> tuple[str, bool, bool, str, bool, bool]:
         argv = argv[1:]
 
     prompt = " ".join(argv)
-    if not prompt:
+    if not prompt and not chat_mode:
         print('ERROR: no prompt given. Usage: bridget "your prompt"')
         raise SystemExit(1)
 
-    return prompt, False, do_mode, model, search, search_global
+    return prompt, False, do_mode, model, search, search_global, chat_mode
 
 
 def tool_catalog_text(mcp_tools: Any) -> str:
@@ -711,26 +725,159 @@ async def run_turn(
     )
 
 
-def print_response(answer: str, prefix_newline: bool = False) -> None:
-    """Print Bridget's answer to stdout with the decode animation and optional
-    voice. ``prefix_newline`` reproduces the leading blank line the tool-round
-    path emitted before its answer.
+def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -> None:
+    """Print Bridget's answer with the decode animation and optional voice.
+
+    ``prefix_newline`` reproduces the leading blank line the tool-round path
+    emitted before its answer. ``out`` defaults to stdout (one-shot); the REPL
+    passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
+    stream = out or sys.stdout
     prefix = "\nBridget: " if prefix_newline else "Bridget: "
-    sys.stdout.write(prefix)
-    sys.stdout.flush()
-    scramble_print(answer)
+    stream.write(prefix)
+    stream.flush()
+    scramble_print(answer, file=stream)
     speak_if_enabled(answer)
 
 
+CHAT_EXIT_WORDS = {"exit", "quit", "q"}
+
+
+async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
+    """Interactive Bridget REPL (Phase 2).
+
+    Keeps one MCP session and one system message alive for the whole session and
+    runs run_turn per line, so context is retained across turns. Not the default:
+    one-shot mode stays the default for scripts, aliases, and automation.
+
+    IO split: turns are read from stdin, so ``printf '...\\nexit\\n' | bridget
+    --chat`` feeds the loop and piped input works. The prompt, spinner, and
+    answers are written to /dev/tty so they stay visible even when a launcher
+    captures stdout; falls back to stdout when /dev/tty is unavailable (CI).
+
+    Persisting the session is deliberately left to Phase 4 (record once at exit);
+    this phase does not call ctx.record().
+    """
+    server_params = StdioServerParameters(
+        command=SERVER_COMMAND,
+        args=SERVER_ARGS,
+        env=os.environ.copy(),
+    )
+
+    try:
+        tty = open("/dev/tty", "w")
+    except Exception:
+        tty = None
+    out = tty or sys.stdout
+
+    global _SPINNER
+
+    try:
+        async with stdio_client(server_params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+
+                catalog, openai_tools = await discover_tools(session)
+                ctx = BridgetContext()
+                system_content = build_system_content(ctx, catalog, do_mode)
+                messages: list[ChatCompletionMessageParam] = [
+                    {"role": "system", "content": system_content},
+                ]
+                client = OpenAI()
+
+                out.write(
+                    "Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för "
+                    "att avsluta.\n"
+                )
+                out.flush()
+
+                pending = initial_prompt.strip()
+                while True:
+                    if pending:
+                        user_input = pending
+                        pending = ""
+                    else:
+                        out.write("\ndu> ")
+                        out.flush()
+                        try:
+                            line = sys.stdin.readline()
+                        except KeyboardInterrupt:
+                            out.write("\nHej då.\n")
+                            out.flush()
+                            break
+                        if line == "":  # EOF / Ctrl-D
+                            out.write("\nHej då.\n")
+                            out.flush()
+                            break
+                        user_input = line.strip()
+
+                    if not user_input:
+                        continue
+                    if user_input.lower() in CHAT_EXIT_WORDS:
+                        out.write("Hej då.\n")
+                        out.flush()
+                        break
+
+                    # Per-turn route intercepts, same as the one-shot path: voice
+                    # command, face trigger, goto-repo. Each handles its own
+                    # output and the turn continues without a model call.
+                    if handle_voice_command(user_input):
+                        continue
+                    if is_bridget_face_prompt(user_input):
+                        show_bridget_face()
+                        speak_if_enabled("Jag är Bridget. Lokal MCP-brygga online.")
+                        continue
+                    goto, repo_name = is_goto_repo_prompt(user_input)
+                    if goto:
+                        handle_goto_repo(repo_name)
+                        continue
+
+                    messages.append({"role": "user", "content": user_input})
+
+                    spinner = BridgetSpinner(stream=tty)
+                    if not do_mode:
+                        # As in one-shot, --do lets the approval gate own the
+                        # terminal; a concurrent spinner corrupts the y/n prompt.
+                        spinner.start()
+                        _SPINNER = spinner
+
+                    answer, _called_tools, did_tool_round = await run_turn(
+                        client=client,
+                        model=model,
+                        messages=messages,
+                        openai_tools=openai_tools,
+                        do_mode=do_mode,
+                        session=session,
+                    )
+
+                    spinner.stop()
+                    _SPINNER = None
+
+                    print_response(answer, prefix_newline=did_tool_round, out=out)
+
+                    # Keep the assistant's answer in history so later turns have
+                    # context. run_turn already appended any tool-call turns and
+                    # tool results; the final text answer is appended here.
+                    messages.append({"role": "assistant", "content": answer})
+    finally:
+        if tty:
+            tty.close()
+
+
 async def run_bridge() -> None:
-    prompt, list_tools_only, do_mode, model, search, search_global = parse_prompt()
+    prompt, list_tools_only, do_mode, model, search, search_global, chat_mode = parse_prompt()
 
     # In --do mode, enable the server's shell_exec tool for the child process
     # only. Set before server_params copies the environment. Other clients,
     # which never set this, get shell_exec disabled server-side.
     if do_mode:
         os.environ["MQ_MCP_ALLOW_SHELL_EXEC"] = "1"
+
+    # Interactive REPL keeps the session alive across turns; delegate before the
+    # one-shot intercepts (they run per-turn inside run_chat). Not the default.
+    if chat_mode:
+        await run_chat(model=model, do_mode=do_mode, initial_prompt=prompt)
+        return
 
     if handle_voice_command(prompt):
         return

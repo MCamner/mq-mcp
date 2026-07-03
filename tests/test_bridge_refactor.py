@@ -273,6 +273,43 @@ def test_run_turn_stops_at_max_rounds(bridge):
     assert len(client.chat.completions.calls) == bridge.MAX_TOOL_ROUNDS
 
 
+# --- parse_prompt: --chat flag -------------------------------------------------
+
+
+def test_parse_prompt_chat_flag_no_initial_prompt(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "argv", ["bridge.py", "--chat"])
+
+    prompt, list_tools_only, do_mode, model, search, search_global, chat_mode = (
+        bridge.parse_prompt()
+    )
+
+    assert chat_mode is True
+    assert prompt == ""  # initial prompt optional under --chat
+    assert list_tools_only is False
+    assert do_mode is False
+
+
+def test_parse_prompt_chat_flag_with_initial_prompt(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "argv", ["bridge.py", "--chat", "vilka", "verktyg"])
+
+    prompt, *_rest, chat_mode = bridge.parse_prompt()
+
+    assert chat_mode is True
+    assert prompt == "vilka verktyg"
+
+
+def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "argv", ["bridge.py", "list", "tools"])
+
+    prompt, list_tools_only, do_mode, model, search, search_global, chat_mode = (
+        bridge.parse_prompt()
+    )
+
+    assert prompt == "list tools"
+    assert chat_mode is False
+    assert do_mode is False
+
+
 # --- print_response ------------------------------------------------------------
 
 
