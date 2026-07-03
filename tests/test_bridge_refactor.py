@@ -335,3 +335,119 @@ def test_print_response_newline_prefix(bridge, monkeypatch):
     bridge.print_response("x", prefix_newline=True)
 
     assert buf.getvalue() == "\nBridget: x\n"
+
+
+# --- Phase 3: context window management ----------------------------------------
+
+
+def test_estimate_tokens_counts_content_and_tool_calls(bridge):
+    msgs = [
+        {"role": "system", "content": "a" * 40},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"function": {"name": "xxxx", "arguments": "yyyy"}}],
+        },
+    ]
+    # 40 content chars + 4 name + 4 args = 48 chars // 4 = 12
+    assert bridge.estimate_tokens(msgs) == 12
+
+
+def test_context_budget_env_override_wins(bridge, monkeypatch):
+    monkeypatch.setenv("BRIDGET_CONTEXT_BUDGET", "1234")
+    assert bridge.context_budget_for("gpt-5.4-mini") == 1234
+
+
+def test_context_budget_per_model_defaults(bridge, monkeypatch):
+    monkeypatch.delenv("BRIDGET_CONTEXT_BUDGET", raising=False)
+    # mini is checked first, so mini variants get the smaller budget
+    assert bridge.context_budget_for("gpt-5.4-mini") == 60_000
+    assert bridge.context_budget_for("gpt-5") == 120_000
+    assert bridge.context_budget_for("o3") == 120_000
+    assert bridge.context_budget_for("totally-unknown") == bridge.DEFAULT_CONTEXT_BUDGET
+
+
+def test_truncate_tool_output(bridge, monkeypatch):
+    monkeypatch.setattr(bridge, "MAX_TOOL_OUTPUT_CHARS", 10)
+    assert bridge.truncate_tool_output("abc") == "abc"
+    out = bridge.truncate_tool_output("Z" * 25)
+    assert out.startswith("Z" * 10)
+    assert "trunkerat 15 tecken" in out
+
+
+def test_trim_history_noop_when_small(bridge):
+    msgs = [{"role": "system", "content": "s"}, {"role": "user", "content": "hi"}]
+    assert bridge.trim_history(msgs, budget_tokens=10**9) is msgs
+
+
+def test_trim_history_keeps_system_and_recent_drops_middle(bridge):
+    system = {"role": "system", "content": "SYS"}
+    msgs = [system]
+    for i in range(5):
+        msgs.append({"role": "user", "content": f"u{i}"})
+        msgs.append({"role": "assistant", "content": f"a{i}"})
+
+    trimmed = bridge.trim_history(msgs, budget_tokens=10**9, max_messages=4)
+
+    assert trimmed[0] is system
+    assert any(
+        "Earlier in this Bridget session" in (m.get("content") or "") for m in trimmed
+    )
+    # Most recent turn preserved; oldest turns dropped.
+    assert trimmed[-1]["content"] == "a4"
+    assert trimmed[-2]["content"] == "u4"
+    assert len(trimmed) <= 4 + 1  # +1 for the summary note
+
+
+def test_trim_history_preserves_tool_call_pairs(bridge):
+    system = {"role": "system", "content": "SYS"}
+    turn0 = [
+        {"role": "user", "content": "old"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"id": "t1", "function": {"name": "g", "arguments": "{}"}}],
+        },
+        {"role": "tool", "tool_call_id": "t1", "content": "res"},
+        {"role": "assistant", "content": "done"},
+    ]
+    turn1 = [
+        {"role": "user", "content": "new"},
+        {"role": "assistant", "content": "latest"},
+    ]
+    msgs = [system, *turn0, *turn1]
+
+    # Tiny budget forces the oldest block out.
+    trimmed = bridge.trim_history(msgs, budget_tokens=1, max_messages=100)
+
+    roles = [m["role"] for m in trimmed]
+    # The whole tool-bearing turn was dropped as a unit — no orphan tool message
+    # and no dangling assistant tool_calls.
+    assert "tool" not in roles
+    assert not any(m.get("tool_calls") for m in trimmed)
+    assert trimmed[-1]["content"] == "latest"
+
+
+def test_execute_tool_calls_truncates_large_output(bridge, monkeypatch):
+    monkeypatch.setattr(bridge, "MAX_TOOL_OUTPUT_CHARS", 20)
+    first = _response(_FakeMessage("", [_FakeToolCall("c1", "g", "{}")]))
+    final = _response(_FakeMessage("ok", None))
+    client = _FakeClient([first, final])
+    session = _FakeSession(result_text="Z" * 100)
+    messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "go"}]
+
+    asyncio.run(
+        bridge.run_turn(
+            client=client,
+            model="m",
+            messages=messages,
+            openai_tools=[],
+            do_mode=False,
+            session=session,
+        )
+    )
+
+    tool_msgs = [m for m in messages if m.get("role") == "tool"]
+    assert len(tool_msgs) == 1
+    assert tool_msgs[0]["content"].startswith("Z" * 20)
+    assert "trunkerat 80 tecken" in tool_msgs[0]["content"]

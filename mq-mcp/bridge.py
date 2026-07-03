@@ -613,6 +613,127 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
     )
 
 
+# --- Context window management (Phase 3) -------------------------------------
+#
+# REPL history is temporary and must not overflow or poison the model context.
+# These bounds apply per turn (tool output) and across turns (message budget).
+# BridgetContext stays summary-based; this only trims the live in-process history.
+
+# Hard cap on a single tool result appended to history; oversized output is
+# truncated with a marker. Applies to one-shot and REPL alike.
+MAX_TOOL_OUTPUT_CHARS = int(os.getenv("BRIDGET_MAX_TOOL_OUTPUT_CHARS", "8000"))
+
+# Hard cap on messages kept in a REPL session (system message included). Oldest
+# whole turns are dropped first.
+MAX_MESSAGES = int(os.getenv("BRIDGET_MAX_MESSAGES", "40"))
+
+# Fallback token budget for REPL history when the model is unknown.
+DEFAULT_CONTEXT_BUDGET = 48_000
+
+# Rough per-model history budgets (tokens), conservative — well under the real
+# context window so there is room for the tool catalog and the response. "mini"
+# is checked first so mini variants get the smaller budget regardless of family.
+_MODEL_CONTEXT_BUDGETS = (
+    ("mini", 60_000),
+    ("gpt-5", 120_000),
+    ("gpt-4.1", 120_000),
+    ("gpt-4o", 90_000),
+    ("o3", 120_000),
+    ("o4", 120_000),
+)
+
+
+def context_budget_for(model: str) -> int:
+    """Token budget for REPL history. BRIDGET_CONTEXT_BUDGET overrides everything;
+    otherwise pick a conservative per-model default."""
+    override = os.getenv("BRIDGET_CONTEXT_BUDGET", "")
+    if override.isdigit():
+        return int(override)
+    lowered = model.lower()
+    for needle, budget in _MODEL_CONTEXT_BUDGETS:
+        if needle in lowered:
+            return budget
+    return DEFAULT_CONTEXT_BUDGET
+
+
+def estimate_tokens(messages: list[ChatCompletionMessageParam]) -> int:
+    """Rough token estimate: total characters / 4, over text content plus tool-call
+    names and arguments. Deliberately cheap, not exact."""
+    chars = 0
+    for message in messages:
+        content = message.get("content")
+        if isinstance(content, str):
+            chars += len(content)
+        for tool_call in message.get("tool_calls", []) or []:
+            fn = tool_call.get("function", {}) if isinstance(tool_call, dict) else {}
+            chars += len(fn.get("name", "") or "") + len(fn.get("arguments", "") or "")
+    return chars // 4
+
+
+def truncate_tool_output(text: str) -> str:
+    """Cap a single tool result so one huge output can't dominate the context."""
+    if len(text) <= MAX_TOOL_OUTPUT_CHARS:
+        return text
+    dropped = len(text) - MAX_TOOL_OUTPUT_CHARS
+    return text[:MAX_TOOL_OUTPUT_CHARS] + f"\n[... trunkerat {dropped} tecken ...]"
+
+
+def trim_history(
+    messages: list[ChatCompletionMessageParam],
+    budget_tokens: int,
+    max_messages: int = MAX_MESSAGES,
+) -> list[ChatCompletionMessageParam]:
+    """Trim REPL history to fit the budget without breaking tool_calls/tool pairing.
+
+    ``messages[0]`` (the system prompt) is never dropped. History is trimmed in
+    whole turn blocks — a user message and everything up to the next user message
+    — so an assistant tool_calls message and its tool results are always kept or
+    dropped together. Dropped blocks are replaced by a single summary note, and
+    the most recent turn is always kept.
+    """
+    if len(messages) <= 2:
+        return messages
+
+    system = messages[0]
+    rest = list(messages[1:])
+    starts = [i for i, m in enumerate(rest) if m.get("role") == "user"]
+    if not starts:
+        return messages
+
+    blocks: list[list[ChatCompletionMessageParam]] = []
+    for idx, start in enumerate(starts):
+        end = starts[idx + 1] if idx + 1 < len(starts) else len(rest)
+        blocks.append(rest[start:end])
+
+    def within_limits(kept_blocks: list[list[ChatCompletionMessageParam]]) -> bool:
+        kept = [system] + [m for block in kept_blocks for m in block]
+        return estimate_tokens(kept) <= budget_tokens and len(kept) <= max_messages
+
+    dropped = 0
+    while len(blocks) > 1 and not within_limits(blocks):
+        blocks.pop(0)
+        dropped += 1
+
+    trimmed: list[ChatCompletionMessageParam] = [system]
+    if dropped:
+        trimmed.append(
+            cast(
+                ChatCompletionMessageParam,
+                {
+                    "role": "system",
+                    "content": (
+                        "## Earlier in this Bridget session\n"
+                        f"{dropped} earlier turn(s) were dropped to stay within the "
+                        "context budget."
+                    ),
+                },
+            )
+        )
+    for block in blocks:
+        trimmed.extend(block)
+    return trimmed
+
+
 async def execute_tool_calls(
     session: ClientSession,
     assistant_message: Any,
@@ -656,6 +777,7 @@ async def execute_tool_calls(
             name=tool_name,
             raw_args=tool_args,
         )
+        tool_result = truncate_tool_output(tool_result)
 
         messages.append(
             cast(
@@ -859,6 +981,11 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                     # context. run_turn already appended any tool-call turns and
                     # tool results; the final text answer is appended here.
                     messages.append({"role": "assistant", "content": answer})
+
+                    # Bound the live history so a long session can't overflow or
+                    # poison the context. Drops oldest whole turns; keeps the
+                    # system prompt and the most recent turn intact.
+                    messages = trim_history(messages, context_budget_for(model))
     finally:
         if tty:
             tty.close()
