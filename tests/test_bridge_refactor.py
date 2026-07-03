@@ -203,13 +203,74 @@ def test_run_turn_single_tool_round_do_mode(bridge):
     assert did_tool_round is True
     # The tool was actually invoked with parsed args.
     assert session.tool_calls == [("git_status", {"repo": "."})]
-    # First call forces a tool in --do mode; the final call omits tools.
+    # --do mode forces a tool on the first round; every later call uses
+    # tool_choice=auto but still offers tools (Phase 1: chained calls possible).
     assert client.chat.completions.calls[0]["tool_choice"] == "required"
-    assert "tools" not in client.chat.completions.calls[1]
+    assert client.chat.completions.calls[1]["tool_choice"] == "auto"
+    assert "tools" in client.chat.completions.calls[1]
     # History carries the assistant tool_calls turn and the tool result.
     assert any(
         m.get("role") == "tool" and m.get("content") == "clean tree" for m in messages
     )
+
+
+def test_run_turn_chains_multiple_tool_rounds(bridge):
+    round1 = _response(_FakeMessage("", [_FakeToolCall("c1", "alpha", "{}")]))
+    round2 = _response(_FakeMessage("", [_FakeToolCall("c2", "beta", "{}")]))
+    final = _response(_FakeMessage("all done", None))
+    client = _FakeClient([round1, round2, final])
+    session = _FakeSession(result_text="step ok")
+    messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "go"}]
+
+    answer, called, did_tool_round = asyncio.run(
+        bridge.run_turn(
+            client=client,
+            model="m",
+            messages=messages,
+            openai_tools=[{"type": "function", "function": {"name": "alpha"}}],
+            do_mode=True,
+            session=session,
+        )
+    )
+
+    assert answer == "all done"
+    # Tools accumulate across every round, in order.
+    assert called == ["alpha", "beta"]
+    assert did_tool_round is True
+    assert [name for name, _ in session.tool_calls] == ["alpha", "beta"]
+    # Three model calls: required, then auto, then auto — all offering tools.
+    choices = [c["tool_choice"] for c in client.chat.completions.calls]
+    assert choices == ["required", "auto", "auto"]
+    assert all("tools" in c for c in client.chat.completions.calls)
+
+
+def test_run_turn_stops_at_max_rounds(bridge):
+    # A model that never stops calling tools must not loop forever.
+    responses = [
+        _response(_FakeMessage("", [_FakeToolCall(f"c{i}", "loop_tool", "{}")]))
+        for i in range(bridge.MAX_TOOL_ROUNDS)
+    ]
+    client = _FakeClient(responses)
+    session = _FakeSession()
+    messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "spin"}]
+
+    answer, called, did_tool_round = asyncio.run(
+        bridge.run_turn(
+            client=client,
+            model="m",
+            messages=messages,
+            openai_tools=[{"type": "function", "function": {"name": "loop_tool"}}],
+            do_mode=False,
+            session=session,
+        )
+    )
+
+    assert "MAX_TOOL_ROUNDS" in answer
+    assert did_tool_round is True
+    assert len(called) == bridge.MAX_TOOL_ROUNDS
+    assert len(session.tool_calls) == bridge.MAX_TOOL_ROUNDS
+    # Exactly MAX_TOOL_ROUNDS model calls, no more.
+    assert len(client.chat.completions.calls) == bridge.MAX_TOOL_ROUNDS
 
 
 # --- print_response ------------------------------------------------------------
