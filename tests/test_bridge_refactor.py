@@ -410,7 +410,7 @@ def test_print_response_plain_prefix(bridge, monkeypatch):
 
     bridge.print_response("answer text", prefix_newline=False)
 
-    assert buf.getvalue() == "Bridget: answer text\n"
+    assert buf.getvalue() == "👩 Bridget: answer text\n"
 
 
 def test_print_response_newline_prefix(bridge, monkeypatch):
@@ -420,7 +420,7 @@ def test_print_response_newline_prefix(bridge, monkeypatch):
 
     bridge.print_response("x", prefix_newline=True)
 
-    assert buf.getvalue() == "\nBridget: x\n"
+    assert buf.getvalue() == "\n👩 Bridget: x\n"
 
 
 # --- Phase 3: context window management ----------------------------------------

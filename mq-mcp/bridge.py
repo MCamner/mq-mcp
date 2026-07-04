@@ -855,7 +855,7 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
-    prefix = "\nBridget: " if prefix_newline else "Bridget: "
+    prefix = "\n👩 Bridget: " if prefix_newline else "👩 Bridget: "
     stream.write(prefix)
     stream.flush()
     scramble_print(answer, file=stream)
@@ -966,7 +966,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             user_input = pending
                             pending = ""
                         else:
-                            out.write("\ndu> ")
+                            out.write("\n👹 master: ")
                             out.flush()
                             try:
                                 line = sys.stdin.readline()

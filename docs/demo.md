@@ -12,12 +12,12 @@ uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 
 Expected output (abbreviated):
 
-```
+```text
 --- mq-mcp bridge: Model Context Protocol <-> OpenAI ---
 Model: gpt-4.1
 Prompt: List the available MCP tools.
 
-Bridget: Here are the available MCP tools:
+👩 Bridget: Here are the available MCP tools:
 
 1.  tool_safety_report — returns the MCP tool safety classification
 2.  hal_repo_report — read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
@@ -52,13 +52,13 @@ uv --directory mq-mcp run python bridge.py --chat
 ```text
 Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för att avsluta.
 
-du> which tools can read git state?
-Bridget: git_status and git_diff …
+👹 master: which tools can read git state?
+👩 Bridget: git_status and git_diff …
 
-du> use git_status here
-Bridget: …
+👹 master: use git_status here
+👩 Bridget: …
 
-du> exit
+👹 master: exit
 Hej då.
 ```
 
@@ -121,7 +121,7 @@ Or directly:
 
 Expected output:
 
-```
+```text
 [OK] server.py
 [OK] bridge.py
 [OK] main.py
