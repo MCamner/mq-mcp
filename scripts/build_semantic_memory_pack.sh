@@ -74,6 +74,35 @@ do
 done
 
 # -----------------------------------------------------------------
+# mqobsidian (durable MQ memory — curated views only, not the whole vault)
+# -----------------------------------------------------------------
+
+echo "--- mqobsidian ---"
+R="$HOME_DIR/mqobsidian"
+for f in \
+  home/dashboard.md \
+  memory/learn/index.md \
+  memory/learn/README.md \
+  docs/architecture.md \
+  docs/memory-model.md \
+  docs/CONTEXT_CONTRACT.md \
+  docs/context-export-contract.md \
+  docs/agent-entrypoint-lineage.md \
+  docs/truth-export.md \
+  docs/workflow-observations.md \
+  docs/roadmap-token-reduction.md
+do
+  add_file "mqobsidian" "$R/$f" "$f"
+done
+# Compressed per-system memory + per-repo agent lesson views (low-token,
+# high-value). Deliberately excludes memory/learn/patterns/* raw notes and
+# the rest of the vault, per the "prefer views, don't scan the whole vault"
+# rule in mqobsidian AGENTS.md.
+add_glob "mqobsidian" "$R" "systems/*/index.md"
+add_glob "mqobsidian" "$R" "systems/*/hot.md"
+add_glob "mqobsidian" "$R" "memory/learn/agent/*.md"
+
+# -----------------------------------------------------------------
 # mq-mcp
 # -----------------------------------------------------------------
 
