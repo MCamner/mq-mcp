@@ -68,6 +68,7 @@ if ! grep -q '_bridget()' "${ZDOTDIR:-$HOME}/.zshrc" 2>/dev/null; then
 
 Add this to your ~/.zshrc to enable the goto/CD feature and interactive --do:
 
+# Coordinates bridget behavior.
   _bridget() {
     # --do is interactive (y/n approval prompts) — run attached to the terminal,
     # without capturing stdout, or the prompt is hidden and the read breaks.

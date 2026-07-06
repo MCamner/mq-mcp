@@ -16,9 +16,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 FAIL=0
+# Marks a failing check.
 fail() { echo "FAIL: $1"; FAIL=1; }
+# Coordinates ok behavior.
 ok()   { echo "PASS: $1"; }
 
+# Coordinates frontmatter field behavior.
 frontmatter_field() {
   awk -v key="$2" -F': ' '$1 == key { sub("^" key ": ", ""); print; exit }' "$1"
 }
@@ -80,6 +83,7 @@ done < <(grep -HoE '`[A-Za-z][A-Za-z0-9._/-]*/[A-Za-z0-9._/*-]*`' skills/*/SKILL
 
 # --- 5: SKILLS.md generated from frontmatter ---------------------------------
 
+# Generates skills index for docs or release automation.
 generate_skills_index() {
   cat <<'HEADER'
 # Skills
