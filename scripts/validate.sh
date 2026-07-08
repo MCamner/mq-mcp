@@ -169,8 +169,8 @@ if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   # without spending an OpenAI completion. Must greet and exit 0.
   repl_out="$(uv run python bridge.py --chat <<< 'exit' 2>&1)" \
     || fail "Bridget --chat REPL crashed"
-  grep -q "Hej då" <<< "$repl_out" \
-    || fail "Bridget --chat did not exit cleanly"
+  grep -q "Bridget REPL" <<< "$repl_out" \
+    || fail "Bridget --chat did not print its REPL greeting"
   ok "Bridget --chat REPL starts and exits cleanly"
 else
   echo "SKIP: OPENAI_API_KEY is not set, skipping REPL smoke"

@@ -863,6 +863,20 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
 
 
 CHAT_EXIT_WORDS = {"exit", "quit", "q"}
+BRIDGET_GOODBYE_MESSAGES = (
+    "Hej då.",
+    "Hasta la vista, master.",
+    "Adios, amigo.",
+    "Jag går tillbaka in i terminalskuggan.",
+    "Bryggan parkerad, lampan blinkar.",
+    "Ciao for now.",
+    "Jag stänger luckan tyst den här gången.",
+    "Au revoir, kommandokapten.",
+)
+
+
+def bridget_goodbye_message() -> str:
+    return random.choice(BRIDGET_GOODBYE_MESSAGES)
 
 
 def record_chat_session(
@@ -971,11 +985,11 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             try:
                                 line = sys.stdin.readline()
                             except KeyboardInterrupt:
-                                out.write("\nHej då.\n")
+                                out.write(f"\n{bridget_goodbye_message()}\n")
                                 out.flush()
                                 break
                             if line == "":  # EOF / Ctrl-D
-                                out.write("\nHej då.\n")
+                                out.write(f"\n{bridget_goodbye_message()}\n")
                                 out.flush()
                                 break
                             user_input = line.strip()
@@ -983,7 +997,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         if not user_input:
                             continue
                         if user_input.lower() in CHAT_EXIT_WORDS:
-                            out.write("Hej då.\n")
+                            out.write(f"{bridget_goodbye_message()}\n")
                             out.flush()
                             break
 
