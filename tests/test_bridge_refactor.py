@@ -314,6 +314,35 @@ def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
     assert do_mode is False
 
 
+# --- REPL stdin handling -------------------------------------------------------
+
+
+class _BrokenStdin:
+    def readline(self):
+        raise UnicodeDecodeError("utf-8", b"\xc3", 0, 1, "invalid continuation byte")
+
+
+def test_read_chat_stdin_line_handles_bad_utf8(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "stdin", _BrokenStdin())
+    out = io.StringIO()
+
+    line = bridge.read_chat_stdin_line(out)
+
+    assert line == ""
+    assert "ogiltig UTF-8" in out.getvalue()
+
+
+def test_read_chat_stdin_line_returns_none_on_eof(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "stdin", io.StringIO(""))
+    monkeypatch.setattr(bridge, "bridget_goodbye_message", lambda: "Hej då.")
+    out = io.StringIO()
+
+    line = bridge.read_chat_stdin_line(out)
+
+    assert line is None
+    assert "Hej då." in out.getvalue()
+
+
 # --- Phase 4: record_chat_session ----------------------------------------------
 
 

@@ -879,6 +879,28 @@ def bridget_goodbye_message() -> str:
     return random.choice(BRIDGET_GOODBYE_MESSAGES)
 
 
+def read_chat_stdin_line(out) -> str | None:
+    """Read one REPL line; return None for clean session exit conditions."""
+    try:
+        line = sys.stdin.readline()
+    except KeyboardInterrupt:
+        out.write(f"\n{bridget_goodbye_message()}\n")
+        out.flush()
+        return None
+    except UnicodeDecodeError as exc:
+        out.write(
+            "\nBridget kunde inte läsa raden: stdin innehöll ogiltig UTF-8 "
+            f"({exc.reason}). Klistra in texten igen som UTF-8.\n"
+        )
+        out.flush()
+        return ""
+    if line == "":  # EOF / Ctrl-D
+        out.write(f"\n{bridget_goodbye_message()}\n")
+        out.flush()
+        return None
+    return line
+
+
 def record_chat_session(
     ctx: BridgetContext,
     *,
@@ -982,15 +1004,8 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         else:
                             out.write("\n👹 master: ")
                             out.flush()
-                            try:
-                                line = sys.stdin.readline()
-                            except KeyboardInterrupt:
-                                out.write(f"\n{bridget_goodbye_message()}\n")
-                                out.flush()
-                                break
-                            if line == "":  # EOF / Ctrl-D
-                                out.write(f"\n{bridget_goodbye_message()}\n")
-                                out.flush()
+                            line = read_chat_stdin_line(out)
+                            if line is None:
                                 break
                             user_input = line.strip()
 
