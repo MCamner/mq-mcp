@@ -12,6 +12,10 @@ safety metadata, review, memory, and bridge calls. Planning, routing, dry-runs,
 and approval UX belong in `mq-agent`; repo health scoring belongs in
 `repo-signal`; operator reports belong in `mq-hal`.
 
+The whole-stack architecture and memory loop are documented in mqobsidian
+(source of truth):
+[docs/architecture/mq-stack.md](https://github.com/MCamner/mqobsidian/blob/main/docs/architecture/mq-stack.md).
+
 ## Status
 
 v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift, unsafe-command, and read-only perception-review checks complete the deterministic release gate, on top of the brain/Obsidian tools, local Ollama learn provider, and mq-agent learn compatibility aliases.
