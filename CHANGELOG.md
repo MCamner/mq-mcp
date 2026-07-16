@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## [2.0.1] - 2026-07-16
+
+### Added
+
+* Release metadata refreshed for the current mq-mcp branch work.
+
+### Changed
+
+* Updated version metadata to reflect the latest mq-mcp release state.
 
 ### Added
 
