@@ -45,6 +45,19 @@ jobs:
           fi
           echo "PASS: VERSION ($VERSION) matches pyproject.toml"
 
+      # The version surface the rest of the stack reads. Ungated, a stale value
+      # here fails mq-agent's stack contract gate rather than this repo's own
+      # checks, so the drift surfaces late and in someone else's CI.
+      - name: VERSION matches .mq/repo-contract.json
+        run: |
+          VERSION="$(cat VERSION)"
+          CONTRACT_VER="$(python3 -c "import json; print(json.load(open('.mq/repo-contract.json'))['version'])")"
+          if [[ "$VERSION" != "$CONTRACT_VER" ]]; then
+            echo "FAIL: VERSION=$VERSION but .mq/repo-contract.json=$CONTRACT_VER"
+            exit 1
+          fi
+          echo "PASS: VERSION ($VERSION) matches .mq/repo-contract.json"
+
       - name: README references current version
         run: |
           VERSION="$(cat VERSION)"
