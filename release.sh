@@ -10,6 +10,15 @@ VERSION=""
 VERSION_FILE="VERSION"
 README_FILE="README.md"
 CHANGELOG_FILE="CHANGELOG.md"
+# Every version surface release-check.sh validates against VERSION. release.sh
+# used to bump only VERSION and the README badge, leaving these five behind — so
+# v2.0.1 was tagged with all of them still at 2.0.0. The pre-flight gate runs
+# before the bump and cannot catch drift the bump itself creates.
+PYPROJECT_FILE="mq-mcp/pyproject.toml"
+STABILITY_FILE="docs/stability.json"
+TOOL_CONTRACTS_FILE="docs/tool_contracts.json"
+CONTRACT_FILE=".mq/repo-contract.json"
+GEN_TOOL_CONTRACTS="scripts/generate_tool_contracts.py"
 
 
 # Shows usage.
@@ -30,14 +39,18 @@ What it does:
   3. Syncs with origin/main for live releases
   4. Verifies tag v<version> does not already exist
   5. Updates VERSION
-  6. Updates README version badge when present
-  7. Verifies CHANGELOG.md contains the version
-  8. Shows a diff preview
-  9. Creates a release commit
- 10. Creates annotated tag v<version>
- 11. Pushes main and the new tag to origin
- 12. Regenerates and pushes wiki Command-Reference (warn-only)
- 13. Optionally creates a GitHub Release via gh CLI
+  6. Updates README version badge and release link when present
+  7. Bumps pyproject.toml, docs/stability.json and .mq/repo-contract.json,
+     and regenerates docs/tool_contracts.json — every version surface
+     release-check.sh validates against VERSION
+  8. Verifies CHANGELOG.md contains the version
+  9. Re-gates: verifies every version surface now matches VERSION (post-bump)
+ 10. Shows a diff preview
+ 11. Creates a release commit
+ 12. Creates annotated tag v<version>
+ 13. Pushes main and the new tag to origin
+ 14. Regenerates and pushes wiki Command-Reference (warn-only)
+ 15. Optionally creates a GitHub Release via gh CLI
 
 Special mode:
   --init-changelog
@@ -47,7 +60,8 @@ Special mode:
 Safety:
   - --dry-run performs local checks and file updates, shows the diff,
     then rolls changes back and exits without fetch/commit/tag/push.
-  - If the script aborts before commit, VERSION and README.md are restored.
+  - If the script aborts before commit, every bumped version surface is
+    restored.
 USAGE
 }
 
@@ -63,7 +77,10 @@ error() {
 
 # Handles rollback local changes.
 rollback_local_changes() {
-  git checkout -- "${VERSION_FILE}" "${README_FILE}" 2>/dev/null || true
+  git checkout -- \
+    "${VERSION_FILE}" "${README_FILE}" \
+    "${PYPROJECT_FILE}" "${STABILITY_FILE}" "${TOOL_CONTRACTS_FILE}" "${CONTRACT_FILE}" \
+    2>/dev/null || true
   log_step "Rolled back local file changes"
 }
 
@@ -119,9 +136,63 @@ update_readme_badge() {
     log_step "Updating README version badge -> ${version}"
     perl -0pi -e "s/badge\/version-[0-9]+\.[0-9]+\.[0-9]+/badge\/version-${version}/g" "${README_FILE}"
   else
-    log_step "Updating README version badge -> ${version}"
     printf 'README version badge not found; skipping\n'
   fi
+
+  if grep -Eq 'releases/tag/v[0-9]+\.[0-9]+\.[0-9]+' "${README_FILE}"; then
+    log_step "Updating README release link -> v${version}"
+    perl -0pi -e "s/releases\/tag\/v[0-9]+\.[0-9]+\.[0-9]+/releases\/tag\/v${version}/g" "${README_FILE}"
+  fi
+}
+
+# Bumps the standalone version surfaces release-check validates against VERSION,
+# so the state release.sh produces is consistent instead of drifting.
+sync_pyproject_version() {
+  local version="$1"
+  log_step "Syncing ${PYPROJECT_FILE} -> ${version}"
+  perl -0pi -e "s/^(version\s*=\s*\")[^\"]+(\")/\${1}${version}\${2}/m" "${PYPROJECT_FILE}"
+}
+
+# Replaces only the top-level "version" value; leaves the rest of the JSON as-is.
+sync_json_version() {
+  local file="$1" version="$2"
+  perl -0pi -e "s/(\"version\"\s*:\s*\")[^\"]+(\")/\${1}${version}\${2}/" "${file}"
+}
+
+# tool_contracts.json is generated from VERSION (already bumped), not hand-edited.
+regenerate_tool_contracts() {
+  log_step "Regenerating ${TOOL_CONTRACTS_FILE} from VERSION"
+  python3 "${GEN_TOOL_CONTRACTS}" >/dev/null || { error "tool-contracts generation failed"; exit 1; }
+}
+
+# Post-bump re-gate. release-check.sh runs BEFORE the bump and validates the old
+# state; this runs AFTER and refuses to commit unless every version surface now
+# matches VERSION. Silent drift becomes a hard stop instead of a drifted tag.
+verify_version_surfaces() {
+  local version="$1"
+  local ok=true
+  check() {
+    local label="$1" actual="$2"
+    if [[ "$actual" != "$version" ]]; then
+      error "${label} is '${actual}', expected '${version}'"
+      ok=false
+    fi
+  }
+  check "${PYPROJECT_FILE}" "$(grep '^version' "${PYPROJECT_FILE}" | sed 's/version = "\(.*\)"/\1/')"
+  check "${STABILITY_FILE}" "$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "${STABILITY_FILE}")"
+  check "${TOOL_CONTRACTS_FILE}" "$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['mq_mcp_version'])" "${TOOL_CONTRACTS_FILE}")"
+  check "${CONTRACT_FILE}" "$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "${CONTRACT_FILE}")"
+  if ! grep -qF "version-${version}-" "${README_FILE}"; then
+    error "README badge does not reference version ${version}"; ok=false
+  fi
+  if ! grep -qF "releases/tag/v${version}" "${README_FILE}"; then
+    error "README release link does not reference v${version}"; ok=false
+  fi
+  if [[ "$ok" != true ]]; then
+    error "Version surfaces are not consistent after bump — aborting"
+    exit 1
+  fi
+  log_step "Verified all version surfaces match VERSION (${version})"
 }
 
 # Handles init changelog section.
@@ -164,7 +235,8 @@ Release summary
 Version : ${VERSION}
 Tag     : ${tag}
 Branch  : main
-Files   : ${VERSION_FILE}, ${README_FILE}, ${CHANGELOG_FILE}
+Files   : ${VERSION_FILE}, ${README_FILE}, ${CHANGELOG_FILE}, ${PYPROJECT_FILE},
+          ${STABILITY_FILE}, ${TOOL_CONTRACTS_FILE}, ${CONTRACT_FILE}
 GitHub  : $( [[ "${GITHUB_RELEASE}" == true ]] && echo enabled || echo disabled )
 EOF_SUMMARY
 }
@@ -174,7 +246,9 @@ create_release_commit_and_tag() {
   local version="$1"
   local tag="v${version}"
 
-  git add "${VERSION_FILE}" "${README_FILE}" "${CHANGELOG_FILE}"
+  git add \
+    "${VERSION_FILE}" "${README_FILE}" "${CHANGELOG_FILE}" \
+    "${PYPROJECT_FILE}" "${STABILITY_FILE}" "${TOOL_CONTRACTS_FILE}" "${CONTRACT_FILE}"
   git commit -m "Prepare ${tag} release"
   git tag -a "${tag}" -m "${tag}"
 }
@@ -294,6 +368,11 @@ fi
 require_file "${VERSION_FILE}"
 require_file "${README_FILE}"
 require_file "${CHANGELOG_FILE}"
+require_file "${PYPROJECT_FILE}"
+require_file "${STABILITY_FILE}"
+require_file "${TOOL_CONTRACTS_FILE}"
+require_file "${CONTRACT_FILE}"
+require_file "${GEN_TOOL_CONTRACTS}"
 
 if [[ "${INIT_CHANGELOG}" == true ]]; then
   init_changelog_section "${VERSION}"
@@ -341,12 +420,20 @@ fi
 
 update_version_file "${VERSION}"
 update_readme_badge "${VERSION}"
+sync_pyproject_version "${VERSION}"
+sync_json_version "${STABILITY_FILE}" "${VERSION}"
+sync_json_version "${CONTRACT_FILE}" "${VERSION}"
+regenerate_tool_contracts
 
 log_step "Verifying CHANGELOG contains version ${VERSION}"
 require_changelog_version "${VERSION}"
 
+verify_version_surfaces "${VERSION}"
+
 log_step "Showing diff preview"
-git --no-pager diff -- "${VERSION_FILE}" "${README_FILE}" "${CHANGELOG_FILE}" || true
+git --no-pager diff -- \
+  "${VERSION_FILE}" "${README_FILE}" "${CHANGELOG_FILE}" \
+  "${PYPROJECT_FILE}" "${STABILITY_FILE}" "${TOOL_CONTRACTS_FILE}" "${CONTRACT_FILE}" || true
 
 if [[ "${DRY_RUN}" == true ]]; then
   printf '\nDry run complete. No commit, tag, or push performed.\n'
