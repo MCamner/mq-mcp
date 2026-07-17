@@ -176,6 +176,16 @@ else
   fail "docs/tool_contracts.json mq_mcp_version mismatch: has '$CONTRACTS_VER', expected '$VERSION'"
 fi
 
+# The version surface the rest of the stack reads. Ungated, a stale value here
+# fails mq-agent's stack contract gate rather than this repo's own checks, so
+# the drift surfaces late and in someone else's CI.
+REPO_CONTRACT_VER="$(python3 -c "import json; print(json.load(open('.mq/repo-contract.json')).get('version',''))" 2>/dev/null || echo "")"
+if [[ "$REPO_CONTRACT_VER" == "$VERSION" ]]; then
+  pass ".mq/repo-contract.json version matches ($VERSION)"
+else
+  fail ".mq/repo-contract.json version mismatch: has '$REPO_CONTRACT_VER', expected '$VERSION'"
+fi
+
 # ---------------------------------------------------------------------------
 # 9. Generated artifacts
 # ---------------------------------------------------------------------------
