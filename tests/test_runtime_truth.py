@@ -101,7 +101,7 @@ def test_readme_tool_count_matches_runtime():
 def test_changelog_has_current_version():
     version = _current_version()
     changelog = CHANGELOG.read_text()
-    assert re.search(rf"^## {re.escape(version)}", changelog, re.MULTILINE), (
+    assert re.search(rf"^## (?:\[)?{re.escape(version)}(?:\])?", changelog, re.MULTILINE), (
         f"CHANGELOG missing entry for version {version}"
     )
 

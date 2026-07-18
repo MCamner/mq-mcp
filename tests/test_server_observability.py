@@ -8,6 +8,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_PATH = ROOT / "mq-mcp" / "server.py"
+VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
 
 def _req(host: str | None = "127.0.0.1:8765", path: str = "/health"):
@@ -31,7 +32,7 @@ async def test_health_endpoint_reports_version_and_tool_count(server):
     payload = json.loads(response.body)
 
     assert payload["status"] == "ok"
-    assert payload["version"] == "2.0.0"
+    assert payload["version"] == VERSION
     assert payload["tool_count"] == 125
     assert "elapsed_ms" in payload
 

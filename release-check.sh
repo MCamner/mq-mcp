@@ -16,6 +16,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT" || exit 1
 VERSION="$(cat VERSION)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 DRY_RUN=0
 JSON=0
@@ -29,6 +30,8 @@ done
 : "$DRY_RUN"
 
 BLOCKERS=()
+COMPILE_CACHE="$(mktemp -d)"
+trap 'rm -rf "$COMPILE_CACHE"' EXIT
 say()  { [[ "$JSON" -eq 1 ]] || echo "$1"; }
 ok()   { [[ "$JSON" -eq 1 ]] || echo "  ok: $1"; }
 fail() { BLOCKERS+=("$1"); [[ "$JSON" -eq 1 ]] || echo "FAIL: $1" >&2; }
@@ -47,7 +50,7 @@ run() {
 say "=== mq-mcp release-check v${VERSION} ==="
 
 say "--- Version surfaces ---"
-CONTRACT_VER="$(python3 -c "import json; print(json.load(open('.mq/repo-contract.json'))['version'])" 2>/dev/null)"
+CONTRACT_VER="$("$PYTHON_BIN" -c "import json; print(json.load(open('.mq/repo-contract.json'))['version'])" 2>/dev/null)"
 if [[ "$CONTRACT_VER" == "$VERSION" ]]; then
   ok ".mq/repo-contract.json matches VERSION ($VERSION)"
 else
@@ -70,7 +73,8 @@ run "tool contracts (entries + safety classes)" bash scripts/check-tool-contract
 run "semantic memory audit" bash scripts/check-semantic-memory.sh
 
 say "--- Python compile ---"
-run "compileall mq-mcp" python3 -m compileall -q mq-mcp/
+run "compileall mq-mcp" env PYTHONPYCACHEPREFIX="$COMPILE_CACHE" \
+  "$PYTHON_BIN" -m compileall -q -x '(^|/)\.venv/' mq-mcp/
 
 # Note: generated/ tool artifacts are gitignored and produced by the tool
 # registry export (a write). Their presence/validity is enforced by CI on push,
@@ -79,7 +83,7 @@ run "compileall mq-mcp" python3 -m compileall -q mq-mcp/
 if [[ "$JSON" -eq 1 ]]; then
   status=READY
   [[ "${#BLOCKERS[@]}" -gt 0 ]] && status=BLOCKED
-  python3 - "$status" "$VERSION" ${BLOCKERS[@]+"${BLOCKERS[@]}"} <<'PY'
+  "$PYTHON_BIN" - "$status" "$VERSION" ${BLOCKERS[@]+"${BLOCKERS[@]}"} <<'PY'
 import json
 import sys
 

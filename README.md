@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.0.0)
+[![Version](https://img.shields.io/badge/version-2.0.2-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.0.2)
 
 Local MCP server experiments and tooling for macOS.
 
