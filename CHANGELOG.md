@@ -20,7 +20,7 @@
 
 ### Added
 
-* Bridget interactive session foundation (v2.1.0, `mq-mcp/bridge.py`):
+* Bridget interactive session foundation (`mq-mcp/bridge.py`):
   * `bridget --chat` — an explicit interactive REPL. One MCP `ClientSession`
     and one system message stay alive for the whole session; tools are
     discovered once at start. Per turn: read a line → `run_turn` → print →
