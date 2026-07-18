@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+
+* Added a root `release-check.sh` conforming to the `repo_release_check.v1`
+  contract: `--json` emits the machine-readable verdict (`schema`, `repo`,
+  `status`, `blockers`, `warnings`, `evidence`) on clean stdout and exits 0;
+  human mode prints per-check ok/FAIL. It runs the read-only governance checks
+  (contract/CHANGELOG/README version surfaces, runtime-truth, tool-contracts,
+  semantic-memory, compileall) and deliberately does NOT run
+  `scripts/release-check.sh`, which exports the tool registry (a write). Lets
+  mq-agent's `stack release --all --preflight` read mq-mcp's release verdict.
+
 ### Added
 
 * Bridget interactive session foundation (v2.1.0, `mq-mcp/bridge.py`):
