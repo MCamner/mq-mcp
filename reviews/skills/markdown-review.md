@@ -12,7 +12,7 @@ Apply this guidance when reviewing Markdown documentation files.
 
 **Content completeness**
 
-- Are code examples fenced with a language specifier (```python, ```bash, etc.)?
+- Are code examples fenced with a language specifier (```python,```bash, etc.)?
 - Are commands shown without a language specifier when the type is ambiguous?
 - Do links point to valid targets within the repo, not external URLs that may rot?
 - Are placeholder values clearly marked (e.g., `<your-value>`, `YOUR_KEY`)?

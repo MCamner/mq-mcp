@@ -48,14 +48,14 @@ No other labels are permitted in memory hygiene reviews.
 
 ## Output Format
 
-```
+```text
 [SEVERITY] memory_key
 <one sentence describing the hygiene issue>
 ```
 
 Example:
 
-```
+```text
 [STALE] mq-mcp.tool-count
 Entry says "76 tools" but server.py currently has 91 @mcp.tool decorators.
 
@@ -98,7 +98,7 @@ A memory hygiene review does NOT cover:
 
 ## Invariants to enforce
 
-```
+```text
 Every memory item must have a non-empty source field
 No two items should describe the same fact with contradictory values
 Items that reference a version should match the current VERSION
@@ -116,7 +116,7 @@ Items describing transient state (PR numbers, TODO notes) should be flagged
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: memory-hygiene-review
 model-behavior: hygiene-detection-only, no-modifications

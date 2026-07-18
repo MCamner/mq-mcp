@@ -23,17 +23,17 @@ Use this skill before tagging, publishing, announcing, or merging release-critic
 
 ### Should trigger
 
-* "is mq-mcp ready to release?"
-* "check mq-mcp tool contracts and safety before tagging"
-* "what's blocking the mq-mcp v2.0.0 release?"
-* "run the mq-mcp release checklist"
+- "is mq-mcp ready to release?"
+- "check mq-mcp tool contracts and safety before tagging"
+- "what's blocking the mq-mcp v2.0.0 release?"
+- "run the mq-mcp release checklist"
 
 ### Should not trigger
 
-* "update mq-mcp docs" → use `docs-maintainer`
-* "fix the Bridget bridge" → use `bridget-bridge-maintainer`
-* "check a specific tool safety issue" → use `mcp-tool-safety-maintainer`
-* "regular mq-mcp feature work" → only needed at release boundaries
+- "update mq-mcp docs" → use `docs-maintainer`
+- "fix the Bridget bridge" → use `bridget-bridge-maintainer`
+- "check a specific tool safety issue" → use `mcp-tool-safety-maintainer`
+- "regular mq-mcp feature work" → only needed at release boundaries
 
 ## Always Inspect
 

@@ -23,15 +23,15 @@ Profile templates live in `profiles/` and can be inspected with
 
 Claude Desktop is a primary client for MCP. It uses a JSON configuration file.
 
-1.  Open the Claude Desktop configuration file:
+1. Open the Claude Desktop configuration file:
     `~/Library/Application Support/Claude/claude_desktop_config.json`
-2.  Inspect the profile template:
+2. Inspect the profile template:
 
 ```bash
 mq-mcp profiles show claude-desktop
 ```
 
-3.  Add `mq-mcp` to the `mcpServers` section:
+3. Add `mq-mcp` to the `mcpServers` section:
 
 ```json
 {
@@ -55,8 +55,8 @@ mq-mcp profiles show claude-desktop
 }
 ```
 
-4.  **Replace** `YOUR_USERNAME` and the paths with your actual local paths.
-5.  Restart Claude Desktop.
+4. **Replace** `YOUR_USERNAME` and the paths with your actual local paths.
+5. Restart Claude Desktop.
 
 ---
 
@@ -64,8 +64,8 @@ mq-mcp profiles show claude-desktop
 
 Zed has built-in support for MCP.
 
-1.  Open Zed and go to `Settings` (Cmd + ,).
-2.  Add the following to your `settings.json`:
+1. Open Zed and go to `Settings` (Cmd + ,).
+2. Add the following to your `settings.json`:
 
 ```json
 {
@@ -85,7 +85,7 @@ Zed has built-in support for MCP.
 }
 ```
 
-3.  Restart Zed or reload the context servers.
+3. Restart Zed or reload the context servers.
 
 ---
 
@@ -95,18 +95,18 @@ Multiple VS Code extensions support MCP, such as **Roo Code (formerly Roo Cline)
 
 ### Roo Code
 
-1.  Install the Roo Code extension.
-2.  Open the Roo Code settings/configuration.
-3.  Add a new MCP server with the following details:
+1. Install the Roo Code extension.
+2. Open the Roo Code settings/configuration.
+3. Add a new MCP server with the following details:
     - **Name**: `mq-mcp`
     - **Command**: `uv`
     - **Arguments**: `--directory /Users/YOUR_USERNAME/path/to/mq-mcp/mq-mcp run mcp run server.py`
 
 ### Continue
 
-1.  Install the Continue extension.
-2.  Open `~/.continue/config.json`.
-3.  Add `mq-mcp` to the `contextProviders` or `models` section if they support MCP servers directly, or follow their latest documentation for MCP integration.
+1. Install the Continue extension.
+2. Open `~/.continue/config.json`.
+3. Add `mq-mcp` to the `contextProviders` or `models` section if they support MCP servers directly, or follow their latest documentation for MCP integration.
 
 ---
 

@@ -25,17 +25,17 @@ Use this skill to keep work grounded in mq-mcp's actual structure, safety model,
 
 ### Should trigger
 
-* "what does mq-mcp do?"
-* "explain mq-mcp's architecture and safety model"
-* "I'm new to mq-mcp — what are the key surfaces and patterns?"
-* "what's the scope of changes I need for this mq-mcp task?"
+- "what does mq-mcp do?"
+- "explain mq-mcp's architecture and safety model"
+- "I'm new to mq-mcp — what are the key surfaces and patterns?"
+- "what's the scope of changes I need for this mq-mcp task?"
 
 ### Should not trigger
 
-* "update mq-mcp docs" → use `docs-maintainer`
-* "add or audit an MCP tool" → use `mcp-tool-safety-maintainer`
-* "fix the Bridget bridge" → use `bridget-bridge-maintainer`
-* "is mq-mcp ready to release?" → use `release-readiness`
+- "update mq-mcp docs" → use `docs-maintainer`
+- "add or audit an MCP tool" → use `mcp-tool-safety-maintainer`
+- "fix the Bridget bridge" → use `bridget-bridge-maintainer`
+- "is mq-mcp ready to release?" → use `release-readiness`
 
 ## What This Repo Is
 

@@ -28,10 +28,10 @@ uv python install 3.12
 
 If the bridge fails with a missing API key error:
 
-1.  Ensure you are in the `mq-mcp/mq-mcp/` directory.
-2.  Check if `.env` exists. If not, copy it: `cp .env.example .env`.
-3.  Add your key: `OPENAI_API_KEY=sk-...` inside `.env`.
-4.  Ensure you are NOT committing this file.
+1. Ensure you are in the `mq-mcp/mq-mcp/` directory.
+2. Check if `.env` exists. If not, copy it: `cp .env.example .env`.
+3. Add your key: `OPENAI_API_KEY=sk-...` inside `.env`.
+4. Ensure you are NOT committing this file.
 
 ## MCP Server
 
@@ -39,18 +39,18 @@ If the bridge fails with a missing API key error:
 
 If `uv run mcp run server.py` fails:
 
-1.  **Dependencies**: Run `uv sync` to ensure all packages are installed.
-2.  **Syntax**: Run `python -m compileall server.py` to check for syntax errors.
-3.  **Port conflict**: If the server uses a specific port, ensure it's not occupied. FastMCP typically uses standard I/O for local MCP, so this is rarely an issue unless using a remote transport.
-4.  **Permissions**: Ensure `server.py` and the `mq-mcp` folder are readable by your user.
+1. **Dependencies**: Run `uv sync` to ensure all packages are installed.
+2. **Syntax**: Run `python -m compileall server.py` to check for syntax errors.
+3. **Port conflict**: If the server uses a specific port, ensure it's not occupied. FastMCP typically uses standard I/O for local MCP, so this is rarely an issue unless using a remote transport.
+4. **Permissions**: Ensure `server.py` and the `mq-mcp` folder are readable by your user.
 
 ### Tools not visible
 
 If `uv run python bridge.py --tools` shows an empty list or missing tools:
 
-1.  Check `server.py` for errors.
-2.  Ensure the `@mcp.tool()` decorators are correctly applied.
-3.  Run the validation script: `./scripts/validate.sh` from the repo root.
+1. Check `server.py` for errors.
+2. Ensure the `@mcp.tool()` decorators are correctly applied.
+3. Run the validation script: `./scripts/validate.sh` from the repo root.
 
 ## Integration
 
@@ -58,23 +58,27 @@ If `uv run python bridge.py --tools` shows an empty list or missing tools:
 
 The integration tools require these projects to be installed locally and registered in your environment:
 
-1.  Install `mq-hal` and `repo-signal` in their respective directories.
-2.  Add them to `MQ_MCP_LOCAL_REPOS` in your `.env`:
+1. Install `mq-hal` and `repo-signal` in their respective directories.
+2. Add them to `MQ_MCP_LOCAL_REPOS` in your `.env`:
+
     ```bash
     MQ_MCP_LOCAL_REPOS="/Users/yourname/mq-hal,/Users/yourname/repo-signal"
     ```
-3.  Restart the MCP server or bridge.
+
+3. Restart the MCP server or bridge.
 
 ## Still having issues?
 
-1.  Run the full validation: `./scripts/validate.sh`.
-2.  Generate a redacted local report:
+1. Run the full validation: `./scripts/validate.sh`.
+2. Generate a redacted local report:
+
     ```bash
     mq-mcp report --json
     mq-mcp bundle --validate
     ```
-3.  Check the [Safety notes](security.md) to ensure your paths are allowed.
-4.  Check the [Stability baseline](stability.md) if a release or profile
+
+3. Check the [Safety notes](security.md) to ensure your paths are allowed.
+4. Check the [Stability baseline](stability.md) if a release or profile
     contract appears out of sync.
-5.  Open an issue on GitHub with the output of the failing command and the
+5. Open an issue on GitHub with the output of the failing command and the
     redacted bundle path.

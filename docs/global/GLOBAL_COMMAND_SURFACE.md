@@ -101,6 +101,7 @@ OPENAI_MODEL="gpt-4.1"        # fallback
 ```
 
 Override per call:
+
 ```bash
 OPENAI_MODEL="gpt-5.5" ask "gör en djup repo-review"
 bridget -m gpt-5.5 "detailed analysis"

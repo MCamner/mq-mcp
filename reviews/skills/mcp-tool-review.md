@@ -12,6 +12,7 @@ file that uses the `@mcp.tool()` decorator pattern.
 ### Docstring requirements
 
 Every `@mcp.tool()` function must have a docstring that describes:
+
 1. What the tool does (first sentence)
 2. What it returns
 3. Args: block with each parameter described
@@ -23,7 +24,7 @@ Flag tools that are missing any of these three elements.
 Tools that touch the filesystem, run subprocesses, or open external apps
 should document their safety boundary in the docstring. Example:
 
-```
+```text
 Read-only. Repo-scoped. No subprocess.
 ```
 
@@ -32,6 +33,7 @@ Flag tools that have subprocess or filesystem side effects with no safety note.
 ### Path parameter documentation
 
 Tools that accept a `path` or `relative_path` parameter should document:
+
 - whether the path is repo-relative or absolute
 - what happens if the path is outside the allowed boundary
 

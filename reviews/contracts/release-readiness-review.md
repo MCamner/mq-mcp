@@ -48,14 +48,14 @@ No other labels are permitted in release readiness reviews.
 
 ## Output Format
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence identifying the blocker or warning and what must be done>
 ```
 
 Example:
 
-```
+```text
 [BLOCKER] README.md:4
 Version badge shows 1.3.0 but current VERSION is 1.9.0 — badge must be updated before release.
 
@@ -92,7 +92,7 @@ A release readiness review does NOT cover:
 
 ## Invariants to enforce
 
-```
+```text
 All version surfaces agree (VERSION, README, CHANGELOG, stability.json, tool_contracts.json)
 CHANGELOG has a dated entry for the current version
 README CI badge is green (Validate badge)
@@ -111,7 +111,7 @@ No FIXME or placeholder text in release-critical docs
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: release-readiness-review
 model-behavior: blocker-detection-only, no-code-changes

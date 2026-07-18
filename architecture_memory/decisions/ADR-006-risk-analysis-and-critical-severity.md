@@ -19,14 +19,16 @@ It must not appear in `comment-review.md` or `architecture-review.md` output.
 ## Rationale
 
 Pre-scan before API call:
+
 - Eliminates cost of calling the API for files with obvious structural issues
 - Provides ground truth to the model rather than relying on it to re-discover
   known patterns from scratch
 - Makes the pre-scan results falsifiable and auditable without an API key
 
 CRITICAL above RISK:
+
 - `RISK` was already the highest severity before v1.7.0
-- Findings that represent immediate exploitable vulnerabilities (curl|bash, 
+- Findings that represent immediate exploitable vulnerabilities (curl|bash,
   direct code execution paths) need a distinct label so callers can gate
   on them separately
 - Keeping CRITICAL out of comment/architecture modes prevents severity label

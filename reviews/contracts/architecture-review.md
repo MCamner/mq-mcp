@@ -35,7 +35,7 @@ It does not modify code. It does not review comment quality or naming style.
 
 Every finding must start with exactly one of these labels:
 
-```
+```text
 NOTE          — factual observation about structure, no action required
 SUGGESTION    — optional architectural improvement, low priority
 WARNING       — coupling or boundary issue that increases maintenance risk
@@ -51,21 +51,21 @@ No other labels are permitted in architecture reviews.
 
 Each finding must follow this exact structure:
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence describing the finding>
 ```
 
 For file-level findings with no specific line:
 
-```
+```text
 [SEVERITY] file_path
 <one sentence describing the finding>
 ```
 
 Example:
 
-```
+```text
 [ARCHITECTURE] mq-mcp/bridge.py:302
 known_local_repos duplicates repo-registry logic from server.py — this logic
 has one owner and one file; bridge.py is importing an env var it does not own.
@@ -112,7 +112,7 @@ An architecture review does NOT cover:
 
 If the reviewer cannot determine whether a structural choice is intentional:
 
-```
+```text
 [NOTE] mq-mcp/bridge.py:302
 known_local_repos is defined in both bridge.py and server.py with identical
 logic — unclear whether this is intentional isolation or accidental duplication.
@@ -132,7 +132,7 @@ Do not assert duplication is a bug if the motivation might be deliberate isolati
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: architecture-review
 model-behavior: structure-only, no-code-changes

@@ -48,14 +48,14 @@ No other labels are permitted in orchestration boundary reviews.
 
 ## Output Format
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence naming the boundary and which repo should own the responsibility>
 ```
 
 Example:
 
-```
+```text
 [BOUNDARY] mq-mcp/server.py:942
 plan_next_action() builds a multi-step execution plan — planning logic belongs to mq-agent,
 not mq-mcp which should only execute individual declared operations.
@@ -106,7 +106,7 @@ An orchestration boundary review does NOT cover:
 
 ## Invariants to enforce
 
-```
+```text
 mq-mcp tools must not contain planning or routing logic
 mq-mcp tools must not reimplement repo-signal scoring
 mq-mcp tools must not build multi-step execution chains internally
@@ -125,7 +125,7 @@ Class D tools must not bypass the allowlist pattern used by hal_repo_report
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: orchestration-boundary-review
 model-behavior: boundary-enforcement-only, no-code-changes

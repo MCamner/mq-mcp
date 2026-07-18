@@ -52,14 +52,14 @@ No other labels are permitted in safety contract reviews.
 
 ## Output Format
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence identifying the tool and the specific contract violation>
 ```
 
 Example:
 
-```
+```text
 [CRITICAL] mq-mcp/server.py:842
 Class A tool `analyze_csv` calls open(path, 'w') — write operation violates Class A contract.
 
@@ -109,7 +109,7 @@ that was added or modified. For each new tool:
 
 ## Invariants to enforce
 
-```
+```text
 Every @mcp.tool must have an entry in docs/tool_contracts.json
 Class A: write=false, subprocess=false (exception: resolver=run_repo_command)
 Class B: write=false
@@ -129,7 +129,7 @@ No tool may call git commit or git push from within the tool function
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: safety-contract-review
 model-behavior: safety-enforcement-only, no-code-changes

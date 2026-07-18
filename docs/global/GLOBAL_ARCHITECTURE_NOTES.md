@@ -2,7 +2,7 @@
 
 ## System overview
 
-```
+```text
 User (zsh terminal on macOS)
 ├── mqlaunch (macos-scripts TUI)
 │   ├── ask / bridget → mq-mcp
@@ -45,6 +45,7 @@ User (zsh terminal on macOS)
 `bridge.py` spawns it as a subprocess via stdio and proxies tool calls to OpenAI.
 
 Tool safety tiers (see docs/TOOL_SAFETY.md for full classification):
+
 - Class A — Read-only, repo-scoped: read_repo_file, list_repo_files, search_repo, git_status, git_diff, analyze_csv, tool_safety_report, list_local_repos, list_openable_apps
 - Class B — Read-only, external access: get_system_resources, repo_signal_*, get_clipboard, get_wifi_info, get_battery_status, list_running_apps, get_todays_events, find_large_files, find_recent_files, check_port, get_public_ip, analyze_guitar_pro
 - Class C — Write-capable: update_repo_file, edit_image, set_clipboard, take_screenshot
