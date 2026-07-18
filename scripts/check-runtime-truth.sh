@@ -63,7 +63,7 @@ fi
 # ---------------------------------------------------------------------------
 # 3. CHANGELOG
 # ---------------------------------------------------------------------------
-if grep -qE "^## ${version}" "$CHANGELOG"; then
+if grep -qE "^## (\[)?${version}(\])?" "$CHANGELOG"; then
   ok "CHANGELOG has entry for $version"
 else
   fail "VERSION mismatch: CHANGELOG missing entry for $version"

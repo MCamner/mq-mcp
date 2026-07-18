@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## [2.0.2] - 2026-07-19
+
+### Fixed
+
+* Fix-forward from known-bad `v2.0.1`, whose release left the package,
+  stability, tool-contract, and repo-contract version surfaces at `2.0.0`.
 
 ### Changed
 
