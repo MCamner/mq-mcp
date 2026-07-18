@@ -64,6 +64,7 @@ An entry without `type` is unclassified and cannot be routed correctly.
 ## How old entries are marked
 
 An entry is considered stale when:
+
 - Its `version` field is more than one minor version behind the current VERSION
 - Its content references a fact that has demonstrably changed (different tool count, renamed tool)
 - Its `source` file has changed significantly since the entry was created
@@ -76,6 +77,7 @@ If the fact no longer applies, update with a note explaining why it was supersed
 ## How conflicts are handled
 
 When two entries contradict each other:
+
 1. Prefer the entry with the higher `confidence` value
 2. If confidence is equal, prefer the most recently updated entry
 3. Flag both entries with the `memory-hygiene-review` contract
@@ -98,6 +100,7 @@ If the entry's meaning has changed substantially, prefer a new key and deprecate
 ## How sources are cited
 
 `source` should be one of:
+
 - A repo-relative file path: `README.md`, `docs/TOOL_SAFETY.md`
 - A doc name: `ORCHESTRATION_CONTRACT.md`, `RUNTIME_CONTRACT.md`
 - A convention name: `ADR-003`, `BND-001`
@@ -113,6 +116,7 @@ If the entry's meaning has changed substantially, prefer a new key and deprecate
 Bootstrap is idempotent: it skips entries whose source content has not changed.
 
 Bootstrap must not overwrite entries with:
+
 - type=decision
 - type=convention
 - type=warning
@@ -125,6 +129,7 @@ Bootstrap may overwrite entries with type=summary if the source doc has changed.
 ## How stale memory is detected
 
 Run `mq-mcp memory audit` to see:
+
 - Entries missing `source`
 - Entries missing `type`
 - Entries whose `version` is more than one minor behind VERSION
@@ -151,7 +156,7 @@ Recommended prefixes:
 
 ## Policy version
 
-```
+```yaml
 version: 1.0
 last-updated: 2026-05-31
 ```

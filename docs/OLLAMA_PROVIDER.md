@@ -60,6 +60,7 @@ response is not valid JSON.
 Extracts structured learn candidates from review findings text.
 
 Returns:
+
 ```json
 {
   "candidates": [...],   // valid items with should_store=true

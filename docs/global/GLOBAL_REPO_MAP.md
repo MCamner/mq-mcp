@@ -18,7 +18,7 @@ Last updated: 2026-05-14
 
 ## How repos relate
 
-```
+```text
 macos-scripts
   └── mqlaunch — TUI launcher for all local commands
       ├── ask / bridget → mq-mcp (MCP tools + OpenAI bridge)

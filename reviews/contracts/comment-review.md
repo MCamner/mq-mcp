@@ -38,7 +38,7 @@ These rules are non-negotiable. The model must follow them in every review.
 
 Every comment must start with exactly one of these labels:
 
-```
+```text
 NOTE        — factual observation, no action required
 SUGGESTION  — optional improvement, low priority
 WARNING     — likely to cause confusion or maintenance debt
@@ -53,14 +53,14 @@ No other labels are permitted in comment reviews.
 
 Each finding must follow this exact structure:
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence describing the finding>
 ```
 
 Example:
 
-```
+```text
 [WARNING] mq-mcp/bridge.py:28
 SYSTEM_PROMPT is defined at module level but references runtime state — document that it is static.
 
@@ -100,7 +100,7 @@ A comment review does NOT cover:
 
 If the reviewer is unsure whether a finding is valid, they must say so:
 
-```
+```text
 [NOTE] mq-mcp/server.py:450
 open_in_app does not validate that the file type is safe to open — unclear whether
 this is intentional given the existing allowlist model.
@@ -120,7 +120,7 @@ Do not assert facts about intent or behavior that cannot be confirmed from the f
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: comment-review
 model-behavior: comments-only, no-code-changes

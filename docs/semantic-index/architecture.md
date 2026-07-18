@@ -4,7 +4,7 @@
 
 mq-mcp is a local MCP (Model Context Protocol) server for macOS with an OpenAI bridge.
 
-```
+```text
 User terminal
     │
     ├─ bridget "prompt"   →  bridge.py  →  OpenAI Chat API  →  MCP tools  →  server.py
@@ -17,22 +17,29 @@ User terminal
 ## Components
 
 ### `mq-mcp/server.py`
+
 FastMCP server exposing all local tools. Runs as a subprocess via stdio. Entry point:
+
 ```bash
 uv run mcp run server.py
 ```
+
 Tools are sandboxed to `REPO_ROOT` (`~/mq-mcp`).
 
 ### `mq-mcp/bridge.py`
+
 OpenAI ↔ MCP bridge. Uses Chat Completions API with tool_choice="auto". Spawns server.py as subprocess via `StdioServerParameters`. Handles tool calls in a single round-trip. CLI entry point via `bridget` shell wrapper (`~/bin/bridget`).
 
 ### `mq-mcp/ask.py`
+
 Vector store Q&A client. Uses OpenAI Responses API with `file_search` tool against the `mq-mcp-repo-knowledge` vector store. Does NOT use MCP tools — answers from uploaded repo knowledge. Also importable by bridge.py for `--search` routing.
 
 ### `mq-mcp/main.py`
+
 Minimal entry point for running the MCP server directly.
 
 ### `mq-mcp/mqlaunch.sh`
+
 Interactive TUI launcher for mq-mcp. Cannot be captured by subprocess — always opened in a new Terminal window via osascript.
 
 ## Data flow: bridget
@@ -57,6 +64,7 @@ Interactive TUI launcher for mq-mcp. Cannot be captured by subprocess — always
 All secrets live in `mq-mcp/.env`, loaded automatically by direnv when `cd`-ing into `~/mq-mcp/mq-mcp`.
 
 Key env vars:
+
 - `OPENAI_API_KEY` — OpenAI API key
 - `OPENAI_VECTOR_STORE_ID` — ID of the active vector store (e.g. `vs_6a0513bc1adc8191bc18affe4383d83f`)
 - `OPENAI_MODEL` — model override, defaults to `gpt-5.4-mini`
@@ -66,6 +74,7 @@ Key env vars:
 ## Shell integration
 
 `~/.zshrc` defines:
+
 - `bridget` — via `~/bin/bridget` wrapper
 - `ask()` — shell function running ask.py
 - `Ctrl+O` — inserts "bridget " at the prompt

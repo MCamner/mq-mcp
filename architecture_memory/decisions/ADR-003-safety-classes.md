@@ -13,6 +13,7 @@ The class is documented in `docs/TOOL_SAFETY.md` and `docs/tool_contracts.json`.
 No tool may be added without a declared class.
 
 Classes:
+
 - A — read-only, repo-scoped
 - B — read-only, allowed external paths or system reads
 - C — write-capable, controlled scope

@@ -48,14 +48,14 @@ No other labels are permitted in runtime truth reviews.
 
 ## Output Format
 
-```
+```text
 [SEVERITY] file_path:line_number
 <one sentence naming the drifted values and where they conflict>
 ```
 
 Example:
 
-```
+```text
 [DRIFT] README.md:4
 Version badge shows 1.3.0 but VERSION file contains 1.9.0.
 
@@ -92,7 +92,7 @@ A runtime truth review does NOT cover:
 
 ## Invariants to enforce
 
-```
+```text
 VERSION == README badge version
 VERSION == README release link version
 VERSION == CHANGELOG latest entry
@@ -114,7 +114,7 @@ If any of these are false, emit a DRIFT finding.
 
 ## Contract Version
 
-```
+```yaml
 version: 1.0
 scope: runtime-truth-review
 model-behavior: drift-detection-only, no-code-changes

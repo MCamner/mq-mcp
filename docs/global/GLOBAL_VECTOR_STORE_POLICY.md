@@ -18,9 +18,9 @@
 
 | Category | Exclude |
 |---|---|
-| Secrets | .env, .env.*, *.key, *.pem, *.p12, *.mobileconfig |
-| Large assets | *.png, *.jpg, *.gif, *.mp4, *.zip, *.tar.gz, *.dmg |
-| Caches | .git/, .venv/, __pycache__/, node_modules/, .pytest_cache/ |
+| Secrets | .env, .env.*,*.key, *.pem,*.p12, *.mobileconfig |
+| Large assets | *.png,*.jpg, *.gif,*.mp4, *.zip,*.tar.gz, *.dmg |
+| Caches | .git/, .venv/, **pycache**/, node_modules/, .pytest_cache/ |
 | Lock files | uv.lock, package-lock.json, pnpm-lock.yaml, yarn.lock |
 | Backups | backups/, *.bak |
 | Logs | *.log |
@@ -29,7 +29,8 @@
 ## File naming in the pack
 
 Files are flattened to a single directory using:
-```
+
+```text
 {repo-name}__{relative__path__with__double__underscores}.ext
 ```
 

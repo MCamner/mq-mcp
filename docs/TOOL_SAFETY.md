@@ -135,7 +135,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `brain_record_review` | Write a code review summary to mqobsidian/reviews/ | Write outside repo (vault) |
 | `brain_record_session` | Write a session note to mqobsidian/sessions/ | Write outside repo (vault) |
 | `brain_record_learning` | Write a learned engineering pattern to mqobsidian/learn/ | Write outside repo (vault) |
-| `brain_promote_learning` | Promote learn/<slug>.md to learn/verified/ | Write outside repo (vault) |
+| `brain_promote_learning` | Promote `learn/<slug>.md` to learn/verified/ | Write outside repo (vault) |
 
 `update_repo_file` has additional guards: blocked filenames (`.env`, `uv.lock`), blocked directories (`.git`, `.venv`), allowed suffixes only, exact-match required, refuses ambiguous matches, never commits.
 
