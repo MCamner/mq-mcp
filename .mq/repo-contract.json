@@ -10,5 +10,6 @@
     "learn_contract.v1",
     "brain_write.v1"
   ],
-  "next_focus": ""
+  "next_focus": "",
+  "release_mode": "direct"
 }
