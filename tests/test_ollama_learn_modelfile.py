@@ -2,7 +2,6 @@ import json
 import re
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODELFILE = REPO_ROOT / "models" / "ollama" / "Modelfile.mq-learn"
 SCHEMA = REPO_ROOT / "schemas" / "learn_extraction.schema.json"
