@@ -1,6 +1,6 @@
 ---
 name: curate-learn-inbox
-description: Use when reviewing, drafting, promoting, or clearing pending learn candidates in the inbox queue — the preview-first inbox -> record_learning curation flow.
+description: Use when reviewing, drafting, promoting, or clearing pending learn candidates in the inbox queue — the preview-first inbox to record_learning curation flow.
 ---
 
 # Curate Learn Inbox
