@@ -1,6 +1,6 @@
 # MCP Tool Inventory
 
-50 tools exposed by `mq-mcp/server.py`.
+55 core tools documented from `mq-mcp/server.py`.
 
 For full safety classification, resolvers, and per-tool access boundaries
 see [`TOOL_SAFETY.md`](TOOL_SAFETY.md).
@@ -37,6 +37,11 @@ Cannot write files. Can read outside the repo if MQ_MCP_ALLOWED_PATHS is set.
 | `repo_signal_checklist` | `resolve_allowed_local_file` | repo-signal publish checklist |
 | `repo_signal_inspect` | `resolve_allowed_local_file` | repo-signal inspect --json |
 | `repo_signal_doctor_json` | `resolve_allowed_local_file` | repo-signal doctor --json |
+| `mq_route_inspect` | (fixed mq-agent CLI) | Deterministic route recommendation |
+| `mq_route_shadow` | (fixed mq-agent CLI) | Advisory local candidate and verification outcome |
+| `mq_context_pack` | (fixed mq-agent CLI) | Task context returned on stdout only |
+| `mq_route_verify` | (none — local schema validation) | Validate untrusted candidate data |
+| `mq_route_report` | `resolve_allowed_local_file` | Aggregate validated outcome evidence |
 | `get_clipboard` | (none — pbpaste) | Read macOS clipboard |
 | `get_wifi_info` | (none — networksetup) | Wi-Fi network name and signal |
 | `get_battery_status` | (none — pmset) | Battery level and charging state |
@@ -102,7 +107,7 @@ Launch external processes or open macOS applications. No file write access.
 | Class | Count | Write | Subprocess |
 | --- | --- | --- | --- |
 | A — read-only, repo-scoped | 9 | No | No |
-| B — read-only, external access | 15 | No | No |
+| B — read-only, external access | 20 | No | Fixed only |
 | C — write-capable, controlled | 4 | Yes | No |
 | D — subprocess / open-app | 22 | No | Yes |
-| **Total** | **50** | | |
+| **Total** | **55** | | |

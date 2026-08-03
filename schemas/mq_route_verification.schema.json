@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mq.local/schemas/mq_route_verification.schema.json",
+  "title": "MQ deterministic route verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "verification", "escalation_required", "errors"],
+  "properties": {
+    "schema": {"const": "mq.route-verification.v1"},
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL"]},
+        "checks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "escalation_required": {"type": "boolean"},
+    "errors": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

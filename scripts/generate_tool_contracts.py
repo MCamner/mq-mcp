@@ -51,6 +51,11 @@ TOOL_META: dict[str, dict] = {
     "repo_signal_suggest":    {"class": "B", "resolver": "resolve_allowed_local_file",  "write": False, "subprocess": True,  "side_effects": []},
     "ums_audit_log":          {"class": "B", "resolver": "MQ_UMS_DIR",                  "write": False, "subprocess": False, "side_effects": []},
     "ums_command_catalog":    {"class": "B", "resolver": "MQ_UMS_DIR",                  "write": False, "subprocess": False, "side_effects": []},
+    "mq_route_inspect":       {"class": "B", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_route_shadow":        {"class": "B", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_context_pack":        {"class": "B", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_route_verify":        {"class": "B", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
+    "mq_route_report":        {"class": "B", "resolver": "resolve_allowed_local_file",   "write": False, "subprocess": True,  "side_effects": []},
 
     "edit_image":             {"class": "C", "resolver": "resolve_allowed_local_file",  "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "set_clipboard":          {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["clipboard-write"]},

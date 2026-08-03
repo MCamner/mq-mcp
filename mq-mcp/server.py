@@ -913,6 +913,61 @@ def _run_repo_signal(args: list[str], cwd: Path, timeout: int = 60) -> subproces
 
 
 @mcp.tool()
+def mq_route_inspect(task: str, authoritative_agent: str = "codex") -> dict[str, Any]:
+    """Return mq-agent's deterministic model-route recommendation. Read-only."""
+    import model_routing
+
+    return model_routing.route_inspect(
+        task,
+        authoritative_agent=authoritative_agent,
+    )
+
+
+@mcp.tool()
+def mq_route_shadow(
+    task: str,
+    authoritative_agent: str = "codex",
+    timeout: int = 30,
+) -> dict[str, Any]:
+    """Request a validated advisory Ollama candidate without accepting it. Read-only."""
+    import model_routing
+
+    return model_routing.route_shadow(
+        task,
+        authoritative_agent=authoritative_agent,
+        timeout=max(1, timeout),
+    )
+
+
+@mcp.tool()
+def mq_context_pack(task: str, repo: str = "", target: str = "both") -> dict[str, Any]:
+    """Return mq-agent task context on stdout without writing a pack. Read-only."""
+    import model_routing
+
+    return model_routing.context_pack(task, repo=repo, target=target)
+
+
+@mcp.tool()
+def mq_route_verify(
+    decision: dict[str, Any],
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate an untrusted route candidate without executing or storing it. Read-only."""
+    import model_routing
+
+    return model_routing.route_verify(decision, candidate)
+
+
+@mcp.tool()
+def mq_route_report(source: str = "") -> dict[str, Any]:
+    """Return validated aggregate routing evidence from mq-agent. Read-only."""
+    import model_routing
+
+    safe_source = str(resolve_allowed_local_file(source)) if source else ""
+    return model_routing.route_report(safe_source)
+
+
+@mcp.tool()
 def repo_signal_analyze(repo_path: str = ".") -> str:
     """Run repo-signal analyze on a local repository. Read-only.
 

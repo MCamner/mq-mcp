@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mq.local/schemas/mq_route_candidate.schema.json",
+  "title": "MQ advisory local model candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_class", "summary", "evidence", "suggestions"],
+  "properties": {
+    "task_class": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "evidence": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

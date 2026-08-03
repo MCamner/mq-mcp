@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.0.2",
-  "tool_count": 125,
+  "tool_count": 130,
   "tools": [
     {
       "name": "analyze_csv",
@@ -616,6 +616,56 @@
       "side_effects": [
         "system"
       ],
+      "examples": []
+    },
+    {
+      "name": "mq_context_pack",
+      "class": "B",
+      "description": "Return mq-agent task context on stdout without writing a pack. Read-only.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_route_inspect",
+      "class": "B",
+      "description": "Return mq-agent's deterministic model-route recommendation. Read-only.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_route_report",
+      "class": "B",
+      "description": "Return validated aggregate routing evidence from mq-agent. Read-only.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_route_shadow",
+      "class": "B",
+      "description": "Request a validated advisory Ollama candidate without accepting it. Read-only.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_route_verify",
+      "class": "B",
+      "description": "Validate an untrusted route candidate without executing or storing it. Read-only.",
+      "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
       "examples": []
     },
     {

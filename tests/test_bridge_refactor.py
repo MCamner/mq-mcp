@@ -123,6 +123,29 @@ def test_discover_tools_returns_catalog_and_openai_specs(bridge):
     assert openai_tools[0]["function"]["name"] == "git_status"
 
 
+def test_openai_tool_specs_exclude_only_compatibility_aliases(bridge):
+    excluded = {
+        "explain_learned_pattern",
+        "learn_status",
+        "search_learned_patterns",
+    }
+    tools = [
+        types.SimpleNamespace(
+            name=name,
+            description=name,
+            inputSchema={"type": "object", "properties": {}},
+        )
+        for name in [*sorted(excluded), *[f"tool_{index}" for index in range(127)]]
+    ]
+
+    openai_tools = bridge.to_openai_tools(types.SimpleNamespace(tools=tools))
+    names = {item["function"]["name"] for item in openai_tools}
+
+    assert len(openai_tools) == 127
+    assert not names & excluded
+    assert "tool_126" in names
+
+
 # --- build_system_content ------------------------------------------------------
 
 

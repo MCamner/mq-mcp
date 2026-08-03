@@ -25,6 +25,11 @@
     "list_repo_files",
     "search_repo",
     "tool_safety_report",
+    "mq_route_inspect",
+    "mq_route_shadow",
+    "mq_context_pack",
+    "mq_route_verify",
+    "mq_route_report",
     "repo_signal_analyze"
   ],
   "safety_notes": [

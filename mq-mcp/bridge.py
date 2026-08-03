@@ -357,10 +357,21 @@ _TOOL_DESCRIPTION_OVERRIDES = {
 }
 
 
+_OPENAI_TOOL_EXCLUSIONS = {
+    # mq-agent compatibility aliases. Bridget uses the canonical learn tools;
+    # excluding aliases keeps the OpenAI function list below its 128-tool cap.
+    "explain_learned_pattern",
+    "learn_status",
+    "search_learned_patterns",
+}
+
+
 def to_openai_tools(mcp_tools: Any) -> list[ChatCompletionToolParam]:
     openai_tools: list[ChatCompletionToolParam] = []
 
     for tool in mcp_tools.tools:
+        if tool.name in _OPENAI_TOOL_EXCLUSIONS:
+            continue
         parameters = tool.inputSchema or {"type": "object", "properties": {}}
         description = _TOOL_DESCRIPTION_OVERRIDES.get(tool.name, tool.description or "")
         openai_tools.append(

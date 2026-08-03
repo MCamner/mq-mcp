@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mq.local/schemas/mq_route_tool_result.schema.json",
+  "title": "MQ routing MCP tool result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "tool", "status", "data", "error_code"],
+  "properties": {
+    "schema": {"const": "mq.route-tool-result.v1"},
+    "tool": {
+      "enum": [
+        "mq_route_inspect",
+        "mq_route_shadow",
+        "mq_context_pack",
+        "mq_route_verify",
+        "mq_route_report"
+      ]
+    },
+    "status": {"enum": ["PASS", "WARN", "FAIL", "UNAVAILABLE"]},
+    "data": {"type": ["object", "null"]},
+    "error_code": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9-]+$"
+    }
+  }
+}
