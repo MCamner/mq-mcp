@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "mq-mcp" / "model_routing.py"
 SERVER_PATH = ROOT / "mq-mcp" / "server.py"
+AGENT_SCHEMA_FIXTURES = ROOT / "tests" / "fixtures" / "mq-agent-schemas"
 TOOL_NAMES = {
     "mq_route_inspect",
     "mq_route_shadow",
@@ -89,7 +90,7 @@ def _copy_agent_schemas(agent_home: Path) -> None:
     target = agent_home / "schemas"
     target.mkdir(parents=True, exist_ok=True)
     for name in ("model_route_decision.schema.json", "model_route_outcome.schema.json"):
-        source = ROOT.parent / "mq-agent" / "schemas" / name
+        source = AGENT_SCHEMA_FIXTURES / name
         (target / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
