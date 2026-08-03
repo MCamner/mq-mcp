@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 125 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 130 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -70,7 +70,8 @@ Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` wi
 
 ## Class B — Read-only, allowed external paths
 
-These tools cannot write files and cannot run processes. They can read files outside the repo if `MQ_MCP_ALLOWED_PATHS` is configured.
+These tools cannot write files. Some run fixed read-only subprocesses; they can
+read files outside the repo only when `MQ_MCP_ALLOWED_PATHS` permits it.
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
@@ -106,6 +107,11 @@ These tools cannot write files and cannot run processes. They can read files out
 | `ollama_learn_status` | Check local Ollama server and mq-learn model availability | Write, subprocess |
 | `ollama_learn_extract` | Dry-run extraction of a learn pattern via local Ollama | Write, subprocess |
 | `learn_extract_from_last_review` | Dry-run extraction from the last stored review for a file | Write, subprocess |
+| `mq_route_inspect` | Ask mq-agent for a deterministic route decision | Write, model call, arbitrary subprocess |
+| `mq_route_shadow` | Ask mq-agent for an advisory local candidate | Write, execute/store model output, arbitrary subprocess |
+| `mq_context_pack` | Ask mq-agent for task context on stdout | Write a context pack, arbitrary subprocess |
+| `mq_route_verify` | Validate decision and candidate schemas locally | Execute/store candidate data, subprocess |
+| `mq_route_report` | Ask mq-agent for aggregate outcomes; source is path-scoped | Write history, read outside allowed roots, arbitrary subprocess |
 
 Resolver: `resolve_allowed_local_file` (repo-signal tools, analyze_guitar_pro); no resolver for system read-only tools (they read system state, not user files)
 
@@ -217,6 +223,11 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `image_analyze` | B | resolve_allowed_local_file | No | Yes |
 | `ums_command_catalog` | B | MQ_UMS_DIR | No | No |
 | `ums_audit_log` | B | MQ_UMS_DIR | No | No |
+| `mq_route_inspect` | B | fixed mq-agent CLI | No | Yes |
+| `mq_route_shadow` | B | fixed mq-agent CLI | No | Yes |
+| `mq_context_pack` | B | fixed mq-agent CLI | No | Yes |
+| `mq_route_verify` | B | mq-agent decision schema | No | No |
+| `mq_route_report` | B | resolve_allowed_local_file + fixed mq-agent CLI | No | Yes |
 | `get_clipboard` | B | none (pbpaste) | No | Yes |
 | `get_wifi_info` | B | none (airport/networksetup) | No | Yes |
 | `get_battery_status` | B | none (pmset) | No | Yes |

@@ -18,6 +18,14 @@ Core tools:
 * open_in_app: opens a file in its default app
 * edit_image: edits an image (resize, rotate, grayscale)
 
+Model routing tools:
+
+* mq_route_inspect: returns mq-agent's deterministic route recommendation
+* mq_route_shadow: requests an advisory local candidate without accepting it
+* mq_context_pack: returns task-scoped context without writing a pack
+* mq_route_verify: validates untrusted structured candidate data
+* mq_route_report: returns aggregate validated routing evidence
+
 Review engine tools:
 
 * list_review_contracts: lists available review contracts and their modes
