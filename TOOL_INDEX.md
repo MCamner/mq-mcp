@@ -21,7 +21,7 @@ Core tools:
 Model routing tools:
 
 * mq_route_inspect: returns mq-agent's deterministic route recommendation
-* mq_route_shadow: requests an advisory local candidate without accepting it
+* mq_route_shadow: requests an advisory local candidate without accepting it, and records the outcome as evidence
 * mq_context_pack: returns task-scoped context without writing a pack
 * mq_route_verify: validates untrusted structured candidate data
 * mq_route_report: returns aggregate validated routing evidence

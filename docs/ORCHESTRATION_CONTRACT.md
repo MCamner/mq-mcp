@@ -192,7 +192,8 @@ mq-agent must not:
 | Ollama learn | `ollama_learn_status`, `ollama_learn_extract` | B | Network read from local Ollama; no persistent write |
 | Zephyr (architecture) | `zephyr_validate`, `zephyr_review`, `zephyr_analyze`, `zephyr_diff` | B | Proxy to zephyr-workbench CLI; path-safe; no file writes |
 | Image analysis | `image_observe_architecture`, `image_analyze_ui`, `image_analyze` | B | Proxy to mq-image CLI; path-safe; local or cloud vision backend |
-| Model routing | `mq_route_inspect`, `mq_route_shadow`, `mq_context_pack`, `mq_route_verify`, `mq_route_report` | B | Validated read-only bridge; mq-agent owns routing policy |
+| Model routing | `mq_route_inspect`, `mq_context_pack`, `mq_route_verify`, `mq_route_report` | B | Validated read-only bridge; mq-agent owns routing policy |
+| Model routing (shadow) | `mq_route_shadow` | C | Same bridge, but mq-agent appends the outcome to its evidence store |
 
 All group B tools make network calls (OpenAI or Ollama) but produce no persistent side effects.
 Authoritative safety metadata: `docs/TOOL_SAFETY.md`.

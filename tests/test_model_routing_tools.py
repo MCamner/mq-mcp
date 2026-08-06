@@ -227,14 +227,24 @@ def test_shadow_rejects_contract_drift(monkeypatch, tmp_path) -> None:
     assert result["error_code"] == "contract-invalid"
 
 
-def test_all_route_tools_are_registered_and_class_b() -> None:
+def test_read_only_route_tools_are_registered_and_class_b() -> None:
     assert TOOL_NAMES <= _registered_tool_names()
     contracts = json.loads((ROOT / "docs" / "tool_contracts.json").read_text(encoding="utf-8"))
     by_name = {item["name"]: item for item in contracts["tools"]}
-    for name in TOOL_NAMES:
+    for name in TOOL_NAMES - {"mq_route_shadow"}:
         assert by_name[name]["class"] == "B"
         assert by_name[name]["write"] is False
         assert by_name[name]["side_effects"] == []
+
+
+def test_route_shadow_declares_its_evidence_write() -> None:
+    """mq-agent persists every shadow outcome, so the tool is not read-only."""
+    contracts = json.loads((ROOT / "docs" / "tool_contracts.json").read_text(encoding="utf-8"))
+    by_name = {item["name"]: item for item in contracts["tools"]}
+    shadow = by_name["mq_route_shadow"]
+    assert shadow["class"] == "C"
+    assert shadow["write"] is True
+    assert shadow["side_effects"] == ["file-write"]
 
 
 def test_codex_and_claude_profiles_recommend_same_route_tools() -> None:

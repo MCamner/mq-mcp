@@ -650,12 +650,14 @@
     },
     {
       "name": "mq_route_shadow",
-      "class": "B",
+      "class": "C",
       "description": "Request a validated advisory Ollama candidate without accepting it. Read-only.",
       "resolver": "none",
-      "write": false,
+      "write": true,
       "subprocess": true,
-      "side_effects": [],
+      "side_effects": [
+        "file-write"
+      ],
       "examples": []
     },
     {
