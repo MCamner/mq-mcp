@@ -256,7 +256,7 @@ The local MCP server exposes 130 tools across five safety classes. See [`docs/TO
 * `repo_signal_positioning` — runs repo-signal positioning --json and returns structured positioning.v1 data
 * `repo_signal_status` — reports whether repo-signal export packs are present and merged (Class A, read-only)
 * `mq_route_inspect` — returns mq-agent's deterministic routing recommendation
-* `mq_route_shadow` — requests a validated advisory Ollama candidate without accepting or storing it
+* `mq_route_shadow` — requests a validated advisory Ollama candidate; never accepts it, but mq-agent records the outcome as routing evidence (Class C)
 * `mq_context_pack` — returns task-scoped mq-agent context on stdout without writing a pack
 * `mq_route_verify` — validates untrusted candidate data without execution
 * `mq_route_report` — returns aggregate validated routing evidence from an allowed source

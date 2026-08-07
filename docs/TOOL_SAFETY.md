@@ -108,7 +108,7 @@ read files outside the repo only when `MQ_MCP_ALLOWED_PATHS` permits it.
 | `ollama_learn_extract` | Dry-run extraction of a learn pattern via local Ollama | Write, subprocess |
 | `learn_extract_from_last_review` | Dry-run extraction from the last stored review for a file | Write, subprocess |
 | `mq_route_inspect` | Ask mq-agent for a deterministic route decision | Write, model call, arbitrary subprocess |
-| `mq_route_shadow` | Ask mq-agent for an advisory local candidate | Write, execute/store model output, arbitrary subprocess |
+| `mq_route_shadow` | Ask mq-agent for an advisory local candidate; mq-agent appends the outcome record to its evidence store | Execute/store model output, accept the candidate, arbitrary subprocess |
 | `mq_context_pack` | Ask mq-agent for task context on stdout | Write a context pack, arbitrary subprocess |
 | `mq_route_verify` | Validate decision and candidate schemas locally | Execute/store candidate data, subprocess |
 | `mq_route_report` | Ask mq-agent for aggregate outcomes; source is path-scoped | Write history, read outside allowed roots, arbitrary subprocess |
@@ -224,7 +224,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `ums_command_catalog` | B | MQ_UMS_DIR | No | No |
 | `ums_audit_log` | B | MQ_UMS_DIR | No | No |
 | `mq_route_inspect` | B | fixed mq-agent CLI | No | Yes |
-| `mq_route_shadow` | B | fixed mq-agent CLI | No | Yes |
+| `mq_route_shadow` | C | fixed mq-agent CLI | Yes | Yes |
 | `mq_context_pack` | B | fixed mq-agent CLI | No | Yes |
 | `mq_route_verify` | B | mq-agent decision schema | No | No |
 | `mq_route_report` | B | resolve_allowed_local_file + fixed mq-agent CLI | No | Yes |

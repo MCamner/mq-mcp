@@ -121,9 +121,13 @@ def route_shadow(
     task: str,
     *,
     authoritative_agent: str = "codex",
-    timeout: int = 30,
+    timeout: int = 180,
 ) -> dict[str, Any]:
-    """Request an advisory shadow candidate without accepting or storing it."""
+    """Request an advisory shadow candidate without accepting it.
+
+    mq-agent appends every outcome to its local evidence store, so this tool
+    persists a record even though it never accepts the candidate.
+    """
     tool = "mq_route_shadow"
     try:
         data = _run_agent_json(
