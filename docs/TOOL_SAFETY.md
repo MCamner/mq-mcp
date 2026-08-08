@@ -14,6 +14,26 @@ Two path resolvers enforce access boundaries:
 
 `REPO_ROOT` is always included in `resolve_allowed_local_file` — no configuration needed for repo files.
 
+## Bridget's approval gate
+
+The bridge (`mq-mcp/bridge.py`) asks for consent before running a tool that has a
+lasting effect. The rule lives in `mq-mcp/bridget_safety.py` and reads this
+document's machine-readable twin, `docs/tool_contracts.json`:
+
+* `write: true` — always gated
+* Class D — gated, except tools whose effect is only on screen (`set_volume`,
+  `speak_text`, `show_notification`, `toggle_dark_mode`, `lock_screen`, and the
+  `open_*` app launchers)
+* a tool absent from the contract — gated, so nothing unclassified runs silently
+
+Read-only tools pass without a prompt even when they shell out: 27 Class A/B
+tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
+subprocesses while changing nothing, and prompting for those would train the
+operator to dismiss the prompt unread. As classified today, 41 of 130 tools are
+gated.
+
+A denial returns an error string to the model; it does not end the turn.
+
 ---
 
 ## Class A — Read-only, repo-scoped

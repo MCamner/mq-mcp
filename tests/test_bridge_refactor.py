@@ -41,6 +41,17 @@ def bridge():
     return mod
 
 
+@pytest.fixture(autouse=True)
+def _open_gate(bridge, monkeypatch):
+    """Let tool calls through so these tests exercise the loop, not consent.
+
+    The tests drive the loop with invented tool names (alpha, beta, g), which
+    the approval gate correctly treats as unknown and therefore gates. Consent
+    behavior has its own tests in test_bridget_gate.py.
+    """
+    monkeypatch.setattr(bridge, "approval_gate", lambda *args, **kwargs: True)
+
+
 # --- Fakes for the OpenAI client and MCP session -------------------------------
 
 

@@ -14,6 +14,7 @@ from typing import Any, Optional, cast
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 from bridget_context import BridgetContext
+from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
 import bridget_workflow
 import codegraph_cochange
@@ -80,33 +81,22 @@ DO_MODE = False  # Set True by parse_prompt() when --do is passed.
 _SPINNER: "BridgetSpinner | None" = None  # Set by run_bridge so the gate can pause it.
 
 
-def approval_gate(tool_name: str, tool_args: dict) -> bool:
-    """y/n approval gate for shell_exec; all other tools pass through.
+_SMAP = load_safety_map()
 
-    Prompts on /dev/tty rather than stdout: the bridget launcher captures
-    stdout (`out=$(command bridget ... 2>&1)`), so a stdout prompt would be
-    invisible and input() would deadlock. Pauses the spinner while waiting so
-    the two don't write to the terminal at once. Denies if there is no tty.
+_APPROVE_WORDS = {"ja", "j", "y", "yes", "ok", "kör", "kor"}
+_DENY_WORDS = {"nej", "n", "no", "stopp", "avbryt"}
+_SHOW_WORDS = {"visa", "full", "detaljer"}
+_MODIFY_WORDS = {"ändra", "andra", "byt"}
+
+
+def _ask_tty(prompt: str) -> str:
+    """Read one line from /dev/tty, falling back to stdin/stdout.
+
+    The bridget launcher captures stdout (`out=$(command bridget ... 2>&1)`),
+    so a stdout prompt would be invisible and input() would deadlock. Prefer
+    /dev/tty so the prompt is always visible. Returns "" on EOF/interrupt or
+    when no tty is available — the caller reads that as a denial.
     """
-    if tool_name != "shell_exec":
-        return True
-
-    command = tool_args.get("command", "")
-    working_dir = tool_args.get("working_dir", "")
-
-    if _SPINNER:
-        _SPINNER.stop()
-
-    banner = "\n" + "─" * 60 + "\n"
-    banner += "⚠️  Bridget vill köra:\n"
-    banner += f"   $ {command}\n"
-    if working_dir:
-        banner += f"   katalog: {working_dir}\n"
-    banner += "─" * 60 + "\n"
-
-    # Prefer /dev/tty so the prompt is visible even if stdout is captured; fall
-    # back to the standard streams (the launcher runs --do attached to the
-    # terminal, so those work too). Never silently deny on an open failure.
     tty = None
     try:
         tty = open("/dev/tty", "r+")
@@ -116,19 +106,100 @@ def approval_gate(tool_name: str, tool_args: dict) -> bool:
     out = tty or sys.stdout
     reader = tty or sys.stdin
     try:
-        out.write(banner)
-        out.write("Tillåt? [y/n]: ")
+        out.write(prompt)
         out.flush()
-        answer = (reader.readline() or "").strip().lower()
+        return (reader.readline() or "").strip()
     except (EOFError, KeyboardInterrupt):
-        answer = ""
+        return ""
     finally:
         if tty:
             tty.close()
 
+
+def render_gate_card(
+    tool_name: str,
+    tool_args: dict,
+    cls: str,
+    *,
+    verbose: bool = False,
+) -> str:
+    """Render the approval card shown before a gated tool runs.
+
+    Facts only: tool name, class, write/subprocess flags from the contract, and
+    the concrete args. Nothing about intent is inferred.
+    """
+    meta = _SMAP.get(tool_name, {})
+    line = "─" * 60
+    parts = [
+        "",
+        line,
+        "⚠️  Bridget vill köra ett verktyg",
+        f"   Verktyg:    {tool_name}",
+        f"   Klass:      {cls}",
+        f"   Skriver:    {'ja' if meta.get('write') else 'nej'}",
+        f"   Subprocess: {'ja' if meta.get('subprocess') else 'nej'}",
+    ]
+
+    command = tool_args.get("command")
+    working_dir = tool_args.get("working_dir")
+    if command:
+        parts.append(f"   $ {command}")
+    if working_dir:
+        parts.append(f"   katalog:    {working_dir}")
+    if verbose:
+        # Full arg dump only on request, to keep the default card compact.
+        args_json = json.dumps(tool_args, ensure_ascii=False, indent=2)
+        parts.append("   args:")
+        parts.extend(f"     {row}" for row in args_json.splitlines())
+
+    parts.append(line)
+    return "\n".join(parts)
+
+
+def approval_gate(tool_name: str, tool_args: dict) -> bool:
+    """Effect-based approval gate: writing and executing tools need consent.
+
+    Read-only tools pass silently, including the ones implemented as
+    subprocesses (git_status and friends) — see bridget_safety.needs_approval
+    for why class alone is the wrong signal. Gated calls show a card and loop
+    on ja / visa / ändra / nej; `ändra` only edits shell_exec's command. Pauses
+    the spinner while waiting so the two don't write the terminal at once.
+    """
+    if not needs_approval(tool_name, _SMAP):
+        return True
+
+    cls = tool_class(tool_name, _SMAP)
+
     if _SPINNER:
-        _SPINNER.start()
-    return answer in {"y", "yes", "j", "ja"}
+        _SPINNER.stop()
+    try:
+        card = render_gate_card(tool_name, tool_args, cls)
+        while True:
+            answer = _ask_tty(card + "\nja / visa / ändra / nej: ").lower()
+            if answer in _APPROVE_WORDS:
+                return True
+            if answer in _DENY_WORDS or answer == "":
+                return False
+            if answer in _SHOW_WORDS:
+                card = render_gate_card(tool_name, tool_args, cls, verbose=True)
+                continue
+            if answer in _MODIFY_WORDS:
+                if tool_name == "shell_exec":
+                    new_cmd = _ask_tty("Nytt kommando: ")
+                    if new_cmd:
+                        tool_args["command"] = new_cmd
+                    card = render_gate_card(tool_name, tool_args, cls)
+                else:
+                    card = (
+                        render_gate_card(tool_name, tool_args, cls)
+                        + "\n(ändra stöds bara för shell_exec — svara ja eller nej)"
+                    )
+                continue
+            # Unrecognized input: re-show the choices rather than guessing.
+            card = render_gate_card(tool_name, tool_args, cls)
+    finally:
+        if _SPINNER:
+            _SPINNER.start()
 
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
