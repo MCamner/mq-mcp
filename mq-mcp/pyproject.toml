@@ -5,7 +5,13 @@ description = "Local MCP server experiments and tooling for macOS"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "mcp[cli]>=1.27.1",
+    # Upper bound, not a preference: mcp 2.0 removed mcp.server.fastmcp, which
+    # server.py imports FastMCP from. uv.lock already held us at 1.27.1, but a
+    # lock is a record of one resolution, not a rule — regenerating it against
+    # an open `>=` would have pulled 2.x and taken the server down. This is the
+    # same break that left mq-image-analyze red for nine days.
+    # Migrating to the 2.x API is coordinated work: MCamner/mq-image-analyze#13.
+    "mcp[cli]>=1.27.1,<2",
     "jsonschema>=4.26.0",
     "openai>=2.36.0",
     "pandas>=3.0.3",
