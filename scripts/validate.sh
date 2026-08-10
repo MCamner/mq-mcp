@@ -126,6 +126,14 @@ python -m compileall bridge.py server.py main.py >/dev/null \
   || fail "Python compile failed"
 ok "Python files compile"
 
+section "Python lint"
+if uv run ruff check --no-cache --config pyproject.toml \
+  . ../review_engine ../semantic_memory ../scripts ../tests; then
+  ok "Ruff baseline passed"
+else
+  fail "Ruff baseline failed"
+fi
+
 section "MCP tool listing"
 tools_output="$(uv run python bridge.py --tools)" \
   || { fail "bridge.py --tools failed"; tools_output=""; }

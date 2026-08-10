@@ -560,6 +560,11 @@ def make_learning(
     tags: str | list[str] | None = None,
     risk: str = "unknown",
 ) -> LearningRecord:
+    """Validate and normalize fields into an unstored ``LearningRecord``.
+
+    This function performs no persistence. ``record_learning`` owns deduplication
+    and storage; invalid source, risk, repo, task, or lesson values raise ValueError.
+    """
     source = source.strip().lower()
     risk = risk.strip().lower()
     if source not in _ALLOWED_SOURCES:

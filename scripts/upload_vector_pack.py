@@ -29,6 +29,11 @@ def pack_files() -> list[Path]:
 
 
 def clear_store(client: OpenAI, vector_store_id: str) -> int:
+    """Detach and delete every file in ``vector_store_id``.
+
+    The operation is destructive and non-transactional: upload failure after this
+    step can leave the store empty or partially rebuilt. Returns detached file count.
+    """
     removed = 0
 
     while True:

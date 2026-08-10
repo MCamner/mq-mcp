@@ -18,6 +18,11 @@ ALLOWED_SUFFIXES = {".md", ".txt", ".py", ".sh", ".yml", ".yaml", ".html"}
 
 
 def clear_store(client: OpenAI) -> None:
+    """Delete every file attached to the configured semantic-memory store.
+
+    This is destructive and has no rollback. Underlying Storage deletion failures
+    are intentionally ignored after detachment, so orphaned file objects may remain.
+    """
     print("Removing existing files from store...")
     removed = 0
     while True:

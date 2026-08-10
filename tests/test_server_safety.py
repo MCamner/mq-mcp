@@ -197,7 +197,7 @@ def test_detect_type_issues_prescan_header(server):
 # ── review_router path-prefix routing ────────────────────────────────────────
 
 def test_router_prefix_review_engine(server):
-    import importlib, sys
+    import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(server.__file__).parents[1]))
     from review_engine.review_router import route_file

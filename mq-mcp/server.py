@@ -1,7 +1,13 @@
+"""Run the mq-mcp tool server and its local HTTP diagnostics bridge.
+
+The server owns tool registration and execution adapters. Custom HTTP routes
+accept loopback Host headers only; individual tools retain their own safety,
+approval, path-validation, and feature-gate contracts.
+"""
+
 import contextvars
 import json
 import logging
-import random
 import re
 import os
 import sys
@@ -1215,8 +1221,8 @@ def open_messages(contact: str = "") -> str:
         if contact:
             subprocess.Popen(
                 ["osascript", "-e",
-                 f'tell application "Messages" to activate\n'
-                 f'tell application "Messages" to activate'],
+                 'tell application "Messages" to activate\n'
+                 'tell application "Messages" to activate'],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -1706,7 +1712,7 @@ def find_recent_files(path: str = ".", days: int = 7) -> str:
         if not target.exists():
             return f"Path does not exist: {target}"
         result = subprocess.run(
-            ["find", str(target), "-type", "f", f"-mtime", f"-{days}",
+            ["find", str(target), "-type", "f", "-mtime", f"-{days}",
              "-not", "-path", "*/.git/*"],
             capture_output=True, text=True, check=False, timeout=30,
         )
@@ -1947,7 +1953,6 @@ def _detect_type_issues(file_path: str, content: str) -> str:
     except SyntaxError:
         return ""
 
-    lines = content.splitlines()
     hits: list[str] = []
 
     for node in _ast.walk(tree):
@@ -2049,7 +2054,6 @@ def _quote_prefix_len(tok_str: str) -> int:
     while i < len(tok_str) and tok_str[i].lower() in "rRbBfFuU":
         i += 1
     # Count quote chars (''' or \"\"\" or ' or ")
-    q = tok_str[i]
     if tok_str[i:i+3] in ('"""', "'''"):
         return i + 3
     return i + 1
@@ -2914,7 +2918,6 @@ def validate_orchestration_contract() -> str:
         return f"validate_orchestration_contract failed: cannot load tool_contracts.json: {exc}"
 
     # — 2 & 7. Profile validation —
-    READONLY_PROFILES = {"read-only", "repo-only", "claude-desktop"}
     MAX_CLASS: dict[str, set[str]] = {
         "read-only": {"A"},
         "repo-only": {"A", "C"},
@@ -4113,7 +4116,8 @@ def repo_signal_status() -> str:
 
 def _learn_engine():
     """Lazy-import learn_engine so server still starts if file is missing."""
-    import importlib.util, sys as _sys
+    import importlib.util
+    import sys as _sys
     mod_path = Path(__file__).parent / "learn_engine.py"
     if not mod_path.exists():
         raise RuntimeError("learn_engine.py not found")
@@ -4748,7 +4752,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
 
     if result.get("status") == "no_review":
         return "\n".join([
-            f"Learn extract from last review: NO REVIEW FOUND",
+            "Learn extract from last review: NO REVIEW FOUND",
             "",
             f"file: {relative_path}",
             "",
@@ -5090,8 +5094,8 @@ def run_mqlaunch_version() -> str:
             None,
         )
         note = (
-            f"NOTE: Output is TUI splash — version extracted heuristically.\n"
-            f"Fix: add `mqlaunch version --plain` for a bare version string.\n\n"
+            "NOTE: Output is TUI splash — version extracted heuristically.\n"
+            "Fix: add `mqlaunch version --plain` for a bare version string.\n\n"
         )
         return note + (version_line or output[:400])
     return output

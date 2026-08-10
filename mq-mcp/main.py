@@ -404,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.safety:
                 import json as _json
                 from pathlib import Path as _Path
-                out = export_tool_safety(_Path("/dev/stdout"))
+                export_tool_safety(_Path("/dev/stdout"))
                 return 0
             if args.markdown:
                 print(as_markdown_table())

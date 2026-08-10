@@ -20,6 +20,12 @@ ALLOWED_SUFFIXES = {".md", ".txt", ".py", ".sh", ".yml", ".yaml", ".html"}
 
 
 def update_env(vector_store_id: str) -> None:
+    """Persist the active vector-store ID in mq-mcp/.env.
+
+    Replace only ``OPENAI_VECTOR_STORE_ID`` when present; preserve all other lines.
+    Create the file when absent. This function does not load the value into the
+    current process environment.
+    """
     key = "OPENAI_VECTOR_STORE_ID"
     line = f"{key}={vector_store_id}\n"
 

@@ -188,13 +188,13 @@ class ArchitectureMemory:
         filename = f"{adr_id}-{slug}.md"
 
         body_parts = [
-            f"---",
+            "---",
             f"id: {adr_id}",
             f"title: {title}",
             f"date: {date.today().isoformat()}",
             f"status: {status}",
             f"area: {area}",
-            f"---",
+            "---",
             "",
             "## Decision",
             "",

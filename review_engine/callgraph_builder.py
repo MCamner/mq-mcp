@@ -349,7 +349,7 @@ class CallgraphBuilder:
         lines = [
             f"callgraph_builder: {n_files} Python files  {n_edges} import edges",
             f"  Hub files ({len(hubs)}): {hub_str or 'none'}",
-            f"  Output: review_engine/context/callgraph.json",
+            "  Output: review_engine/context/callgraph.json",
         ]
         rs_status = result.get("repo_signal_status", "")
         if rs_status:
@@ -394,7 +394,6 @@ class CallgraphBuilder:
 
 if __name__ == "__main__":
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(
         description="Build cross-file import graph for the review engine."

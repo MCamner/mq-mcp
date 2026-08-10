@@ -477,6 +477,11 @@ def content_to_text(content: Any) -> str:
 
 
 async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[str]) -> str:
+    """Parse, approve, and dispatch one model-requested MCP tool call.
+
+    The approval gate runs before dispatch. Invalid arguments, denials, and MCP
+    failures are returned as user-facing text rather than raised to the caller.
+    """
     try:
         args = json.loads(raw_args or "{}")
     except json.JSONDecodeError:

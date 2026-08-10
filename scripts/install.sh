@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Install mq-mcp through uv, initialize local .env when absent, register the
+# post-commit learn hook when safe, and install the Bridget launcher in BIN_DIR.
+# Existing non-MQ Git hooks and existing .env content are preserved.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
