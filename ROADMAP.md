@@ -35,15 +35,22 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-v2.0.0 - Release Gate v2 + deterministic readiness (done)
-v2.1.0 - Bridget interactive session foundation (done)
-Next:   v2.2.0  mq-learn integration (Fas 0-2)
-        v1.12.0 repo-snapshot evidence
+Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
+On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
+           Ruff correctness baseline
+Next:      consolidate mq-learn's shipped extractor around one documented
+           CLI/MCP contract and complete the remaining live-model acceptance
+Later:     repo-context evidence hardening and CG-2.2+ timeline
 ```
+
+Version labels below describe historical milestones. A capability is not a
+separate release merely because an earlier roadmap assigned it a version.
+`VERSION`, `CHANGELOG.md`, and the latest Git tag remain authoritative for what
+has actually been released.
 
 Completed foundation:
 
-* local MCP server with 66 tools across safety classes A–D and review engine tools
+* local MCP server with 130 tools across safety classes A–D and review engine tools
 * OpenAI/MCP bridge
 * repo-scoped file tools with path boundary enforcement
 * system resource tools
@@ -80,7 +87,7 @@ derived from git and joined read-only into the graph.
 * **CG-2.1 — co-change** (done): `bridget --co-change <file>` — which files
   historically change together, confidence-scored from `git log`, optionally
   enriched read-only from the graph.
-* **CG-2.2 — graph snapshots + diff** (this round): `bridget --snapshot [repo]`
+* **CG-2.2 — graph snapshots + diff** (done): `bridget --snapshot [repo]`
   persists a `graph-snapshot.v1` (totals + per-file symbol counts / content
   hashes, pinned to the current commit) under `~/.mq/graph-snapshots/`;
   `bridget --graph-diff [repo]` reports files/symbols added/removed/changed
@@ -215,8 +222,8 @@ This is not a problem to solve. It is a tension to design.
 
 ## Release map
 
-| Version | Theme                                       | Status        |
-| ------- | ------------------------------------------- | ------------- |
+| Version | Theme                                       | Status                               |
+| ------- | ------------------------------------------- | ------------------------------------ |
 | v0.1.0  | Public baseline                             | Done          |
 | v0.1.1  | Documentation cleanup                       | Done          |
 | v0.1.2  | Local validation flow                       | Done          |
@@ -242,9 +249,9 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
-| v2.1.0  | Bridget interactive session foundation      | Done          |
-| v2.2.0  | mq-learn integration                        | Planned       |
-| v1.12.0 | Repo-snapshot as controlled evidence        | Planned       |
+| v2.1.0  | Bridget interactive session foundation      | Shipped in v2.0.2                    |
+| v2.2.0  | mq-learn integration                        | Partial; re-scope                    |
+| v1.12.0 | Repo-context evidence hardening             | Legacy label; fold into next release |
 
 ---
 
@@ -377,7 +384,7 @@ stable in real use.
 
 ---
 
-## Planned: v2.0.0 — Release Gate v2 + deterministic readiness
+## Completed: v2.0.0 — Release Gate v2 + deterministic readiness
 
 Goal:
 
@@ -431,7 +438,18 @@ Non-goals:
 
 ---
 
-## Planned: v2.2.0 — mq-learn integration
+## In progress: mq-learn integration (legacy target: v2.2.0)
+
+Current implementation note:
+
+* the Modelfile, schema, validation, dry-run extraction, review-to-learn MCP
+  tools, repo-context loading, and tests already exist
+* the implementation is intentionally consolidated in `learn_engine.py` rather
+  than the originally proposed `learn_engine/` package
+* the proposed `mq-mcp learn ...` CLI surface has not been adopted; MCP tools
+  are the current public surface
+* remaining work is to verify the live `mq-learn` refusal behavior and decide
+  whether a separate CLI adds value before documenting one
 
 ### Goal
 
@@ -491,7 +509,7 @@ Never infer file names, versions, branches, commits, issues, paths, or tools.
 **Acceptance criteria**
 
 * [ ] `ollama run mq-learn:latest "Lista exakt filer i mq-mcp"` hittar inte på
-* [ ] Rätt svar är JSON med `confidence="low"` och `evidence=[]`
+* [ ] Live-modelsvaret är verifierat som JSON med `confidence="low"` och `evidence=[]`
 
 ---
 
@@ -526,11 +544,11 @@ mq-mcp/
 
 **Acceptance criteria**
 
-* [ ] Ogiltig JSON stoppas
-* [ ] Saknad evidence ger `confidence=low`
-* [ ] `should_store=true` tillåts bara om input uttryckligen godkänner lagring
-* [ ] Inga repo-mutationer
-* [ ] `scripts/validate.sh` passerar
+* [x] Ogiltig JSON stoppas
+* [x] Saknad evidence tillåts endast med `confidence=low`
+* [x] Modellens `should_store=true` tvingas tillbaka till dry-run
+* [x] Inga repo-mutationer från extractorn
+* [x] `scripts/validate.sh` passerar
 
 ---
 
@@ -554,7 +572,7 @@ dry-run output
 approved storage
 ```
 
-**CLI-kommandon**
+**Ursprungligen föreslagen CLI (inte implementerad)**
 
 ```bash
 mq-mcp learn extract reviews/latest.json --dry-run
@@ -565,14 +583,15 @@ mq-mcp learn explain architecture
 
 **Acceptance criteria**
 
-* [ ] Default är alltid `--dry-run`
-* [ ] Lagring kräver explicit `--approve-store`
-* [ ] Output är JSONL-kompatibel
-* [ ] `scripts/release-check.sh` passerar
+* [x] Extraktion är alltid dry-run
+* [x] Lagring ligger i separata Class C-flöden med explicit godkännande
+* [x] Learning records är JSONL-kompatibla
+* [x] `scripts/release-check.sh` passerar
+* [ ] Besluta om den föreslagna CLI-ytan ska byggas eller tas bort permanent
 
 ---
 
-## Planned: v1.12.0 — Repo-snapshot som kontrollerad evidence
+## Later: repo-context som kontrollerad evidence (legacy target: v1.12.0)
 
 Minska hallucination genom att alltid ge modellen faktisk repo-kontext.
 
@@ -1667,15 +1686,20 @@ Every powerful tool must have:
 Work on:
 
 ```text
-v2.2.0 - mq-learn integration (Fas 0-2)
+mq-learn contract consolidation
 ```
 
-The v2.1.0 Bridget interactive session foundation is complete (Phases 0–5
-shipped; `--chat` is opt-in and did not become the default). The prior v1.11.0
-Ollama-backed learn extraction hardening is also complete. v2.2.0 moves the
-`mq-learn` extractor to the right place in the stack and wires it to the
-review pipeline, repo context, and Obsidian; v1.12.0 (repo-snapshot evidence)
-follows.
+The Bridget interactive session foundation, CG-2.1 co-change, CG-2.2 graph
+snapshots, and the core Ollama-backed learn extractor are implemented. Do not
+rebuild those milestones under their old version labels.
+
+The next bounded work is to:
+
+1. run the two remaining live-model refusal checks from Phase 0
+2. document MCP tools as the current learn extraction surface
+3. decide explicitly whether the proposed `mq-mcp learn ...` CLI is still
+   needed
+4. keep repo-context evidence hardening as the next separate milestone
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2054,12 +2078,12 @@ Graph data ≠ observation evidence.
 
 Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` not started.
 
-### Phase 0 — Boundaries and principles (planned)
+### Phase 0 — Boundaries and principles (partial)
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
 * [ ] ADR documenting the four boundaries
-* [ ] Principles recorded alongside the orchestration-boundary doc
+* [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
 ### Phase 1 — Close the learn loop (planned)
 
@@ -2070,30 +2094,30 @@ Make learning a natural part of conversations. The `learn_*` tools already exist
 * [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
 * [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
-### Phase 2 — Working memory (partial)
+### Phase 2 — Working memory (mostly done)
 
 Remember recent conversations without becoming a knowledge system. `bridget_context.py` already keeps a rolling session window (currently `~/.mq/bridget-context.md`).
 
 * [x] Rolling session memory with bounded window
 * [ ] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
-* [ ] `bridget --history` (date / summary / tools used)
+* [x] `bridget --history` (date / summary / tools used)
 * [ ] `bridget --forget <date>` (delete one day)
 * [ ] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
-* [ ] Never persist API keys / secrets / credentials
+* [x] Never persist API keys / secrets / credentials
 
 ### Phase 2.5 — Memory boundary (planned)
 
 * [ ] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
 * [ ] No hidden persistence
 
-### Phase 3 — Context awareness (planned)
+### Phase 3 — Context awareness (partial)
 
 Bridget starts informed.
 
 * [ ] Auto repo detection (git_status, list_repo_files → inject repo / branch / dirty files)
 * [ ] Recent-work injection (get_last_review, git_diff)
-* [ ] `bridget --project <repo>` persistent session context
-* [ ] `bridget --continue` (last project / branch / changed files / recent review)
+* [x] `bridget --project <repo>` persistent session context
+* [x] `bridget --continue` (last project / branch / changed files / recent review)
 
 ### Phase 3.5 — CodeGraph awareness (partial)
 
@@ -2103,7 +2127,7 @@ Use CodeGraph as context only — never a producer (no CodeGraph → memory-obse
 * [ ] Symbol lookup
 * [ ] Dependency lookup
 * [ ] Hotspots / call-graph search
-* [ ] Graph snapshot queries
+* [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 
 ### Phase 4 — Delegation to mq-agent (mostly done)
 
