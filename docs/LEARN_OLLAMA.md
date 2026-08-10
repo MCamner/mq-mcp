@@ -75,6 +75,12 @@ When mq-mcp calls Ollama for learn extraction, it should use a non-streaming
 structured JSON response. Plain `format: "json"` is not enough by itself
 because it can produce valid JSON that still omits required contract fields.
 
+Direct `ollama run mq-learn:latest ...` output is diagnostic only. The model
+may refuse an ungrounded request correctly while still returning prose or an
+incomplete JSON fragment. It is not a learn-contract surface and must not feed
+storage, review, or automation. Only the mq-mcp provider path below, with the
+full schema in `format` followed by mq-mcp validation, is authoritative.
+
 Use a JSON schema in `format` so Ollama is guided toward the full extraction
 contract:
 
@@ -132,8 +138,9 @@ model to respond in JSON. This avoids malformed or whitespace-heavy output and
 keeps the response suitable for schema validation.
 
 The schema is a generation aid, not the safety boundary. mq-mcp must still
-parse and validate the response, reject missing or unknown fields, reject empty
-evidence, and apply the storage approval rules in `docs/LEARN_CONTRACT.md`.
+parse and validate the response, reject missing or unknown fields, normalize
+empty evidence to `pattern_type="unknown"` / `confidence="low"`, and apply the
+storage approval rules in `docs/LEARN_CONTRACT.md`.
 
 ## Storage rule
 

@@ -49,11 +49,15 @@ Validation must reject:
 - non-JSON output
 - missing required fields
 - unknown fields unless the contract explicitly allows them
-- empty `evidence`
 - unsupported `pattern_type`
 - unsupported `confidence`
 - `should_store=true` without explicit caller approval
 - `confidence=low` records from automatic storage
+
+Empty `evidence` is the explicit ungrounded-result signal. For model-generated
+records, mq-mcp must normalize it deterministically to
+`pattern_type="unknown"` and `confidence="low"` before strict validation.
+Low-confidence records remain ineligible for automatic storage.
 
 Ollama structured output is an extraction aid, not validation. mq-mcp must
 validate the parsed response even when the Ollama request uses a JSON schema in

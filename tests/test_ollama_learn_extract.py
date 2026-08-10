@@ -123,6 +123,33 @@ def test_ollama_learn_extract_approve_false_always():
     assert result.get("status") == "dry_run"
 
 
+def test_ollama_learn_extract_normalizes_empty_evidence_to_unknown_low():
+    engine = _load_engine()
+    ungrounded = {
+        **_VALID_CANDIDATE,
+        "pattern_type": "integration",
+        "confidence": "high",
+        "evidence": [],
+    }
+
+    class _UngroundedResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"response": json.dumps(ungrounded)}
+
+    result = engine.ollama_learn_extract(
+        "Lista exakt filer i mq-mcp",
+        http_post=lambda *a, **k: _UngroundedResponse(),
+    )
+
+    assert result["status"] == "dry_run"
+    assert result["record"]["evidence"] == []
+    assert result["record"]["confidence"] == "low"
+    assert result["record"]["pattern_type"] == "unknown"
+
+
 def test_ollama_learn_extract_rejects_prompt_injection_as_action():
     engine = _load_engine()
     injected_action = {

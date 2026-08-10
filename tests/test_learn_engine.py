@@ -376,3 +376,28 @@ def test_learn_extract_pattern_coerces_provider_storage_request_to_read_only():
     record = engine.learn_extract_pattern("finding", http_post=lambda *args, **kwargs: Response())
 
     assert record["should_store"] is False
+
+
+def test_learn_extract_pattern_normalizes_empty_evidence_to_unknown_low():
+    engine = _load_engine()
+    ungrounded = _valid_extraction(
+        pattern_type="integration",
+        confidence="high",
+        evidence=[],
+    )
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"response": json.dumps(ungrounded)}
+
+    record = engine.learn_extract_pattern(
+        "Lista exakt filer i mq-mcp",
+        http_post=lambda *args, **kwargs: Response(),
+    )
+
+    assert record["evidence"] == []
+    assert record["confidence"] == "low"
+    assert record["pattern_type"] == "unknown"

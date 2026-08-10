@@ -191,6 +191,26 @@ def validate_learn_record(record: Any, *, approve: bool = False) -> dict[str, An
     return redact_secrets(cleaned)
 
 
+def _normalize_provider_record(record: Any) -> Any:
+    """Downgrade an ungrounded provider record before strict validation.
+
+    Empty evidence means the model could not ground a claim. The provider may
+    still emit a guessed type or confidence despite the prompt, so mq-mcp owns
+    the deterministic fallback to unknown/low. Invalid evidence shapes remain
+    untouched and are rejected by validate_learn_record.
+    """
+    if not isinstance(record, dict):
+        return record
+    evidence = record.get("evidence")
+    if not isinstance(evidence, list):
+        return record
+    if not all(isinstance(item, str) for item in evidence):
+        return record
+    if any(item.strip() for item in evidence):
+        return record
+    return {**record, "pattern_type": "unknown", "confidence": "low"}
+
+
 def _looks_like_prompt_injection(value: str) -> bool:
     return any(pattern.search(value) for pattern in _PROMPT_INJECTION_PATTERNS)
 
@@ -405,6 +425,8 @@ def ollama_learn_extract(
         except json.JSONDecodeError:
             return {"status": "unavailable", "reason": "Ollama learn provider returned non-JSON output"}
 
+    generated = _normalize_provider_record(generated)
+
     # Coerce should_store=True — this function is always dry-run.
     if isinstance(generated, dict) and generated.get("should_store"):
         generated = {**generated, "should_store": False}
@@ -470,6 +492,8 @@ def learn_extract_pattern(
             generated = json.loads(generated)
         except json.JSONDecodeError as exc:
             raise ValueError("Ollama learn provider returned non-JSON output") from exc
+
+    generated = _normalize_provider_record(generated)
 
     if isinstance(generated, dict) and generated.get("should_store"):
         generated = {**generated, "should_store": False}

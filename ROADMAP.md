@@ -508,8 +508,9 @@ Never infer file names, versions, branches, commits, issues, paths, or tools.
 
 **Acceptance criteria**
 
-* [ ] `ollama run mq-learn:latest "Lista exakt filer i mq-mcp"` hittar inte på
-* [ ] Live-modelsvaret är verifierat som JSON med `confidence="low"` och `evidence=[]`
+* [x] Rå `ollama run` är diagnostik, inte kontraktsyta, och används inte av automation
+* [x] Provider-svaret är verifierat som JSON med `pattern_type="unknown"`,
+  `confidence="low"` och `evidence=[]`
 
 ---
 
