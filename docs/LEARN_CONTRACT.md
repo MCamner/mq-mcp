@@ -10,6 +10,23 @@ The machine-readable extraction schema lives in
 `schemas/learn_extraction.schema.json`. `mq-mcp/learn_engine.py`, tests, and
 docs should use that file as the source of truth to avoid contract drift.
 
+## Public MCP surface
+
+The MCP tools are the authoritative public surface for learn extraction and
+storage. mq-mcp does not provide a separate `mq-mcp learn ...` CLI.
+
+- `ollama_learn_status` (Class B) checks the optional local provider.
+- `ollama_learn_extract` (Class B) extracts a dry-run candidate from supplied
+  review findings.
+- `learn_extract_from_last_review` (Class B) extracts a dry-run candidate from
+  stored review findings.
+- `learn_from_review` (Class C) stores a learning from the latest review.
+- `learn_from_diff` (Class C) stores an explicitly supplied learning with the
+  current diff summary as validation context.
+
+Extraction tools never write. Storage remains in separate Class C tools; the
+caller must choose those tools explicitly.
+
 ## Input
 
 The input is mq-mcp review findings, such as output from:

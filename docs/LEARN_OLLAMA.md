@@ -26,6 +26,12 @@ Ollama may only propose structured JSON records from review findings. mq-agent
 may only surface read-only learn status, search, and explain commands. mq-hal
 may display stack status after mq-mcp exposes it.
 
+The supported provider entrypoints are the MCP tools `ollama_learn_status`,
+`ollama_learn_extract`, and `learn_extract_from_last_review`. The latter two
+are dry-run only. Persistent learning uses the separate Class C MCP tools
+`learn_from_review` or `learn_from_diff`. There is no separate
+`mq-mcp learn ...` CLI contract.
+
 ## Allowed use
 
 Ollama may:

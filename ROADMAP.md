@@ -37,10 +37,9 @@ Current project phase:
 ```text
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
-           Ruff correctness baseline
-Next:      consolidate mq-learn's shipped extractor around one documented
-           CLI/MCP contract and complete the remaining live-model acceptance
-Later:     repo-context evidence hardening and CG-2.2+ timeline
+           Ruff baseline and consolidated mq-learn MCP contract
+Next:      harden repo-context evidence and refusal behavior
+Later:     CG-2.2+ timeline
 ```
 
 Version labels below describe historical milestones. A capability is not a
@@ -446,10 +445,10 @@ Current implementation note:
   tools, repo-context loading, and tests already exist
 * the implementation is intentionally consolidated in `learn_engine.py` rather
   than the originally proposed `learn_engine/` package
-* the proposed `mq-mcp learn ...` CLI surface has not been adopted; MCP tools
-  are the current public surface
-* remaining work is to verify the live `mq-learn` refusal behavior and decide
-  whether a separate CLI adds value before documenting one
+* the proposed `mq-mcp learn ...` CLI surface was not adopted; the documented
+  MCP tools are the authoritative public surface
+* live refusal behavior and deterministic empty-evidence normalization are
+  verified; repo-context evidence hardening remains separate follow-up work
 
 ### Goal
 
@@ -573,14 +572,12 @@ dry-run output
 approved storage
 ```
 
-**Ursprungligen föreslagen CLI (inte implementerad)**
+**Publik yta**
 
-```bash
-mq-mcp learn extract reviews/latest.json --dry-run
-mq-mcp learn validate learn_engine/memory/lessons.jsonl
-mq-mcp learn list
-mq-mcp learn explain architecture
-```
+MCP-verktygen `ollama_learn_status`, `ollama_learn_extract`,
+`learn_extract_from_last_review`, `learn_from_review` och `learn_from_diff` är
+den publika learn-ytan. En separat `mq-mcp learn ...` CLI byggs inte; den skulle
+dubblera kontrakt, säkerhetsmetadata och tester utan ett verifierat behov.
 
 **Acceptance criteria**
 
@@ -588,7 +585,7 @@ mq-mcp learn explain architecture
 * [x] Lagring ligger i separata Class C-flöden med explicit godkännande
 * [x] Learning records är JSONL-kompatibla
 * [x] `scripts/release-check.sh` passerar
-* [ ] Besluta om den föreslagna CLI-ytan ska byggas eller tas bort permanent
+* [x] Den föreslagna CLI-ytan är borttagen permanent; MCP är kontraktsytan
 
 ---
 
@@ -1552,14 +1549,17 @@ Learning must not:
 
 **Promotion model**
 
-Promotion must default to dry-run and require explicit confirmation for writes:
+Promotion previews use the read-only MCP tool `promote_learning`:
 
-```bash
-mq-mcp learn promote <id> --to runbook --dry-run
-mq-mcp learn promote <id> --to agents-md --dry-run
-mq-mcp learn promote <id> --to claude-md --dry-run
-mq-mcp learn promote <id> --to architecture-memory --dry-run
+```text
+promote_learning(learning_id=<id>, target="runbook")
+promote_learning(learning_id=<id>, target="agents-md")
+promote_learning(learning_id=<id>, target="claude-md")
+promote_learning(learning_id=<id>, target="architecture-memory")
 ```
+
+The tool writes nothing; applying a preview remains an explicit, separate
+operation.
 
 Allowed promotion targets:
 
@@ -1687,20 +1687,20 @@ Every powerful tool must have:
 Work on:
 
 ```text
-mq-learn contract consolidation
+repo-context evidence hardening
 ```
 
 The Bridget interactive session foundation, CG-2.1 co-change, CG-2.2 graph
 snapshots, and the core Ollama-backed learn extractor are implemented. Do not
 rebuild those milestones under their old version labels.
 
-The next bounded work is to:
+The learn contract consolidation is complete: live refusal behavior is checked,
+the MCP tools are documented as the public surface, and the separate CLI plan
+is removed. The next bounded work is to:
 
-1. run the two remaining live-model refusal checks from Phase 0
-2. document MCP tools as the current learn extraction surface
-3. decide explicitly whether the proposed `mq-mcp learn ...` CLI is still
-   needed
-4. keep repo-context evidence hardening as the next separate milestone
+1. require verified `repo_context` for repository-specific extraction claims
+2. build evidence from repo-signal output or git without trusting prompt text
+3. add refusal, provenance, and missing-context tests before enabling the rule
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
