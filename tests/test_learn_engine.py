@@ -222,26 +222,70 @@ def test_validate_learn_record_allows_empty_evidence_only_at_low_confidence():
         engine.validate_learn_record(_valid_extraction(confidence="high", evidence=[]))
 
 
-def test_load_repo_context_snapshot_lists_real_files(tmp_path):
+def test_load_repo_context_snapshot_uses_repo_signal_provenance(tmp_path):
     engine = _load_engine()
 
-    # Absent artifact -> empty snapshot, which forces the model to low confidence.
+    # Absent verified artifact -> empty snapshot, which forces refusal.
     assert engine.load_repo_context_snapshot(tmp_path) == ""
 
-    ctx_dir = tmp_path / "review_engine" / "context"
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
     ctx_dir.mkdir(parents=True)
-    (ctx_dir / "file_summary_index.json").write_text(
-        json.dumps([
-            {"path": "mq-mcp/server.py", "role": "MCP server"},
-            {"path": "README.md"},
-            {"not_a_path": True},
-        ]),
+    (tmp_path / "mq-mcp").mkdir()
+    (tmp_path / "mq-mcp" / "server.py").write_text("", encoding="utf-8")
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    (ctx_dir / "symbol_index.json").write_text(
+        json.dumps({
+            "schema": "symbol_index.v1",
+            "repo_name": tmp_path.name,
+            "generated_at": "2026-08-11T10:00:00Z",
+            "files": [
+                {"path": "mq-mcp/server.py"},
+                {"path": "README.md"},
+                {"not_a_path": True},
+            ],
+        }),
         encoding="utf-8",
     )
     snap = engine.load_repo_context_snapshot(tmp_path)
-    assert "mq-mcp/server.py — MCP server" in snap
+    assert "PROVENANCE source=repo-signal schema=symbol_index.v1" in snap
+    assert f"repo={tmp_path.name}" in snap
+    assert "mq-mcp/server.py" in snap
     assert "README.md" in snap
     assert "not_a_path" not in snap
+
+
+def test_load_repo_context_snapshot_rejects_wrong_repo(tmp_path):
+    engine = _load_engine()
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
+    ctx_dir.mkdir(parents=True)
+    (ctx_dir / "symbol_index.json").write_text(
+        json.dumps({
+            "schema": "symbol_index.v1",
+            "repo_name": "another-repo",
+            "generated_at": "2026-08-11T10:00:00Z",
+            "files": [{"path": "invented.py"}],
+        }),
+        encoding="utf-8",
+    )
+
+    assert engine.load_repo_context_snapshot(tmp_path) == ""
+
+
+def test_load_repo_context_snapshot_omits_missing_and_outside_files(tmp_path):
+    engine = _load_engine()
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
+    ctx_dir.mkdir(parents=True)
+    (ctx_dir / "symbol_index.json").write_text(
+        json.dumps({
+            "schema": "symbol_index.v1",
+            "repo_name": tmp_path.name,
+            "generated_at": "2026-08-11T10:00:00Z",
+            "files": [{"path": "missing.py"}, {"path": "../outside.py"}],
+        }),
+        encoding="utf-8",
+    )
+
+    assert engine.load_repo_context_snapshot(tmp_path) == ""
 
 
 def test_validate_learn_record_requires_approval_for_storage():

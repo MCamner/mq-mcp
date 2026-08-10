@@ -27,6 +27,22 @@ storage. mq-mcp does not provide a separate `mq-mcp learn ...` CLI.
 Extraction tools never write. Storage remains in separate Class C tools; the
 caller must choose those tools explicitly.
 
+## Repository context and provenance
+
+Repository-specific extraction requires a verified repo context. mq-mcp reads
+`.repo-signal/exports/symbol_index.json` and accepts it only when:
+
+- `schema` is `symbol_index.v1`
+- `repo_name` matches the requested repository
+- `generated_at` is present
+- every included path resolves to an existing file inside that repository
+
+The context sent to Ollama includes those provenance fields. If the artifact is
+missing, malformed, belongs to another repository, or contains no verifiable
+files, mq-mcp returns an `unknown` / `low` refusal with empty evidence without
+calling the model. The learning layer reads exports but does not execute
+repo-signal or git.
+
 ## Input
 
 The input is mq-mcp review findings, such as output from:

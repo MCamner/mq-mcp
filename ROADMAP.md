@@ -623,8 +623,9 @@ mq-mcp/
 
 **Acceptance criteria**
 
-* [ ] `mq-learn` får aldrig svara på repo-frågor utan `repo_context`
-* [ ] `evidence_builder` hämtar repo-kontext från `repo-signal` eller git
+* [x] `mq-learn` svarar inte på repo-frågor utan verifierad `repo_context`
+* [x] Den konsoliderade context-buildern hämtar proveniensmärkt repo-kontext
+  från `repo-signal` och verifierar att filerna finns inom rätt repo
 
 ---
 
@@ -1698,9 +1699,9 @@ The learn contract consolidation is complete: live refusal behavior is checked,
 the MCP tools are documented as the public surface, and the separate CLI plan
 is removed. The next bounded work is to:
 
-1. require verified `repo_context` for repository-specific extraction claims
-2. build evidence from repo-signal output or git without trusting prompt text
-3. add refusal, provenance, and missing-context tests before enabling the rule
+1. define a freshness policy for repo-signal evidence (`generated_at`)
+2. expose context provenance in the human-readable MCP preview
+3. evaluate a read-only git fallback when repo-signal exports are unavailable
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.

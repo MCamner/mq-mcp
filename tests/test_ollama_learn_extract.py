@@ -150,6 +150,29 @@ def test_ollama_learn_extract_normalizes_empty_evidence_to_unknown_low():
     assert result["record"]["pattern_type"] == "unknown"
 
 
+def test_ollama_learn_extract_refuses_required_missing_repo_context():
+    engine = _load_engine()
+    called = False
+
+    def _must_not_call(*args, **kwargs):
+        nonlocal called
+        called = True
+        return _OkResponse()
+
+    result = engine.ollama_learn_extract(
+        "List the exact files and versions in this repository.",
+        require_repo_context=True,
+        http_post=_must_not_call,
+    )
+
+    assert called is False
+    assert result["status"] == "dry_run"
+    assert result["reason"] == "verified repo_context required"
+    assert result["record"]["pattern_type"] == "unknown"
+    assert result["record"]["confidence"] == "low"
+    assert result["record"]["evidence"] == []
+
+
 def test_ollama_learn_extract_rejects_prompt_injection_as_action():
     engine = _load_engine()
     injected_action = {

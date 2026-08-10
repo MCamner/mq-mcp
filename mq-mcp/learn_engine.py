@@ -219,38 +219,71 @@ _REPO_CONTEXT_MAX_FILES = 400
 
 
 def load_repo_context_snapshot(repo_root: Path, *, max_files: int = _REPO_CONTEXT_MAX_FILES) -> str:
-    """Return a compact, verified file list for grounding ollama evidence.
+    """Return a provenance-marked repo-signal file list for Ollama grounding.
 
-    Reads the already-built review_engine/context/file_summary_index.json (no
-    rebuild — that is build_repo_context's job) and emits one "path — role" line
-    per file. The model may only cite files that appear here, which prevents the
-    confidence=high hallucination of nonexistent filenames. Returns "" when the
-    artifact is absent, which forces the model to confidence=low.
+    Only a matching ``symbol_index.v1`` export is accepted. The learning layer
+    reads the artifact but never runs repo-signal or git itself. Missing,
+    malformed, or cross-repo artifacts return an empty snapshot so callers can
+    refuse repository-specific extraction deterministically.
     """
-    index_path = repo_root / "review_engine" / "context" / "file_summary_index.json"
+    index_path = repo_root / ".repo-signal" / "exports" / "symbol_index.json"
     try:
-        entries = json.loads(index_path.read_text(encoding="utf-8"))
+        artifact = json.loads(index_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return ""
+    if not isinstance(artifact, dict):
+        return ""
+    if artifact.get("schema") != "symbol_index.v1":
+        return ""
+    if artifact.get("repo_name") != repo_root.name:
+        return ""
+    generated_at = artifact.get("generated_at")
+    if not isinstance(generated_at, str) or not generated_at.strip():
+        return ""
+    entries = artifact.get("files")
     if not isinstance(entries, list):
         return ""
     lines: list[str] = []
+    resolved_root = repo_root.resolve()
     for entry in entries:
         if not isinstance(entry, dict):
             continue
         path = str(entry.get("path", "")).strip()
         if not path:
             continue
-        role = str(entry.get("role", "")).strip()
-        lines.append(f"{path} — {role}" if role else path)
+        candidate = (resolved_root / path).resolve()
+        try:
+            candidate.relative_to(resolved_root)
+        except ValueError:
+            continue
+        if not candidate.is_file():
+            continue
+        lines.append(path)
     if not lines:
         return ""
     truncated = len(lines) > max_files
     shown = lines[:max_files]
-    body = "\n".join(shown)
+    header = (
+        "PROVENANCE source=repo-signal schema=symbol_index.v1 "
+        f"repo={repo_root.name} generated_at={generated_at.strip()}"
+    )
+    body = "\n".join([header, *shown])
     if truncated:
         body += f"\n... ({len(lines) - max_files} more files omitted)"
     return body
+
+
+def _missing_repo_context_record() -> dict[str, Any]:
+    """Return the deterministic refusal used when verified context is required."""
+    return {
+        "pattern_name": "repo-context-required",
+        "pattern_type": "unknown",
+        "summary": "Repository-specific extraction requires verified repo context.",
+        "evidence": [],
+        "recommended_action": "Generate a repo-signal symbol index and retry.",
+        "confidence": "low",
+        "should_store": False,
+    }
 
 
 def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
@@ -352,6 +385,8 @@ def learn_extract_from_last_review(
     model: str = "mq-learn",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
+    repo_context: str = "",
+    require_repo_context: bool = False,
     http_post: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Dry-run extraction of a learn pattern from the last stored review for a file.
@@ -371,6 +406,8 @@ def learn_extract_from_last_review(
         model=model,
         endpoint=endpoint,
         timeout=timeout,
+        repo_context=repo_context,
+        require_repo_context=require_repo_context,
         http_post=http_post,
     )
     result["file"] = relative_path
@@ -384,6 +421,7 @@ def ollama_learn_extract(
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     repo_context: str = "",
+    require_repo_context: bool = False,
     http_post: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Dry-run extraction of a learn pattern from review findings via Ollama.
@@ -394,6 +432,14 @@ def ollama_learn_extract(
     """
     if not review_findings.strip():
         raise ValueError("review_findings is required")
+
+    if require_repo_context and not repo_context.strip():
+        return {
+            "status": "dry_run",
+            "stored": False,
+            "reason": "verified repo_context required",
+            "record": _missing_repo_context_record(),
+        }
 
     if http_post is None:
         try:
@@ -447,6 +493,7 @@ def learn_extract_pattern(
     timeout: int = 30,
     approve: bool = False,
     repo_context: str = "",
+    require_repo_context: bool = False,
     http_post: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Extract a validated learn candidate with optional local Ollama.
@@ -457,6 +504,9 @@ def learn_extract_pattern(
     """
     if not review_findings.strip():
         raise ValueError("review_findings is required")
+
+    if require_repo_context and not repo_context.strip():
+        return _missing_repo_context_record()
 
     payload = {
         "model": model,

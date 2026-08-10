@@ -72,7 +72,9 @@ def test_run_skips_low_signal(monkeypatch, tmp_path):
             return "file.py — role"
 
         @staticmethod
-        def learn_extract_pattern(_findings, approve=False, repo_context=""):
+        def learn_extract_pattern(
+            _findings, approve=False, repo_context="", require_repo_context=False
+        ):
             return {"confidence": "low", "evidence": [], "pattern_name": "x"}
 
     monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
@@ -95,7 +97,9 @@ def test_run_queues_grounded_candidate(monkeypatch, tmp_path):
             return "file.py — role"
 
         @staticmethod
-        def learn_extract_pattern(_findings, approve=False, repo_context=""):
+        def learn_extract_pattern(
+            _findings, approve=False, repo_context="", require_repo_context=False
+        ):
             return {
                 "confidence": "high",
                 "evidence": ["file.py line 1"],

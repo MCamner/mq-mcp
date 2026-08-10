@@ -104,3 +104,17 @@ def test_learn_extract_from_last_review_does_not_store():
         http_post=_ok_http_post,
     )
     assert result.get("stored") is False
+
+
+def test_learn_extract_from_last_review_refuses_without_required_context():
+    engine = _load_engine()
+    result = engine.learn_extract_from_last_review(
+        "mq-mcp/learn_engine.py",
+        review_loader=lambda path: "The repository contains learn_engine.py.",
+        require_repo_context=True,
+        http_post=lambda *a, **k: (_ for _ in ()).throw(AssertionError("provider called")),
+    )
+
+    assert result["status"] == "dry_run"
+    assert result["reason"] == "verified repo_context required"
+    assert result["record"]["evidence"] == []

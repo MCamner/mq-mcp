@@ -4673,7 +4673,11 @@ def ollama_learn_extract(review_findings: str) -> str:
     """
     eng = _learn_engine()
     repo_context = eng.load_repo_context_snapshot(REPO_ROOT)
-    result = eng.ollama_learn_extract(review_findings, repo_context=repo_context)
+    result = eng.ollama_learn_extract(
+        review_findings,
+        repo_context=repo_context,
+        require_repo_context=True,
+    )
 
     if result.get("status") == "unavailable":
         return "\n".join([
@@ -4730,6 +4734,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         _sys.path.insert(0, str(REPO_ROOT))
 
     repo_name = REPO_ROOT.name
+    context_root = REPO_ROOT
     if repo_path is not None:
         try:
             _root = resolve_allowed_local_file(repo_path)
@@ -4738,6 +4743,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         if not _root.is_dir():
             return f"learn_extract_from_last_review failed: repo_path is not a directory: {repo_path}"
         repo_name = _root.name
+        context_root = _root
 
     def _review_loader(path: str) -> str | None:
         try:
@@ -4748,7 +4754,13 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
             return None
 
     eng = _learn_engine()
-    result = eng.learn_extract_from_last_review(relative_path, review_loader=_review_loader)
+    repo_context = eng.load_repo_context_snapshot(context_root)
+    result = eng.learn_extract_from_last_review(
+        relative_path,
+        review_loader=_review_loader,
+        repo_context=repo_context,
+        require_repo_context=True,
+    )
 
     if result.get("status") == "no_review":
         return "\n".join([

@@ -164,7 +164,10 @@ def run(sha: str = "HEAD") -> str:
     repo_context = eng.load_repo_context_snapshot(REPO_ROOT)
     try:
         record = eng.learn_extract_pattern(
-            findings, approve=False, repo_context=repo_context
+            findings,
+            approve=False,
+            repo_context=repo_context,
+            require_repo_context=True,
         )
     except Exception as exc:
         return f"skip: extraction failed: {exc}"
