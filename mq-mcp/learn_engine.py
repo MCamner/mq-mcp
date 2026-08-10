@@ -14,6 +14,7 @@ import hashlib
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, cast
 
@@ -216,9 +217,16 @@ def _looks_like_prompt_injection(value: str) -> bool:
 
 
 _REPO_CONTEXT_MAX_FILES = 400
+_REPO_CONTEXT_MAX_AGE = timedelta(hours=24)
+_REPO_CONTEXT_FUTURE_SKEW = timedelta(minutes=5)
 
 
-def load_repo_context_snapshot(repo_root: Path, *, max_files: int = _REPO_CONTEXT_MAX_FILES) -> str:
+def load_repo_context_snapshot(
+    repo_root: Path,
+    *,
+    max_files: int = _REPO_CONTEXT_MAX_FILES,
+    now: datetime | None = None,
+) -> str:
     """Return a provenance-marked repo-signal file list for Ollama grounding.
 
     Only a matching ``symbol_index.v1`` export is accepted. The learning layer
@@ -239,6 +247,18 @@ def load_repo_context_snapshot(repo_root: Path, *, max_files: int = _REPO_CONTEX
         return ""
     generated_at = artifact.get("generated_at")
     if not isinstance(generated_at, str) or not generated_at.strip():
+        return ""
+    try:
+        generated = datetime.fromisoformat(generated_at.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    if generated.tzinfo is None:
+        return ""
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    age = current.astimezone(timezone.utc) - generated.astimezone(timezone.utc)
+    if age > _REPO_CONTEXT_MAX_AGE or age < -_REPO_CONTEXT_FUTURE_SKEW:
         return ""
     entries = artifact.get("files")
     if not isinstance(entries, list):
@@ -284,6 +304,22 @@ def _missing_repo_context_record() -> dict[str, Any]:
         "confidence": "low",
         "should_store": False,
     }
+
+
+def _repo_context_provenance(repo_context: str) -> dict[str, str]:
+    """Parse provenance from a context created by load_repo_context_snapshot."""
+    first_line = repo_context.splitlines()[0] if repo_context.strip() else ""
+    if not first_line.startswith("PROVENANCE "):
+        return {"status": "missing"}
+    fields: dict[str, str] = {"status": "verified"}
+    for part in first_line.removeprefix("PROVENANCE ").split():
+        key, separator, value = part.partition("=")
+        if separator and key in {"source", "schema", "repo", "generated_at"}:
+            fields[key] = value
+    required = {"source", "schema", "repo", "generated_at"}
+    if not required.issubset(fields):
+        return {"status": "missing"}
+    return fields
 
 
 def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
@@ -439,6 +475,7 @@ def ollama_learn_extract(
             "stored": False,
             "reason": "verified repo_context required",
             "record": _missing_repo_context_record(),
+            "context_provenance": {"status": "missing"},
         }
 
     if http_post is None:
@@ -482,7 +519,13 @@ def ollama_learn_extract(
     except ValueError as exc:
         return {"status": "unavailable", "reason": str(exc)}
 
-    return {"status": "dry_run", "stored": False, "reason": "explicit approval required", "record": candidate}
+    return {
+        "status": "dry_run",
+        "stored": False,
+        "reason": "explicit approval required",
+        "record": candidate,
+        "context_provenance": _repo_context_provenance(repo_context),
+    }
 
 
 def learn_extract_pattern(

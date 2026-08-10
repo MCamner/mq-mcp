@@ -38,8 +38,8 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      harden repo-context evidence and refusal behavior
-Later:     CG-2.2+ timeline
+Next:      continue with the CG-2.2+ timeline
+Later:     remaining explicitly uncompleted milestones below
 ```
 
 Version labels below describe historical milestones. A capability is not a
@@ -1699,9 +1699,11 @@ The learn contract consolidation is complete: live refusal behavior is checked,
 the MCP tools are documented as the public surface, and the separate CLI plan
 is removed. The next bounded work is to:
 
-1. define a freshness policy for repo-signal evidence (`generated_at`)
-2. expose context provenance in the human-readable MCP preview
-3. evaluate a read-only git fallback when repo-signal exports are unavailable
+1. [x] reject repo-signal evidence older than 24 hours, future-dated by more
+   than five minutes, or missing timezone information
+2. [x] expose context status, source, and timestamp in MCP previews
+3. [x] reject a git fallback inside learn extraction; it would violate the
+   non-executing learn boundary, so stale/missing repo-signal context refuses
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.

@@ -4691,8 +4691,13 @@ def ollama_learn_extract(review_findings: str) -> str:
         ])
 
     record = result.get("record", {})
+    provenance = result.get("context_provenance", {"status": "missing"})
     lines = [
         "Ollama learn extract: DRY-RUN PREVIEW",
+        "",
+        f"context:         {provenance.get('status', 'missing')}",
+        f"context_source:  {provenance.get('source', '-')}",
+        f"context_time:    {provenance.get('generated_at', '-')}",
         "",
         f"pattern_name:    {record.get('pattern_name', '-')}",
         f"pattern_type:    {record.get('pattern_type', '-')}",
@@ -4784,12 +4789,16 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         ])
 
     record = result.get("record", {})
+    provenance = result.get("context_provenance", {"status": "missing"})
     lines = [
         "Learn extract from last review: DRY-RUN PREVIEW",
         "",
         f"file:     {relative_path}",
         "provider: ollama / mq-learn",
         "stored:   false",
+        f"context:  {provenance.get('status', 'missing')}",
+        f"source:   {provenance.get('source', '-')}",
+        f"generated:{provenance.get('generated_at', '-')}",
         "",
         f"pattern_name: {record.get('pattern_name', '-')}",
         f"pattern_type: {record.get('pattern_type', '-')}",

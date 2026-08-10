@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -246,7 +247,10 @@ def test_load_repo_context_snapshot_uses_repo_signal_provenance(tmp_path):
         }),
         encoding="utf-8",
     )
-    snap = engine.load_repo_context_snapshot(tmp_path)
+    snap = engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+    )
     assert "PROVENANCE source=repo-signal schema=symbol_index.v1" in snap
     assert f"repo={tmp_path.name}" in snap
     assert "mq-mcp/server.py" in snap
@@ -286,6 +290,31 @@ def test_load_repo_context_snapshot_omits_missing_and_outside_files(tmp_path):
     )
 
     assert engine.load_repo_context_snapshot(tmp_path) == ""
+
+
+def test_load_repo_context_snapshot_rejects_stale_and_future_exports(tmp_path):
+    engine = _load_engine()
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
+    ctx_dir.mkdir(parents=True)
+    (tmp_path / "tracked.py").write_text("", encoding="utf-8")
+
+    def _write(generated_at):
+        (ctx_dir / "symbol_index.json").write_text(
+            json.dumps({
+                "schema": "symbol_index.v1",
+                "repo_name": tmp_path.name,
+                "generated_at": generated_at,
+                "files": [{"path": "tracked.py"}],
+            }),
+            encoding="utf-8",
+        )
+
+    now = datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc)
+    _write("2026-08-10T11:59:59Z")
+    assert engine.load_repo_context_snapshot(tmp_path, now=now) == ""
+
+    _write("2026-08-11T12:05:01Z")
+    assert engine.load_repo_context_snapshot(tmp_path, now=now) == ""
 
 
 def test_validate_learn_record_requires_approval_for_storage():
