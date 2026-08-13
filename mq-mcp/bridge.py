@@ -19,6 +19,7 @@ import bridget_runtime
 import bridget_workflow
 import codegraph_cochange
 import codegraph_snapshot
+from learn_engine import redact_secrets
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -312,6 +313,7 @@ def usage() -> None:
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
+  uv run python bridge.py --learn-last [review-path]
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
@@ -327,6 +329,7 @@ Examples:
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: last session, branch, changes, review
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
+  uv run python bridge.py --learn-last         # redacted preview; asks before storage
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
   uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots
@@ -350,6 +353,17 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
         else:
             kept.append(a)
     return " ".join(kept).strip(), assume_yes
+
+
+def parse_learn_last_args(argv: list[str]) -> str:
+    """Return an optional review path from ``--learn-last`` arguments."""
+    index = argv.index("--learn-last")
+    rest = argv[index + 1 :]
+    if len(rest) > 1:
+        raise ValueError("--learn-last accepts at most one review path")
+    if rest and rest[0].startswith("-"):
+        raise ValueError("--learn-last review path must not be another option")
+    return rest[0] if rest else ""
 
 
 def parse_prompt() -> tuple[str, bool, bool, str, bool, bool, bool]:
@@ -951,6 +965,13 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
 
 CHAT_EXIT_WORDS = {"exit", "quit", "q"}
 MAX_LEARN_SUGGESTION_CHARS = 700
+MAX_LEARN_PREVIEW_CHARS = 4000
+REVIEW_HISTORY_FILE = (
+    Path(__file__).resolve().parents[1]
+    / "review_engine"
+    / "memory"
+    / "review_history.json"
+)
 _LEARN_EVIDENCE_TOOLS = {
     "detect_architecture_drift",
     "release_gate_run",
@@ -1010,6 +1031,151 @@ def print_learn_suggestion(
     stream = out or sys.stdout
     stream.write(f"\n{suggestion}\n")
     stream.flush()
+
+
+def redact_learn_preview(text: str) -> str:
+    """Return a bounded preview with the learn layer's secret masking applied."""
+    redacted = str(redact_secrets(text))
+    marker = "\n… [preview truncated]"
+    if len(redacted) > MAX_LEARN_PREVIEW_CHARS:
+        redacted = redacted[: MAX_LEARN_PREVIEW_CHARS - len(marker)] + marker
+    return redacted
+
+
+def _latest_review_path(repo_path: Path) -> str:
+    """Find the newest reviewed file in the central active-repo namespace."""
+    try:
+        data = json.loads(REVIEW_HISTORY_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    # Current stores are {repo: {path: [entries]}}; retain legacy flat support.
+    first = next(iter(data.values()), None)
+    if isinstance(first, dict):
+        data = data.get(repo_path.name, {})
+    if not isinstance(data, dict):
+        return ""
+    newest: dict[str, Any] | None = None
+    groups: list[list[Any]] = []
+    for value in data.values():
+        if isinstance(value, list):
+            groups.append(value)
+    for entries in groups:
+        for entry in entries:
+            if isinstance(entry, dict) and (
+                newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0)
+            ):
+                newest = entry
+    return str((newest or {}).get("file_path") or "")
+
+
+def resolve_learn_last_context(relative_path: str = "") -> tuple[str, str]:
+    """Resolve the active repo and optional/latest reviewed file."""
+    project = bridget_runtime.get_project()
+    if project and project.get("path"):
+        repo_path = Path(project["path"]).resolve()
+    else:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            raise ValueError("no pinned project or current Git repository")
+        repo_path = Path(result.stdout.strip()).resolve()
+    selected = relative_path or _latest_review_path(repo_path)
+    return selected, str(repo_path)
+
+
+def build_diff_learn_args(repo_path: str) -> dict[str, str]:
+    """Build a preview candidate from the last suggestion plus current diff."""
+    if Path(repo_path).resolve() != Path(__file__).resolve().parents[1]:
+        raise ValueError(
+            "diff fallback is only supported for mq-mcp; pass a reviewed path "
+            "for external repos"
+        )
+    diff = subprocess.run(
+        ["git", "diff", "--stat", "--"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    ).stdout.strip()
+    entries = BridgetContext().read_history(limit=1)
+    latest = entries[0] if entries else {}
+    task = str(latest.get("prompt") or "review current diff").strip()
+    lesson = str(latest.get("summary") or "Review the current diff before reuse.").strip()
+    if not diff:
+        raise ValueError("no review history or current diff found")
+    return {
+        "task": _bounded_line(task, 240),
+        "lesson": _bounded_line(lesson, 500),
+        "risk": "unknown",
+        "validation": _bounded_line(f"diff preview: {diff}", 500),
+    }
+
+
+async def run_learn_last(
+    session: ClientSession,
+    relative_path: str = "",
+    *,
+    out: Any = None,
+) -> None:
+    """Preview the latest review candidate, then gate the existing store tool."""
+    stream = out or sys.stdout
+    selected, repo_path = resolve_learn_last_context(relative_path)
+    if not selected:
+        args = build_diff_learn_args(repo_path)
+        preview = redact_learn_preview(
+            "\n".join(
+                [
+                    "Learn from current diff: DRY-RUN PREVIEW",
+                    "source: diff",
+                    f"task: {args['task']}",
+                    f"lesson: {args['lesson']}",
+                    f"validation: {args['validation']}",
+                ]
+            )
+        )
+        stream.write(f"{preview}\n\nstored: false\n")
+        stream.flush()
+        if not approval_gate("learn_from_diff", args):
+            stream.write("Storage denied; preview only.\n")
+            stream.flush()
+            return
+        stored_result = await session.call_tool("learn_from_diff", args)
+        stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
+        stream.flush()
+        return
+
+    args = {"relative_path": selected, "repo_path": repo_path}
+    preview_result = await session.call_tool("learn_extract_from_last_review", args)
+    preview = redact_learn_preview(content_to_text(preview_result.content))
+    stream.write(f"{preview}\n\nstored: false\n")
+    stream.flush()
+
+    if not approval_gate("learn_from_review", args):
+        stream.write("Storage denied; preview only.\n")
+        stream.flush()
+        return
+    stored_result = await session.call_tool("learn_from_review", args)
+    stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
+    stream.flush()
+
+
+async def run_learn_last_entry(relative_path: str = "") -> None:
+    """Open one MCP session for the synchronous ``--learn-last`` CLI route."""
+    server_params = StdioServerParameters(
+        command=SERVER_COMMAND,
+        args=SERVER_ARGS,
+        env=os.environ.copy(),
+    )
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            await run_learn_last(session, relative_path)
 
 
 def record_chat_session(
@@ -1332,6 +1498,17 @@ if __name__ == "__main__":
     if "--workflow" in sys.argv[1:]:
         _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
         sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
+
+    # Preview-first learning is an explicit CLI workflow. It bypasses the model
+    # and uses the existing Class B extractor + Class C approval gate directly.
+    if "--learn-last" in sys.argv[1:]:
+        try:
+            _review_path = parse_learn_last_args(sys.argv[1:])
+            asyncio.run(run_learn_last_entry(_review_path))
+        except ValueError as exc:
+            print(f"ERROR: {exc}")
+            sys.exit(2)
+        sys.exit(0)
 
     # Runtime commands (--project / --continue / --history) are read-only and
     # synchronous; intercept them here so they never spin up OpenAI or MCP.

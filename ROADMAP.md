@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 1 --learn-last dry-run workflow
+Next:      Bridget Phase 1 learning provenance
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1702,7 +1702,7 @@ version labels. The next bounded work is to:
    exceeding the context budget
 3. [x] suggest reusable learn candidates at the end of a session without
    writing anything before explicit approval
-4. [ ] add `bridget --learn-last` as a redacted dry-run preview with an explicit
+4. [x] add `bridget --learn-last` as a redacted dry-run preview with an explicit
    approval gate before any storage
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
@@ -2095,7 +2095,7 @@ Make the architectural boundaries explicit as an ADR: Bridget stores context; mq
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
 * [x] Suggest reusable learn candidates at end of session (no write without approval)
-* [ ] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
+* [x] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
 * [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
 * [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
