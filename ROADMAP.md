@@ -2086,7 +2086,8 @@ Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` no
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
-* [ ] ADR documenting the four boundaries
+* [x] ADR-007 documents the Bridget, mqobsidian, mq-agent, and CodeGraph
+  boundaries, with mq-mcp and mqlaunch responsibilities made explicit
 * [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
 ### Phase 1 — Close the learn loop (planned)
