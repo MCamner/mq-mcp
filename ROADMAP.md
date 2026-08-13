@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 3 recent-work context injection
+Next:      Bridget Phase 1 --learn-last dry-run workflow
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1698,8 +1698,12 @@ version labels. The next bounded work is to:
 
 1. [x] detect the current Git repository automatically when no explicit project
    pin exists; inject repo, branch, and a bounded dirty-file summary
-2. [ ] inject recent work from the latest review and current diff without
+2. [x] inject recent work from the latest review and current diff without
    exceeding the context budget
+3. [x] suggest reusable learn candidates at the end of a session without
+   writing anything before explicit approval
+4. [ ] add `bridget --learn-last` as a redacted dry-run preview with an explicit
+   approval gate before any storage
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2090,7 +2094,7 @@ Make the architectural boundaries explicit as an ADR: Bridget stores context; mq
 
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
-* [ ] Suggest reusable learn candidates at end of session (no write without approval)
+* [x] Suggest reusable learn candidates at end of session (no write without approval)
 * [ ] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
 * [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
 * [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
@@ -2111,12 +2115,12 @@ Remember recent conversations without becoming a knowledge system. `bridget_cont
 * [ ] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
 * [ ] No hidden persistence
 
-### Phase 3 — Context awareness (partial)
+### Phase 3 — Context awareness (done)
 
 Bridget starts informed.
 
 * [x] Auto repo detection (Git root/status → inject repo / branch / dirty files)
-* [ ] Recent-work injection (get_last_review, git_diff)
+* [x] Recent-work injection (latest review metadata and bounded `git diff --stat`)
 * [x] `bridget --project <repo>` persistent session context
 * [x] `bridget --continue` (last project / branch / changed files / recent review)
 

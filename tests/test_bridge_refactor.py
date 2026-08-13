@@ -434,6 +434,44 @@ def test_record_chat_session_no_project_pin(bridge, monkeypatch):
     assert kw["chat_mode"] is True
 
 
+# --- Phase 1: preview-only learn suggestions ---------------------------------
+
+
+def test_build_learn_suggestion_requires_evidence_tool(bridge):
+    assert bridge.build_learn_suggestion("task", "answer", ["search_repo"]) == ""
+    assert bridge.build_learn_suggestion("task", "answer", []) == ""
+
+
+def test_build_learn_suggestion_is_bounded_and_never_claims_storage(bridge):
+    suggestion = bridge.build_learn_suggestion(
+        "fix the repeated issue " * 20,
+        "the reusable result " * 80,
+        ["review_diff", "validate_project"],
+    )
+
+    assert "Reusable learn candidate" in suggestion
+    assert "review_diff, validate_project" in suggestion
+    assert "stored: false" in suggestion
+    assert "explicit approval" in suggestion
+    assert len(suggestion) <= bridge.MAX_LEARN_SUGGESTION_CHARS
+
+
+def test_build_learn_suggestion_suppressed_after_learn_write(bridge):
+    suggestion = bridge.build_learn_suggestion(
+        "task", "answer", ["review_diff", "learn_from_diff"]
+    )
+    assert suggestion == ""
+
+
+def test_print_learn_suggestion_emits_one_preview(bridge):
+    out = io.StringIO()
+    bridge.print_learn_suggestion(
+        "task", "answer", ["run_tests", "run_tests"], out=out
+    )
+
+    assert out.getvalue().count("Reusable learn candidate") == 1
+
+
 # --- print_response ------------------------------------------------------------
 
 

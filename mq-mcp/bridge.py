@@ -950,6 +950,66 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
 
 
 CHAT_EXIT_WORDS = {"exit", "quit", "q"}
+MAX_LEARN_SUGGESTION_CHARS = 700
+_LEARN_EVIDENCE_TOOLS = {
+    "detect_architecture_drift",
+    "release_gate_run",
+    "review_diff",
+    "review_file",
+    "risk_review_diff",
+    "risk_review_file",
+    "run_tests",
+    "validate_project",
+}
+_LEARN_WRITE_TOOLS = {
+    "brain_record_learning",
+    "learn_from_diff",
+    "learn_from_review",
+    "promote_learning",
+    "record_learning",
+}
+
+
+def _bounded_line(text: str, limit: int) -> str:
+    line = " ".join(text.split())
+    return line if len(line) <= limit else line[: limit - 1].rstrip() + "…"
+
+
+def build_learn_suggestion(prompt: str, answer: str, tools: list[str]) -> str:
+    """Build a preview-only learn candidate after evidence-producing work."""
+    unique_tools = list(dict.fromkeys(tools))
+    if not answer.strip() or _LEARN_WRITE_TOOLS.intersection(unique_tools):
+        return ""
+    evidence_tools = [name for name in unique_tools if name in _LEARN_EVIDENCE_TOOLS]
+    if not evidence_tools:
+        return ""
+    suggestion = "\n".join(
+        [
+            "💡 Reusable learn candidate (preview only)",
+            "stored: false — storage requires explicit approval",
+            f"task: {_bounded_line(prompt, 120)}",
+            f"candidate: {_bounded_line(answer, 240)}",
+            f"evidence tools: {', '.join(evidence_tools)}",
+            "next: review with a dry-run learn extractor before approved storage",
+        ]
+    )
+    return suggestion[:MAX_LEARN_SUGGESTION_CHARS]
+
+
+def print_learn_suggestion(
+    prompt: str,
+    answer: str,
+    tools: list[str],
+    *,
+    out: Any = None,
+) -> None:
+    """Print at most one learn preview; perform no model, MCP, or storage call."""
+    suggestion = build_learn_suggestion(prompt, answer, tools)
+    if not suggestion:
+        return
+    stream = out or sys.stdout
+    stream.write(f"\n{suggestion}\n")
+    stream.flush()
 
 
 def record_chat_session(
@@ -1139,6 +1199,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         last_answer=last_answer,
                         start=session_start,
                     )
+                    print_learn_suggestion(
+                        last_prompt,
+                        last_answer,
+                        all_called_tools,
+                        out=out,
+                    )
     finally:
         if tty:
             tty.close()
@@ -1249,6 +1315,7 @@ async def run_bridge() -> None:
                     project=_proj_name,
                     branch=_proj_branch,
                 )
+                print_learn_suggestion(prompt, answer, called_tools, out=tty)
 
             if tty:
                 tty.close()

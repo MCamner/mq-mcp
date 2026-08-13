@@ -198,8 +198,71 @@ def test_last_review_picks_newest(tmp_path):
     assert "b.py" in out and "T9" in out
 
 
+def test_last_review_supports_repo_namespaced_history(tmp_path):
+    hist = tmp_path / "review_engine" / "memory"
+    hist.mkdir(parents=True)
+    (hist / "review_history.json").write_text(
+        json.dumps(
+            {
+                "mq-mcp": {
+                    "a.py": [
+                        {
+                            "file_path": "a.py",
+                            "timestamp": 11,
+                            "timestamp_iso": "T11",
+                            "finding_count": 3,
+                        }
+                    ]
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert "a.py" in br.last_review(tmp_path)
+    assert "T11" in br.last_review(tmp_path)
+
+
 def test_last_review_absent_returns_none(tmp_path):
     assert br.last_review(tmp_path) is None
+
+
+def test_recent_work_block_reports_bounded_diff_stat(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed\n", encoding="utf-8")
+
+    block = br.recent_work_block(repo)
+
+    assert "## Recent work" in block
+    assert "current diff:" in block
+    assert "f.txt" in block
+    assert len(block) <= br.MAX_RECENT_WORK_CHARS
+
+
+def test_recent_work_block_is_empty_without_review_or_diff(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    assert br.recent_work_block(repo) == ""
+
+
+def test_recent_work_block_enforces_hard_character_limit(monkeypatch):
+    monkeypatch.setattr(br, "last_review", lambda _path: None)
+    monkeypatch.setattr(br, "_git", lambda _path, _args: "x" * 2_000)
+
+    block = br.recent_work_block("repo")
+
+    assert len(block) == br.MAX_RECENT_WORK_CHARS
+    assert block.endswith("… [recent work truncated]")
+
+
+def test_project_context_includes_recent_work(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed\n", encoding="utf-8")
+
+    block = br.project_context_block(repo)
+
+    assert "## Detected project" in block
+    assert "## Recent work" in block
 
 
 # --- synchronous handlers (no MCP/OpenAI) -----------------------------------

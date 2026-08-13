@@ -24,6 +24,7 @@ PROJECT_FILE = CONTEXT_DIR / "bridget-project"
 
 _GIT_TIMEOUT = 5
 _MAX_DIRTY_SHOWN = 5
+MAX_RECENT_WORK_CHARS = 1_200
 
 
 def known_local_repos() -> dict[str, str]:
@@ -143,13 +144,17 @@ def last_review(path: str | Path) -> str | None:
     if not isinstance(data, dict):
         return None
     newest: dict | None = None
-    for entries in data.values():
-        if not isinstance(entries, list):
-            continue
+    groups: list[list] = []
+    for value in data.values():
+        if isinstance(value, list):
+            groups.append(value)
+        elif isinstance(value, dict):
+            groups.extend(entries for entries in value.values() if isinstance(entries, list))
+    for entries in groups:
         for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            if newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0):
+            if isinstance(entry, dict) and (
+                newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0)
+            ):
                 newest = entry
     if newest is None:
         return None
@@ -158,6 +163,25 @@ def last_review(path: str | Path) -> str | None:
         f"@ {newest.get('timestamp_iso', '?')} "
         f"({newest.get('finding_count', '?')} findings)"
     )
+
+
+def recent_work_block(path: str | Path) -> str:
+    """Return bounded review metadata and diff statistics for prompt context."""
+    parts: list[str] = []
+    review = last_review(path)
+    if review:
+        parts.append(review)
+    diff_stat = _git(path, ["diff", "--stat", "--"])
+    if diff_stat:
+        indented = "\n".join(f"    {line}" for line in diff_stat.splitlines())
+        parts.append(f"  current diff:\n{indented}")
+    if not parts:
+        return ""
+    block = "## Recent work\n\n" + "\n".join(parts)
+    marker = "\n… [recent work truncated]"
+    if len(block) > MAX_RECENT_WORK_CHARS:
+        block = block[: MAX_RECENT_WORK_CHARS - len(marker)] + marker
+    return block
 
 
 # ----------------------------------------------------------------------
@@ -178,11 +202,14 @@ def project_context_block(cwd: str | Path | None = None) -> str:
         heading = "Detected project"
     if not proj.get("path"):
         return ""
+    recent = recent_work_block(proj["path"])
+    recent_context = f"{recent}\n\n" if recent else ""
     return (
         "\n\n---\n"
         f"## {heading}\n\n"
         f"{proj['name']} ({proj['path']})\n"
         f"{repo_brief(proj['path'])}\n\n"
+        f"{recent_context}"
         "Treat this repo as the working context for this session.\n---\n"
     )
 
