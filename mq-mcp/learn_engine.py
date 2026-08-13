@@ -27,6 +27,7 @@ _SECRET_PATTERNS = [
 
 _ALLOWED_SOURCES = {"codex", "claude", "mq-agent", "mq-hal", "manual", "review", "diff"}
 _ALLOWED_RISKS = {"low", "medium", "high", "unknown"}
+_ALLOWED_LEARNING_ORIGINS = {"user", "bridget", "review", "diff"}
 _PROMOTION_TARGETS = {"runbook", "agents-md", "claude-md", "architecture-memory"}
 _LEARN_PATTERN_TYPES = {
     "architecture",
@@ -91,6 +92,7 @@ class LearningRecord:
     task: str
     lesson: str
     validation: list[str]
+    learning_origin: str = "user"
     problem: str = ""
     solution: str = ""
     files_touched: list[str] = field(default_factory=list)
@@ -625,6 +627,7 @@ def store_learn_record(
         repo_root,
         repo=repo,
         source="review",
+        learning_origin="review",
         task=candidate["pattern_name"],
         lesson=candidate["summary"],
         validation=candidate["evidence"],
@@ -670,6 +673,7 @@ def make_learning(
     task: str,
     lesson: str,
     validation: str | list[str],
+    learning_origin: str | None = None,
     problem: str = "",
     solution: str = "",
     files_touched: str | list[str] | None = None,
@@ -688,6 +692,11 @@ def make_learning(
         raise ValueError(f"Unsupported learning source: {source}")
     if risk not in _ALLOWED_RISKS:
         raise ValueError(f"Unsupported risk value: {risk}")
+    if learning_origin is None:
+        learning_origin = source if source in {"review", "diff"} else "user"
+    learning_origin = learning_origin.strip().lower()
+    if learning_origin not in _ALLOWED_LEARNING_ORIGINS:
+        raise ValueError(f"Unsupported learning origin: {learning_origin}")
     if not repo.strip():
         raise ValueError("repo is required")
     if not task.strip():
@@ -703,6 +712,7 @@ def make_learning(
         task=task.strip(),
         lesson=lesson.strip(),
         validation=_as_list(validation),
+        learning_origin=learning_origin,
         problem=problem.strip(),
         solution=solution.strip(),
         files_touched=_as_list(files_touched),

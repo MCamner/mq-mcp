@@ -48,6 +48,72 @@ def test_load_lessons_empty_when_no_store(monkeypatch, tmp_path):
     assert BridgetContext(path=tmp_path / "ctx.md").load_lessons() == ""
 
 
+def test_load_lessons_filters_by_repo_risk_and_task(monkeypatch, tmp_path):
+    store = tmp_path / "lessons.jsonl"
+    _write_lessons(store, [
+        {"repo": "mq-mcp", "risk": "high", "lesson": "Validate MCP tool contracts after server changes", "tags": ["mcp", "contracts"]},
+        {"repo": "mq-mcp", "risk": "low", "lesson": "Low risk MCP formatting detail", "tags": ["mcp"]},
+        {"repo": "mq-hal", "risk": "high", "lesson": "Validate MCP tool contracts after server changes", "tags": ["mcp"]},
+        {"repo": "mq-mcp", "risk": "high", "lesson": "Unrelated image palette guidance", "tags": ["images"]},
+    ])
+    monkeypatch.setattr(bridget_context, "LESSONS_FILE", store)
+
+    out = BridgetContext(path=tmp_path / "ctx.md").load_lessons(
+        repo="mq-mcp", task="update MCP server contract"
+    )
+
+    assert "Validate MCP tool contracts" in out
+    assert "Low risk" not in out
+    assert "mq-hal" not in out
+    assert "palette" not in out
+
+
+def test_load_lessons_matches_file_metadata(monkeypatch, tmp_path):
+    store = tmp_path / "lessons.jsonl"
+    _write_lessons(store, [
+        {"repo": "mq-mcp", "risk": "medium", "lesson": "Keep the generated catalog synchronized", "files_touched": ["mq-mcp/server.py"]},
+        {"repo": "mq-mcp", "risk": "medium", "lesson": "Keep release notes concise", "files_touched": ["CHANGELOG.md"]},
+    ])
+    monkeypatch.setattr(bridget_context, "LESSONS_FILE", store)
+
+    out = BridgetContext(path=tmp_path / "ctx.md").load_lessons(
+        repo="mq-mcp", file_path="mq-mcp/server.py", task="change parser"
+    )
+
+    assert "generated catalog" in out
+    assert "release notes" not in out
+
+
+def test_load_lessons_bounds_complete_block(monkeypatch, tmp_path):
+    store = tmp_path / "lessons.jsonl"
+    _write_lessons(store, [
+        {"repo": "mq-mcp", "risk": "high", "lesson": f"contract lesson {i} " + "x" * 200}
+        for i in range(10)
+    ])
+    monkeypatch.setattr(bridget_context, "LESSONS_FILE", store)
+
+    out = BridgetContext(path=tmp_path / "ctx.md").load_lessons(
+        repo="mq-mcp", task="contract", max_chars=500
+    )
+
+    assert out
+    assert len(out) <= 500
+
+
+def test_load_lessons_keeps_legacy_records_without_provenance(monkeypatch, tmp_path):
+    store = tmp_path / "lessons.jsonl"
+    _write_lessons(store, [
+        {"repo": "mq-mcp", "risk": "high", "lesson": "Legacy contract lesson"}
+    ])
+    monkeypatch.setattr(bridget_context, "LESSONS_FILE", store)
+
+    out = BridgetContext(path=tmp_path / "ctx.md").load_lessons(
+        repo="mq-mcp", task="contract"
+    )
+
+    assert "Legacy contract lesson" in out
+
+
 # --- Phase 4: REPL session metadata -----------------------------------------
 
 

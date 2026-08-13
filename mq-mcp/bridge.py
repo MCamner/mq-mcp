@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -690,7 +691,32 @@ async def discover_tools(
     return catalog, openai_tools
 
 
-def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> str:
+def lesson_context_filters(task: str) -> tuple[str, str]:
+    """Derive active repo and an optional repo-relative file from task text."""
+    project = bridget_runtime.get_project()
+    repo = str(project.get("name") or "") if project else ""
+    if not repo:
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                repo = Path(result.stdout.strip()).name
+        except (OSError, subprocess.SubprocessError):
+            pass
+    match = re.search(r"(?<![\w.-])([\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]+)", task)
+    return repo, match.group(1) if match else ""
+
+
+def build_system_content(
+    ctx: BridgetContext,
+    catalog: str,
+    do_mode: bool,
+    task: str = "",
+) -> str:
     """Assemble the system message: base prompt + session/lessons/project context,
     optional DO MODE block, and the live tool catalog as ground truth.
 
@@ -698,7 +724,12 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
     build the system message once per session.
     """
     session_context = ctx.load()
-    lessons_context = ctx.load_lessons()
+    lesson_repo, lesson_file = lesson_context_filters(task)
+    lessons_context = ctx.load_lessons(
+        repo=lesson_repo,
+        file_path=lesson_file,
+        task=task,
+    )
     project_context = bridget_runtime.project_context_block()
     do_instructions = DO_MODE_INSTRUCTIONS if do_mode else ""
 
@@ -712,6 +743,20 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
         "Use this catalog as ground truth.\n\n"
         + catalog
     )
+
+
+def refresh_system_message(
+    messages: list[ChatCompletionMessageParam],
+    ctx: BridgetContext,
+    catalog: str,
+    do_mode: bool,
+    task: str,
+) -> None:
+    """Replace the sole system context for a new task without growing history."""
+    messages[0] = {
+        "role": "system",
+        "content": build_system_content(ctx, catalog, do_mode, task=task),
+    }
 
 
 # --- Context window management (Phase 3) -------------------------------------
@@ -1141,11 +1186,12 @@ async def run_learn_last(
         )
         stream.write(f"{preview}\n\nstored: false\n")
         stream.flush()
-        if not approval_gate("learn_from_diff", args):
+        store_args = {**args, "learning_origin": "bridget"}
+        if not approval_gate("learn_from_diff", store_args):
             stream.write("Storage denied; preview only.\n")
             stream.flush()
             return
-        stored_result = await session.call_tool("learn_from_diff", args)
+        stored_result = await session.call_tool("learn_from_diff", store_args)
         stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
         stream.flush()
         return
@@ -1156,11 +1202,12 @@ async def run_learn_last(
     stream.write(f"{preview}\n\nstored: false\n")
     stream.flush()
 
-    if not approval_gate("learn_from_review", args):
+    store_args = {**args, "learning_origin": "bridget"}
+    if not approval_gate("learn_from_review", store_args):
         stream.write("Storage denied; preview only.\n")
         stream.flush()
         return
-    stored_result = await session.call_tool("learn_from_review", args)
+    stored_result = await session.call_tool("learn_from_review", store_args)
     stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
     stream.flush()
 
@@ -1251,7 +1298,9 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
 
                 catalog, openai_tools = await discover_tools(session)
                 ctx = BridgetContext()
-                system_content = build_system_content(ctx, catalog, do_mode)
+                system_content = build_system_content(
+                    ctx, catalog, do_mode, task=initial_prompt
+                )
                 messages: list[ChatCompletionMessageParam] = [
                     {"role": "system", "content": system_content},
                 ]
@@ -1314,6 +1363,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             handle_goto_repo(repo_name)
                             continue
 
+                        # Replace the system message rather than appending a new
+                        # lesson block, so task relevance changes per turn while
+                        # prompt growth stays bounded.
+                        refresh_system_message(
+                            messages, ctx, catalog, do_mode, user_input
+                        )
                         messages.append({"role": "user", "content": user_input})
 
                         spinner = BridgetSpinner(stream=tty)
@@ -1443,7 +1498,7 @@ async def run_bridge() -> None:
                 return
 
             ctx = BridgetContext()
-            system_content = build_system_content(ctx, catalog, do_mode)
+            system_content = build_system_content(ctx, catalog, do_mode, task=prompt)
 
             messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": system_content},

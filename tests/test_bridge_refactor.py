@@ -160,8 +160,13 @@ def test_openai_tool_specs_exclude_only_compatibility_aliases(bridge):
 # --- build_system_content ------------------------------------------------------
 
 
-def _fake_ctx(session="", lessons=""):
-    return types.SimpleNamespace(load=lambda: session, load_lessons=lambda: lessons)
+def _fake_ctx(session="", lessons="", calls=None):
+    def load_lessons(**kwargs):
+        if calls is not None:
+            calls.append(kwargs)
+        return lessons
+
+    return types.SimpleNamespace(load=lambda: session, load_lessons=load_lessons)
 
 
 def test_build_system_content_includes_prompt_context_and_catalog(bridge, monkeypatch):
@@ -188,6 +193,42 @@ def test_build_system_content_adds_do_block_only_in_do_mode(bridge, monkeypatch)
 
     assert "DO MODE (ACTIVE)" in content
     assert "shell_exec is ENABLED" in content
+
+
+def test_build_system_content_passes_repo_file_and_task_to_lessons(bridge, monkeypatch):
+    calls = []
+    ctx = _fake_ctx(lessons="LESSON", calls=calls)
+    monkeypatch.setattr(bridge.bridget_runtime, "project_context_block", lambda: "")
+    monkeypatch.setattr(
+        bridge, "lesson_context_filters", lambda task: ("mq-mcp", "mq-mcp/server.py")
+    )
+
+    bridge.build_system_content(
+        ctx, "catalog", do_mode=False, task="fix mq-mcp/server.py contract"
+    )
+
+    assert calls == [{
+        "repo": "mq-mcp",
+        "file_path": "mq-mcp/server.py",
+        "task": "fix mq-mcp/server.py contract",
+    }]
+
+
+def test_refresh_system_message_replaces_context_without_growth(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.bridget_runtime, "project_context_block", lambda: "")
+    monkeypatch.setattr(bridge, "lesson_context_filters", lambda task: ("mq-mcp", ""))
+    calls = []
+    ctx = _fake_ctx(lessons="LESSON", calls=calls)
+    messages = [
+        {"role": "system", "content": "old"},
+        {"role": "user", "content": "previous turn"},
+    ]
+
+    bridge.refresh_system_message(messages, ctx, "catalog", False, "new task")
+
+    assert len(messages) == 2
+    assert messages[0]["content"] != "old"
+    assert calls[-1]["task"] == "new task"
 
 
 # --- run_turn ------------------------------------------------------------------
@@ -535,7 +576,14 @@ def test_run_learn_last_approval_stores_via_existing_review_tool(bridge, monkeyp
 
     assert session.tool_calls == [
         ("learn_extract_from_last_review", {"relative_path": "server.py", "repo_path": "/repo"}),
-        ("learn_from_review", {"relative_path": "server.py", "repo_path": "/repo"}),
+        (
+            "learn_from_review",
+            {
+                "relative_path": "server.py",
+                "repo_path": "/repo",
+                "learning_origin": "bridget",
+            },
+        ),
     ]
 
 
@@ -562,6 +610,37 @@ def test_run_learn_last_falls_back_to_redacted_diff_preview(bridge, monkeypatch)
     assert "abc123" not in out.getvalue()
     assert "letmein" not in out.getvalue()
     assert "stored: false" in out.getvalue()
+
+
+def test_run_learn_last_approved_diff_is_attributed_to_bridget(bridge, monkeypatch):
+    session = _FakeSession(result_text="stored")
+    monkeypatch.setattr(bridge, "resolve_learn_last_context", lambda _path="": ("", "/repo"))
+    monkeypatch.setattr(
+        bridge,
+        "build_diff_learn_args",
+        lambda _repo: {
+            "task": "fix contract",
+            "lesson": "keep provenance",
+            "validation": "changed: bridge.py",
+            "risk": "unknown",
+        },
+    )
+    monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: True)
+
+    asyncio.run(bridge.run_learn_last(session, out=io.StringIO()))
+
+    assert session.tool_calls == [
+        (
+            "learn_from_diff",
+            {
+                "task": "fix contract",
+                "lesson": "keep provenance",
+                "validation": "changed: bridge.py",
+                "risk": "unknown",
+                "learning_origin": "bridget",
+            },
+        )
+    ]
 
 
 # --- print_response ------------------------------------------------------------

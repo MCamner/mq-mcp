@@ -31,6 +31,11 @@ MAX_TOOLS_SHOWN = 5      # max tool calls shown per session
 # Learn store lives at the repo root next to this package (mq-mcp/mq-mcp/).
 LESSONS_FILE = Path(__file__).resolve().parents[1] / "learn_engine" / "memory" / "lessons.jsonl"
 MAX_LESSONS = 6          # how many lessons to inject into the system prompt
+MAX_LESSON_CONTEXT_CHARS = 1600
+_LESSON_STOP_WORDS = {
+    "after", "before", "change", "current", "from", "into", "keep", "task",
+    "that", "the", "this", "update", "with",
+}
 
 
 class BridgetContext:
@@ -70,13 +75,22 @@ class BridgetContext:
             "Do not repeat it back verbatim unless asked.\n---\n"
         )
 
-    def load_lessons(self, limit: int = MAX_LESSONS) -> str:
-        """Return medium/high-risk lessons to inject into the system prompt.
+    def load_lessons(
+        self,
+        limit: int = MAX_LESSONS,
+        *,
+        repo: str = "",
+        file_path: str = "",
+        task: str = "",
+        risk_levels: tuple[str, ...] = ("medium", "high"),
+        max_chars: int = MAX_LESSON_CONTEXT_CHARS,
+    ) -> str:
+        """Return bounded lessons relevant to the current repository and task.
 
         Reads the learn store directly (no shelling out) so Bridget applies
-        prior lessons without being asked. Cross-repo lessons are included on
-        purpose — release-hygiene and JSON-output guidance apply everywhere.
-        Returns an empty string when there is nothing worth injecting.
+        prior lessons without being asked. Repository and risk are eligibility
+        filters; file/task terms rank and filter eligible records. With no
+        context arguments this retains the legacy medium/high cross-repo view.
         """
         if not LESSONS_FILE.exists():
             return ""
@@ -105,15 +119,52 @@ class BridgetContext:
                     return " ".join(str(val).split())
             return ""
 
-        items: list[str] = []
-        seen_words: list[set[str]] = []
-        # Most recent lessons are appended last; walk newest-first.
-        for d in reversed(lessons):
-            if risk_of(d) not in {"medium", "high"}:
+        def terms_of(value: object) -> set[str]:
+            words = re.findall(r"[a-z0-9_]+", str(value).lower())
+            return {
+                word[:-1] if len(word) > 4 and word.endswith("s") else word
+                for word in words
+                if len(word) > 2 and word not in _LESSON_STOP_WORDS
+            }
+
+        query_terms = terms_of(task)
+        selected_file = file_path.strip().lower()
+        allowed_risks = {risk.lower() for risk in risk_levels}
+        ranked: list[tuple[int, int, dict, str]] = []
+        for recency, d in enumerate(reversed(lessons)):
+            if risk_of(d) not in allowed_risks:
+                continue
+            lesson_repo = str(d.get("repo") or "").strip().lower()
+            if repo and lesson_repo not in {"", "general", repo.strip().lower()}:
                 continue
             text = text_of(d)
             if not text:
                 continue
+            files = [str(item).lower() for item in d.get("files_touched", []) or []]
+            haystack = " ".join(
+                [
+                    text,
+                    str(d.get("task") or ""),
+                    " ".join(str(tag) for tag in d.get("tags", []) or []),
+                    " ".join(files),
+                ]
+            )
+            score = len(query_terms & terms_of(haystack))
+            if selected_file and any(
+                selected_file == candidate
+                or Path(selected_file).name == Path(candidate).name
+                for candidate in files
+            ):
+                score += 10
+            if (query_terms or selected_file) and score == 0:
+                continue
+            ranked.append((score, -recency, d, text))
+
+        ranked.sort(key=lambda item: (item[0], item[1]), reverse=True)
+
+        items: list[str] = []
+        seen_words: list[set[str]] = []
+        for _score, _recency, d, text in ranked:
             # Collapse near-identical paraphrases (e.g. the same contract-update
             # lesson stored several times) by word-overlap similarity.
             words = set(re.findall(r"[a-z0-9_]+", text.lower()))
@@ -129,13 +180,30 @@ class BridgetContext:
 
         if not items:
             return ""
-        return (
+        header = (
             "\n\n---\n"
             "## Lessons learned (apply proactively)\n\n"
-            + "\n".join(items)
-            + "\n\nApply these lessons without being asked; do not repeat them "
+        )
+        footer = (
+            "\n\nApply these lessons without being asked; do not repeat them "
             "verbatim unless relevant.\n---\n"
         )
+        available = max_chars - len(header) - len(footer)
+        if available <= 4:
+            return ""
+        rendered: list[str] = []
+        used = 0
+        for item in items:
+            separator = 1 if rendered else 0
+            remaining = available - used - separator
+            if remaining <= 1:
+                break
+            bounded = item if len(item) <= remaining else item[: remaining - 1].rstrip() + "…"
+            rendered.append(bounded)
+            used += separator + len(bounded)
+            if len(item) > remaining:
+                break
+        return header + "\n".join(rendered) + footer
 
     def record(
         self,

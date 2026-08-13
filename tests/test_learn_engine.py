@@ -35,6 +35,7 @@ def test_record_and_search_learning(tmp_path):
 
     result = engine.record_learning(tmp_path, record)
     assert result["status"] == "ok"
+    assert engine.load_learnings(tmp_path)[0]["learning_origin"] == "user"
 
     matches = engine.search_learnings(tmp_path, "tool count")
     assert len(matches) == 1
@@ -43,6 +44,53 @@ def test_record_and_search_learning(tmp_path):
     summary = engine.summarize_learnings(tmp_path)
     assert "Fix docs drift" in summary
     assert "Keep tool docs" in summary
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_origin"),
+    [("manual", "user"), ("codex", "user"), ("review", "review"), ("diff", "diff")],
+)
+def test_learning_origin_defaults_from_source(tmp_path, source, expected_origin):
+    engine = _load_engine()
+    record = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source=source,
+        task="Track provenance",
+        lesson="Origin is distinct from source.",
+        validation="unit test",
+    )
+
+    assert record.learning_origin == expected_origin
+
+
+def test_learning_origin_accepts_explicit_bridget(tmp_path):
+    engine = _load_engine()
+    record = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source="review",
+        learning_origin="bridget",
+        task="Learn from Bridget preview",
+        lesson="Approved Bridget previews retain their origin.",
+        validation="unit test",
+    )
+
+    assert record.learning_origin == "bridget"
+
+
+def test_learning_origin_rejects_unsupported_value(tmp_path):
+    engine = _load_engine()
+    with pytest.raises(ValueError, match="Unsupported learning origin"):
+        engine.make_learning(
+            tmp_path,
+            repo="mq-mcp",
+            source="manual",
+            learning_origin="automatic",
+            task="x",
+            lesson="x",
+            validation="x",
+        )
 
 
 def test_record_learning_skips_duplicate_fingerprint(tmp_path):

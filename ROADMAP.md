@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 1 learning provenance
+Next:      Bridget Phase 2 per-day session logs
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1688,7 +1688,7 @@ Every powerful tool must have:
 Work on:
 
 ```text
-Bridget context awareness
+Bridget working memory
 ```
 
 The Bridget interactive session foundation, repo-context evidence hardening,
@@ -1704,6 +1704,11 @@ version labels. The next bounded work is to:
    writing anything before explicit approval
 4. [x] add `bridget --learn-last` as a redacted dry-run preview with an explicit
    approval gate before any storage
+5. [x] record learning provenance and inject only repo-, risk-, file-, and
+   task-relevant lessons within a fixed prompt budget
+
+The next bounded work is per-day session logs, followed by date-scoped deletion
+and bounded recent-session injection.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2090,14 +2095,14 @@ Make the architectural boundaries explicit as an ADR: Bridget stores context; mq
   boundaries, with mq-mcp and mqlaunch responsibilities made explicit
 * [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
-### Phase 1 — Close the learn loop (planned)
+### Phase 1 — Close the learn loop (done)
 
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
 * [x] Suggest reusable learn candidates at end of session (no write without approval)
 * [x] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
-* [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
-* [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
+* [x] Learning provenance (`learning_origin: user | bridget | review | diff`)
+* [x] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
 ### Phase 2 — Working memory (mostly done)
 

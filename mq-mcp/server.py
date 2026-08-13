@@ -4141,6 +4141,7 @@ def record_learning(
     repo: str = "",
     risk: str = "low",
     tags: str = "",
+    learning_origin: str = "user",
 ) -> str:
     """Store a verified engineering lesson in the local learn layer.
 
@@ -4156,6 +4157,7 @@ def record_learning(
         repo:       Repo name this applies to (empty = general).
         risk:       low | medium | high | unknown.
         tags:       Comma-separated tags (e.g. "ci,docs,release").
+        learning_origin: How this was created — user | bridget | review | diff.
 
     Safety: Class C — local write to REPO_ROOT/learn_engine/memory/lessons.jsonl,
     no command execution, no allowlist mutation.
@@ -4166,6 +4168,7 @@ def record_learning(
         REPO_ROOT,
         repo=repo or "",
         source=source,
+        learning_origin=learning_origin,
         task=task,
         lesson=lesson,
         validation=validation,
@@ -4179,6 +4182,7 @@ def record_learning(
         f"Saved lesson {result['id']}.\n"
         f"  repo:   {record.repo or '(general)'}\n"
         f"  source: {record.source}\n"
+        f"  origin: {record.learning_origin}\n"
         f"  risk:   {record.risk}\n"
         f"  task:   {record.task[:72]}"
     )
@@ -4411,13 +4415,16 @@ def learning_status(repo: str = "") -> str:
         return f"No lessons stored{f' for repo {repo!r}' if repo else ''}."
 
     by_source: dict[str, int] = {}
+    by_origin: dict[str, int] = {}
     by_risk: dict[str, int] = {}
     by_repo: dict[str, int] = {}
     for l in lessons:
         s = l.get("source", "unknown")
+        origin = l.get("learning_origin", "legacy")
         r = l.get("risk", "unknown")
         rp = l.get("repo") or "(general)"
         by_source[s] = by_source.get(s, 0) + 1
+        by_origin[origin] = by_origin.get(origin, 0) + 1
         by_risk[r]   = by_risk.get(r, 0) + 1
         by_repo[rp]  = by_repo.get(rp, 0) + 1
 
@@ -4426,6 +4433,8 @@ def learning_status(repo: str = "") -> str:
         lines[0] += f" for repo '{repo}'"
     lines += ["", "By source:"]
     lines += [f"  {k}: {v}" for k, v in sorted(by_source.items())]
+    lines += ["", "By learning origin:"]
+    lines += [f"  {k}: {v}" for k, v in sorted(by_origin.items())]
     lines += ["", "By risk:"]
     lines += [f"  {k}: {v}" for k, v in sorted(by_risk.items())]
     if not repo:
@@ -4821,7 +4830,13 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
 
 
 @mcp.tool()
-def learn_from_review(relative_path: str, task: str = "", risk: str = "low", repo_path: str | None = None) -> str:
+def learn_from_review(
+    relative_path: str,
+    task: str = "",
+    risk: str = "low",
+    repo_path: str | None = None,
+    learning_origin: str = "review",
+) -> str:
     """Create a learning record from the last review findings for a file.
 
     Loads the most recent review from review memory, extracts the first
@@ -4837,6 +4852,7 @@ def learn_from_review(relative_path: str, task: str = "", risk: str = "low", rep
                        lives in. The lesson is attributed to that repo but
                        always stored in mq-mcp's central learn layer. Defaults
                        to the mq-mcp repo.
+        learning_origin: review by default; bridget for approved CLI previews.
 
     Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
     """
@@ -4881,6 +4897,7 @@ def learn_from_review(relative_path: str, task: str = "", risk: str = "low", rep
         REPO_ROOT,
         repo=repo_name,
         source="review",
+        learning_origin=learning_origin,
         task=task,
         lesson=lesson[:500],
         validation=f"review_file ran on {rel} ({repo_name})",
@@ -4895,7 +4912,13 @@ def learn_from_review(relative_path: str, task: str = "", risk: str = "low", rep
 
 
 @mcp.tool()
-def learn_from_diff(task: str, lesson: str, risk: str = "low", validation: str = "") -> str:
+def learn_from_diff(
+    task: str,
+    lesson: str,
+    risk: str = "low",
+    validation: str = "",
+    learning_origin: str = "diff",
+) -> str:
     """Create a learning record with the current git diff as context.
 
     Automatically captures the current diff summary (changed files) as part
@@ -4907,6 +4930,7 @@ def learn_from_diff(task: str, lesson: str, risk: str = "low", validation: str =
         lesson:     What was learned (e.g. "pyproject version must match VERSION").
         risk:       low | medium | high | unknown.
         validation: How it was verified (diff summary is appended automatically).
+        learning_origin: diff by default; bridget for approved CLI previews.
 
     Safety: Class C — writes to learn_engine/memory/lessons.jsonl.
     """
@@ -4933,6 +4957,7 @@ def learn_from_diff(task: str, lesson: str, risk: str = "low", validation: str =
         REPO_ROOT,
         repo="mq-mcp",
         source="diff",
+        learning_origin=learning_origin,
         task=task,
         lesson=lesson,
         validation=full_validation,
