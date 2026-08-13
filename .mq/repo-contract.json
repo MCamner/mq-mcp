@@ -10,6 +10,17 @@
     "learn_contract.v1",
     "brain_write.v1"
   ],
+  "compatibility": {
+    "protocols": {
+      "mcp_api": "1.x-fastmcp"
+    },
+    "dependencies": {
+      "mcp": ">=1.27.1,<2"
+    },
+    "import_probes": {
+      "mcp": "from mcp.server.fastmcp import FastMCP; from mcp.client.stdio import stdio_client"
+    }
+  },
   "next_focus": "",
   "release_mode": "direct"
 }
