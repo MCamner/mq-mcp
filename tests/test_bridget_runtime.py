@@ -146,6 +146,41 @@ def test_repo_brief_non_git_is_graceful(tmp_path):
     assert "not a git repo" in br.repo_brief(tmp_path)
 
 
+def test_project_context_auto_detects_git_repo_without_pin(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    repo = _git_repo(tmp_path / "detected-repo")
+    (repo / "new.txt").write_text("x", encoding="utf-8")
+
+    block = br.project_context_block(repo)
+
+    assert "## Detected project" in block
+    assert f"detected-repo ({repo.resolve()})" in block
+    assert "branch:" in block
+    assert "dirty: 1 file" in block
+    assert not br.PROJECT_FILE.exists()
+
+
+def test_project_context_explicit_pin_wins_over_detected_repo(tmp_path, monkeypatch):
+    detected = _git_repo(tmp_path / "detected-repo")
+    pinned = _git_repo(tmp_path / "pinned-repo")
+    project_file = tmp_path / "bridget-project"
+    project_file.write_text(
+        json.dumps({"name": "chosen", "path": str(pinned)}), encoding="utf-8"
+    )
+    monkeypatch.setattr(br, "PROJECT_FILE", project_file)
+
+    block = br.project_context_block(detected)
+
+    assert "## Pinned project" in block
+    assert f"chosen ({pinned})" in block
+    assert "detected-repo" not in block
+
+
+def test_project_context_is_empty_outside_git_without_pin(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    assert br.project_context_block(tmp_path) == ""
+
+
 def test_last_review_picks_newest(tmp_path):
     hist = tmp_path / "review_engine" / "memory"
     hist.mkdir(parents=True)

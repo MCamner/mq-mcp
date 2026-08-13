@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      continue with the CG-2.2+ timeline
+Next:      Bridget Phase 3 recent-work context injection
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1688,22 +1688,18 @@ Every powerful tool must have:
 Work on:
 
 ```text
-repo-context evidence hardening
+Bridget context awareness
 ```
 
-The Bridget interactive session foundation, CG-2.1 co-change, CG-2.2 graph
-snapshots, and the core Ollama-backed learn extractor are implemented. Do not
-rebuild those milestones under their old version labels.
+The Bridget interactive session foundation, repo-context evidence hardening,
+CG-2.1 co-change, CG-2.2 graph snapshots, and the core Ollama-backed learn
+extractor are implemented. Do not rebuild those milestones under their old
+version labels. The next bounded work is to:
 
-The learn contract consolidation is complete: live refusal behavior is checked,
-the MCP tools are documented as the public surface, and the separate CLI plan
-is removed. The next bounded work is to:
-
-1. [x] reject repo-signal evidence older than 24 hours, future-dated by more
-   than five minutes, or missing timezone information
-2. [x] expose context status, source, and timestamp in MCP previews
-3. [x] reject a git fallback inside learn extraction; it would violate the
-   non-executing learn boundary, so stale/missing repo-signal context refuses
+1. [x] detect the current Git repository automatically when no explicit project
+   pin exists; inject repo, branch, and a bounded dirty-file summary
+2. [ ] inject recent work from the latest review and current diff without
+   exceeding the context budget
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2082,7 +2078,7 @@ Graph data ≠ observation evidence.
 
 Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` not started.
 
-### Phase 0 — Boundaries and principles (partial)
+### Phase 0 — Boundaries and principles (done)
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
@@ -2119,7 +2115,7 @@ Remember recent conversations without becoming a knowledge system. `bridget_cont
 
 Bridget starts informed.
 
-* [ ] Auto repo detection (git_status, list_repo_files → inject repo / branch / dirty files)
+* [x] Auto repo detection (Git root/status → inject repo / branch / dirty files)
 * [ ] Recent-work injection (get_last_review, git_diff)
 * [x] `bridget --project <repo>` persistent session context
 * [x] `bridget --continue` (last project / branch / changed files / recent review)

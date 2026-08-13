@@ -165,14 +165,22 @@ def last_review(path: str | Path) -> str | None:
 # ----------------------------------------------------------------------
 
 
-def project_context_block() -> str:
-    """Return a system-prompt block for the pinned project, or '' if none."""
+def project_context_block(cwd: str | Path | None = None) -> str:
+    """Return bounded project context from an explicit pin or current Git repo."""
     proj = get_project()
+    heading = "Pinned project"
     if not proj:
+        root = _git(cwd or Path.cwd(), ["rev-parse", "--show-toplevel"])
+        if not root:
+            return ""
+        path = Path(root).resolve()
+        proj = {"name": path.name, "path": str(path)}
+        heading = "Detected project"
+    if not proj.get("path"):
         return ""
     return (
         "\n\n---\n"
-        "## Pinned project\n\n"
+        f"## {heading}\n\n"
         f"{proj['name']} ({proj['path']})\n"
         f"{repo_brief(proj['path'])}\n\n"
         "Treat this repo as the working context for this session.\n---\n"
