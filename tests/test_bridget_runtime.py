@@ -293,6 +293,58 @@ def test_handle_history_empty(tmp_path, monkeypatch, capsys):
     assert "No session history" in capsys.readouterr().out
 
 
+def test_handle_forget_denies_by_default(tmp_path, monkeypatch, capsys):
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    target = sessions / "2026-08-13.jsonl"
+    target.write_text('{"ts":"2026-08-13 10:00"}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(
+            BridgetContext,
+            path=tmp_path / "ctx.md",
+            history_path=tmp_path / "history.jsonl",
+            sessions_dir=sessions,
+        ),
+    )
+
+    br.handle_forget("2026-08-13", confirm=lambda _prompt: "")
+
+    assert target.exists()
+    assert "Cancelled" in capsys.readouterr().out
+
+
+def test_handle_forget_approved_deletes_exact_date(tmp_path, monkeypatch, capsys):
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    target = sessions / "2026-08-13.jsonl"
+    keep = sessions / "2026-08-14.jsonl"
+    target.write_text('{"ts":"2026-08-13 10:00"}\n', encoding="utf-8")
+    keep.write_text('{"ts":"2026-08-14 10:00"}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(
+            BridgetContext,
+            path=tmp_path / "ctx.md",
+            history_path=tmp_path / "history.jsonl",
+            sessions_dir=sessions,
+        ),
+    )
+
+    br.handle_forget("2026-08-13", confirm=lambda _prompt: "ja")
+
+    assert not target.exists()
+    assert keep.exists()
+    assert "Deleted sessions for 2026-08-13" in capsys.readouterr().out
+
+
+def test_runtime_command_forget_requires_date(monkeypatch, capsys):
+    assert br.maybe_handle_runtime_command(["--forget"]) is True
+    assert "YYYY-MM-DD" in capsys.readouterr().out
+
+
 def test_handle_project_set_show_and_unknown(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "bridget-project")
 

@@ -264,6 +264,45 @@ def handle_history(limit: int = 20) -> None:
         print(f"       tools: {tools_s}")
 
 
+def handle_forget(date_value: str, confirm=None) -> None:
+    """Preview and explicitly approve deletion of one session date."""
+    ctx = BridgetContext()
+    try:
+        preview = ctx.forget_date(date_value, apply=False)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return
+    total = sum(
+        preview[key]
+        for key in ("daily_entries", "history_entries", "rolling_sessions")
+    )
+    if total == 0:
+        print(f"No Bridget sessions found for {date_value}.")
+        return
+    print(f"Forget Bridget sessions for {date_value}:")
+    print(f"  daily log entries: {preview['daily_entries']}")
+    print(f"  legacy history entries: {preview['history_entries']}")
+    print(f"  rolling context sessions: {preview['rolling_sessions']}")
+    print("This deletion is irreversible and affects no other date.")
+    ask = confirm or input
+    try:
+        answer = ask("Delete these sessions? ja/nej: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        answer = ""
+    if answer not in {"ja", "j", "yes", "y"}:
+        print("Cancelled; no session data deleted.")
+        return
+    try:
+        result = ctx.forget_date(date_value, apply=True)
+    except OSError as exc:
+        print(f"ERROR: session deletion failed: {exc}")
+        return
+    if result["deleted"]:
+        print(f"Deleted sessions for {date_value}. This cannot be recovered.")
+    else:
+        print(f"No Bridget sessions found for {date_value}.")
+
+
 def handle_project(name: str | None) -> None:
     if not name:
         proj = get_project()
@@ -308,6 +347,12 @@ def maybe_handle_runtime_command(argv: list[str]) -> bool:
     Returns True if a runtime command was handled (caller should exit), so these
     flags never reach the async bridge or the OpenAI/MCP path.
     """
+    if "--forget" in argv:
+        if len(argv) != 2 or argv[0] != "--forget":
+            print("ERROR: usage: bridget --forget YYYY-MM-DD")
+            return True
+        handle_forget(argv[1])
+        return True
     if "--history" in argv:
         i = argv.index("--history")
         limit = 20

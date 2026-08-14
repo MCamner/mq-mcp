@@ -314,6 +314,7 @@ def usage() -> None:
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
+  uv run python bridge.py --forget YYYY-MM-DD
   uv run python bridge.py --learn-last [review-path]
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
@@ -330,6 +331,7 @@ Examples:
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: last session, branch, changes, review
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
+  uv run python bridge.py --forget 2026-08-13 # preview + approval for one date
   uv run python bridge.py --learn-last         # redacted preview; asks before storage
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot

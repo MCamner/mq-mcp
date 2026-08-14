@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 2 per-day session logs
+Next:      Bridget Phase 2.5 memory boundary
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1707,8 +1707,9 @@ version labels. The next bounded work is to:
 5. [x] record learning provenance and inject only repo-, risk-, file-, and
    task-relevant lessons within a fixed prompt budget
 
-The next bounded work is per-day session logs, followed by date-scoped deletion
-and bounded recent-session injection.
+Per-day logs, date-scoped deletion, and bounded recent-session injection are
+implemented. The next bounded work is to document and verify the Phase 2.5
+memory boundary, including the absence of hidden persistence.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2104,15 +2105,15 @@ Make learning a natural part of conversations. The `learn_*` tools already exist
 * [x] Learning provenance (`learning_origin: user | bridget | review | diff`)
 * [x] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
-### Phase 2 — Working memory (mostly done)
+### Phase 2 — Working memory (done)
 
 Remember recent conversations without becoming a knowledge system. `bridget_context.py` already keeps a rolling session window (currently `~/.mq/bridget-context.md`).
 
 * [x] Rolling session memory with bounded window
-* [ ] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
+* [x] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
 * [x] `bridget --history` (date / summary / tools used)
-* [ ] `bridget --forget <date>` (delete one day)
-* [ ] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
+* [x] `bridget --forget <date>` (delete one day)
+* [x] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
 * [x] Never persist API keys / secrets / credentials
 
 ### Phase 2.5 — Memory boundary (planned)
