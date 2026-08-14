@@ -215,3 +215,80 @@ def test_dispatcher_routes_dependencies(monkeypatch):
         ["--dependencies", "run_turn", "--direction", "callees"]
     ) == 0
     assert calls == [(('run_turn',), {"repo": None, "direction": "callees", "limit": 20})]
+
+
+def test_parse_graph_search_args_defaults_max_files():
+    assert lookup.parse_graph_search_args(
+        ["--graph-search", "call-graph hotspots"]
+    ) == ("call-graph hotspots", None, 8)
+
+
+def test_parse_graph_search_args_accepts_repo_and_max_files():
+    assert lookup.parse_graph_search_args(
+        [
+            "--graph-search",
+            "paths from run_turn",
+            "--repo",
+            "mq-mcp",
+            "--max-files",
+            "5",
+        ]
+    ) == ("paths from run_turn", "mq-mcp", 5)
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["--graph-search"],
+        ["--graph-search", "query", "extra"],
+        ["--graph-search", "query", "--unknown", "x"],
+        ["--graph-search", "query", "--max-files", "0"],
+        ["--graph-search", "query", "--max-files", "21"],
+        ["--graph-search", "query", "--max-files", "many"],
+    ],
+)
+def test_parse_graph_search_args_rejects_invalid_input(argv):
+    with pytest.raises(ValueError):
+        lookup.parse_graph_search_args(argv)
+
+
+def test_handle_graph_search_delegates_to_explore(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(lookup, "resolve_repo", lambda _target: tmp_path)
+    monkeypatch.setattr(lookup.shutil, "which", lambda _name: "/opt/bin/codegraph")
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return subprocess.CompletedProcess(command, 0, stdout="graph paths\n", stderr="")
+
+    monkeypatch.setattr(lookup.subprocess, "run", fake_run)
+
+    assert lookup.handle_graph_search("call hotspots", repo="mq-mcp", max_files=5) == 0
+    assert capsys.readouterr().out == "graph paths\n"
+    command, kwargs = calls[0]
+    assert command == [
+        "/opt/bin/codegraph",
+        "--no-color",
+        "explore",
+        "--path",
+        str(tmp_path),
+        "--max-files",
+        "5",
+        "call hotspots",
+    ]
+    assert kwargs["shell"] is False
+    assert kwargs["timeout"] == lookup.CODEGRAPH_TIMEOUT
+
+
+def test_dispatcher_routes_graph_search(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        lookup,
+        "handle_graph_search",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or 0,
+    )
+
+    assert lookup.maybe_handle_lookup(
+        ["--graph-search", "hotspots", "--max-files", "4"]
+    ) == 0
+    assert calls == [(('hotspots',), {"repo": None, "max_files": 4})]

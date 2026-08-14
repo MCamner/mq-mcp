@@ -319,6 +319,7 @@ def usage() -> None:
   uv run python bridge.py --learn-last [review-path]
   uv run python bridge.py --symbol NAME [--repo REPO] [--file PATH]
   uv run python bridge.py --dependencies NAME [--repo REPO] [--direction callers|callees|both] [--limit N]
+  uv run python bridge.py --graph-search QUERY [--repo REPO] [--max-files N]
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
@@ -338,6 +339,7 @@ Examples:
   uv run python bridge.py --learn-last         # redacted preview; asks before storage
   uv run python bridge.py --symbol BridgetContext --file mq-mcp/bridget_context.py
   uv run python bridge.py --dependencies build_system_content --direction both --limit 10
+  uv run python bridge.py --graph-search "call-graph hotspots in Bridget" --max-files 5
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
   uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots

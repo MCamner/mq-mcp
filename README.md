@@ -425,6 +425,8 @@ bridget --symbol build_system_content --file mq-mcp/bridge.py
 bridget --symbol handle_symbol --repo mq-mcp --file mq-mcp/codegraph_lookup.py
 bridget --dependencies build_system_content
 bridget --dependencies run_turn --direction callers --limit 10
+bridget --graph-search "call-graph hotspots in Bridget" --max-files 5
+bridget --graph-search "paths from run_chat to session storage"
 ```
 
 `--repo` accepts a registered repository name or directory. `--file` resolves
@@ -435,6 +437,11 @@ is not persisted by Bridget.
 `--dependencies` delegates to `codegraph callers` and `codegraph callees`.
 The default direction is `both`; `--limit` accepts 1–100 and defaults to 20
 per direction. This output follows the same context-only boundary.
+
+`--graph-search` delegates free-text structural questions to the supported
+CodeGraph Explore interface, which returns relevant source plus call paths.
+`--max-files` accepts 1–20 and defaults to 8. “Hotspots” is a query convention,
+not a separate CodeGraph API or persisted score.
 
 ## Bridget voice
 
