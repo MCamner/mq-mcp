@@ -411,6 +411,22 @@ Quiet mode changes presentation only. Answers, errors, tool results, and
 mandatory approval prompts remain visible, and tool safety behavior is
 unchanged.
 
+Bridget keeps optional local aggregate usage counters for completed commands,
+sessions, workflow delegations, learn suggestions and acceptance, plus
+history/context hits. Inspect the last seven days or choose a 1–365 day window:
+
+```bash
+bridget --metrics
+bridget --metrics 30
+```
+
+The metrics store contains only a date, a fixed counter name, and an integer
+increment. It never stores prompts, answers, repositories, paths, tool names,
+arguments, or session identifiers. See
+[`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the exact local path.
+Set `BRIDGET_METRICS_DISABLED=1` to disable collection; validation does this
+automatically so smoke tests do not pollute real usage counts.
+
 Bridget may hold conversational context, but it is not an orchestrator: planning,
 retries, and workflow state stay in mq-agent and mq-mcp.
 

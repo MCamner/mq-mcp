@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 6 real usage metrics
+Next:      Bridget Phase 7 long-term validation
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1709,8 +1709,8 @@ version labels. The next bounded work is to:
 
 Per-day logs, date-scoped deletion, bounded recent-session injection, the
 explicit no-hidden-persistence boundary, and the Phase 4 agent-boundary
-documentation and Phase 5 terminal presence are implemented. The next bounded
-work is Bridget Phase 6 real usage metrics.
+documentation, Phase 5 terminal presence, and Phase 6 local usage metrics are
+implemented. The next bounded work is Bridget Phase 7 long-term validation.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2155,11 +2155,11 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 * [x] Status indicators (thinking / responding / approval)
 * [x] `bridget --quiet` (no visual effects)
 
-### Phase 6 — Real usage metrics (planned)
+### Phase 6 — Real usage metrics (done)
 
-* [ ] Capture commands / sessions / delegations / learning-suggestions per day
-* [ ] Accepted-learning, history-hit, context-hit counts
-* [ ] Simple dashboard (helped / delegated / suggested / accepted)
+* [x] Capture commands / sessions / delegations / learning-suggestions per day
+* [x] Accepted-learning, history-hit, context-hit counts
+* [x] Simple dashboard (helped / delegated / suggested / accepted)
 
 ### Phase 7 — Long-term validation (planned)
 

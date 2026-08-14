@@ -17,6 +17,7 @@ from ask import run_ask
 from bridget_context import BridgetContext
 from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
+import bridget_metrics
 import bridget_workflow
 import codegraph_cochange
 import codegraph_lookup
@@ -325,6 +326,7 @@ def usage() -> None:
   uv run python bridge.py --history [N]
   uv run python bridge.py --forget YYYY-MM-DD
   uv run python bridge.py --learn-last [review-path]
+  uv run python bridge.py --metrics [N]
   uv run python bridge.py --symbol NAME [--repo REPO] [--file PATH]
   uv run python bridge.py --dependencies NAME [--repo REPO] [--direction callers|callees|both] [--limit N]
   uv run python bridge.py --graph-search QUERY [--repo REPO] [--max-files N]
@@ -346,6 +348,7 @@ Examples:
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
   uv run python bridge.py --forget 2026-08-13 # preview + approval for one date
   uv run python bridge.py --learn-last         # redacted preview; asks before storage
+  uv run python bridge.py --metrics 7          # local aggregate outcome counters
   uv run python bridge.py --symbol BridgetContext --file mq-mcp/bridget_context.py
   uv run python bridge.py --dependencies build_system_content --direction both --limit 10
   uv run python bridge.py --graph-search "call-graph hotspots in Bridget" --max-files 5
@@ -372,6 +375,18 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
         else:
             kept.append(a)
     return " ".join(kept).strip(), assume_yes
+
+
+def run_workflow_with_metrics(
+    goal: str,
+    *,
+    assume_yes: bool = False,
+    metrics: Any = bridget_metrics.METRICS,
+) -> int:
+    """Delegate one workflow and count the explicit delegation request."""
+    result = bridget_workflow.run_workflow_entry(goal, assume_yes=assume_yes)
+    metrics.record("delegations")
+    return result
 
 
 def parse_learn_last_args(argv: list[str]) -> str:
@@ -780,12 +795,25 @@ def refresh_system_message(
     catalog: str,
     do_mode: bool,
     task: str,
+    *,
+    metrics: Any = None,
 ) -> None:
     """Replace the sole system context for a new task without growing history."""
+    content = build_system_content(ctx, catalog, do_mode, task=task)
     messages[0] = {
         "role": "system",
-        "content": build_system_content(ctx, catalog, do_mode, task=task),
+        "content": content,
     }
+    if metrics is not None:
+        record_context_hits(content, metrics=metrics)
+
+
+def record_context_hits(system_content: str, *, metrics: Any) -> None:
+    """Count bounded history/project context use without persisting its content."""
+    if "## Bridget session memory (previous sessions)" in system_content:
+        metrics.record("history_hits")
+    if "## Pinned project" in system_content or "## Detected project" in system_content:
+        metrics.record("context_hits")
 
 
 # --- Context window management (Phase 3) -------------------------------------
@@ -1114,14 +1142,15 @@ def print_learn_suggestion(
     tools: list[str],
     *,
     out: Any = None,
-) -> None:
+) -> bool:
     """Print at most one learn preview; perform no model, MCP, or storage call."""
     suggestion = build_learn_suggestion(prompt, answer, tools)
     if not suggestion:
-        return
+        return False
     stream = out or sys.stdout
     stream.write(f"\n{suggestion}\n")
     stream.flush()
+    return True
 
 
 def print_delegation_suggestion(prompt: str, *, out: Any = None) -> bool:
@@ -1224,6 +1253,7 @@ async def run_learn_last(
     relative_path: str = "",
     *,
     out: Any = None,
+    metrics: Any = None,
 ) -> None:
     """Preview the latest review candidate, then gate the existing store tool."""
     stream = out or sys.stdout
@@ -1248,6 +1278,8 @@ async def run_learn_last(
             stream.write("Storage denied; preview only.\n")
             stream.flush()
             return
+        if metrics is not None:
+            metrics.record("accepted_learning")
         stored_result = await session.call_tool("learn_from_diff", store_args)
         stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
         stream.flush()
@@ -1264,6 +1296,8 @@ async def run_learn_last(
         stream.write("Storage denied; preview only.\n")
         stream.flush()
         return
+    if metrics is not None:
+        metrics.record("accepted_learning")
     stored_result = await session.call_tool("learn_from_review", store_args)
     stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
     stream.flush()
@@ -1279,7 +1313,11 @@ async def run_learn_last_entry(relative_path: str = "") -> None:
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
-            await run_learn_last(session, relative_path)
+            await run_learn_last(
+                session,
+                relative_path,
+                metrics=bridget_metrics.METRICS,
+            )
 
 
 def record_chat_session(
@@ -1291,6 +1329,7 @@ def record_chat_session(
     last_prompt: str,
     last_answer: str,
     start: float,
+    metrics: Any = None,
 ) -> None:
     """Record a whole REPL session once, at exit (Phase 4).
 
@@ -1317,6 +1356,8 @@ def record_chat_session(
         do_mode=do_mode,
         chat_mode=True,
     )
+    if metrics is not None:
+        metrics.record("sessions")
 
 
 async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
@@ -1425,7 +1466,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         # lesson block, so task relevance changes per turn while
                         # prompt growth stays bounded.
                         refresh_system_message(
-                            messages, ctx, catalog, do_mode, user_input
+                            messages,
+                            ctx,
+                            catalog,
+                            do_mode,
+                            user_input,
+                            metrics=bridget_metrics.METRICS,
                         )
                         messages.append({"role": "user", "content": user_input})
 
@@ -1448,6 +1494,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         _SPINNER = None
 
                         print_response(answer, prefix_newline=did_tool_round, out=out)
+                        bridget_metrics.METRICS.record("commands")
                         if not delegation_suggested:
                             delegation_suggested = print_delegation_suggestion(
                                 user_input,
@@ -1480,13 +1527,16 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         last_prompt=last_prompt,
                         last_answer=last_answer,
                         start=session_start,
+                        metrics=bridget_metrics.METRICS,
                     )
-                    print_learn_suggestion(
+                    learn_suggested = print_learn_suggestion(
                         last_prompt,
                         last_answer,
                         all_called_tools,
                         out=out,
                     )
+                    if learn_suggested:
+                        bridget_metrics.METRICS.record("learning_suggestions")
     finally:
         if tty:
             tty.close()
@@ -1559,6 +1609,7 @@ async def run_bridge() -> None:
 
             ctx = BridgetContext()
             system_content = build_system_content(ctx, catalog, do_mode, task=prompt)
+            record_context_hits(system_content, metrics=bridget_metrics.METRICS)
 
             messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": system_content},
@@ -1589,6 +1640,8 @@ async def run_bridge() -> None:
                 prefix_newline=did_tool_round,
                 show_status=False,
             )
+            bridget_metrics.METRICS.record("commands")
+            bridget_metrics.METRICS.record("sessions")
 
             if did_tool_round:
                 _pinned = bridget_runtime.get_project()
@@ -1603,7 +1656,8 @@ async def run_bridge() -> None:
                     project=_proj_name,
                     branch=_proj_branch,
                 )
-                print_learn_suggestion(prompt, answer, called_tools, out=tty)
+                if print_learn_suggestion(prompt, answer, called_tools, out=tty):
+                    bridget_metrics.METRICS.record("learning_suggestions")
 
             print_delegation_suggestion(prompt, out=tty)
 
@@ -1622,12 +1676,21 @@ if __name__ == "__main__":
         QUIET_MODE = True
         sys.argv = [sys.argv[0], *(arg for arg in sys.argv[1:] if arg != "--quiet")]
 
+    # Metrics are local aggregate counters and need neither OpenAI nor MCP.
+    if bridget_metrics.maybe_handle_metrics_command(sys.argv[1:]):
+        sys.exit(0)
+
     # Workflow mode is fully synchronous and delegates to mq-agent; it needs
     # neither the OpenAI client nor the MCP session, so intercept it before the
     # async bridge starts.
     if "--workflow" in sys.argv[1:]:
         _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
-        sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
+        sys.exit(
+            run_workflow_with_metrics(
+                _goal,
+                assume_yes=_assume_yes,
+            )
+        )
 
     # Preview-first learning is an explicit CLI workflow. It bypasses the model
     # and uses the existing Class B extractor + Class C approval gate directly.

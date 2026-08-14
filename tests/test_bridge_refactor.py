@@ -464,6 +464,15 @@ class _RecordingCtx:
         self.calls.append((prompt, tools, answer, kwargs))
 
 
+class _RecordingMetrics:
+    def __init__(self):
+        self.names = []
+
+    def record(self, name, **_kwargs):
+        self.names.append(name)
+        return True
+
+
 def test_record_chat_session_records_once_with_metadata(bridge, monkeypatch):
     monkeypatch.setattr(
         bridge.bridget_runtime, "get_project", lambda: {"name": "mq-mcp", "path": "/x"}
@@ -537,6 +546,35 @@ def test_record_chat_session_no_project_pin(bridge, monkeypatch):
     assert kw["chat_mode"] is True
 
 
+def test_record_chat_session_counts_one_completed_session(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.bridget_runtime, "get_project", lambda: None)
+    metrics = _RecordingMetrics()
+
+    bridge.record_chat_session(
+        _RecordingCtx(),
+        do_mode=False,
+        turns=4,
+        tools=[],
+        last_prompt="p",
+        last_answer="a",
+        start=0.0,
+        metrics=metrics,
+    )
+
+    assert metrics.names == ["sessions"]
+
+
+def test_record_context_hits_counts_only_present_context(bridge):
+    metrics = _RecordingMetrics()
+
+    bridge.record_context_hits(
+        "## Bridget session memory (previous sessions)\n## Detected project",
+        metrics=metrics,
+    )
+
+    assert metrics.names == ["history_hits", "context_hits"]
+
+
 # --- Phase 1: preview-only learn suggestions ---------------------------------
 
 
@@ -569,10 +607,11 @@ def test_build_learn_suggestion_suppressed_after_learn_write(bridge):
 
 def test_print_learn_suggestion_emits_one_preview(bridge):
     out = io.StringIO()
-    bridge.print_learn_suggestion(
+    emitted = bridge.print_learn_suggestion(
         "task", "answer", ["run_tests", "run_tests"], out=out
     )
 
+    assert emitted is True
     assert out.getvalue().count("Reusable learn candidate") == 1
 
 
@@ -642,12 +681,13 @@ def test_run_learn_last_denial_keeps_review_as_dry_run(bridge, monkeypatch):
 
 def test_run_learn_last_approval_stores_via_existing_review_tool(bridge, monkeypatch):
     session = _FakeSession(result_text="safe preview")
+    metrics = _RecordingMetrics()
     monkeypatch.setattr(
         bridge, "resolve_learn_last_context", lambda _path="": ("server.py", "/repo")
     )
     monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: True)
 
-    asyncio.run(bridge.run_learn_last(session, out=io.StringIO()))
+    asyncio.run(bridge.run_learn_last(session, out=io.StringIO(), metrics=metrics))
 
     assert session.tool_calls == [
         ("learn_extract_from_last_review", {"relative_path": "server.py", "repo_path": "/repo"}),
@@ -660,6 +700,25 @@ def test_run_learn_last_approval_stores_via_existing_review_tool(bridge, monkeyp
             },
         ),
     ]
+    assert metrics.names == ["accepted_learning"]
+
+
+def test_workflow_entry_counts_a_delegation(bridge, monkeypatch):
+    metrics = _RecordingMetrics()
+    monkeypatch.setattr(
+        bridge.bridget_workflow,
+        "run_workflow_entry",
+        lambda goal, assume_yes=False: 7,
+    )
+
+    result = bridge.run_workflow_with_metrics(
+        "review and test",
+        assume_yes=True,
+        metrics=metrics,
+    )
+
+    assert result == 7
+    assert metrics.names == ["delegations"]
 
 
 def test_run_learn_last_falls_back_to_redacted_diff_preview(bridge, monkeypatch):
