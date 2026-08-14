@@ -115,3 +115,10 @@ def test_pass_with_note_when_git_history_unavailable(monkeypatch):
     out = server.validate_orchestration_contract()
     assert "[WARN] docs/ORCHESTRATION_CONTRACT.md" not in out
     assert "tool-drift unverified" in out
+
+
+def test_manual_class_c_tools_are_explicitly_profile_free():
+    out = server.validate_orchestration_contract()
+
+    assert "Class C tools not in any profile" not in out
+    assert "Class C tools covered by profiles or intentionally profile-free" in out

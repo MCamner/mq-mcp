@@ -3030,14 +3030,17 @@ def validate_orchestration_contract() -> str:
         pass
 
     _INTENTIONALLY_PROFILE_FREE = {
-        # All Class C tools require explicit user approval and are called
-        # directly, not via automated profile-based workflows. Profiles list
-        # Class A/B tools for agents; Class C tools are user-invoked.
+        # These Class C tools remain explicit, approval-gated operations rather
+        # than recommended defaults. In particular, curation and durable-memory
+        # writes must be user-invoked and must not become profile-driven flows.
         "build_repo_context", "record_architecture_decision",
         "extract_coding_conventions", "export_symbol_index", "record_learning",
         "bootstrap_learning_memory", "learn_from_diff", "learn_from_review",
         "bootstrap_semantic_memory", "store_semantic_memory",
         "update_repo_file", "edit_image", "take_screenshot", "set_clipboard",
+        "learn_inbox_drop",
+        "brain_record_decision", "brain_record_review", "brain_record_session",
+        "brain_record_learning", "brain_promote_learning",
     }
     uncovered = sorted(
         t for t in class_c_tools
