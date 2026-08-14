@@ -19,6 +19,9 @@ if [[ $# -eq 0 ]]; then
   echo 'Example: bridget "Show git status."'
   echo '         bridget --do "create a folder test123 and list it"'
   echo '         bridget --workflow "preflight ~/macos-scripts"'
+  echo '         bridget --history 10'
+  echo '         bridget --forget YYYY-MM-DD'
+  echo '         bridget --help'
   exit 0
 fi
 

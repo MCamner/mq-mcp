@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -50,6 +52,71 @@ _TEMPLATE_KEYWORDS: dict[str, tuple[str, ...]] = {
         "ready to release", "release-ready", "release ready", "tag a release",
     ),
 }
+
+MAX_DELEGATION_SUGGESTION_CHARS = 500
+_MQ_REPOS = {
+    "macos-scripts",
+    "mq-agent",
+    "mq-hal",
+    "mq-mcp",
+    "mqobsidian",
+    "repo-signal",
+}
+_ORDER_MARKERS = {
+    "after that", "därefter", "finally", "first", "först", "sedan", "then",
+}
+_ACTION_WORDS = {
+    "commit", "committa", "fix", "fixa", "implement", "implementera", "inspect",
+    "merge", "migrate", "migrera", "publish", "push", "pusha", "release", "review",
+    "run", "test", "testa", "update", "uppdatera", "validate", "validera", "granska",
+}
+_COMPLEX_TERMS = {
+    "architecture migration", "arkitekturmigrering", "breaking change",
+    "complex task", "komplex uppgift", "multi-step", "flersteg",
+}
+
+
+def delegation_reasons(goal: str) -> list[str]:
+    """Return conservative, explainable reasons to suggest mq-agent."""
+    text = " ".join((goal or "").lower().split())
+    if not text or "--workflow" in text:
+        return []
+    reasons: list[str] = []
+    named_repos = {repo for repo in _MQ_REPOS if repo in text}
+    if (
+        re.search(r"\b(cross[- ]repo|multiple repos|flera repon|flera repo)\b", text)
+        or len(named_repos) >= 2
+    ):
+        reasons.append("cross-repo")
+
+    ordered = sum(marker in text for marker in _ORDER_MARKERS)
+    words = set(re.findall(r"[a-zåäö-]+", text))
+    action_count = len(words & _ACTION_WORDS)
+    numbered_steps = bool(re.search(r"(?:^|\s)1[.)].*(?:\s)2[.)]", text))
+    if ordered >= 2 or action_count >= 3 or numbered_steps:
+        reasons.append("multi-step")
+    if any(term in text for term in _COMPLEX_TERMS):
+        reasons.append("complex")
+    return reasons
+
+
+def build_delegation_suggestion(goal: str) -> str:
+    """Build a bounded preview that never invokes or schedules a workflow."""
+    reasons = delegation_reasons(goal)
+    if not reasons:
+        return ""
+    compact_goal = " ".join(goal.split())
+    if len(compact_goal) > 240:
+        compact_goal = compact_goal[:239].rstrip() + "…"
+    suggestion = "\n".join(
+        [
+            "🧭 Delegation suggestion (preview only — nothing started)",
+            f"reason: {', '.join(reasons)}",
+            "mq-agent should own planning and multi-step execution.",
+            f"next: bridget --workflow {shlex.quote(compact_goal)}",
+        ]
+    )
+    return suggestion[:MAX_DELEGATION_SUGGESTION_CHARS]
 
 
 def classify_goal(goal: str) -> str | None:

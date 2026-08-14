@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -16,9 +17,12 @@ from ask import run_ask
 from bridget_context import BridgetContext
 from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
+import bridget_metrics
 import bridget_workflow
 import codegraph_cochange
+import codegraph_lookup
 import codegraph_snapshot
+from learn_engine import redact_secrets
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
@@ -42,10 +46,10 @@ class BridgetSpinner:
     FRAMES = "⠁⠃⠇⠏⠟⠿⠟⠏⠇⠃"
     INTERVAL = 0.08
 
-    def __init__(self, stream: Any = None) -> None:
+    def __init__(self, stream: Any = None, *, quiet: bool = False) -> None:
         self._stream = stream or sys.stdout
         isatty = getattr(self._stream, "isatty", None)
-        self._enabled = bool(isatty and isatty())
+        self._enabled = bool(not quiet and isatty and isatty())
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -71,13 +75,19 @@ class BridgetSpinner:
         idx = 0
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
-            self._stream.write(f"\r{frame}")
+            self._stream.write(self.render_frame(frame))
             self._stream.flush()
             idx += 1
             self._stop_event.wait(self.INTERVAL)
 
+    @staticmethod
+    def render_frame(frame: str) -> str:
+        """Return one compact, explicit thinking-status frame."""
+        return f"\r{frame} Bridget · thinking"
+
 
 DO_MODE = False  # Set True by parse_prompt() when --do is passed.
+QUIET_MODE = False  # Set True when --quiet removes terminal visual effects.
 _SPINNER: "BridgetSpinner | None" = None  # Set by run_bridge so the gate can pause it.
 
 
@@ -133,7 +143,8 @@ def render_gate_card(
     parts = [
         "",
         line,
-        "⚠️  Bridget vill köra ett verktyg",
+        "⚠️  Bridget · approval required",
+        "   Bridget vill köra ett verktyg",
         f"   Verktyg:    {tool_name}",
         f"   Klass:      {cls}",
         f"   Skriver:    {'ja' if meta.get('write') else 'nej'}",
@@ -276,13 +287,13 @@ BRIDGET_LOCAL_LINES = [
 ]
 
 
-def scramble_print(text: str, file: Any = None) -> None:
+def scramble_print(text: str, file: Any = None, *, animate: bool = True) -> None:
     out = file or sys.stdout
     # The decode animation relies on "\b" overwriting characters, which only
     # works on an interactive terminal. Piped/captured output (validate.sh,
     # CI, logs) must get plain text or the scramble bytes leak through.
     isatty = getattr(out, "isatty", None)
-    if not (isatty and isatty()):
+    if not animate or not (isatty and isatty()):
         out.write(text + "\n")
         out.flush()
         return
@@ -307,11 +318,19 @@ def usage() -> None:
   uv run python bridge.py "your prompt"
   uv run python bridge.py -m <model> "your prompt"
   uv run python bridge.py --chat ["your prompt"]
+  uv run python bridge.py --quiet [--chat] "your prompt"
   uv run python bridge.py --tools
   uv run python bridge.py --workflow "your goal" [-y]
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
+  uv run python bridge.py --forget YYYY-MM-DD
+  uv run python bridge.py --learn-last [review-path]
+  uv run python bridge.py --metrics [N]
+  uv run python bridge.py --validation [N]
+  uv run python bridge.py --symbol NAME [--repo REPO] [--file PATH]
+  uv run python bridge.py --dependencies NAME [--repo REPO] [--direction callers|callees|both] [--limit N]
+  uv run python bridge.py --graph-search QUERY [--repo REPO] [--max-files N]
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
@@ -320,6 +339,7 @@ def usage() -> None:
 Examples:
   uv run python bridge.py "List the available MCP tools."
   uv run python bridge.py --chat                # interactive multi-turn session
+  uv run python bridge.py --quiet "Explain this repo." # no visual effects
   uv run python bridge.py -m o3 "Explain this repo."
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
@@ -327,6 +347,13 @@ Examples:
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: last session, branch, changes, review
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
+  uv run python bridge.py --forget 2026-08-13 # preview + approval for one date
+  uv run python bridge.py --learn-last         # redacted preview; asks before storage
+  uv run python bridge.py --metrics 7          # local aggregate outcome counters
+  uv run python bridge.py --validation 30      # Phase 7 evidence summary
+  uv run python bridge.py --symbol BridgetContext --file mq-mcp/bridget_context.py
+  uv run python bridge.py --dependencies build_system_content --direction both --limit 10
+  uv run python bridge.py --graph-search "call-graph hotspots in Bridget" --max-files 5
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
   uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots
@@ -341,7 +368,7 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
     ``mq-agent workflow``; it never selects tools or holds run state. Returns
     (goal, assume_yes).
     """
-    rest = [a for a in argv if a != "--workflow"]
+    rest = [a for a in argv if a not in {"--workflow", "--quiet"}]
     assume_yes = False
     kept: list[str] = []
     for a in rest:
@@ -352,8 +379,37 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
     return " ".join(kept).strip(), assume_yes
 
 
+def run_workflow_with_metrics(
+    goal: str,
+    *,
+    assume_yes: bool = False,
+    metrics: Any = bridget_metrics.METRICS,
+) -> int:
+    """Delegate one workflow and count the explicit delegation request."""
+    result = bridget_workflow.run_workflow_entry(goal, assume_yes=assume_yes)
+    metrics.record("delegations")
+    return result
+
+
+def parse_learn_last_args(argv: list[str]) -> str:
+    """Return an optional review path from ``--learn-last`` arguments."""
+    index = argv.index("--learn-last")
+    rest = argv[index + 1 :]
+    if len(rest) > 1:
+        raise ValueError("--learn-last accepts at most one review path")
+    if rest and rest[0].startswith("-"):
+        raise ValueError("--learn-last review path must not be another option")
+    return rest[0] if rest else ""
+
+
 def parse_prompt() -> tuple[str, bool, bool, str, bool, bool, bool]:
     argv = sys.argv[1:]
+
+    quiet_mode = "--quiet" in argv
+    if quiet_mode:
+        argv = [a for a in argv if a != "--quiet"]
+        global QUIET_MODE
+        QUIET_MODE = True
 
     do_mode = "--do" in argv
     if do_mode:
@@ -569,7 +625,12 @@ def show_bridget_face() -> None:
     except OSError:
         tty = None
 
-    if available_images and shutil.which("chafa"):
+    if QUIET_MODE:
+        out = tty or sys.stdout
+        out.write("BRIDGET online.\n")
+        out.flush()
+        line = random.choice(BRIDGET_LOCAL_LINES)
+    elif available_images and shutil.which("chafa"):
         image = choose_bridget_image(available_images)
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_image_line, image)
@@ -587,7 +648,7 @@ def show_bridget_face() -> None:
         out.flush()
         line = random.choice(BRIDGET_LOCAL_LINES)
 
-    scramble_print(line, file=tty)
+    scramble_print(line, file=tty, animate=not QUIET_MODE)
     if tty:
         tty.close()
 
@@ -676,7 +737,32 @@ async def discover_tools(
     return catalog, openai_tools
 
 
-def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> str:
+def lesson_context_filters(task: str) -> tuple[str, str]:
+    """Derive active repo and an optional repo-relative file from task text."""
+    project = bridget_runtime.get_project()
+    repo = str(project.get("name") or "") if project else ""
+    if not repo:
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                repo = Path(result.stdout.strip()).name
+        except (OSError, subprocess.SubprocessError):
+            pass
+    match = re.search(r"(?<![\w.-])([\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]+)", task)
+    return repo, match.group(1) if match else ""
+
+
+def build_system_content(
+    ctx: BridgetContext,
+    catalog: str,
+    do_mode: bool,
+    task: str = "",
+) -> str:
     """Assemble the system message: base prompt + session/lessons/project context,
     optional DO MODE block, and the live tool catalog as ground truth.
 
@@ -684,7 +770,12 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
     build the system message once per session.
     """
     session_context = ctx.load()
-    lessons_context = ctx.load_lessons()
+    lesson_repo, lesson_file = lesson_context_filters(task)
+    lessons_context = ctx.load_lessons(
+        repo=lesson_repo,
+        file_path=lesson_file,
+        task=task,
+    )
     project_context = bridget_runtime.project_context_block()
     do_instructions = DO_MODE_INSTRUCTIONS if do_mode else ""
 
@@ -698,6 +789,33 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
         "Use this catalog as ground truth.\n\n"
         + catalog
     )
+
+
+def refresh_system_message(
+    messages: list[ChatCompletionMessageParam],
+    ctx: BridgetContext,
+    catalog: str,
+    do_mode: bool,
+    task: str,
+    *,
+    metrics: Any = None,
+) -> None:
+    """Replace the sole system context for a new task without growing history."""
+    content = build_system_content(ctx, catalog, do_mode, task=task)
+    messages[0] = {
+        "role": "system",
+        "content": content,
+    }
+    if metrics is not None:
+        record_context_hits(content, metrics=metrics)
+
+
+def record_context_hits(system_content: str, *, metrics: Any) -> None:
+    """Count bounded history/project context use without persisting its content."""
+    if "## Bridget session memory (previous sessions)" in system_content:
+        metrics.record("history_hits")
+    if "## Pinned project" in system_content or "## Detected project" in system_content:
+        metrics.record("context_hits")
 
 
 # --- Context window management (Phase 3) -------------------------------------
@@ -934,7 +1052,22 @@ async def run_turn(
     )
 
 
-def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -> None:
+def write_terminal_status(state: str, stream: Any) -> None:
+    """Write one calm status line only to an interactive, non-quiet terminal."""
+    isatty = getattr(stream, "isatty", None)
+    if QUIET_MODE or not (isatty and isatty()):
+        return
+    stream.write(f"Bridget · {state}\n")
+    stream.flush()
+
+
+def print_response(
+    answer: str,
+    prefix_newline: bool = False,
+    out: Any = None,
+    *,
+    show_status: bool = True,
+) -> None:
     """Print Bridget's answer with the decode animation and optional voice.
 
     ``prefix_newline`` reproduces the leading blank line the tool-round path
@@ -942,14 +1075,251 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
+    if show_status:
+        write_terminal_status("responding", stream)
     prefix = "\n👩 Bridget: " if prefix_newline else "👩 Bridget: "
     stream.write(prefix)
     stream.flush()
-    scramble_print(answer, file=stream)
+    scramble_print(answer, file=stream, animate=not QUIET_MODE)
     speak_if_enabled(answer)
 
 
 CHAT_EXIT_WORDS = {"exit", "quit", "q"}
+MAX_LEARN_SUGGESTION_CHARS = 700
+MAX_LEARN_PREVIEW_CHARS = 4000
+REVIEW_HISTORY_FILE = (
+    Path(__file__).resolve().parents[1]
+    / "review_engine"
+    / "memory"
+    / "review_history.json"
+)
+_LEARN_EVIDENCE_TOOLS = {
+    "detect_architecture_drift",
+    "release_gate_run",
+    "review_diff",
+    "review_file",
+    "risk_review_diff",
+    "risk_review_file",
+    "run_tests",
+    "validate_project",
+}
+_LEARN_WRITE_TOOLS = {
+    "brain_record_learning",
+    "learn_from_diff",
+    "learn_from_review",
+    "promote_learning",
+    "record_learning",
+}
+
+
+def _bounded_line(text: str, limit: int) -> str:
+    line = " ".join(text.split())
+    return line if len(line) <= limit else line[: limit - 1].rstrip() + "…"
+
+
+def build_learn_suggestion(prompt: str, answer: str, tools: list[str]) -> str:
+    """Build a preview-only learn candidate after evidence-producing work."""
+    unique_tools = list(dict.fromkeys(tools))
+    if not answer.strip() or _LEARN_WRITE_TOOLS.intersection(unique_tools):
+        return ""
+    evidence_tools = [name for name in unique_tools if name in _LEARN_EVIDENCE_TOOLS]
+    if not evidence_tools:
+        return ""
+    suggestion = "\n".join(
+        [
+            "💡 Reusable learn candidate (preview only)",
+            "stored: false — storage requires explicit approval",
+            f"task: {_bounded_line(prompt, 120)}",
+            f"candidate: {_bounded_line(answer, 240)}",
+            f"evidence tools: {', '.join(evidence_tools)}",
+            "next: review with a dry-run learn extractor before approved storage",
+        ]
+    )
+    return suggestion[:MAX_LEARN_SUGGESTION_CHARS]
+
+
+def print_learn_suggestion(
+    prompt: str,
+    answer: str,
+    tools: list[str],
+    *,
+    out: Any = None,
+) -> bool:
+    """Print at most one learn preview; perform no model, MCP, or storage call."""
+    suggestion = build_learn_suggestion(prompt, answer, tools)
+    if not suggestion:
+        return False
+    stream = out or sys.stdout
+    stream.write(f"\n{suggestion}\n")
+    stream.flush()
+    return True
+
+
+def print_delegation_suggestion(prompt: str, *, out: Any = None) -> bool:
+    """Print a preview-only mq-agent recommendation; start nothing."""
+    suggestion = bridget_workflow.build_delegation_suggestion(prompt)
+    if not suggestion:
+        return False
+    stream = out or sys.stdout
+    stream.write(f"\n{suggestion}\n")
+    stream.flush()
+    return True
+
+
+def redact_learn_preview(text: str) -> str:
+    """Return a bounded preview with the learn layer's secret masking applied."""
+    redacted = str(redact_secrets(text))
+    marker = "\n… [preview truncated]"
+    if len(redacted) > MAX_LEARN_PREVIEW_CHARS:
+        redacted = redacted[: MAX_LEARN_PREVIEW_CHARS - len(marker)] + marker
+    return redacted
+
+
+def _latest_review_path(repo_path: Path) -> str:
+    """Find the newest reviewed file in the central active-repo namespace."""
+    try:
+        data = json.loads(REVIEW_HISTORY_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    # Current stores are {repo: {path: [entries]}}; retain legacy flat support.
+    first = next(iter(data.values()), None)
+    if isinstance(first, dict):
+        data = data.get(repo_path.name, {})
+    if not isinstance(data, dict):
+        return ""
+    newest: dict[str, Any] | None = None
+    groups: list[list[Any]] = []
+    for value in data.values():
+        if isinstance(value, list):
+            groups.append(value)
+    for entries in groups:
+        for entry in entries:
+            if isinstance(entry, dict) and (
+                newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0)
+            ):
+                newest = entry
+    return str((newest or {}).get("file_path") or "")
+
+
+def resolve_learn_last_context(relative_path: str = "") -> tuple[str, str]:
+    """Resolve the active repo and optional/latest reviewed file."""
+    project = bridget_runtime.get_project()
+    if project and project.get("path"):
+        repo_path = Path(project["path"]).resolve()
+    else:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            raise ValueError("no pinned project or current Git repository")
+        repo_path = Path(result.stdout.strip()).resolve()
+    selected = relative_path or _latest_review_path(repo_path)
+    return selected, str(repo_path)
+
+
+def build_diff_learn_args(repo_path: str) -> dict[str, str]:
+    """Build a preview candidate from the last suggestion plus current diff."""
+    if Path(repo_path).resolve() != Path(__file__).resolve().parents[1]:
+        raise ValueError(
+            "diff fallback is only supported for mq-mcp; pass a reviewed path "
+            "for external repos"
+        )
+    diff = subprocess.run(
+        ["git", "diff", "--stat", "--"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    ).stdout.strip()
+    entries = BridgetContext().read_history(limit=1)
+    latest = entries[0] if entries else {}
+    task = str(latest.get("prompt") or "review current diff").strip()
+    lesson = str(latest.get("summary") or "Review the current diff before reuse.").strip()
+    if not diff:
+        raise ValueError("no review history or current diff found")
+    return {
+        "task": _bounded_line(task, 240),
+        "lesson": _bounded_line(lesson, 500),
+        "risk": "unknown",
+        "validation": _bounded_line(f"diff preview: {diff}", 500),
+    }
+
+
+async def run_learn_last(
+    session: ClientSession,
+    relative_path: str = "",
+    *,
+    out: Any = None,
+    metrics: Any = None,
+) -> None:
+    """Preview the latest review candidate, then gate the existing store tool."""
+    stream = out or sys.stdout
+    selected, repo_path = resolve_learn_last_context(relative_path)
+    if not selected:
+        args = build_diff_learn_args(repo_path)
+        preview = redact_learn_preview(
+            "\n".join(
+                [
+                    "Learn from current diff: DRY-RUN PREVIEW",
+                    "source: diff",
+                    f"task: {args['task']}",
+                    f"lesson: {args['lesson']}",
+                    f"validation: {args['validation']}",
+                ]
+            )
+        )
+        stream.write(f"{preview}\n\nstored: false\n")
+        stream.flush()
+        store_args = {**args, "learning_origin": "bridget"}
+        if not approval_gate("learn_from_diff", store_args):
+            stream.write("Storage denied; preview only.\n")
+            stream.flush()
+            return
+        if metrics is not None:
+            metrics.record("accepted_learning")
+        stored_result = await session.call_tool("learn_from_diff", store_args)
+        stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
+        stream.flush()
+        return
+
+    args = {"relative_path": selected, "repo_path": repo_path}
+    preview_result = await session.call_tool("learn_extract_from_last_review", args)
+    preview = redact_learn_preview(content_to_text(preview_result.content))
+    stream.write(f"{preview}\n\nstored: false\n")
+    stream.flush()
+
+    store_args = {**args, "learning_origin": "bridget"}
+    if not approval_gate("learn_from_review", store_args):
+        stream.write("Storage denied; preview only.\n")
+        stream.flush()
+        return
+    if metrics is not None:
+        metrics.record("accepted_learning")
+    stored_result = await session.call_tool("learn_from_review", store_args)
+    stream.write(redact_learn_preview(content_to_text(stored_result.content)) + "\n")
+    stream.flush()
+
+
+async def run_learn_last_entry(relative_path: str = "") -> None:
+    """Open one MCP session for the synchronous ``--learn-last`` CLI route."""
+    server_params = StdioServerParameters(
+        command=SERVER_COMMAND,
+        args=SERVER_ARGS,
+        env=os.environ.copy(),
+    )
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            await run_learn_last(
+                session,
+                relative_path,
+                metrics=bridget_metrics.METRICS,
+            )
 
 
 def record_chat_session(
@@ -961,6 +1331,7 @@ def record_chat_session(
     last_prompt: str,
     last_answer: str,
     start: float,
+    metrics: Any = None,
 ) -> None:
     """Record a whole REPL session once, at exit (Phase 4).
 
@@ -987,6 +1358,8 @@ def record_chat_session(
         do_mode=do_mode,
         chat_mode=True,
     )
+    if metrics is not None:
+        metrics.record("sessions")
 
 
 async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
@@ -1025,7 +1398,9 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
 
                 catalog, openai_tools = await discover_tools(session)
                 ctx = BridgetContext()
-                system_content = build_system_content(ctx, catalog, do_mode)
+                system_content = build_system_content(
+                    ctx, catalog, do_mode, task=initial_prompt
+                )
                 messages: list[ChatCompletionMessageParam] = [
                     {"role": "system", "content": system_content},
                 ]
@@ -1045,6 +1420,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 all_called_tools: list[str] = []
                 last_prompt = ""
                 last_answer = ""
+                delegation_suggested = False
 
                 try:
                     pending = initial_prompt.strip()
@@ -1088,15 +1464,24 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             handle_goto_repo(repo_name)
                             continue
 
+                        # Replace the system message rather than appending a new
+                        # lesson block, so task relevance changes per turn while
+                        # prompt growth stays bounded.
+                        refresh_system_message(
+                            messages,
+                            ctx,
+                            catalog,
+                            do_mode,
+                            user_input,
+                            metrics=bridget_metrics.METRICS,
+                        )
                         messages.append({"role": "user", "content": user_input})
 
-                        spinner = BridgetSpinner(stream=tty)
-                        if not do_mode:
-                            # As in one-shot, --do lets the approval gate own the
-                            # terminal; a concurrent spinner corrupts the y/n
-                            # prompt.
-                            spinner.start()
-                            _SPINNER = spinner
+                        spinner = BridgetSpinner(stream=tty, quiet=QUIET_MODE)
+                        # The approval gate pauses and resumes this same spinner,
+                        # so every mode can expose one consistent thinking state.
+                        _SPINNER = spinner
+                        spinner.start()
 
                         answer, called_tools, did_tool_round = await run_turn(
                             client=client,
@@ -1111,6 +1496,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         _SPINNER = None
 
                         print_response(answer, prefix_newline=did_tool_round, out=out)
+                        bridget_metrics.METRICS.record("commands")
+                        if not delegation_suggested:
+                            delegation_suggested = print_delegation_suggestion(
+                                user_input,
+                                out=out,
+                            )
 
                         # Accumulate whole-session state for the single Phase-4
                         # record at exit: the latest exchange plus every tool
@@ -1138,7 +1529,16 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         last_prompt=last_prompt,
                         last_answer=last_answer,
                         start=session_start,
+                        metrics=bridget_metrics.METRICS,
                     )
+                    learn_suggested = print_learn_suggestion(
+                        last_prompt,
+                        last_answer,
+                        all_called_tools,
+                        out=out,
+                    )
+                    if learn_suggested:
+                        bridget_metrics.METRICS.record("learning_suggestions")
     finally:
         if tty:
             tty.close()
@@ -1189,13 +1589,12 @@ async def run_bridge() -> None:
         tty = open("/dev/tty", "w")
     except Exception:
         tty = None
-    spinner = BridgetSpinner(stream=tty)
+    spinner = BridgetSpinner(stream=tty, quiet=QUIET_MODE)
     global _SPINNER
-    if not do_mode:
-        # In --do mode the interactive approval gate owns the terminal; a
-        # concurrent spinner corrupts the y/n prompt and its readline.
-        spinner.start()
-        _SPINNER = spinner
+    # The approval gate pauses and resumes this same spinner before it writes
+    # the mandatory card, so thinking never competes with the y/n prompt.
+    _SPINNER = spinner
+    spinner.start()
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -1211,7 +1610,8 @@ async def run_bridge() -> None:
                 return
 
             ctx = BridgetContext()
-            system_content = build_system_content(ctx, catalog, do_mode)
+            system_content = build_system_content(ctx, catalog, do_mode, task=prompt)
+            record_context_hits(system_content, metrics=bridget_metrics.METRICS)
 
             messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": system_content},
@@ -1234,7 +1634,16 @@ async def run_bridge() -> None:
             # and also gates session recording (the pre-refactor direct-answer
             # path returned without recording).
             spinner.stop()
-            print_response(answer, prefix_newline=did_tool_round)
+            # The launcher may capture stdout while /dev/tty remains visible.
+            # Put status on the terminal and keep the answer's existing channel.
+            write_terminal_status("responding", tty or sys.stdout)
+            print_response(
+                answer,
+                prefix_newline=did_tool_round,
+                show_status=False,
+            )
+            bridget_metrics.METRICS.record("commands")
+            bridget_metrics.METRICS.record("sessions")
 
             if did_tool_round:
                 _pinned = bridget_runtime.get_project()
@@ -1249,6 +1658,10 @@ async def run_bridge() -> None:
                     project=_proj_name,
                     branch=_proj_branch,
                 )
+                if print_learn_suggestion(prompt, answer, called_tools, out=tty):
+                    bridget_metrics.METRICS.record("learning_suggestions")
+
+            print_delegation_suggestion(prompt, out=tty)
 
             if tty:
                 tty.close()
@@ -1259,12 +1672,43 @@ if __name__ == "__main__":
     if reconfigure_stdout:
         reconfigure_stdout(line_buffering=True)
 
+    # Normalize the presentation-only flag before synchronous command
+    # intercepts inspect argv. This keeps --quiet orthogonal to every command.
+    if "--quiet" in sys.argv[1:]:
+        QUIET_MODE = True
+        sys.argv = [sys.argv[0], *(arg for arg in sys.argv[1:] if arg != "--quiet")]
+
+    # Metrics are local aggregate counters and need neither OpenAI nor MCP.
+    if bridget_metrics.maybe_handle_metrics_command(sys.argv[1:]):
+        sys.exit(0)
+
+    # Validation summarizes those same content-free counters and makes no
+    # automatic usefulness or memory-expansion decision.
+    if bridget_metrics.maybe_handle_validation_command(sys.argv[1:]):
+        sys.exit(0)
+
     # Workflow mode is fully synchronous and delegates to mq-agent; it needs
     # neither the OpenAI client nor the MCP session, so intercept it before the
     # async bridge starts.
     if "--workflow" in sys.argv[1:]:
         _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
-        sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
+        sys.exit(
+            run_workflow_with_metrics(
+                _goal,
+                assume_yes=_assume_yes,
+            )
+        )
+
+    # Preview-first learning is an explicit CLI workflow. It bypasses the model
+    # and uses the existing Class B extractor + Class C approval gate directly.
+    if "--learn-last" in sys.argv[1:]:
+        try:
+            _review_path = parse_learn_last_args(sys.argv[1:])
+            asyncio.run(run_learn_last_entry(_review_path))
+        except ValueError as exc:
+            print(f"ERROR: {exc}")
+            sys.exit(2)
+        sys.exit(0)
 
     # Runtime commands (--project / --continue / --history) are read-only and
     # synchronous; intercept them here so they never spin up OpenAI or MCP.
@@ -1280,6 +1724,12 @@ if __name__ == "__main__":
     # writes only its own snapshot JSON); intercept before OpenAI or MCP.
     if codegraph_snapshot.maybe_handle_snapshot(sys.argv[1:]):
         sys.exit(0)
+
+    # Symbol lookup is a supported CodeGraph CLI delegation. It is read-only,
+    # synchronous, and preserves CodeGraph's stdout, stderr, and exit code.
+    _symbol_exit = codegraph_lookup.maybe_handle_lookup(sys.argv[1:])
+    if _symbol_exit is not None:
+        sys.exit(_symbol_exit)
 
     try:
         asyncio.run(run_bridge())

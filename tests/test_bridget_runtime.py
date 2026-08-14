@@ -146,6 +146,41 @@ def test_repo_brief_non_git_is_graceful(tmp_path):
     assert "not a git repo" in br.repo_brief(tmp_path)
 
 
+def test_project_context_auto_detects_git_repo_without_pin(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    repo = _git_repo(tmp_path / "detected-repo")
+    (repo / "new.txt").write_text("x", encoding="utf-8")
+
+    block = br.project_context_block(repo)
+
+    assert "## Detected project" in block
+    assert f"detected-repo ({repo.resolve()})" in block
+    assert "branch:" in block
+    assert "dirty: 1 file" in block
+    assert not br.PROJECT_FILE.exists()
+
+
+def test_project_context_explicit_pin_wins_over_detected_repo(tmp_path, monkeypatch):
+    detected = _git_repo(tmp_path / "detected-repo")
+    pinned = _git_repo(tmp_path / "pinned-repo")
+    project_file = tmp_path / "bridget-project"
+    project_file.write_text(
+        json.dumps({"name": "chosen", "path": str(pinned)}), encoding="utf-8"
+    )
+    monkeypatch.setattr(br, "PROJECT_FILE", project_file)
+
+    block = br.project_context_block(detected)
+
+    assert "## Pinned project" in block
+    assert f"chosen ({pinned})" in block
+    assert "detected-repo" not in block
+
+
+def test_project_context_is_empty_outside_git_without_pin(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    assert br.project_context_block(tmp_path) == ""
+
+
 def test_last_review_picks_newest(tmp_path):
     hist = tmp_path / "review_engine" / "memory"
     hist.mkdir(parents=True)
@@ -163,8 +198,71 @@ def test_last_review_picks_newest(tmp_path):
     assert "b.py" in out and "T9" in out
 
 
+def test_last_review_supports_repo_namespaced_history(tmp_path):
+    hist = tmp_path / "review_engine" / "memory"
+    hist.mkdir(parents=True)
+    (hist / "review_history.json").write_text(
+        json.dumps(
+            {
+                "mq-mcp": {
+                    "a.py": [
+                        {
+                            "file_path": "a.py",
+                            "timestamp": 11,
+                            "timestamp_iso": "T11",
+                            "finding_count": 3,
+                        }
+                    ]
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert "a.py" in br.last_review(tmp_path)
+    assert "T11" in br.last_review(tmp_path)
+
+
 def test_last_review_absent_returns_none(tmp_path):
     assert br.last_review(tmp_path) is None
+
+
+def test_recent_work_block_reports_bounded_diff_stat(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed\n", encoding="utf-8")
+
+    block = br.recent_work_block(repo)
+
+    assert "## Recent work" in block
+    assert "current diff:" in block
+    assert "f.txt" in block
+    assert len(block) <= br.MAX_RECENT_WORK_CHARS
+
+
+def test_recent_work_block_is_empty_without_review_or_diff(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    assert br.recent_work_block(repo) == ""
+
+
+def test_recent_work_block_enforces_hard_character_limit(monkeypatch):
+    monkeypatch.setattr(br, "last_review", lambda _path: None)
+    monkeypatch.setattr(br, "_git", lambda _path, _args: "x" * 2_000)
+
+    block = br.recent_work_block("repo")
+
+    assert len(block) == br.MAX_RECENT_WORK_CHARS
+    assert block.endswith("… [recent work truncated]")
+
+
+def test_project_context_includes_recent_work(tmp_path, monkeypatch):
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project-pin")
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed\n", encoding="utf-8")
+
+    block = br.project_context_block(repo)
+
+    assert "## Detected project" in block
+    assert "## Recent work" in block
 
 
 # --- synchronous handlers (no MCP/OpenAI) -----------------------------------
@@ -193,6 +291,58 @@ def test_handle_history_empty(tmp_path, monkeypatch, capsys):
     )
     br.handle_history()
     assert "No session history" in capsys.readouterr().out
+
+
+def test_handle_forget_denies_by_default(tmp_path, monkeypatch, capsys):
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    target = sessions / "2026-08-13.jsonl"
+    target.write_text('{"ts":"2026-08-13 10:00"}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(
+            BridgetContext,
+            path=tmp_path / "ctx.md",
+            history_path=tmp_path / "history.jsonl",
+            sessions_dir=sessions,
+        ),
+    )
+
+    br.handle_forget("2026-08-13", confirm=lambda _prompt: "")
+
+    assert target.exists()
+    assert "Cancelled" in capsys.readouterr().out
+
+
+def test_handle_forget_approved_deletes_exact_date(tmp_path, monkeypatch, capsys):
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    target = sessions / "2026-08-13.jsonl"
+    keep = sessions / "2026-08-14.jsonl"
+    target.write_text('{"ts":"2026-08-13 10:00"}\n', encoding="utf-8")
+    keep.write_text('{"ts":"2026-08-14 10:00"}\n', encoding="utf-8")
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(
+            BridgetContext,
+            path=tmp_path / "ctx.md",
+            history_path=tmp_path / "history.jsonl",
+            sessions_dir=sessions,
+        ),
+    )
+
+    br.handle_forget("2026-08-13", confirm=lambda _prompt: "ja")
+
+    assert not target.exists()
+    assert keep.exists()
+    assert "Deleted sessions for 2026-08-13" in capsys.readouterr().out
+
+
+def test_runtime_command_forget_requires_date(monkeypatch, capsys):
+    assert br.maybe_handle_runtime_command(["--forget"]) is True
+    assert "YYYY-MM-DD" in capsys.readouterr().out
 
 
 def test_handle_project_set_show_and_unknown(tmp_path, monkeypatch, capsys):

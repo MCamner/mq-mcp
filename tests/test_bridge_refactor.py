@@ -117,6 +117,13 @@ class _FakeSession:
         )
 
 
+class _TTY(io.StringIO):
+    """Small interactive stream fake for terminal-status assertions."""
+
+    def isatty(self):
+        return True
+
+
 # --- discover_tools ------------------------------------------------------------
 
 
@@ -160,8 +167,13 @@ def test_openai_tool_specs_exclude_only_compatibility_aliases(bridge):
 # --- build_system_content ------------------------------------------------------
 
 
-def _fake_ctx(session="", lessons=""):
-    return types.SimpleNamespace(load=lambda: session, load_lessons=lambda: lessons)
+def _fake_ctx(session="", lessons="", calls=None):
+    def load_lessons(**kwargs):
+        if calls is not None:
+            calls.append(kwargs)
+        return lessons
+
+    return types.SimpleNamespace(load=lambda: session, load_lessons=load_lessons)
 
 
 def test_build_system_content_includes_prompt_context_and_catalog(bridge, monkeypatch):
@@ -188,6 +200,42 @@ def test_build_system_content_adds_do_block_only_in_do_mode(bridge, monkeypatch)
 
     assert "DO MODE (ACTIVE)" in content
     assert "shell_exec is ENABLED" in content
+
+
+def test_build_system_content_passes_repo_file_and_task_to_lessons(bridge, monkeypatch):
+    calls = []
+    ctx = _fake_ctx(lessons="LESSON", calls=calls)
+    monkeypatch.setattr(bridge.bridget_runtime, "project_context_block", lambda: "")
+    monkeypatch.setattr(
+        bridge, "lesson_context_filters", lambda task: ("mq-mcp", "mq-mcp/server.py")
+    )
+
+    bridge.build_system_content(
+        ctx, "catalog", do_mode=False, task="fix mq-mcp/server.py contract"
+    )
+
+    assert calls == [{
+        "repo": "mq-mcp",
+        "file_path": "mq-mcp/server.py",
+        "task": "fix mq-mcp/server.py contract",
+    }]
+
+
+def test_refresh_system_message_replaces_context_without_growth(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.bridget_runtime, "project_context_block", lambda: "")
+    monkeypatch.setattr(bridge, "lesson_context_filters", lambda task: ("mq-mcp", ""))
+    calls = []
+    ctx = _fake_ctx(lessons="LESSON", calls=calls)
+    messages = [
+        {"role": "system", "content": "old"},
+        {"role": "user", "content": "previous turn"},
+    ]
+
+    bridge.refresh_system_message(messages, ctx, "catalog", False, "new task")
+
+    assert len(messages) == 2
+    assert messages[0]["content"] != "old"
+    assert calls[-1]["task"] == "new task"
 
 
 # --- run_turn ------------------------------------------------------------------
@@ -348,6 +396,61 @@ def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
     assert do_mode is False
 
 
+def test_parse_prompt_quiet_removes_flag_and_sets_mode(bridge, monkeypatch):
+    monkeypatch.setattr(
+        bridge.sys,
+        "argv",
+        ["bridge.py", "--quiet", "summarize", "README.md"],
+    )
+
+    prompt, *_rest = bridge.parse_prompt()
+
+    assert prompt == "summarize README.md"
+    assert bridge.QUIET_MODE is True
+
+
+def test_spinner_labels_thinking_and_quiet_disables_it(bridge):
+    stream = _TTY()
+
+    spinner = bridge.BridgetSpinner(stream=stream)
+    quiet_spinner = bridge.BridgetSpinner(stream=stream, quiet=True)
+
+    assert spinner.render_frame("⠁") == "\r⠁ Bridget · thinking"
+    assert spinner._enabled is True
+    assert quiet_spinner._enabled is False
+
+
+def test_print_response_shows_responding_status_on_tty(bridge, monkeypatch):
+    stream = _TTY()
+    monkeypatch.setattr(bridge, "QUIET_MODE", False)
+    monkeypatch.setattr(
+        bridge,
+        "scramble_print",
+        lambda text, file=None, animate=True: file.write(text + "\n"),
+    )
+
+    bridge.print_response("klart", out=stream)
+
+    assert stream.getvalue() == "Bridget · responding\n👩 Bridget: klart\n"
+
+
+def test_print_response_quiet_skips_status_and_animation(bridge, monkeypatch):
+    stream = _TTY()
+    calls = []
+    monkeypatch.setattr(bridge, "QUIET_MODE", True)
+    monkeypatch.setattr(
+        bridge,
+        "scramble_print",
+        lambda text, file=None, animate=True: calls.append(animate)
+        or file.write(text + "\n"),
+    )
+
+    bridge.print_response("klart", out=stream)
+
+    assert stream.getvalue() == "👩 Bridget: klart\n"
+    assert calls == [False]
+
+
 # --- Phase 4: record_chat_session ----------------------------------------------
 
 
@@ -359,6 +462,15 @@ class _RecordingCtx:
 
     def record(self, prompt, tools, answer, **kwargs):
         self.calls.append((prompt, tools, answer, kwargs))
+
+
+class _RecordingMetrics:
+    def __init__(self):
+        self.names = []
+
+    def record(self, name, **_kwargs):
+        self.names.append(name)
+        return True
 
 
 def test_record_chat_session_records_once_with_metadata(bridge, monkeypatch):
@@ -432,6 +544,237 @@ def test_record_chat_session_no_project_pin(bridge, monkeypatch):
     assert kw["project"] is None
     assert kw["branch"] is None
     assert kw["chat_mode"] is True
+
+
+def test_record_chat_session_counts_one_completed_session(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.bridget_runtime, "get_project", lambda: None)
+    metrics = _RecordingMetrics()
+
+    bridge.record_chat_session(
+        _RecordingCtx(),
+        do_mode=False,
+        turns=4,
+        tools=[],
+        last_prompt="p",
+        last_answer="a",
+        start=0.0,
+        metrics=metrics,
+    )
+
+    assert metrics.names == ["sessions"]
+
+
+def test_record_context_hits_counts_only_present_context(bridge):
+    metrics = _RecordingMetrics()
+
+    bridge.record_context_hits(
+        "## Bridget session memory (previous sessions)\n## Detected project",
+        metrics=metrics,
+    )
+
+    assert metrics.names == ["history_hits", "context_hits"]
+
+
+# --- Phase 1: preview-only learn suggestions ---------------------------------
+
+
+def test_build_learn_suggestion_requires_evidence_tool(bridge):
+    assert bridge.build_learn_suggestion("task", "answer", ["search_repo"]) == ""
+    assert bridge.build_learn_suggestion("task", "answer", []) == ""
+    assert bridge.build_learn_suggestion("prior session", "context", ["git_status"]) == ""
+
+
+def test_build_learn_suggestion_is_bounded_and_never_claims_storage(bridge):
+    suggestion = bridge.build_learn_suggestion(
+        "fix the repeated issue " * 20,
+        "the reusable result " * 80,
+        ["review_diff", "validate_project"],
+    )
+
+    assert "Reusable learn candidate" in suggestion
+    assert "review_diff, validate_project" in suggestion
+    assert "stored: false" in suggestion
+    assert "explicit approval" in suggestion
+    assert len(suggestion) <= bridge.MAX_LEARN_SUGGESTION_CHARS
+
+
+def test_build_learn_suggestion_suppressed_after_learn_write(bridge):
+    suggestion = bridge.build_learn_suggestion(
+        "task", "answer", ["review_diff", "learn_from_diff"]
+    )
+    assert suggestion == ""
+
+
+def test_print_learn_suggestion_emits_one_preview(bridge):
+    out = io.StringIO()
+    emitted = bridge.print_learn_suggestion(
+        "task", "answer", ["run_tests", "run_tests"], out=out
+    )
+
+    assert emitted is True
+    assert out.getvalue().count("Reusable learn candidate") == 1
+
+
+def test_print_delegation_suggestion_emits_preview_without_starting_workflow(bridge):
+    out = io.StringIO()
+
+    emitted = bridge.print_delegation_suggestion(
+        "Update mq-mcp and mq-agent, then validate both",
+        out=out,
+    )
+
+    assert emitted is True
+    assert out.getvalue().count("Delegation suggestion") == 1
+
+
+def test_parse_learn_last_args_accepts_optional_review_path(bridge):
+    assert bridge.parse_learn_last_args(["--learn-last"]) == ""
+    assert bridge.parse_learn_last_args(["--learn-last", "mq-mcp/server.py"]) == (
+        "mq-mcp/server.py"
+    )
+
+
+def test_parse_learn_last_args_rejects_extra_arguments(bridge):
+    with pytest.raises(ValueError, match="at most one"):
+        bridge.parse_learn_last_args(["--learn-last", "a.py", "b.py"])
+
+
+def test_redact_learn_preview_masks_secret_values(bridge):
+    preview = bridge.redact_learn_preview(
+        "token=abc123 password:letmein Bearer private.jwt.value"
+    )
+
+    assert "abc123" not in preview
+    assert "letmein" not in preview
+    assert "private.jwt.value" not in preview
+    assert "<redacted>" in preview
+
+
+def test_latest_review_path_uses_active_repo_namespace(bridge, monkeypatch, tmp_path):
+    history = tmp_path / "review_history.json"
+    history.write_text(
+        '{"mq-mcp":{"server.py":[{"file_path":"server.py","timestamp":2}]},'
+        '"mq-hal":{"README.md":[{"file_path":"README.md","timestamp":3}]}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(bridge, "REVIEW_HISTORY_FILE", history)
+
+    assert bridge._latest_review_path(Path("/tmp/mq-hal")) == "README.md"
+
+
+def test_run_learn_last_denial_keeps_review_as_dry_run(bridge, monkeypatch):
+    session = _FakeSession(result_text="preview token=abc123")
+    out = io.StringIO()
+    monkeypatch.setattr(
+        bridge, "resolve_learn_last_context", lambda _path="": ("server.py", "/repo")
+    )
+    monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: False)
+
+    asyncio.run(bridge.run_learn_last(session, out=out))
+
+    assert session.tool_calls == [
+        ("learn_extract_from_last_review", {"relative_path": "server.py", "repo_path": "/repo"})
+    ]
+    assert "abc123" not in out.getvalue()
+    assert "stored: false" in out.getvalue()
+
+
+def test_run_learn_last_approval_stores_via_existing_review_tool(bridge, monkeypatch):
+    session = _FakeSession(result_text="safe preview")
+    metrics = _RecordingMetrics()
+    monkeypatch.setattr(
+        bridge, "resolve_learn_last_context", lambda _path="": ("server.py", "/repo")
+    )
+    monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: True)
+
+    asyncio.run(bridge.run_learn_last(session, out=io.StringIO(), metrics=metrics))
+
+    assert session.tool_calls == [
+        ("learn_extract_from_last_review", {"relative_path": "server.py", "repo_path": "/repo"}),
+        (
+            "learn_from_review",
+            {
+                "relative_path": "server.py",
+                "repo_path": "/repo",
+                "learning_origin": "bridget",
+            },
+        ),
+    ]
+    assert metrics.names == ["accepted_learning"]
+
+
+def test_workflow_entry_counts_a_delegation(bridge, monkeypatch):
+    metrics = _RecordingMetrics()
+    monkeypatch.setattr(
+        bridge.bridget_workflow,
+        "run_workflow_entry",
+        lambda goal, assume_yes=False: 7,
+    )
+
+    result = bridge.run_workflow_with_metrics(
+        "review and test",
+        assume_yes=True,
+        metrics=metrics,
+    )
+
+    assert result == 7
+    assert metrics.names == ["delegations"]
+
+
+def test_run_learn_last_falls_back_to_redacted_diff_preview(bridge, monkeypatch):
+    session = _FakeSession(result_text="stored")
+    out = io.StringIO()
+    monkeypatch.setattr(bridge, "resolve_learn_last_context", lambda _path="": ("", "/repo"))
+    monkeypatch.setattr(
+        bridge,
+        "build_diff_learn_args",
+        lambda _repo: {
+            "task": "fix token=abc123",
+            "lesson": "keep password=letmein out",
+            "validation": "changed: bridge.py",
+            "risk": "unknown",
+        },
+    )
+    monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: False)
+
+    asyncio.run(bridge.run_learn_last(session, out=out))
+
+    assert session.tool_calls == []
+    assert "source: diff" in out.getvalue()
+    assert "abc123" not in out.getvalue()
+    assert "letmein" not in out.getvalue()
+    assert "stored: false" in out.getvalue()
+
+
+def test_run_learn_last_approved_diff_is_attributed_to_bridget(bridge, monkeypatch):
+    session = _FakeSession(result_text="stored")
+    monkeypatch.setattr(bridge, "resolve_learn_last_context", lambda _path="": ("", "/repo"))
+    monkeypatch.setattr(
+        bridge,
+        "build_diff_learn_args",
+        lambda _repo: {
+            "task": "fix contract",
+            "lesson": "keep provenance",
+            "validation": "changed: bridge.py",
+            "risk": "unknown",
+        },
+    )
+    monkeypatch.setattr(bridge, "approval_gate", lambda *_a, **_k: True)
+
+    asyncio.run(bridge.run_learn_last(session, out=io.StringIO()))
+
+    assert session.tool_calls == [
+        (
+            "learn_from_diff",
+            {
+                "task": "fix contract",
+                "lesson": "keep provenance",
+                "validation": "changed: bridge.py",
+                "risk": "unknown",
+                "learning_origin": "bridget",
+            },
+        )
+    ]
 
 
 # --- print_response ------------------------------------------------------------

@@ -34,7 +34,8 @@ Repository-specific extraction requires a verified repo context. mq-mcp reads
 
 - `schema` is `symbol_index.v1`
 - `repo_name` matches the requested repository
-- `generated_at` is present
+- `generated_at` is timezone-aware, no more than 24 hours old, and no more
+  than five minutes in the future
 - every included path resolves to an existing file inside that repository
 
 The context sent to Ollama includes those provenance fields. If the artifact is
@@ -42,6 +43,15 @@ missing, malformed, belongs to another repository, or contains no verifiable
 files, mq-mcp returns an `unknown` / `low` refusal with empty evidence without
 calling the model. The learning layer reads exports but does not execute
 repo-signal or git.
+
+Successful and refused MCP previews expose context status, source, and export
+timestamp so callers can distinguish grounded output from a missing/stale
+context refusal.
+
+There is intentionally no git subprocess fallback in the learning layer. Such
+a fallback would violate its non-executing boundary and change the Class B MCP
+subprocess contract. Operators should refresh the repo-signal export; refusal
+is the safe behavior while it is unavailable or stale.
 
 ## Input
 

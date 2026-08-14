@@ -397,8 +397,88 @@ lifetime, and runs each turn through the same bounded multi-round tool loop as
 one-shot mode. Every `shell_exec` still passes the per-command y/n approval gate.
 Exit with `exit`, `quit`, `q`, or Ctrl-D.
 
+On an interactive terminal Bridget shows compact state feedback while it works:
+`thinking` in the spinner, `responding` before the answer, and `approval
+required` on a gated tool card. Use `--quiet` with one-shot or chat mode to
+disable the spinner, response decode animation, and Bridget image rendering:
+
+```bash
+bridget --quiet "Explain this repo."
+bridget --quiet --chat
+```
+
+Quiet mode changes presentation only. Answers, errors, tool results, and
+mandatory approval prompts remain visible, and tool safety behavior is
+unchanged.
+
+Bridget keeps optional local aggregate usage counters for completed commands,
+sessions, workflow delegations, learn suggestions and acceptance, plus
+history/context hits. Inspect the last seven days or choose a 1–365 day window:
+
+```bash
+bridget --metrics
+bridget --metrics 30
+bridget --validation 30
+```
+
+The metrics store contains only a date, a fixed counter name, and an integer
+increment. It never stores prompts, answers, repositories, paths, tool names,
+arguments, or session identifiers. See
+[`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the exact local path.
+Set `BRIDGET_METRICS_DISABLED=1` to disable collection; validation does this
+automatically so smoke tests do not pollute real usage counts.
+
+`bridget --validation [1-365]` summarizes the same content-free counters for
+Phase 7. It reports transparent usage ratios but does not infer usefulness or
+recommend more memory automatically. Complete the qualitative review in
+[`docs/BRIDGET_VALIDATION.md`](docs/BRIDGET_VALIDATION.md) before closing the
+phase.
+
 Bridget may hold conversational context, but it is not an orchestrator: planning,
 retries, and workflow state stay in mq-agent and mq-mcp.
+
+Recent session memory is local, redacted, and temporary. Bridget injects at most
+three sessions, 500 characters per session, from the last seven days. Session
+text is context only: it is never evidence and never auto-promotes to learning
+or mqobsidian. The existing memory commands are:
+
+```bash
+bridget --history [N]            # inspect recent session summaries
+bridget --continue               # resume from the latest summary and repo state
+bridget --project [repo]         # inspect or set the separate project pin
+bridget --forget YYYY-MM-DD      # preview and approve deletion of one date
+bridget --learn-last [file]      # separate learn preview; approval required
+```
+
+See [`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the complete storage,
+retention, deletion, and evidence boundary.
+
+For read-only structural lookup, Bridget delegates directly to CodeGraph's
+supported CLI without starting OpenAI or the MCP server:
+
+```bash
+bridget --symbol BridgetContext
+bridget --symbol build_system_content --file mq-mcp/bridge.py
+bridget --symbol handle_symbol --repo mq-mcp --file mq-mcp/codegraph_lookup.py
+bridget --dependencies build_system_content
+bridget --dependencies run_turn --direction callers --limit 10
+bridget --graph-search "call-graph hotspots in Bridget" --max-files 5
+bridget --graph-search "paths from run_chat to session storage"
+```
+
+`--repo` accepts a registered repository name or directory. `--file` resolves
+an ambiguous symbol within one repo-relative file. Output is CodeGraph's
+line-numbered source and caller/callee trail; it is context, not evidence, and
+is not persisted by Bridget.
+
+`--dependencies` delegates to `codegraph callers` and `codegraph callees`.
+The default direction is `both`; `--limit` accepts 1–100 and defaults to 20
+per direction. This output follows the same context-only boundary.
+
+`--graph-search` delegates free-text structural questions to the supported
+CodeGraph Explore interface, which returns relevant source plus call paths.
+`--max-files` accepts 1–20 and defaults to 8. “Hotspots” is a query convention,
+not a separate CodeGraph API or persisted score.
 
 ## Bridget voice
 
@@ -435,6 +515,13 @@ state, implements no retry, selects no tools, and bypasses no tool policy — al
 orchestration and state live in mq-agent. A workflow cannot start another
 workflow (`MQ_WORKFLOW_DEPTH` guard), and `run_mqlaunch_*` tools may not start
 `mqlaunch flow`.
+
+For ordinary prompts, Bridget may print one bounded delegation suggestion when
+the request is clearly multi-step, cross-repository, or explicitly complex.
+This is a deterministic preview only: it does not call mq-agent, select tools,
+create workflow state, or start a run. The user must invoke the displayed
+`bridget --workflow "<goal>"` command, after which the existing plan and approval
+gates apply. Interactive chat prints at most one such suggestion per session.
 
 ## Validation
 

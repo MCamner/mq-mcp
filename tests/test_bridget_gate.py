@@ -179,3 +179,4 @@ def test_card_states_what_the_tool_does(bridge, monkeypatch):
     assert "update_repo_file" in card
     assert "Klass:      C" in card
     assert "Skriver:    ja" in card
+    assert "Bridget · approval required" in card

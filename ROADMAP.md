@@ -38,8 +38,8 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      harden repo-context evidence and refusal behavior
-Later:     CG-2.2+ timeline
+Next:      Complete Bridget Phase 7 real-usage observation and review
+Later:     remaining explicitly uncompleted milestones below
 ```
 
 Version labels below describe historical milestones. A capability is not a
@@ -1688,20 +1688,29 @@ Every powerful tool must have:
 Work on:
 
 ```text
-repo-context evidence hardening
+Bridget working memory
 ```
 
-The Bridget interactive session foundation, CG-2.1 co-change, CG-2.2 graph
-snapshots, and the core Ollama-backed learn extractor are implemented. Do not
-rebuild those milestones under their old version labels.
+The Bridget interactive session foundation, repo-context evidence hardening,
+CG-2.1 co-change, CG-2.2 graph snapshots, and the core Ollama-backed learn
+extractor are implemented. Do not rebuild those milestones under their old
+version labels. The next bounded work is to:
 
-The learn contract consolidation is complete: live refusal behavior is checked,
-the MCP tools are documented as the public surface, and the separate CLI plan
-is removed. The next bounded work is to:
+1. [x] detect the current Git repository automatically when no explicit project
+   pin exists; inject repo, branch, and a bounded dirty-file summary
+2. [x] inject recent work from the latest review and current diff without
+   exceeding the context budget
+3. [x] suggest reusable learn candidates at the end of a session without
+   writing anything before explicit approval
+4. [x] add `bridget --learn-last` as a redacted dry-run preview with an explicit
+   approval gate before any storage
+5. [x] record learning provenance and inject only repo-, risk-, file-, and
+   task-relevant lessons within a fixed prompt budget
 
-1. define a freshness policy for repo-signal evidence (`generated_at`)
-2. expose context provenance in the human-readable MCP preview
-3. evaluate a read-only git fallback when repo-signal exports are unavailable
+Per-day logs, date-scoped deletion, bounded recent-session injection, the
+explicit no-hidden-persistence boundary, and the Phase 4 agent-boundary
+documentation, Phase 5 terminal presence, and Phase 6 local usage metrics are
+implemented. The next bounded work is Bridget Phase 7 long-term validation.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2080,80 +2089,85 @@ Graph data ≠ observation evidence.
 
 Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` not started.
 
-### Phase 0 — Boundaries and principles (partial)
+### Phase 0 — Boundaries and principles (done)
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
-* [ ] ADR documenting the four boundaries
+* [x] ADR-007 documents the Bridget, mqobsidian, mq-agent, and CodeGraph
+  boundaries, with mq-mcp and mqlaunch responsibilities made explicit
 * [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
-### Phase 1 — Close the learn loop (planned)
+### Phase 1 — Close the learn loop (done)
 
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
-* [ ] Suggest reusable learn candidates at end of session (no write without approval)
-* [ ] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
-* [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
-* [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
+* [x] Suggest reusable learn candidates at end of session (no write without approval)
+* [x] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
+* [x] Learning provenance (`learning_origin: user | bridget | review | diff`)
+* [x] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
-### Phase 2 — Working memory (mostly done)
+### Phase 2 — Working memory (done)
 
 Remember recent conversations without becoming a knowledge system. `bridget_context.py` already keeps a rolling session window (currently `~/.mq/bridget-context.md`).
 
 * [x] Rolling session memory with bounded window
-* [ ] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
+* [x] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
 * [x] `bridget --history` (date / summary / tools used)
-* [ ] `bridget --forget <date>` (delete one day)
-* [ ] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
+* [x] `bridget --forget <date>` (delete one day)
+* [x] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
 * [x] Never persist API keys / secrets / credentials
 
-### Phase 2.5 — Memory boundary (planned)
+### Phase 2.5 — Memory boundary (done)
 
-* [ ] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
-* [ ] No hidden persistence
+* [x] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
+* [x] No hidden persistence: all session and project-pin paths are declared and normal session recording is covered by an exact-file-set test
 
-### Phase 3 — Context awareness (partial)
+### Phase 3 — Context awareness (done)
 
 Bridget starts informed.
 
-* [ ] Auto repo detection (git_status, list_repo_files → inject repo / branch / dirty files)
-* [ ] Recent-work injection (get_last_review, git_diff)
+* [x] Auto repo detection (Git root/status → inject repo / branch / dirty files)
+* [x] Recent-work injection (latest review metadata and bounded `git diff --stat`)
 * [x] `bridget --project <repo>` persistent session context
 * [x] `bridget --continue` (last project / branch / changed files / recent review)
 
-### Phase 3.5 — CodeGraph awareness (partial)
+### Phase 3.5 — CodeGraph awareness (done)
 
 Use CodeGraph as context only — never a producer (no CodeGraph → memory-observation.v1). `--search` / `--search-global` already provide semantic repo search.
 
 * [x] Semantic repo search (`--search`, `--search-global`)
-* [ ] Symbol lookup
-* [ ] Dependency lookup
-* [ ] Hotspots / call-graph search
+* [x] Symbol lookup (`bridget --symbol NAME [--repo REPO] [--file PATH]`)
+* [x] Dependency lookup (`bridget --dependencies NAME [--direction callers|callees|both]`)
+* [x] Hotspots / call-graph search (`bridget --graph-search QUERY [--max-files N]`)
 * [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 
-### Phase 4 — Delegation to mq-agent (mostly done)
+### Phase 4 — Delegation to mq-agent (done)
 
 Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint delegating to `mq-agent workflow`; holds no state, selects no tools).
 
 * [x] `bridget --workflow "<goal>"` delegates to mq-agent (`bridget_workflow.py`)
-* [ ] Auto-suggest delegation for multi-step / cross-repo / complex tasks
-* [ ] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
+* [x] Auto-suggest delegation for multi-step / cross-repo / complex tasks (preview only; never auto-starts)
+* [x] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
 
-### Phase 5 — Terminal presence (partial)
+### Phase 5 — Terminal presence (done)
 
 * [x] Voice mode (`--voice-on`, `bridget_voice.py`); spinner during thinking
-* [ ] Status indicators (thinking / responding / approval)
-* [ ] `bridget --quiet` (no visual effects)
+* [x] Status indicators (thinking / responding / approval)
+* [x] `bridget --quiet` (no visual effects)
 
-### Phase 6 — Real usage metrics (planned)
+### Phase 6 — Real usage metrics (done)
 
-* [ ] Capture commands / sessions / delegations / learning-suggestions per day
-* [ ] Accepted-learning, history-hit, context-hit counts
-* [ ] Simple dashboard (helped / delegated / suggested / accepted)
+* [x] Capture commands / sessions / delegations / learning-suggestions per day
+* [x] Accepted-learning, history-hit, context-hit counts
+* [x] Simple dashboard (helped / delegated / suggested / accepted)
 
-### Phase 7 — Long-term validation (planned)
+### Phase 7 — Long-term validation (in progress)
 
-* [ ] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [x] Add a deterministic, content-free validation report over Phase 6 counters
+* [x] Document quantitative signals, qualitative questions, and memory decision boundaries
+* [ ] Gather a meaningful real-usage observation window
+* [ ] Review whether sessions, lessons, CodeGraph, and delegation were useful
+* [ ] Decide from reviewed evidence whether more memory is needed
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 
 ### Recommended build order
@@ -2162,7 +2176,7 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 Phase 0  Boundaries          first
 Phase 3  Context awareness    ⭐
 Phase 1  Learn loop           ⭐
-Phase 4  mq-agent delegation  ⭐ (finish auto-suggest + boundary doc)
+Phase 4  mq-agent delegation  ⭐
 Phase 2  Working memory
 Phase 2.5 Memory boundary
 Phase 3.5 CodeGraph awareness

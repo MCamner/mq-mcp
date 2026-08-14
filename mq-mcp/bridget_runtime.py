@@ -24,6 +24,7 @@ PROJECT_FILE = CONTEXT_DIR / "bridget-project"
 
 _GIT_TIMEOUT = 5
 _MAX_DIRTY_SHOWN = 5
+MAX_RECENT_WORK_CHARS = 1_200
 
 
 def known_local_repos() -> dict[str, str]:
@@ -143,13 +144,17 @@ def last_review(path: str | Path) -> str | None:
     if not isinstance(data, dict):
         return None
     newest: dict | None = None
-    for entries in data.values():
-        if not isinstance(entries, list):
-            continue
+    groups: list[list] = []
+    for value in data.values():
+        if isinstance(value, list):
+            groups.append(value)
+        elif isinstance(value, dict):
+            groups.extend(entries for entries in value.values() if isinstance(entries, list))
+    for entries in groups:
         for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            if newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0):
+            if isinstance(entry, dict) and (
+                newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0)
+            ):
                 newest = entry
     if newest is None:
         return None
@@ -160,21 +165,51 @@ def last_review(path: str | Path) -> str | None:
     )
 
 
+def recent_work_block(path: str | Path) -> str:
+    """Return bounded review metadata and diff statistics for prompt context."""
+    parts: list[str] = []
+    review = last_review(path)
+    if review:
+        parts.append(review)
+    diff_stat = _git(path, ["diff", "--stat", "--"])
+    if diff_stat:
+        indented = "\n".join(f"    {line}" for line in diff_stat.splitlines())
+        parts.append(f"  current diff:\n{indented}")
+    if not parts:
+        return ""
+    block = "## Recent work\n\n" + "\n".join(parts)
+    marker = "\n… [recent work truncated]"
+    if len(block) > MAX_RECENT_WORK_CHARS:
+        block = block[: MAX_RECENT_WORK_CHARS - len(marker)] + marker
+    return block
+
+
 # ----------------------------------------------------------------------
 # System-prompt injection (used by run_bridge for a pinned project)
 # ----------------------------------------------------------------------
 
 
-def project_context_block() -> str:
-    """Return a system-prompt block for the pinned project, or '' if none."""
+def project_context_block(cwd: str | Path | None = None) -> str:
+    """Return bounded project context from an explicit pin or current Git repo."""
     proj = get_project()
+    heading = "Pinned project"
     if not proj:
+        root = _git(cwd or Path.cwd(), ["rev-parse", "--show-toplevel"])
+        if not root:
+            return ""
+        path = Path(root).resolve()
+        proj = {"name": path.name, "path": str(path)}
+        heading = "Detected project"
+    if not proj.get("path"):
         return ""
+    recent = recent_work_block(proj["path"])
+    recent_context = f"{recent}\n\n" if recent else ""
     return (
         "\n\n---\n"
-        "## Pinned project\n\n"
+        f"## {heading}\n\n"
         f"{proj['name']} ({proj['path']})\n"
         f"{repo_brief(proj['path'])}\n\n"
+        f"{recent_context}"
         "Treat this repo as the working context for this session.\n---\n"
     )
 
@@ -229,6 +264,45 @@ def handle_history(limit: int = 20) -> None:
         print(f"       tools: {tools_s}")
 
 
+def handle_forget(date_value: str, confirm=None) -> None:
+    """Preview and explicitly approve deletion of one session date."""
+    ctx = BridgetContext()
+    try:
+        preview = ctx.forget_date(date_value, apply=False)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return
+    total = sum(
+        preview[key]
+        for key in ("daily_entries", "history_entries", "rolling_sessions")
+    )
+    if total == 0:
+        print(f"No Bridget sessions found for {date_value}.")
+        return
+    print(f"Forget Bridget sessions for {date_value}:")
+    print(f"  daily log entries: {preview['daily_entries']}")
+    print(f"  legacy history entries: {preview['history_entries']}")
+    print(f"  rolling context sessions: {preview['rolling_sessions']}")
+    print("This deletion is irreversible and affects no other date.")
+    ask = confirm or input
+    try:
+        answer = ask("Delete these sessions? ja/nej: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        answer = ""
+    if answer not in {"ja", "j", "yes", "y"}:
+        print("Cancelled; no session data deleted.")
+        return
+    try:
+        result = ctx.forget_date(date_value, apply=True)
+    except OSError as exc:
+        print(f"ERROR: session deletion failed: {exc}")
+        return
+    if result["deleted"]:
+        print(f"Deleted sessions for {date_value}. This cannot be recovered.")
+    else:
+        print(f"No Bridget sessions found for {date_value}.")
+
+
 def handle_project(name: str | None) -> None:
     if not name:
         proj = get_project()
@@ -273,6 +347,12 @@ def maybe_handle_runtime_command(argv: list[str]) -> bool:
     Returns True if a runtime command was handled (caller should exit), so these
     flags never reach the async bridge or the OpenAI/MCP path.
     """
+    if "--forget" in argv:
+        if len(argv) != 2 or argv[0] != "--forget":
+            print("ERROR: usage: bridget --forget YYYY-MM-DD")
+            return True
+        handle_forget(argv[1])
+        return True
     if "--history" in argv:
         i = argv.index("--history")
         limit = 20

@@ -6,6 +6,8 @@ APP="$ROOT/mq-mcp"
 
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/mq-mcp-pycache}"
+# Validation invokes Bridget smoke paths; do not count those as real usage.
+export BRIDGET_METRICS_DISABLED=1
 
 FAILED=0
 

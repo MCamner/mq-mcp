@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -34,6 +35,7 @@ def test_record_and_search_learning(tmp_path):
 
     result = engine.record_learning(tmp_path, record)
     assert result["status"] == "ok"
+    assert engine.load_learnings(tmp_path)[0]["learning_origin"] == "user"
 
     matches = engine.search_learnings(tmp_path, "tool count")
     assert len(matches) == 1
@@ -42,6 +44,53 @@ def test_record_and_search_learning(tmp_path):
     summary = engine.summarize_learnings(tmp_path)
     assert "Fix docs drift" in summary
     assert "Keep tool docs" in summary
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_origin"),
+    [("manual", "user"), ("codex", "user"), ("review", "review"), ("diff", "diff")],
+)
+def test_learning_origin_defaults_from_source(tmp_path, source, expected_origin):
+    engine = _load_engine()
+    record = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source=source,
+        task="Track provenance",
+        lesson="Origin is distinct from source.",
+        validation="unit test",
+    )
+
+    assert record.learning_origin == expected_origin
+
+
+def test_learning_origin_accepts_explicit_bridget(tmp_path):
+    engine = _load_engine()
+    record = engine.make_learning(
+        tmp_path,
+        repo="mq-mcp",
+        source="review",
+        learning_origin="bridget",
+        task="Learn from Bridget preview",
+        lesson="Approved Bridget previews retain their origin.",
+        validation="unit test",
+    )
+
+    assert record.learning_origin == "bridget"
+
+
+def test_learning_origin_rejects_unsupported_value(tmp_path):
+    engine = _load_engine()
+    with pytest.raises(ValueError, match="Unsupported learning origin"):
+        engine.make_learning(
+            tmp_path,
+            repo="mq-mcp",
+            source="manual",
+            learning_origin="automatic",
+            task="x",
+            lesson="x",
+            validation="x",
+        )
 
 
 def test_record_learning_skips_duplicate_fingerprint(tmp_path):
@@ -246,7 +295,10 @@ def test_load_repo_context_snapshot_uses_repo_signal_provenance(tmp_path):
         }),
         encoding="utf-8",
     )
-    snap = engine.load_repo_context_snapshot(tmp_path)
+    snap = engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+    )
     assert "PROVENANCE source=repo-signal schema=symbol_index.v1" in snap
     assert f"repo={tmp_path.name}" in snap
     assert "mq-mcp/server.py" in snap
@@ -286,6 +338,31 @@ def test_load_repo_context_snapshot_omits_missing_and_outside_files(tmp_path):
     )
 
     assert engine.load_repo_context_snapshot(tmp_path) == ""
+
+
+def test_load_repo_context_snapshot_rejects_stale_and_future_exports(tmp_path):
+    engine = _load_engine()
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
+    ctx_dir.mkdir(parents=True)
+    (tmp_path / "tracked.py").write_text("", encoding="utf-8")
+
+    def _write(generated_at):
+        (ctx_dir / "symbol_index.json").write_text(
+            json.dumps({
+                "schema": "symbol_index.v1",
+                "repo_name": tmp_path.name,
+                "generated_at": generated_at,
+                "files": [{"path": "tracked.py"}],
+            }),
+            encoding="utf-8",
+        )
+
+    now = datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc)
+    _write("2026-08-10T11:59:59Z")
+    assert engine.load_repo_context_snapshot(tmp_path, now=now) == ""
+
+    _write("2026-08-11T12:05:01Z")
+    assert engine.load_repo_context_snapshot(tmp_path, now=now) == ""
 
 
 def test_validate_learn_record_requires_approval_for_storage():

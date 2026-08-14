@@ -17,6 +17,40 @@ import bridget_workflow as bw  # noqa: E402
 MODULE_SRC = (ROOT / "mq-mcp" / "bridget_workflow.py").read_text(encoding="utf-8")
 
 
+# --- Phase 4: preview-only delegation suggestions ---------------------------
+
+
+def test_delegation_reasons_detect_cross_repo_and_named_repos():
+    assert "cross-repo" in bw.delegation_reasons("Make this change cross-repo")
+    assert "cross-repo" in bw.delegation_reasons("Update mq-mcp and mq-agent")
+
+
+def test_delegation_reasons_detect_ordered_and_action_heavy_work():
+    assert "multi-step" in bw.delegation_reasons(
+        "First inspect the code, then update it, finally run validation"
+    )
+    assert "multi-step" in bw.delegation_reasons(
+        "Granska implementationen, uppdatera testerna och validera repot"
+    )
+
+
+def test_delegation_suggestion_is_quiet_for_simple_or_existing_workflow():
+    assert bw.build_delegation_suggestion("show git status") == ""
+    assert bw.build_delegation_suggestion('bridget --workflow "review and test"') == ""
+
+
+def test_delegation_suggestion_is_bounded_preview_only():
+    suggestion = bw.build_delegation_suggestion(
+        "Update mq-mcp and mq-agent, then test both repositories"
+    )
+
+    assert "Delegation suggestion" in suggestion
+    assert "preview only" in suggestion
+    assert "nothing started" in suggestion
+    assert "bridget --workflow" in suggestion
+    assert len(suggestion) <= bw.MAX_DELEGATION_SUGGESTION_CHARS
+
+
 # --- deterministic classification ------------------------------------------
 
 def test_classify_goal_matches_each_template():

@@ -35,8 +35,14 @@ are dry-run only. Persistent learning uses the separate Class C MCP tools
 Repository-specific provider calls require a matching repo-signal
 `symbol_index.v1` export. mq-mcp adds its schema, repository name, and
 generation timestamp as provenance and filters out missing or out-of-repo
-paths. Without verified context, mq-mcp returns a deterministic low-confidence
-refusal and does not call Ollama.
+paths. Exports older than 24 hours, more than five minutes in the future, or
+without a timezone are rejected. Without verified context, mq-mcp returns a
+deterministic low-confidence refusal and does not call Ollama. MCP previews
+show context status, source, and generation timestamp.
+
+mq-mcp does not run git as a fallback from learn extraction. Refresh the
+repo-signal export instead; keeping the provider unavailable until verified
+context exists preserves the learning layer's non-executing boundary.
 
 ## Allowed use
 

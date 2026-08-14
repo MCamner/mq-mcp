@@ -10,6 +10,10 @@ bridget "prompt"
 bridget -m gpt-5.5 "prompt"        # override model
 bridget --tools                     # list available MCP tools
 bridget --search "prompt"           # use vector store instead of tools
+bridget --symbol NAME               # CodeGraph source + caller/callee trail
+bridget --symbol NAME --file path   # disambiguate symbol to one file
+bridget --dependencies NAME         # bounded CodeGraph callers + callees
+bridget --graph-search "query"      # CodeGraph source + call-path exploration
 
 # Vector store Q&A
 ask "prompt"

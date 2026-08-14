@@ -171,6 +171,29 @@ def test_ollama_learn_extract_refuses_required_missing_repo_context():
     assert result["record"]["pattern_type"] == "unknown"
     assert result["record"]["confidence"] == "low"
     assert result["record"]["evidence"] == []
+    assert result["context_provenance"]["status"] == "missing"
+
+
+def test_ollama_learn_extract_returns_verified_context_provenance():
+    engine = _load_engine()
+    context = (
+        "PROVENANCE source=repo-signal schema=symbol_index.v1 "
+        "repo=mq-mcp generated_at=2026-08-11T10:00:00Z\nREADME.md"
+    )
+    result = engine.ollama_learn_extract(
+        "README.md contains the documented tool surface.",
+        repo_context=context,
+        require_repo_context=True,
+        http_post=lambda *a, **k: _OkResponse(),
+    )
+
+    assert result["context_provenance"] == {
+        "status": "verified",
+        "source": "repo-signal",
+        "schema": "symbol_index.v1",
+        "repo": "mq-mcp",
+        "generated_at": "2026-08-11T10:00:00Z",
+    }
 
 
 def test_ollama_learn_extract_rejects_prompt_injection_as_action():
