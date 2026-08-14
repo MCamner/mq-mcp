@@ -38,6 +38,14 @@ Learning must not:
 - store chain-of-thought
 - upload memory without explicit user action
 - write `AGENTS.md`, `CLAUDE.md`, or runbooks without explicit confirmation
+- treat Bridget conversation or session history as validation evidence
+- auto-promote a Bridget session into learning or mqobsidian
+
+Bridget's temporary session stores are defined in
+[`BRIDGET_MEMORY.md`](BRIDGET_MEMORY.md). They may provide conversational
+context or a preview suggestion only. A learning record still requires an
+independent evidence-producing review, test, diff, or validation step plus the
+existing explicit approval gate.
 
 ## Safety classes
 

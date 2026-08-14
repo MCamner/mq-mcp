@@ -481,6 +481,7 @@ def test_record_chat_session_no_project_pin(bridge, monkeypatch):
 def test_build_learn_suggestion_requires_evidence_tool(bridge):
     assert bridge.build_learn_suggestion("task", "answer", ["search_repo"]) == ""
     assert bridge.build_learn_suggestion("task", "answer", []) == ""
+    assert bridge.build_learn_suggestion("prior session", "context", ["git_status"]) == ""
 
 
 def test_build_learn_suggestion_is_bounded_and_never_claims_storage(bridge):

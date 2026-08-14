@@ -400,6 +400,22 @@ Exit with `exit`, `quit`, `q`, or Ctrl-D.
 Bridget may hold conversational context, but it is not an orchestrator: planning,
 retries, and workflow state stay in mq-agent and mq-mcp.
 
+Recent session memory is local, redacted, and temporary. Bridget injects at most
+three sessions, 500 characters per session, from the last seven days. Session
+text is context only: it is never evidence and never auto-promotes to learning
+or mqobsidian. The existing memory commands are:
+
+```bash
+bridget --history [N]            # inspect recent session summaries
+bridget --continue               # resume from the latest summary and repo state
+bridget --project [repo]         # inspect or set the separate project pin
+bridget --forget YYYY-MM-DD      # preview and approve deletion of one date
+bridget --learn-last [file]      # separate learn preview; approval required
+```
+
+See [`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the complete storage,
+retention, deletion, and evidence boundary.
+
 ## Bridget voice
 
 Bridget can optionally speak responses locally on macOS using the built-in `say` command. Disabled by default, no external TTS.

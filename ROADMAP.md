@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 2.5 memory boundary
+Next:      Bridget Phase 3.5 CodeGraph symbol lookup
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1707,9 +1707,9 @@ version labels. The next bounded work is to:
 5. [x] record learning provenance and inject only repo-, risk-, file-, and
    task-relevant lessons within a fixed prompt budget
 
-Per-day logs, date-scoped deletion, and bounded recent-session injection are
-implemented. The next bounded work is to document and verify the Phase 2.5
-memory boundary, including the absence of hidden persistence.
+Per-day logs, date-scoped deletion, bounded recent-session injection, and the
+explicit no-hidden-persistence boundary are implemented. The next bounded work
+is Bridget Phase 3.5 CodeGraph symbol lookup.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2116,10 +2116,10 @@ Remember recent conversations without becoming a knowledge system. `bridget_cont
 * [x] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
 * [x] Never persist API keys / secrets / credentials
 
-### Phase 2.5 — Memory boundary (planned)
+### Phase 2.5 — Memory boundary (done)
 
-* [ ] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
-* [ ] No hidden persistence
+* [x] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
+* [x] No hidden persistence: all session and project-pin paths are declared and normal session recording is covered by an exact-file-set test
 
 ### Phase 3 — Context awareness (done)
 

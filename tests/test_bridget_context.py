@@ -284,6 +284,21 @@ def test_record_redacts_session_text_in_all_stores(tmp_path):
     assert "<redacted>" in combined
 
 
+def test_record_creates_only_declared_temporary_session_files(tmp_path):
+    ctx = _ctx(tmp_path)
+
+    ctx.record("prompt", ["git_status"], "summary", project="mq-mcp")
+
+    created = {
+        path.relative_to(tmp_path).as_posix()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    }
+    daily = next(path for path in created if path.startswith("bridget_memory/sessions/"))
+    assert created == {"ctx.md", "history.jsonl", daily}
+    assert daily.endswith(".jsonl")
+
+
 def test_daily_log_failure_does_not_block_legacy_history(tmp_path):
     blocker = tmp_path / "blocker"
     blocker.write_text("x", encoding="utf-8")
