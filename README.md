@@ -416,6 +416,26 @@ bridget --learn-last [file]      # separate learn preview; approval required
 See [`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the complete storage,
 retention, deletion, and evidence boundary.
 
+For read-only structural lookup, Bridget delegates directly to CodeGraph's
+supported CLI without starting OpenAI or the MCP server:
+
+```bash
+bridget --symbol BridgetContext
+bridget --symbol build_system_content --file mq-mcp/bridge.py
+bridget --symbol handle_symbol --repo mq-mcp --file mq-mcp/codegraph_lookup.py
+bridget --dependencies build_system_content
+bridget --dependencies run_turn --direction callers --limit 10
+```
+
+`--repo` accepts a registered repository name or directory. `--file` resolves
+an ambiguous symbol within one repo-relative file. Output is CodeGraph's
+line-numbered source and caller/callee trail; it is context, not evidence, and
+is not persisted by Bridget.
+
+`--dependencies` delegates to `codegraph callers` and `codegraph callees`.
+The default direction is `both`; `--limit` accepts 1–100 and defaults to 20
+per direction. This output follows the same context-only boundary.
+
 ## Bridget voice
 
 Bridget can optionally speak responses locally on macOS using the built-in `say` command. Disabled by default, no external TTS.

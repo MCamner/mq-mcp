@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 3.5 CodeGraph symbol lookup
+Next:      Bridget Phase 3.5 CodeGraph hotspots / call-graph search
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1709,7 +1709,7 @@ version labels. The next bounded work is to:
 
 Per-day logs, date-scoped deletion, bounded recent-session injection, and the
 explicit no-hidden-persistence boundary are implemented. The next bounded work
-is Bridget Phase 3.5 CodeGraph symbol lookup.
+is Bridget Phase 3.5 CodeGraph hotspots / call-graph search.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2135,8 +2135,8 @@ Bridget starts informed.
 Use CodeGraph as context only — never a producer (no CodeGraph → memory-observation.v1). `--search` / `--search-global` already provide semantic repo search.
 
 * [x] Semantic repo search (`--search`, `--search-global`)
-* [ ] Symbol lookup
-* [ ] Dependency lookup
+* [x] Symbol lookup (`bridget --symbol NAME [--repo REPO] [--file PATH]`)
+* [x] Dependency lookup (`bridget --dependencies NAME [--direction callers|callees|both]`)
 * [ ] Hotspots / call-graph search
 * [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 

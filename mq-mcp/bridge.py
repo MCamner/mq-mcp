@@ -19,6 +19,7 @@ from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
 import bridget_workflow
 import codegraph_cochange
+import codegraph_lookup
 import codegraph_snapshot
 from learn_engine import redact_secrets
 
@@ -316,6 +317,8 @@ def usage() -> None:
   uv run python bridge.py --history [N]
   uv run python bridge.py --forget YYYY-MM-DD
   uv run python bridge.py --learn-last [review-path]
+  uv run python bridge.py --symbol NAME [--repo REPO] [--file PATH]
+  uv run python bridge.py --dependencies NAME [--repo REPO] [--direction callers|callees|both] [--limit N]
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
@@ -333,6 +336,8 @@ Examples:
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
   uv run python bridge.py --forget 2026-08-13 # preview + approval for one date
   uv run python bridge.py --learn-last         # redacted preview; asks before storage
+  uv run python bridge.py --symbol BridgetContext --file mq-mcp/bridget_context.py
+  uv run python bridge.py --dependencies build_system_content --direction both --limit 10
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
   uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots
@@ -1581,6 +1586,12 @@ if __name__ == "__main__":
     # writes only its own snapshot JSON); intercept before OpenAI or MCP.
     if codegraph_snapshot.maybe_handle_snapshot(sys.argv[1:]):
         sys.exit(0)
+
+    # Symbol lookup is a supported CodeGraph CLI delegation. It is read-only,
+    # synchronous, and preserves CodeGraph's stdout, stderr, and exit code.
+    _symbol_exit = codegraph_lookup.maybe_handle_lookup(sys.argv[1:])
+    if _symbol_exit is not None:
+        sys.exit(_symbol_exit)
 
     try:
         asyncio.run(run_bridge())
