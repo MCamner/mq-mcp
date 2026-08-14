@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 4 agent-boundary documentation
+Next:      Bridget Phase 6 real usage metrics
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1707,9 +1707,10 @@ version labels. The next bounded work is to:
 5. [x] record learning provenance and inject only repo-, risk-, file-, and
    task-relevant lessons within a fixed prompt budget
 
-Per-day logs, date-scoped deletion, bounded recent-session injection, and the
-explicit no-hidden-persistence boundary are implemented. The next bounded work
-is Bridget Phase 4 agent-boundary documentation.
+Per-day logs, date-scoped deletion, bounded recent-session injection, the
+explicit no-hidden-persistence boundary, and the Phase 4 agent-boundary
+documentation and Phase 5 terminal presence are implemented. The next bounded
+work is Bridget Phase 6 real usage metrics.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2140,19 +2141,19 @@ Use CodeGraph as context only — never a producer (no CodeGraph → memory-obse
 * [x] Hotspots / call-graph search (`bridget --graph-search QUERY [--max-files N]`)
 * [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 
-### Phase 4 — Delegation to mq-agent (mostly done)
+### Phase 4 — Delegation to mq-agent (done)
 
 Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint delegating to `mq-agent workflow`; holds no state, selects no tools).
 
 * [x] `bridget --workflow "<goal>"` delegates to mq-agent (`bridget_workflow.py`)
 * [x] Auto-suggest delegation for multi-step / cross-repo / complex tasks (preview only; never auto-starts)
-* [ ] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
+* [x] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
 
-### Phase 5 — Terminal presence (partial)
+### Phase 5 — Terminal presence (done)
 
 * [x] Voice mode (`--voice-on`, `bridget_voice.py`); spinner during thinking
-* [ ] Status indicators (thinking / responding / approval)
-* [ ] `bridget --quiet` (no visual effects)
+* [x] Status indicators (thinking / responding / approval)
+* [x] `bridget --quiet` (no visual effects)
 
 ### Phase 6 — Real usage metrics (planned)
 
@@ -2171,7 +2172,7 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 Phase 0  Boundaries          first
 Phase 3  Context awareness    ⭐
 Phase 1  Learn loop           ⭐
-Phase 4  mq-agent delegation  ⭐ (finish auto-suggest + boundary doc)
+Phase 4  mq-agent delegation  ⭐
 Phase 2  Working memory
 Phase 2.5 Memory boundary
 Phase 3.5 CodeGraph awareness

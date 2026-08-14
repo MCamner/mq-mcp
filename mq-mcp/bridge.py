@@ -45,10 +45,10 @@ class BridgetSpinner:
     FRAMES = "⠁⠃⠇⠏⠟⠿⠟⠏⠇⠃"
     INTERVAL = 0.08
 
-    def __init__(self, stream: Any = None) -> None:
+    def __init__(self, stream: Any = None, *, quiet: bool = False) -> None:
         self._stream = stream or sys.stdout
         isatty = getattr(self._stream, "isatty", None)
-        self._enabled = bool(isatty and isatty())
+        self._enabled = bool(not quiet and isatty and isatty())
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -74,13 +74,19 @@ class BridgetSpinner:
         idx = 0
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
-            self._stream.write(f"\r{frame}")
+            self._stream.write(self.render_frame(frame))
             self._stream.flush()
             idx += 1
             self._stop_event.wait(self.INTERVAL)
 
+    @staticmethod
+    def render_frame(frame: str) -> str:
+        """Return one compact, explicit thinking-status frame."""
+        return f"\r{frame} Bridget · thinking"
+
 
 DO_MODE = False  # Set True by parse_prompt() when --do is passed.
+QUIET_MODE = False  # Set True when --quiet removes terminal visual effects.
 _SPINNER: "BridgetSpinner | None" = None  # Set by run_bridge so the gate can pause it.
 
 
@@ -136,7 +142,8 @@ def render_gate_card(
     parts = [
         "",
         line,
-        "⚠️  Bridget vill köra ett verktyg",
+        "⚠️  Bridget · approval required",
+        "   Bridget vill köra ett verktyg",
         f"   Verktyg:    {tool_name}",
         f"   Klass:      {cls}",
         f"   Skriver:    {'ja' if meta.get('write') else 'nej'}",
@@ -279,13 +286,13 @@ BRIDGET_LOCAL_LINES = [
 ]
 
 
-def scramble_print(text: str, file: Any = None) -> None:
+def scramble_print(text: str, file: Any = None, *, animate: bool = True) -> None:
     out = file or sys.stdout
     # The decode animation relies on "\b" overwriting characters, which only
     # works on an interactive terminal. Piped/captured output (validate.sh,
     # CI, logs) must get plain text or the scramble bytes leak through.
     isatty = getattr(out, "isatty", None)
-    if not (isatty and isatty()):
+    if not animate or not (isatty and isatty()):
         out.write(text + "\n")
         out.flush()
         return
@@ -310,6 +317,7 @@ def usage() -> None:
   uv run python bridge.py "your prompt"
   uv run python bridge.py -m <model> "your prompt"
   uv run python bridge.py --chat ["your prompt"]
+  uv run python bridge.py --quiet [--chat] "your prompt"
   uv run python bridge.py --tools
   uv run python bridge.py --workflow "your goal" [-y]
   uv run python bridge.py --project [repo]
@@ -328,6 +336,7 @@ def usage() -> None:
 Examples:
   uv run python bridge.py "List the available MCP tools."
   uv run python bridge.py --chat                # interactive multi-turn session
+  uv run python bridge.py --quiet "Explain this repo." # no visual effects
   uv run python bridge.py -m o3 "Explain this repo."
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
@@ -354,7 +363,7 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
     ``mq-agent workflow``; it never selects tools or holds run state. Returns
     (goal, assume_yes).
     """
-    rest = [a for a in argv if a != "--workflow"]
+    rest = [a for a in argv if a not in {"--workflow", "--quiet"}]
     assume_yes = False
     kept: list[str] = []
     for a in rest:
@@ -378,6 +387,12 @@ def parse_learn_last_args(argv: list[str]) -> str:
 
 def parse_prompt() -> tuple[str, bool, bool, str, bool, bool, bool]:
     argv = sys.argv[1:]
+
+    quiet_mode = "--quiet" in argv
+    if quiet_mode:
+        argv = [a for a in argv if a != "--quiet"]
+        global QUIET_MODE
+        QUIET_MODE = True
 
     do_mode = "--do" in argv
     if do_mode:
@@ -593,7 +608,12 @@ def show_bridget_face() -> None:
     except OSError:
         tty = None
 
-    if available_images and shutil.which("chafa"):
+    if QUIET_MODE:
+        out = tty or sys.stdout
+        out.write("BRIDGET online.\n")
+        out.flush()
+        line = random.choice(BRIDGET_LOCAL_LINES)
+    elif available_images and shutil.which("chafa"):
         image = choose_bridget_image(available_images)
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_image_line, image)
@@ -611,7 +631,7 @@ def show_bridget_face() -> None:
         out.flush()
         line = random.choice(BRIDGET_LOCAL_LINES)
 
-    scramble_print(line, file=tty)
+    scramble_print(line, file=tty, animate=not QUIET_MODE)
     if tty:
         tty.close()
 
@@ -1002,7 +1022,22 @@ async def run_turn(
     )
 
 
-def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -> None:
+def write_terminal_status(state: str, stream: Any) -> None:
+    """Write one calm status line only to an interactive, non-quiet terminal."""
+    isatty = getattr(stream, "isatty", None)
+    if QUIET_MODE or not (isatty and isatty()):
+        return
+    stream.write(f"Bridget · {state}\n")
+    stream.flush()
+
+
+def print_response(
+    answer: str,
+    prefix_newline: bool = False,
+    out: Any = None,
+    *,
+    show_status: bool = True,
+) -> None:
     """Print Bridget's answer with the decode animation and optional voice.
 
     ``prefix_newline`` reproduces the leading blank line the tool-round path
@@ -1010,10 +1045,12 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
+    if show_status:
+        write_terminal_status("responding", stream)
     prefix = "\n👩 Bridget: " if prefix_newline else "👩 Bridget: "
     stream.write(prefix)
     stream.flush()
-    scramble_print(answer, file=stream)
+    scramble_print(answer, file=stream, animate=not QUIET_MODE)
     speak_if_enabled(answer)
 
 
@@ -1392,13 +1429,11 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         )
                         messages.append({"role": "user", "content": user_input})
 
-                        spinner = BridgetSpinner(stream=tty)
-                        if not do_mode:
-                            # As in one-shot, --do lets the approval gate own the
-                            # terminal; a concurrent spinner corrupts the y/n
-                            # prompt.
-                            spinner.start()
-                            _SPINNER = spinner
+                        spinner = BridgetSpinner(stream=tty, quiet=QUIET_MODE)
+                        # The approval gate pauses and resumes this same spinner,
+                        # so every mode can expose one consistent thinking state.
+                        _SPINNER = spinner
+                        spinner.start()
 
                         answer, called_tools, did_tool_round = await run_turn(
                             client=client,
@@ -1502,13 +1537,12 @@ async def run_bridge() -> None:
         tty = open("/dev/tty", "w")
     except Exception:
         tty = None
-    spinner = BridgetSpinner(stream=tty)
+    spinner = BridgetSpinner(stream=tty, quiet=QUIET_MODE)
     global _SPINNER
-    if not do_mode:
-        # In --do mode the interactive approval gate owns the terminal; a
-        # concurrent spinner corrupts the y/n prompt and its readline.
-        spinner.start()
-        _SPINNER = spinner
+    # The approval gate pauses and resumes this same spinner before it writes
+    # the mandatory card, so thinking never competes with the y/n prompt.
+    _SPINNER = spinner
+    spinner.start()
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -1547,7 +1581,14 @@ async def run_bridge() -> None:
             # and also gates session recording (the pre-refactor direct-answer
             # path returned without recording).
             spinner.stop()
-            print_response(answer, prefix_newline=did_tool_round)
+            # The launcher may capture stdout while /dev/tty remains visible.
+            # Put status on the terminal and keep the answer's existing channel.
+            write_terminal_status("responding", tty or sys.stdout)
+            print_response(
+                answer,
+                prefix_newline=did_tool_round,
+                show_status=False,
+            )
 
             if did_tool_round:
                 _pinned = bridget_runtime.get_project()
@@ -1574,6 +1615,12 @@ if __name__ == "__main__":
     reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
     if reconfigure_stdout:
         reconfigure_stdout(line_buffering=True)
+
+    # Normalize the presentation-only flag before synchronous command
+    # intercepts inspect argv. This keeps --quiet orthogonal to every command.
+    if "--quiet" in sys.argv[1:]:
+        QUIET_MODE = True
+        sys.argv = [sys.argv[0], *(arg for arg in sys.argv[1:] if arg != "--quiet")]
 
     # Workflow mode is fully synchronous and delegates to mq-agent; it needs
     # neither the OpenAI client nor the MCP session, so intercept it before the

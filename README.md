@@ -397,6 +397,20 @@ lifetime, and runs each turn through the same bounded multi-round tool loop as
 one-shot mode. Every `shell_exec` still passes the per-command y/n approval gate.
 Exit with `exit`, `quit`, `q`, or Ctrl-D.
 
+On an interactive terminal Bridget shows compact state feedback while it works:
+`thinking` in the spinner, `responding` before the answer, and `approval
+required` on a gated tool card. Use `--quiet` with one-shot or chat mode to
+disable the spinner, response decode animation, and Bridget image rendering:
+
+```bash
+bridget --quiet "Explain this repo."
+bridget --quiet --chat
+```
+
+Quiet mode changes presentation only. Answers, errors, tool results, and
+mandatory approval prompts remain visible, and tool safety behavior is
+unchanged.
+
 Bridget may hold conversational context, but it is not an orchestrator: planning,
 retries, and workflow state stay in mq-agent and mq-mcp.
 

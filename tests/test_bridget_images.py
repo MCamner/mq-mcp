@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import sys
 import types
 from pathlib import Path
@@ -50,3 +51,37 @@ def test_choose_bridget_image_does_not_repeat_when_possible(bridge, tmp_path):
         chosen = bridge.choose_bridget_image(images)
         assert chosen == images[1]
         bridge._last_bridget_image = images[0]
+
+
+def test_quiet_face_skips_image_renderer_and_animation(bridge, monkeypatch):
+    output = io.StringIO()
+    calls = []
+    monkeypatch.setattr(bridge, "QUIET_MODE", True)
+    monkeypatch.setattr(bridge, "find_bridget_images", lambda: [Path("bridget.jpg")])
+    monkeypatch.setattr(bridge.shutil, "which", lambda _name: "/usr/bin/chafa")
+    monkeypatch.setattr(
+        bridge.subprocess,
+        "run",
+        lambda *_args, **_kwargs: calls.append("subprocess"),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "scramble_print",
+        lambda text, file=None, animate=True: calls.append((text, animate)),
+    )
+
+    original_open = open
+
+    def no_tty(path, *args, **kwargs):
+        if path == "/dev/tty":
+            raise OSError("no tty")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", no_tty)
+    monkeypatch.setattr(bridge.sys, "stdout", output)
+
+    bridge.show_bridget_face()
+
+    assert output.getvalue() == "BRIDGET online.\n"
+    assert "subprocess" not in calls
+    assert calls and calls[-1][1] is False

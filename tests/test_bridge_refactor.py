@@ -117,6 +117,13 @@ class _FakeSession:
         )
 
 
+class _TTY(io.StringIO):
+    """Small interactive stream fake for terminal-status assertions."""
+
+    def isatty(self):
+        return True
+
+
 # --- discover_tools ------------------------------------------------------------
 
 
@@ -387,6 +394,61 @@ def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
     assert prompt == "list tools"
     assert chat_mode is False
     assert do_mode is False
+
+
+def test_parse_prompt_quiet_removes_flag_and_sets_mode(bridge, monkeypatch):
+    monkeypatch.setattr(
+        bridge.sys,
+        "argv",
+        ["bridge.py", "--quiet", "summarize", "README.md"],
+    )
+
+    prompt, *_rest = bridge.parse_prompt()
+
+    assert prompt == "summarize README.md"
+    assert bridge.QUIET_MODE is True
+
+
+def test_spinner_labels_thinking_and_quiet_disables_it(bridge):
+    stream = _TTY()
+
+    spinner = bridge.BridgetSpinner(stream=stream)
+    quiet_spinner = bridge.BridgetSpinner(stream=stream, quiet=True)
+
+    assert spinner.render_frame("⠁") == "\r⠁ Bridget · thinking"
+    assert spinner._enabled is True
+    assert quiet_spinner._enabled is False
+
+
+def test_print_response_shows_responding_status_on_tty(bridge, monkeypatch):
+    stream = _TTY()
+    monkeypatch.setattr(bridge, "QUIET_MODE", False)
+    monkeypatch.setattr(
+        bridge,
+        "scramble_print",
+        lambda text, file=None, animate=True: file.write(text + "\n"),
+    )
+
+    bridge.print_response("klart", out=stream)
+
+    assert stream.getvalue() == "Bridget · responding\n👩 Bridget: klart\n"
+
+
+def test_print_response_quiet_skips_status_and_animation(bridge, monkeypatch):
+    stream = _TTY()
+    calls = []
+    monkeypatch.setattr(bridge, "QUIET_MODE", True)
+    monkeypatch.setattr(
+        bridge,
+        "scramble_print",
+        lambda text, file=None, animate=True: calls.append(animate)
+        or file.write(text + "\n"),
+    )
+
+    bridge.print_response("klart", out=stream)
+
+    assert stream.getvalue() == "👩 Bridget: klart\n"
+    assert calls == [False]
 
 
 # --- Phase 4: record_chat_session ----------------------------------------------
