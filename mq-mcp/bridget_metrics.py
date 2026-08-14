@@ -28,6 +28,7 @@ METRIC_NAMES = (
     "context_hits",
 )
 DEFAULT_DAYS = 7
+DEFAULT_VALIDATION_DAYS = 30
 MAX_DAYS = 365
 
 
@@ -163,6 +164,52 @@ class BridgetMetrics:
         lines.append("Local aggregate counters only; no prompt or answer content.")
         return "\n".join(lines)
 
+    def validation_report(
+        self,
+        *,
+        days: int = DEFAULT_VALIDATION_DAYS,
+        now: date | datetime | None = None,
+    ) -> str:
+        """Render transparent Phase 7 signals without inferring usefulness."""
+        rows = self.daily(days=days, now=now)
+        totals = {name: sum(int(row[name]) for row in rows) for name in METRIC_NAMES}
+        active_days = sum(
+            1 for row in rows if any(int(row[name]) > 0 for name in METRIC_NAMES)
+        )
+        commands = totals["commands"]
+        suggestions = totals["learning_suggestions"]
+        status = (
+            "insufficient (no recorded usage)"
+            if active_days == 0
+            else "observation in progress"
+        )
+
+        def ratio(value: int, total: int) -> str:
+            percentage = value / total * 100 if total else 0.0
+            return f"{percentage:.1f}%"
+
+        return "\n".join(
+            (
+                f"Bridget Phase 7 validation — last {days} days",
+                f"Evidence status: {status}",
+                f"Active days: {active_days}/{days}",
+                f"Commands / sessions: {commands}/{totals['sessions']}",
+                "Delegation rate: "
+                f"{ratio(totals['delegations'], commands)} "
+                f"({totals['delegations']}/{commands} commands)",
+                "Learning acceptance: "
+                f"{ratio(totals['accepted_learning'], suggestions)} "
+                f"({totals['accepted_learning']}/{suggestions} suggestions)",
+                "Context reuse: "
+                f"{totals['history_hits'] + totals['context_hits']} hits "
+                f"({totals['history_hits']} history, "
+                f"{totals['context_hits']} project/repo)",
+                "Usefulness cannot be established from aggregate counters alone.",
+                "Need for more memory: not established.",
+                "Complete the qualitative review in docs/BRIDGET_VALIDATION.md.",
+            )
+        )
+
 
 METRICS = BridgetMetrics()
 
@@ -188,4 +235,28 @@ def maybe_handle_metrics_command(
         print(f"ERROR: usage: bridget --metrics [1-{MAX_DAYS}]")
         return True
     print(metrics.dashboard(days=days))
+    return True
+
+
+def maybe_handle_validation_command(
+    argv: list[str],
+    *,
+    metrics: BridgetMetrics = METRICS,
+) -> bool:
+    """Handle ``bridget --validation [N]`` without starting OpenAI or MCP."""
+    if "--validation" not in argv:
+        return False
+    if not 1 <= len(argv) <= 2 or argv[0] != "--validation":
+        print(f"ERROR: usage: bridget --validation [1-{MAX_DAYS}]")
+        return True
+    days = DEFAULT_VALIDATION_DAYS
+    if len(argv) == 2:
+        try:
+            days = int(argv[1])
+        except ValueError:
+            days = 0
+    if not 1 <= days <= MAX_DAYS:
+        print(f"ERROR: usage: bridget --validation [1-{MAX_DAYS}]")
+        return True
+    print(metrics.validation_report(days=days))
     return True

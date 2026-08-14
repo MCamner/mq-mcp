@@ -29,6 +29,9 @@ inspect daily counts and totals. The JSONL store is append-only until the user
 removes it; the dashboard reads at most the requested 365-day window. Set
 `BRIDGET_METRICS_DISABLED=1` to disable collection. Repository validation sets
 this automatically so smoke tests are not recorded as real usage.
+`bridget --validation [1-365]` reads the same counters and adds no persistence;
+its limits and qualitative review protocol are documented in
+[`BRIDGET_VALIDATION.md`](BRIDGET_VALIDATION.md).
 
 Live `--chat` messages exist only in process memory. Bridget records one redacted session summary when the chat exits; it does not persist every turn. Prompt injection uses at most three recorded sessions, at most 500 characters each, and nothing older than seven days.
 
@@ -54,6 +57,7 @@ bridget --project [repo]         # inspect or set the separate project pin
 bridget --forget YYYY-MM-DD      # preview, approve, then delete one date
 bridget --learn-last [file]      # separate redacted learn preview and approval
 bridget --metrics [N]            # local content-free daily counters
+bridget --validation [N]         # Phase 7 aggregate evidence summary
 ```
 
 `--forget` removes the selected date from all three session surfaces. It does not touch learning, reviews, semantic memory, mqobsidian, the project pin, or aggregate metrics.

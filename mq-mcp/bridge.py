@@ -327,6 +327,7 @@ def usage() -> None:
   uv run python bridge.py --forget YYYY-MM-DD
   uv run python bridge.py --learn-last [review-path]
   uv run python bridge.py --metrics [N]
+  uv run python bridge.py --validation [N]
   uv run python bridge.py --symbol NAME [--repo REPO] [--file PATH]
   uv run python bridge.py --dependencies NAME [--repo REPO] [--direction callers|callees|both] [--limit N]
   uv run python bridge.py --graph-search QUERY [--repo REPO] [--max-files N]
@@ -349,6 +350,7 @@ Examples:
   uv run python bridge.py --forget 2026-08-13 # preview + approval for one date
   uv run python bridge.py --learn-last         # redacted preview; asks before storage
   uv run python bridge.py --metrics 7          # local aggregate outcome counters
+  uv run python bridge.py --validation 30      # Phase 7 evidence summary
   uv run python bridge.py --symbol BridgetContext --file mq-mcp/bridget_context.py
   uv run python bridge.py --dependencies build_system_content --direction both --limit 10
   uv run python bridge.py --graph-search "call-graph hotspots in Bridget" --max-files 5
@@ -1678,6 +1680,11 @@ if __name__ == "__main__":
 
     # Metrics are local aggregate counters and need neither OpenAI nor MCP.
     if bridget_metrics.maybe_handle_metrics_command(sys.argv[1:]):
+        sys.exit(0)
+
+    # Validation summarizes those same content-free counters and makes no
+    # automatic usefulness or memory-expansion decision.
+    if bridget_metrics.maybe_handle_validation_command(sys.argv[1:]):
         sys.exit(0)
 
     # Workflow mode is fully synchronous and delegates to mq-agent; it needs

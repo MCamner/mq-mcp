@@ -128,3 +128,56 @@ def test_command_handler_rejects_invalid_usage(tmp_path, capsys):
         ["--metrics", "0"], metrics=metrics
     ) is True
     assert "ERROR: usage: bridget --metrics [1-365]" in capsys.readouterr().out
+
+
+def test_validation_report_is_explicit_when_no_evidence_exists(tmp_path):
+    metrics_module = load_module()
+    metrics = metrics_module.BridgetMetrics(tmp_path / "bridget-metrics.jsonl")
+
+    output = metrics.validation_report(days=30, now=date(2026, 8, 14))
+
+    assert "Bridget Phase 7 validation — last 30 days" in output
+    assert "Evidence status: insufficient (no recorded usage)" in output
+    assert "Active days: 0/30" in output
+    assert "Usefulness cannot be established from aggregate counters alone." in output
+    assert "Need for more memory: not established." in output
+
+
+def test_validation_report_calculates_only_transparent_ratios(tmp_path):
+    metrics_module = load_module()
+    metrics = metrics_module.BridgetMetrics(tmp_path / "bridget-metrics.jsonl")
+    metrics.record("sessions", count=4, now=date(2026, 8, 13))
+    metrics.record("commands", count=8, now=date(2026, 8, 13))
+    metrics.record("delegations", count=2, now=date(2026, 8, 13))
+    metrics.record("learning_suggestions", count=4, now=date(2026, 8, 14))
+    metrics.record("accepted_learning", count=1, now=date(2026, 8, 14))
+    metrics.record("history_hits", count=3, now=date(2026, 8, 14))
+    metrics.record("context_hits", count=2, now=date(2026, 8, 14))
+
+    output = metrics.validation_report(days=2, now=date(2026, 8, 14))
+
+    assert "Evidence status: observation in progress" in output
+    assert "Active days: 2/2" in output
+    assert "Delegation rate: 25.0% (2/8 commands)" in output
+    assert "Learning acceptance: 25.0% (1/4 suggestions)" in output
+    assert "Context reuse: 5 hits (3 history, 2 project/repo)" in output
+
+
+def test_validation_command_accepts_optional_day_count(tmp_path, capsys):
+    metrics_module = load_module()
+    metrics = metrics_module.BridgetMetrics(tmp_path / "bridget-metrics.jsonl")
+
+    assert metrics_module.maybe_handle_validation_command(
+        ["--validation", "30"], metrics=metrics
+    ) is True
+    assert "last 30 days" in capsys.readouterr().out
+
+
+def test_validation_command_rejects_invalid_usage(tmp_path, capsys):
+    metrics_module = load_module()
+    metrics = metrics_module.BridgetMetrics(tmp_path / "bridget-metrics.jsonl")
+
+    assert metrics_module.maybe_handle_validation_command(
+        ["--validation", "366"], metrics=metrics
+    ) is True
+    assert "ERROR: usage: bridget --validation [1-365]" in capsys.readouterr().out

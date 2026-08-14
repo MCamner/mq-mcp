@@ -418,6 +418,7 @@ history/context hits. Inspect the last seven days or choose a 1–365 day window
 ```bash
 bridget --metrics
 bridget --metrics 30
+bridget --validation 30
 ```
 
 The metrics store contains only a date, a fixed counter name, and an integer
@@ -426,6 +427,12 @@ arguments, or session identifiers. See
 [`docs/BRIDGET_MEMORY.md`](docs/BRIDGET_MEMORY.md) for the exact local path.
 Set `BRIDGET_METRICS_DISABLED=1` to disable collection; validation does this
 automatically so smoke tests do not pollute real usage counts.
+
+`bridget --validation [1-365]` summarizes the same content-free counters for
+Phase 7. It reports transparent usage ratios but does not infer usefulness or
+recommend more memory automatically. Complete the qualitative review in
+[`docs/BRIDGET_VALIDATION.md`](docs/BRIDGET_VALIDATION.md) before closing the
+phase.
 
 Bridget may hold conversational context, but it is not an orchestrator: planning,
 retries, and workflow state stay in mq-agent and mq-mcp.

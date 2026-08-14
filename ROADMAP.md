@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 7 long-term validation
+Next:      Complete Bridget Phase 7 real-usage observation and review
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -2161,9 +2161,13 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 * [x] Accepted-learning, history-hit, context-hit counts
 * [x] Simple dashboard (helped / delegated / suggested / accepted)
 
-### Phase 7 — Long-term validation (planned)
+### Phase 7 — Long-term validation (in progress)
 
-* [ ] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [x] Add a deterministic, content-free validation report over Phase 6 counters
+* [x] Document quantitative signals, qualitative questions, and memory decision boundaries
+* [ ] Gather a meaningful real-usage observation window
+* [ ] Review whether sessions, lessons, CodeGraph, and delegation were useful
+* [ ] Decide from reviewed evidence whether more memory is needed
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 
 ### Recommended build order
