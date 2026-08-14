@@ -1087,6 +1087,17 @@ def print_learn_suggestion(
     stream.flush()
 
 
+def print_delegation_suggestion(prompt: str, *, out: Any = None) -> bool:
+    """Print a preview-only mq-agent recommendation; start nothing."""
+    suggestion = bridget_workflow.build_delegation_suggestion(prompt)
+    if not suggestion:
+        return False
+    stream = out or sys.stdout
+    stream.write(f"\n{suggestion}\n")
+    stream.flush()
+    return True
+
+
 def redact_learn_preview(text: str) -> str:
     """Return a bounded preview with the learn layer's secret masking applied."""
     redacted = str(redact_secrets(text))
@@ -1329,6 +1340,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 all_called_tools: list[str] = []
                 last_prompt = ""
                 last_answer = ""
+                delegation_suggested = False
 
                 try:
                     pending = initial_prompt.strip()
@@ -1401,6 +1413,11 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         _SPINNER = None
 
                         print_response(answer, prefix_newline=did_tool_round, out=out)
+                        if not delegation_suggested:
+                            delegation_suggested = print_delegation_suggestion(
+                                user_input,
+                                out=out,
+                            )
 
                         # Accumulate whole-session state for the single Phase-4
                         # record at exit: the latest exchange plus every tool
@@ -1546,6 +1563,8 @@ async def run_bridge() -> None:
                     branch=_proj_branch,
                 )
                 print_learn_suggestion(prompt, answer, called_tools, out=tty)
+
+            print_delegation_suggestion(prompt, out=tty)
 
             if tty:
                 tty.close()

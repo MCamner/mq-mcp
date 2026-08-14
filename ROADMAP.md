@@ -38,7 +38,7 @@ Current project phase:
 Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
 On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
            Ruff baseline and consolidated mq-learn MCP contract
-Next:      Bridget Phase 4 auto-suggest delegation
+Next:      Bridget Phase 4 agent-boundary documentation
 Later:     remaining explicitly uncompleted milestones below
 ```
 
@@ -1709,7 +1709,7 @@ version labels. The next bounded work is to:
 
 Per-day logs, date-scoped deletion, bounded recent-session injection, and the
 explicit no-hidden-persistence boundary are implemented. The next bounded work
-is Bridget Phase 4 auto-suggest delegation for multi-step work.
+is Bridget Phase 4 agent-boundary documentation.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2145,7 +2145,7 @@ Use CodeGraph as context only — never a producer (no CodeGraph → memory-obse
 Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint delegating to `mq-agent workflow`; holds no state, selects no tools).
 
 * [x] `bridget --workflow "<goal>"` delegates to mq-agent (`bridget_workflow.py`)
-* [ ] Auto-suggest delegation for multi-step / cross-repo / complex tasks
+* [x] Auto-suggest delegation for multi-step / cross-repo / complex tasks (preview only; never auto-starts)
 * [ ] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
 
 ### Phase 5 — Terminal presence (partial)

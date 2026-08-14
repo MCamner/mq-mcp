@@ -479,6 +479,13 @@ orchestration and state live in mq-agent. A workflow cannot start another
 workflow (`MQ_WORKFLOW_DEPTH` guard), and `run_mqlaunch_*` tools may not start
 `mqlaunch flow`.
 
+For ordinary prompts, Bridget may print one bounded delegation suggestion when
+the request is clearly multi-step, cross-repository, or explicitly complex.
+This is a deterministic preview only: it does not call mq-agent, select tools,
+create workflow state, or start a run. The user must invoke the displayed
+`bridget --workflow "<goal>"` command, after which the existing plan and approval
+gates apply. Interactive chat prints at most one such suggestion per session.
+
 ## Validation
 
 Run the local validation script from the repository root:

@@ -514,6 +514,18 @@ def test_print_learn_suggestion_emits_one_preview(bridge):
     assert out.getvalue().count("Reusable learn candidate") == 1
 
 
+def test_print_delegation_suggestion_emits_preview_without_starting_workflow(bridge):
+    out = io.StringIO()
+
+    emitted = bridge.print_delegation_suggestion(
+        "Update mq-mcp and mq-agent, then validate both",
+        out=out,
+    )
+
+    assert emitted is True
+    assert out.getvalue().count("Delegation suggestion") == 1
+
+
 def test_parse_learn_last_args_accepts_optional_review_path(bridge):
     assert bridge.parse_learn_last_args(["--learn-last"]) == ""
     assert bridge.parse_learn_last_args(["--learn-last", "mq-mcp/server.py"]) == (
