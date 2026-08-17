@@ -19,6 +19,14 @@ jobs:
 
       - name: Python version in install.md is not 3.14
         run: |
+          # The file has to exist before its absence can mean anything. Without
+          # this, a missing or renamed docs/install.md made grep exit 2, the if
+          # fall through, and the step print PASS — a check that reported clean
+          # about a file it never read.
+          if [[ ! -f docs/install.md ]]; then
+            echo "FAIL: docs/install.md is missing — nothing was checked"
+            exit 1
+          fi
           if grep -q '3\.14' docs/install.md; then
             echo "FAIL: docs/install.md still references Python 3.14"
             exit 1
@@ -27,13 +35,24 @@ jobs:
 
       - name: No stale tool counts (13 tools, 14 tools)
         run: |
+          # Every input is confirmed present first. `2>/dev/null || true`
+          # silences the difference between "searched and found nothing" and
+          # "there was nothing to search", and the step reported PASS for both.
+          MISSING=""
+          for path in README.md docs TOOL_INDEX.md SAFETY_MODEL.md; do
+            [[ -e "$path" ]] || MISSING="$MISSING $path"
+          done
+          if [[ -n "$MISSING" ]]; then
+            echo "FAIL: missing input, so nothing was checked:$MISSING"
+            exit 1
+          fi
           STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>/dev/null || true)
           if [[ -n "$STALE" ]]; then
             echo "FAIL: Stale tool count found:"
             echo "$STALE"
             exit 1
           fi
-          echo "PASS: No stale tool count references"
+          echo "PASS: No stale tool count references, across 4 input paths"
 
       - name: VERSION matches pyproject.toml
         run: |
