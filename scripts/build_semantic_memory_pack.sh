@@ -89,6 +89,8 @@ for f in \
   docs/context-export-contract.md \
   docs/agent-entrypoint-lineage.md \
   docs/truth-export.md \
+  docs/TRUTH_SURFACES.md \
+  docs/FEEDBACK_LOOP.md \
   docs/workflow-observations.md \
   docs/roadmap-token-reduction.md
 do
