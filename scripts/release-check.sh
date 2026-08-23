@@ -156,7 +156,7 @@ else
   fail "README release link does not reference version $VERSION"
 fi
 
-if grep -qE "^## ${VERSION}" CHANGELOG.md; then
+if grep -qE "^## (\[)?${VERSION}(\])?" CHANGELOG.md; then
   pass "CHANGELOG has entry for version $VERSION"
 else
   fail "CHANGELOG missing entry for version $VERSION (run: ./release.sh --init-changelog $VERSION)"
