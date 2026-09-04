@@ -7,6 +7,9 @@
 set -euo pipefail
 
 MQ_MCP_HOME="${MQ_MCP_HOME:-$HOME/mq-mcp}"
+KEYCHAIN_SERVICE="${MQ_OPENAI_KEYCHAIN_SERVICE:-mq-openai-api-key}"
+KEYCHAIN_ACCOUNT="${MQ_OPENAI_KEYCHAIN_ACCOUNT:-${USER:-$(id -un)}}"
+SECURITY_BIN="${MQ_SECURITY_BIN:-/usr/bin/security}"
 
 if [[ ! -d "$MQ_MCP_HOME/mq-mcp" ]]; then
   echo "ERROR: mq-mcp app folder not found: $MQ_MCP_HOME/mq-mcp"
@@ -24,12 +27,24 @@ fi
 
 cd "$MQ_MCP_HOME/mq-mcp"
 
+# .env remains available for non-secret local configuration (repo allowlists,
+# vector-store IDs, etc.), but it is not an OpenAI credential source. Preserve a
+# process-scoped key inherited from a trusted launcher; otherwise remove any key
+# sourced from .env so Keychain remains the canonical local store.
+_inherited_openai_key="${OPENAI_API_KEY:-}"
 if [[ -f ".env" ]]; then
   set -a
   # shellcheck source=/dev/null
   source .env
   set +a
 fi
+if [[ -n "$_inherited_openai_key" ]]; then
+  export OPENAI_API_KEY="$_inherited_openai_key"
+else
+  unset OPENAI_API_KEY
+fi
+_inherited_openai_key=''
+unset _inherited_openai_key
 
 # Handle goto triggers locally — no API call needed.
 # Outputs CD:/path so the _bridget shell wrapper in .zshrc can cd there.
@@ -72,6 +87,24 @@ if [[ -n "$_goto_name" ]]; then
   exit 1
 fi
 
+# If a trusted parent (for example VS Code MQ) did not already inject the key,
+# read it from macOS Keychain. Missing Keychain credentials are deliberately not
+# fatal here: local-only Bridget commands such as --tools must continue to work
+# without OPENAI_API_KEY. Model-backed paths will retain their existing OpenAI
+# missing-credential error when neither source is available.
+if [[ -z "${OPENAI_API_KEY:-}" && -x "$SECURITY_BIN" ]]; then
+  _key="$($SECURITY_BIN find-generic-password \
+    -a "$KEYCHAIN_ACCOUNT" \
+    -s "$KEYCHAIN_SERVICE" \
+    -w 2>/dev/null || true)"
+  if [[ -n "$_key" ]]; then
+    export OPENAI_API_KEY="$_key"
+  fi
+  _key=''
+  unset _key
+fi
+
 # Pass the original args through unchanged so flags (--do, --search, -m …)
-# survive as separate argv elements. $prompt above is only for goto detection.
+# survive as separate argv elements. The secret is inherited in the process
+# environment; it is never added to argv.
 exec env PYTHONUNBUFFERED=1 uv run python -u bridge.py "$@"
