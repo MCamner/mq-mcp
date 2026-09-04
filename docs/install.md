@@ -20,9 +20,10 @@ cd mq-mcp
 
 The installer:
 
-- creates `mq-mcp/.env` from `.env.example` when missing
+- creates `mq-mcp/.env` from `.env.example` when missing for non-secret local configuration
 - runs `uv sync`
 - installs the local `mq-mcp` command with `uv tool install`
+- installs the `bridget` launcher in `~/bin`
 - runs `mq-mcp doctor`
 
 ## Local Commands
@@ -53,17 +54,44 @@ uv run python bridge.py --tools
 uv run mcp run server.py
 ```
 
-## Environment
+## Environment and OpenAI credentials
 
-The installer creates `mq-mcp/.env` if it does not already exist.
-
-Edit it before using bridge prompts that need an API key:
+The installer creates `mq-mcp/.env` if it does not already exist. Use that file
+only for non-secret local configuration such as allowed paths and repo lists:
 
 ```bash
-OPENAI_API_KEY=your_api_key_here
 MQ_MCP_ALLOWED_PATHS=""
 MQ_MCP_LOCAL_REPOS=""
 ```
+
+Do not store `OPENAI_API_KEY` in `.env`. For the installed `bridget` command,
+macOS Keychain is the canonical local credential store. If a trusted parent
+process already supplies `OPENAI_API_KEY`, Bridget preserves that process-scoped
+value. Otherwise the launcher reads the key from this Keychain item:
+
+```text
+service: mq-openai-api-key
+account: $USER
+```
+
+Create or replace the item interactively without putting the key on the command
+line:
+
+```bash
+/usr/bin/security add-generic-password \
+  -a "$USER" \
+  -s "mq-openai-api-key" \
+  -l "MQ OpenAI API Key" \
+  -U \
+  -w
+```
+
+At the `password for new item:` prompt, enter the OpenAI API key. The installed
+launcher reads it only when needed and passes it to Bridget through the child
+process environment; it is not written to the repo or added to command argv.
+
+`bridget --tools` and other local-only Bridget paths still work without an API
+key.
 
 Do not commit real API keys, tokens, private paths, or secrets.
 
