@@ -49,7 +49,8 @@ unset _inherited_openai_key
 # Handle goto triggers locally — no API call needed.
 # Outputs CD:/path so the _bridget shell wrapper in .zshrc can cd there.
 prompt="$*"
-_lower="${prompt,,}"
+# macOS still ships Bash 3.2, so avoid Bash 4's ${var,,} lowercase syntax.
+_lower="$(printf '%s' "$prompt" | tr '[:upper:]' '[:lower:]')"
 _goto_name=""
 case "$_lower" in
   "gå till "*)    _goto_name="${_lower#gå till }" ;;
@@ -76,7 +77,8 @@ if [[ -n "$_goto_name" ]]; then
   for _pair in "${_pairs[@]}"; do
     _n="${_pair%%:*}"
     _path="${_pair#*:}"
-    if [[ "${_n,,}" == "${_goto_name,,}" ]]; then
+    _n_lower="$(printf '%s' "$_n" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$_n_lower" == "$_goto_name" ]]; then
       echo "CD:$_path"
       exit 0
     fi
