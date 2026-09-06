@@ -275,18 +275,101 @@ def test_install_type_follows_pep_610_and_never_the_path(identity_module, direct
     assert identity_module.install_source(direct_url)[0] == expected
 
 
-def test_a_recorded_vcs_commit_is_preferred_over_the_working_tree(identity_module, checkout):
-    """PEP 610 says what the build was made from. That outranks whatever the
-    checkout happens to be at now."""
-    recorded = "b" * 40
+def test_installed_metadata_never_speaks_for_code_it_cannot_be_shown_to_own(
+    identity_module, checkout
+):
+    """The dangerous case, because the result would look perfectly valid.
+
+    `distribution("mq-mcp")` finds a distribution by *name*. Nothing says it is
+    the copy this process imported: a venv can hold an installed mq-mcp while
+    the running module was loaded from a checkout somewhere else. Believing its
+    commit would freeze a well-formed, schema-valid identity naming code this
+    process never ran — a lie no consumer could detect.
+    """
+    head = _git(checkout, "rev-parse", "HEAD")
+    someone_elses = "b" * 40
 
     captured = identity_module.capture(
         checkout,
-        direct_url={"url": "file:///x", "vcs_info": {"vcs": "git", "commit_id": recorded}},
+        direct_url={"url": "file:///elsewhere", "vcs_info": {"vcs": "git", "commit_id": someone_elses}},
     )
 
-    assert captured["commit"] == recorded
-    assert captured["commit"] != _git(checkout, "rev-parse", "HEAD")
+    assert captured["commit"] == head
+    assert captured["commit"] != someone_elses
+
+
+@pytest.mark.parametrize(
+    ("metadata", "module_path", "location", "expected"),
+    [
+        # An editable install records the directory it points at; the imported
+        # module has to be inside it.
+        ({"url": "file:///src/mq-mcp", "dir_info": {"editable": True}}, "/src/mq-mcp/mq-mcp", None, True),
+        ({"url": "file:///src/other", "dir_info": {"editable": True}}, "/src/mq-mcp/mq-mcp", None, False),
+        # Anything else has to live where the distribution was installed.
+        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/venv/lib/site-packages/mq_mcp", "/venv/lib/site-packages", True),
+        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/src/mq-mcp/mq-mcp", "/venv/lib/site-packages", False),
+        # No location to check against proves nothing.
+        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/anywhere", None, False),
+        (None, "/anywhere", "/anywhere", False),
+    ],
+)
+def test_metadata_must_be_tied_to_the_imported_code(
+    identity_module, metadata, module_path, location, expected
+):
+    assert (
+        identity_module.describes_imported_code(
+            metadata, Path(module_path), Path(location) if location else None
+        )
+        is expected
+    )
+
+
+def test_a_checkout_keeps_its_own_install_type_out_of_a_stranger_s_metadata(
+    identity_module, checkout
+):
+    """An editable record pointing somewhere else does not make this editable."""
+    captured = identity_module.capture(
+        checkout,
+        direct_url={"url": "file:///elsewhere", "dir_info": {"editable": True}},
+    )
+
+    assert captured["install_type"] == "unknown"
+    assert captured["source_path"] == str(checkout)
+
+
+# --- a record that cannot be valid is not sent ----------------------------
+
+
+def test_a_commit_without_a_version_degrades_instead_of_going_invalid(
+    identity_module, validator, tmp_path
+):
+    """A readable HEAD beside an unreadable version is a real observation, and
+    the contract has no level for it: `unknown` requires both to be null. The
+    record is what travels, so the identity degrades rather than shipping
+    something a consumer would reject."""
+    root = tmp_path / "versionless"
+    root.mkdir()
+    _git(root, "init", "-q", "-b", "main")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "config", "user.name", "test")
+    (root / "code").write_text("x", encoding="utf-8")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-q", "-m", "A")
+    assert _git(root, "rev-parse", "HEAD")
+
+    captured = identity_module.capture(root)
+
+    validator.validate(captured)
+    assert captured["identity_quality"] == "unknown"
+    assert captured["version"] is None
+    assert captured["commit"] is None
+
+
+@pytest.mark.parametrize("recorded", ["not-a-sha", "X" * 40, "abc", "ABCDEF1", ""])
+def test_a_commit_that_is_not_a_git_sha_is_not_a_commit(identity_module, recorded):
+    """PEP 610 covers more version control systems than git; this contract's
+    `commit` is a hex SHA. A revision it cannot express is absent, not coerced."""
+    assert identity_module.usable_commit(recorded) is None
 
 
 # --- the route ------------------------------------------------------------

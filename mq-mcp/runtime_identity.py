@@ -23,6 +23,7 @@ missing commit is a weaker identity, not a gap to be closed with a guess.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -46,6 +47,11 @@ REPO_ROOT = APP_ROOT.parent
 #: which is what an uninstalled runtime legitimately has.
 _UNSET = object()
 
+#: What this contract accepts as a commit. PEP 610 covers version control
+#: systems whose revisions are not hex SHAs; a revision the contract cannot
+#: express is absent rather than coerced into the field.
+_COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
+
 #: Seconds a git probe may take. Identity is observability: a probe that hangs
 #: would delay process start, and a probe that fails is simply an unknown.
 PROBE_TIMEOUT = 5
@@ -67,14 +73,53 @@ def _probe(root: Path, *args: str) -> str | None:
     return result.stdout.strip() or None if result.returncode == 0 else None
 
 
-def installation_metadata() -> dict[str, Any] | None:
-    """PEP 610 installation metadata, when this runtime was installed at all.
+def _within(child: Path, parent: Path) -> bool:
+    try:
+        return child == parent or child.is_relative_to(parent)
+    except (OSError, ValueError):
+        return False
+
+
+def describes_imported_code(
+    metadata: Any, module_path: Path, location: Path | None
+) -> bool:
+    """Whether PEP 610 metadata can speak for the code that was imported.
+
+    `distribution("mq-mcp")` finds a distribution by *name*, and a name is not
+    a subject. A virtualenv can hold an installed mq-mcp while the running
+    module was loaded from a checkout somewhere else; believing that
+    distribution's commit would freeze a well-formed, schema-valid identity
+    naming code this process never ran. Nothing downstream could detect it,
+    because nothing about the record would look wrong.
+
+    So the metadata has to contain the imported module before it may describe
+    it: an editable install through the directory it records, anything else
+    through the location it was installed into.
+    """
+    if not isinstance(metadata, dict):
+        return False
+    dir_info = metadata.get("dir_info")
+    if isinstance(dir_info, dict) and dir_info.get("editable") is True:
+        raw_url = metadata.get("url")
+        if not isinstance(raw_url, str) or not raw_url:
+            return False
+        recorded = unquote(urlparse(raw_url).path)
+        return bool(recorded) and _within(module_path, Path(recorded))
+    return location is not None and _within(module_path, location)
+
+
+def installation_metadata(module_path: Path | None = None) -> dict[str, Any] | None:
+    """PEP 610 metadata for the distribution this code was imported from.
 
     mq-mcp normally runs from a checkout and is not a distribution, so this is
-    normally None. That is a fact about the runtime, not a failure.
+    normally None. That is a fact about the runtime, not a failure. A
+    distribution that merely shares the name is also None: see
+    `describes_imported_code`.
     """
+    subject = module_path or APP_ROOT
     try:
-        raw = distribution(COMPONENT).read_text("direct_url.json")
+        dist = distribution(COMPONENT)
+        raw = dist.read_text("direct_url.json")
     except (PackageNotFoundError, OSError, ValueError):
         return None
     if not raw:
@@ -83,7 +128,13 @@ def installation_metadata() -> dict[str, Any] | None:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
         return None
-    return parsed if isinstance(parsed, dict) else None
+    if not isinstance(parsed, dict):
+        return None
+    try:
+        location = Path(str(dist.locate_file(""))).resolve()
+    except (OSError, ValueError):
+        location = None
+    return parsed if describes_imported_code(parsed, subject, location) else None
 
 
 def install_source(metadata: Any) -> tuple[str, str | None]:
@@ -127,13 +178,17 @@ def recorded_commit(metadata: Any) -> str | None:
     vcs_info = metadata.get("vcs_info")
     if not isinstance(vcs_info, dict):
         return None
-    commit = vcs_info.get("commit_id")
-    return commit if isinstance(commit, str) and commit else None
+    return usable_commit(vcs_info.get("commit_id"))
+
+
+def usable_commit(value: Any) -> str | None:
+    """A commit this contract can carry, or None."""
+    return value if isinstance(value, str) and _COMMIT.match(value) else None
 
 
 def head_commit(root: Path) -> str | None:
     """The commit the checkout is on. Never a tag, never a remote ref."""
-    return _probe(root, "rev-parse", "--verify", "HEAD")
+    return usable_commit(_probe(root, "rev-parse", "--verify", "HEAD"))
 
 
 def declared_version(root: Path) -> str | None:
@@ -175,11 +230,26 @@ def capture(root: Path | str | None = None, *, direct_url: Any = _UNSET) -> dict
     rest of its life. Nothing here reads anything again later.
     """
     checkout = Path(root) if root is not None else REPO_ROOT
-    metadata = installation_metadata() if direct_url is _UNSET else direct_url
+    module_path = APP_ROOT if root is None else Path(checkout)
+    if direct_url is _UNSET:
+        # Looked up, and already tied to this module by the lookup itself.
+        metadata = installation_metadata(module_path)
+    else:
+        # Supplied without any evidence of where it was installed, so only the
+        # editable form — which records its own directory — can tie itself.
+        metadata = direct_url if describes_imported_code(direct_url, module_path, None) else None
 
     install_type, source = install_source(metadata)
     version = declared_version(checkout)
     commit = recorded_commit(metadata) or head_commit(checkout)
+
+    # The contract has three levels and none of them is "a commit but no
+    # version": `unknown` requires both to be null. A readable HEAD beside an
+    # unreadable version is a real observation with nowhere to go, so the
+    # identity degrades. The record is what travels, and a record a consumer
+    # must reject carries less than one that says little.
+    if version is None:
+        commit = None
 
     return {
         "schema": SCHEMA_ID,
