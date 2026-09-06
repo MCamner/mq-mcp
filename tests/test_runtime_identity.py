@@ -298,30 +298,94 @@ def test_installed_metadata_never_speaks_for_code_it_cannot_be_shown_to_own(
     assert captured["commit"] != someone_elses
 
 
+_WHEEL = {"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}
+_EDITABLE_HERE = {"url": "file:///src/mq-mcp", "dir_info": {"editable": True}}
+_EDITABLE_ELSEWHERE = {"url": "file:///src/other", "dir_info": {"editable": True}}
+_SITE = "/venv/lib/site-packages"
+
+
 @pytest.mark.parametrize(
-    ("metadata", "module_path", "location", "expected"),
+    ("metadata", "subject", "owned", "expected"),
     [
         # An editable install records the directory it points at; the imported
         # module has to be inside it.
-        ({"url": "file:///src/mq-mcp", "dir_info": {"editable": True}}, "/src/mq-mcp/mq-mcp", None, True),
-        ({"url": "file:///src/other", "dir_info": {"editable": True}}, "/src/mq-mcp/mq-mcp", None, False),
-        # Anything else has to live where the distribution was installed.
-        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/venv/lib/site-packages/mq_mcp", "/venv/lib/site-packages", True),
-        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/src/mq-mcp/mq-mcp", "/venv/lib/site-packages", False),
-        # No location to check against proves nothing.
-        ({"url": "https://x/mq_mcp-2.0.2-py3-none-any.whl", "archive_info": {}}, "/anywhere", None, False),
-        (None, "/anywhere", "/anywhere", False),
+        (_EDITABLE_HERE, "/src/mq-mcp/mq-mcp/runtime_identity.py", None, True),
+        (_EDITABLE_ELSEWHERE, "/src/mq-mcp/mq-mcp/runtime_identity.py", None, False),
+        # Everything else must appear in the distribution's own file list.
+        (_WHEEL, f"{_SITE}/mq_mcp/runtime_identity.py", [f"{_SITE}/mq_mcp/runtime_identity.py"], True),
+        # Sharing a site-packages is not ownership. This is the case that looks
+        # owned and is not: same directory, different distribution.
+        (_WHEEL, f"{_SITE}/mq_mcp_b/runtime_identity.py", [f"{_SITE}/mq_mcp_a/runtime_identity.py"], False),
+        # A distribution that cannot list its files proves nothing.
+        (_WHEEL, f"{_SITE}/mq_mcp/runtime_identity.py", None, False),
+        # A wheel from an index carries no direct_url at all; the file list
+        # still settles ownership.
+        (None, f"{_SITE}/mq_mcp/runtime_identity.py", [f"{_SITE}/mq_mcp/runtime_identity.py"], True),
+        (None, f"{_SITE}/mq_mcp/runtime_identity.py", None, False),
     ],
 )
-def test_metadata_must_be_tied_to_the_imported_code(
-    identity_module, metadata, module_path, location, expected
+def test_ownership_is_the_file_list_and_never_the_neighbourhood(
+    identity_module, metadata, subject, owned, expected
 ):
     assert (
         identity_module.describes_imported_code(
-            metadata, Path(module_path), Path(location) if location else None
+            metadata,
+            Path(subject),
+            {Path(f) for f in owned} if owned is not None else None,
         )
         is expected
     )
+
+
+def test_a_version_is_never_borrowed_from_a_stranger(identity_module, monkeypatch, tmp_path):
+    """The second half of the same rule, and the one I left open.
+
+    Commit metadata is tied to the imported code. The version fallback was not,
+    so a checkout with no VERSION beside an unrelated installed mq-mcp would
+    report that stranger's version next to this checkout's commit — valid,
+    plausible, and false.
+    """
+    root = tmp_path / "no-version"
+    root.mkdir()
+    _git(root, "init", "-q", "-b", "main")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "config", "user.name", "test")
+    (root / "code").write_text("x", encoding="utf-8")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-q", "-m", "A")
+
+    class _Stranger:
+        version = "9.9.9"
+        files = ()
+
+        def locate_file(self, name):
+            return Path("/somewhere/else") / str(name)
+
+        def read_text(self, name):
+            return None
+
+    monkeypatch.setattr(identity_module, "distribution", lambda _name: _Stranger())
+
+    captured = identity_module.capture(root)
+
+    assert captured["version"] != "9.9.9"
+    assert captured["version"] is None
+    assert captured["identity_quality"] == "unknown"
+
+
+def test_the_version_fallback_needs_a_distribution_that_owns_this_code(
+    identity_module, tmp_path
+):
+    """A bound distribution may supply the version a built artifact has no
+    VERSION file for. An unbound one may not, and there is no third case."""
+    root = tmp_path / "artifact"
+    root.mkdir()
+
+    class _Owner:
+        version = "2.0.2"
+
+    assert identity_module.declared_version(root, None) is None
+    assert identity_module.declared_version(root, _Owner()) == "2.0.2"
 
 
 def test_a_checkout_keeps_its_own_install_type_out_of_a_stranger_s_metadata(

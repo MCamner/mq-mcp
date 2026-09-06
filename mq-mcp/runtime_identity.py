@@ -43,6 +43,10 @@ COMPONENT = "mq-mcp"
 APP_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = APP_ROOT.parent
 
+#: The file this module was loaded from — the subject every claim is checked
+#: against. A directory is a neighbourhood; a file is a thing.
+MODULE_FILE = Path(__file__).resolve()
+
 #: Distinguishes "look it up" from a caller that deliberately supplied None,
 #: which is what an uninstalled runtime legitimately has.
 _UNSET = object()
@@ -81,46 +85,58 @@ def _within(child: Path, parent: Path) -> bool:
 
 
 def describes_imported_code(
-    metadata: Any, module_path: Path, location: Path | None
+    metadata: Any, subject: Path, owned_files: set[Path] | None
 ) -> bool:
-    """Whether PEP 610 metadata can speak for the code that was imported.
+    """Whether an installed distribution may speak for the code that was
+    imported.
 
     `distribution("mq-mcp")` finds a distribution by *name*, and a name is not
     a subject. A virtualenv can hold an installed mq-mcp while the running
     module was loaded from a checkout somewhere else; believing that
-    distribution's commit would freeze a well-formed, schema-valid identity
-    naming code this process never ran. Nothing downstream could detect it,
-    because nothing about the record would look wrong.
+    distribution would freeze a well-formed, schema-valid identity naming code
+    this process never ran. Nothing downstream could detect it, because nothing
+    about the record would look wrong.
 
-    So the metadata has to contain the imported module before it may describe
-    it: an editable install through the directory it records, anything else
-    through the location it was installed into.
+    Ownership is therefore the distribution's own file list, not the directory
+    it sits in. A site-packages holds every distribution in the environment, so
+    "the imported module is under the install root" proves only that the two
+    are neighbours. `RECORD` names what this distribution actually installed.
+
+    An editable install is the exception with its own evidence: it records the
+    directory it points at, and the imported file has to be inside it.
     """
-    if not isinstance(metadata, dict):
-        return False
-    dir_info = metadata.get("dir_info")
-    if isinstance(dir_info, dict) and dir_info.get("editable") is True:
-        raw_url = metadata.get("url")
-        if not isinstance(raw_url, str) or not raw_url:
-            return False
-        recorded = unquote(urlparse(raw_url).path)
-        return bool(recorded) and _within(module_path, Path(recorded))
-    return location is not None and _within(module_path, location)
+    if isinstance(metadata, dict):
+        dir_info = metadata.get("dir_info")
+        if isinstance(dir_info, dict) and dir_info.get("editable") is True:
+            raw_url = metadata.get("url")
+            if not isinstance(raw_url, str) or not raw_url:
+                return False
+            recorded = unquote(urlparse(raw_url).path)
+            return bool(recorded) and _within(subject, Path(recorded))
+    return owned_files is not None and subject in owned_files
 
 
-def installation_metadata(module_path: Path | None = None) -> dict[str, Any] | None:
-    """PEP 610 metadata for the distribution this code was imported from.
-
-    mq-mcp normally runs from a checkout and is not a distribution, so this is
-    normally None. That is a fact about the runtime, not a failure. A
-    distribution that merely shares the name is also None: see
-    `describes_imported_code`.
-    """
-    subject = module_path or APP_ROOT
+def _installed_files(dist: Any) -> set[Path] | None:
+    """What this distribution installed, resolved. None when it cannot say."""
     try:
-        dist = distribution(COMPONENT)
+        entries = dist.files
+    except Exception:
+        return None
+    if not entries:
+        return None
+    owned: set[Path] = set()
+    for entry in entries:
+        try:
+            owned.add(Path(str(dist.locate_file(entry))).resolve())
+        except (OSError, ValueError):
+            continue
+    return owned or None
+
+
+def _direct_url_of(dist: Any) -> dict[str, Any] | None:
+    try:
         raw = dist.read_text("direct_url.json")
-    except (PackageNotFoundError, OSError, ValueError):
+    except (OSError, ValueError):
         return None
     if not raw:
         return None
@@ -128,13 +144,29 @@ def installation_metadata(module_path: Path | None = None) -> dict[str, Any] | N
         parsed = json.loads(raw)
     except json.JSONDecodeError:
         return None
-    if not isinstance(parsed, dict):
-        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def bound_distribution(subject: Path | None = None) -> tuple[Any, dict[str, Any] | None] | None:
+    """The installed distribution that owns the imported code, if any.
+
+    mq-mcp normally runs from a checkout and is not a distribution, so this is
+    normally None. That is a fact about the runtime, not a failure — and it is
+    also the answer when a distribution merely shares the name.
+
+    Everything drawn from installation metadata — commit, version, install
+    type — comes through here, so nothing can be bound for one field and
+    unbound for another.
+    """
+    target = subject or MODULE_FILE
     try:
-        location = Path(str(dist.locate_file(""))).resolve()
-    except (OSError, ValueError):
-        location = None
-    return parsed if describes_imported_code(parsed, subject, location) else None
+        dist = distribution(COMPONENT)
+    except (PackageNotFoundError, OSError, ValueError):
+        return None
+    metadata = _direct_url_of(dist)
+    if not describes_imported_code(metadata, target, _installed_files(dist)):
+        return None
+    return dist, metadata
 
 
 def install_source(metadata: Any) -> tuple[str, str | None]:
@@ -191,11 +223,14 @@ def head_commit(root: Path) -> str | None:
     return usable_commit(_probe(root, "rev-parse", "--verify", "HEAD"))
 
 
-def declared_version(root: Path) -> str | None:
+def declared_version(root: Path, dist: Any = None) -> str | None:
     """The version this code declares, from the checkout it lives in.
 
-    Falls back to installed distribution metadata, which is what a built
-    artifact carries instead of a `VERSION` file.
+    Falls back to the *bound* distribution — the one shown to own the imported
+    module — which is what a built artifact carries instead of a `VERSION`
+    file. Never to a distribution that merely shares the name: that would put a
+    stranger's version beside this checkout's commit, and the result would be
+    valid, plausible and false.
     """
     try:
         declared = (root / "VERSION").read_text(encoding="utf-8").strip()
@@ -203,9 +238,11 @@ def declared_version(root: Path) -> str | None:
         declared = ""
     if declared:
         return declared
+    if dist is None:
+        return None
     try:
-        return distribution(COMPONENT).version or None
-    except (PackageNotFoundError, ValueError):
+        return dist.version or None
+    except (AttributeError, ValueError):
         return None
 
 
@@ -230,17 +267,18 @@ def capture(root: Path | str | None = None, *, direct_url: Any = _UNSET) -> dict
     rest of its life. Nothing here reads anything again later.
     """
     checkout = Path(root) if root is not None else REPO_ROOT
-    module_path = APP_ROOT if root is None else Path(checkout)
+    subject = MODULE_FILE if root is None else Path(checkout)
     if direct_url is _UNSET:
-        # Looked up, and already tied to this module by the lookup itself.
-        metadata = installation_metadata(module_path)
+        bound = bound_distribution(subject)
+        dist, metadata = bound if bound is not None else (None, None)
     else:
-        # Supplied without any evidence of where it was installed, so only the
+        # Supplied without any evidence of what was installed, so only the
         # editable form — which records its own directory — can tie itself.
-        metadata = direct_url if describes_imported_code(direct_url, module_path, None) else None
+        dist = None
+        metadata = direct_url if describes_imported_code(direct_url, subject, None) else None
 
     install_type, source = install_source(metadata)
-    version = declared_version(checkout)
+    version = declared_version(checkout, dist)
     commit = recorded_commit(metadata) or head_commit(checkout)
 
     # The contract has three levels and none of them is "a commit but no
