@@ -51,6 +51,10 @@ REPO_ROOT = APP_ROOT.parent
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
 
+# Imported after APP_ROOT joins sys.path, and imported as a module rather than
+# a function so the snapshot it takes at import is reachable and inspectable.
+import runtime_identity as _runtime_identity  # noqa: E402
+
 # Active review root override. Defaults to None (→ REPO_ROOT, the mq-mcp repo
 # itself). review_repo sets this for the duration of an external-repo review so
 # that resolve_repo_file resolves and validates file paths against the target
@@ -280,6 +284,27 @@ async def diagnostics(request: Request) -> JSONResponse:
         },
     }
     _log_observability_request(request, "diagnostics", started)
+    return JSONResponse(payload)
+
+
+@mcp.custom_route("/runtime-identity", methods=["GET"])
+async def runtime_identity(request: Request) -> JSONResponse:
+    """Which code this process is — `mq.runtime-identity.v1`, taken at start.
+
+    Deliberately not `_version()`. That reads `VERSION` from disk per request,
+    which is right for `/health` and wrong here: after the checkout moved, a
+    process started from commit A would answer B and hide the drift a consumer
+    asks this route to expose. The answer is the snapshot from process start
+    and does not change while the process lives.
+
+    Read-only, loopback-only, and it compares nothing. Comparison and its
+    consequences belong to mq-agent.
+    """
+    if (blocked := _guard_loopback(request)) is not None:
+        return blocked
+    started = time.time()
+    payload = _runtime_identity.identity()
+    _log_observability_request(request, "runtime-identity", started)
     return JSONResponse(payload)
 
 
