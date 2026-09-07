@@ -51,9 +51,10 @@ MODULE_FILE = Path(__file__).resolve()
 #: which is what an uninstalled runtime legitimately has.
 _UNSET = object()
 
-#: What this contract accepts as a commit. PEP 610 covers version control
-#: systems whose revisions are not hex SHAs; a revision the contract cannot
-#: express is absent rather than coerced into the field.
+#: What this contract accepts as a commit: a git object name, lowercase. PEP
+#: 610 covers version control systems that number their revisions rather than
+#: hashing them, and a revision this contract cannot express is absent rather
+#: than coerced into the field.
 _COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 
 #: Seconds a git probe may take. Identity is observability: a probe that hangs
@@ -210,12 +211,20 @@ def recorded_commit(metadata: Any) -> str | None:
     vcs_info = metadata.get("vcs_info")
     if not isinstance(vcs_info, dict):
         return None
+    # The system has to be named, not inferred from the shape of the revision.
+    # `svn` numbers its revisions, and `1234567` is seven characters that all
+    # happen to be valid hex — indistinguishable from an abbreviated SHA to a
+    # pattern, and a different thing entirely.
+    if vcs_info.get("vcs") != "git":
+        return None
     return usable_commit(vcs_info.get("commit_id"))
 
 
 def usable_commit(value: Any) -> str | None:
     """A commit this contract can carry, or None."""
-    return value if isinstance(value, str) and _COMMIT.match(value) else None
+    # `fullmatch`, not `match`: `$` also matches before a trailing newline, so
+    # "abcdef1\n" would pass a check meant to be exact.
+    return value if isinstance(value, str) and _COMMIT.fullmatch(value) else None
 
 
 def head_commit(root: Path) -> str | None:

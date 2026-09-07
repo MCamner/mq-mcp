@@ -429,11 +429,49 @@ def test_a_commit_without_a_version_degrades_instead_of_going_invalid(
     assert captured["commit"] is None
 
 
-@pytest.mark.parametrize("recorded", ["not-a-sha", "X" * 40, "abc", "ABCDEF1", ""])
+@pytest.mark.parametrize(
+    "recorded", ["not-a-sha", "X" * 40, "abc", "ABCDEF1", "", "abcdef1\n", " abcdef1"]
+)
 def test_a_commit_that_is_not_a_git_sha_is_not_a_commit(identity_module, recorded):
     """PEP 610 covers more version control systems than git; this contract's
-    `commit` is a hex SHA. A revision it cannot express is absent, not coerced."""
+    `commit` is a git object name. A revision it cannot express is absent, not
+    coerced — and the check is exact, since `$` also matches before a trailing
+    newline."""
     assert identity_module.usable_commit(recorded) is None
+
+
+@pytest.mark.parametrize(
+    ("vcs", "revision"),
+    [
+        # Seven characters, all valid hex, and not a commit. A pattern cannot
+        # tell an svn revision from an abbreviated SHA; only the recorded
+        # system can, so the system is what gets checked.
+        ("svn", "1234567"),
+        ("svn", "deadbee"),
+        ("bzr", "abcdef1"),
+        ("hg", "a" * 40),
+        (None, "abcdef1"),
+    ],
+)
+def test_only_git_records_a_commit_this_contract_can_carry(
+    identity_module, vcs, revision
+):
+    assert (
+        identity_module.recorded_commit(
+            {"url": "x", "vcs_info": {"vcs": vcs, "commit_id": revision}}
+        )
+        is None
+    )
+
+
+def test_a_git_object_name_still_passes_through(identity_module):
+    """A rule that only ever says no is not a rule."""
+    assert (
+        identity_module.recorded_commit(
+            {"url": "x", "vcs_info": {"vcs": "git", "commit_id": "b" * 40}}
+        )
+        == "b" * 40
+    )
 
 
 # --- the route ------------------------------------------------------------
