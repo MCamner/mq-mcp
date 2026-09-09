@@ -99,7 +99,9 @@ def _ask_tty(prompt: str) -> str:
     """
     tty = None
     try:
-        tty = open("/dev/tty", "r+")
+        # errors="replace" for the same reason as stdin below: an approval
+        # prompt must not raise on a byte the terminal sent us.
+        tty = open("/dev/tty", "r+", errors="replace")
     except Exception:
         tty = None
 
@@ -114,6 +116,32 @@ def _ask_tty(prompt: str) -> str:
     finally:
         if tty:
             tty.close()
+
+
+def read_operator_line(stream: Any, out: Any) -> str | None:
+    """Read one operator turn from ``stream``.
+
+    ``None`` means the session is over — end of input, or Ctrl-C at the
+    prompt. Anything else is the turn, stripped, and the empty string is a
+    turn the caller skips.
+
+    A line that is not valid UTF-8 is one of those skipped turns, not the end
+    of the session. Python decodes stdin strictly under a UTF-8 locale, and the
+    REPL sits inside two nested task groups: an escaping UnicodeDecodeError
+    surfaced as an ExceptionGroup traceback and took the whole bridge with it,
+    over a byte the operator could simply have retyped.
+    """
+    try:
+        line = stream.readline()
+    except KeyboardInterrupt:
+        return None
+    except UnicodeDecodeError:
+        out.write("\n(raden var inte giltig UTF-8 — skriv om den)\n")
+        out.flush()
+        return ""
+    if line == "":  # EOF / Ctrl-D
+        return None
+    return line.strip()
 
 
 def render_gate_card(
@@ -1055,17 +1083,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         else:
                             out.write("\n👹 master: ")
                             out.flush()
-                            try:
-                                line = sys.stdin.readline()
-                            except KeyboardInterrupt:
+                            turn = read_operator_line(sys.stdin, out)
+                            if turn is None:  # EOF / Ctrl-D / Ctrl-C
                                 out.write("\nHej då.\n")
                                 out.flush()
                                 break
-                            if line == "":  # EOF / Ctrl-D
-                                out.write("\nHej då.\n")
-                                out.flush()
-                                break
-                            user_input = line.strip()
+                            user_input = turn
 
                         if not user_input:
                             continue
@@ -1258,6 +1281,18 @@ if __name__ == "__main__":
     reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
     if reconfigure_stdout:
         reconfigure_stdout(line_buffering=True)
+
+    # stdout was reconfigured and stdin was not, which is where the asymmetry
+    # bit. Under a normal UTF-8 locale Python decodes stdin strictly, so one
+    # byte that is not valid UTF-8 — a paste carrying latin-1, a multibyte
+    # sequence cut in half — raises inside the REPL's readline and ends the
+    # session through two task groups, printing an ExceptionGroup and nothing
+    # an operator can act on. Replacing the byte keeps the turn readable and
+    # shows where the damage is. (Under LANG=C.UTF-8 Python already uses
+    # surrogateescape here, which is why this never reproduced everywhere.)
+    reconfigure_stdin = getattr(sys.stdin, "reconfigure", None)
+    if reconfigure_stdin:
+        reconfigure_stdin(errors="replace")
 
     # Workflow mode is fully synchronous and delegates to mq-agent; it needs
     # neither the OpenAI client nor the MCP session, so intercept it before the
