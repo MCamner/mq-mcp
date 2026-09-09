@@ -1960,6 +1960,26 @@ def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: in
 
 # ── type annotation pre-scan ─────────────────────────────────────────────────
 
+# One request's worth of source, and the most requests one file may cost.
+REVIEW_CHUNK_BYTES = 100_000
+REVIEW_MAX_CHUNKS = 6
+REVIEW_DEEP_MAX_BYTES = 200_000
+
+
+def _numbered_source(content: str, start: int = 1) -> str:
+    """Number the lines the model is asked to cite.
+
+    Sent unnumbered, the model has to count to answer "which line", and it
+    counts badly: in one release_gate run every finding in the file was on the
+    wrong line, drifting from +7 near the top to +285 at the bottom — an error
+    that grows with distance, which is what counting looks like. Giving it the
+    numbers removes the need to derive them.
+    """
+    lines = content.splitlines()
+    width = len(str(start + len(lines))) if lines else 1
+    return "\n".join(f"{i:>{width}}\t{line}" for i, line in enumerate(lines, start))
+
+
 def _detect_type_issues(file_path: str, content: str) -> str:
     """AST-based pre-scan for missing type annotations in Python files.
 
@@ -2165,8 +2185,15 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
     if not target.exists() or not target.is_file():
         return f"File not found: {relative_path}"
 
-    if target.stat().st_size > 200_000:
-        return f"File too large to review (> 200 KB): {relative_path}"
+    # A hard refusal here used to mean the largest file in a repo was the one
+    # nothing ever reviewed — in mq-mcp, 26% of its own Python. Multi-pass
+    # keeps the limit because it re-reads the whole file per pass; the single
+    # pass below splits instead.
+    if deep and target.stat().st_size > REVIEW_DEEP_MAX_BYTES:
+        return (
+            f"File too large for deep review (> {REVIEW_DEEP_MAX_BYTES // 1000} KB): "
+            f"{relative_path}. Run without deep to review it in chunks."
+        )
 
     try:
         file_content = target.read_text(encoding="utf-8", errors="replace")
@@ -2322,18 +2349,47 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
             user = (
                 f"Review this file under the contract above.\n\n"
                 f"File: {relative_path}{role_context}{type_prescan}{semantic_section}{adr_section}{cross_section}{past_section}\n\n"
-                f"```\n{file_content}\n```"
+                f"The source below is prefixed with its line numbers. Cite those "
+                f"numbers; do not count lines yourself. You may be shown one "
+                f"section of a longer file; the numbers are the file's own."
             )
 
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                max_tokens=2048,
-            )
-            raw = response.choices[0].message.content or ""
+            # One request per chunk. A file that fits is a single chunk, so
+            # the common path is unchanged; a large one is reviewed in pieces
+            # instead of being skipped, each piece numbered from its own line
+            # so findings keep their position in the whole file.
+            try:
+                from review_engine.source_chunker import split_for_review
+                chunks = split_for_review(
+                    file_content, REVIEW_CHUNK_BYTES, filename=relative_path
+                )
+            except Exception:
+                chunks = []
+
+            truncated = 0
+            if len(chunks) > REVIEW_MAX_CHUNKS:
+                truncated = len(chunks) - REVIEW_MAX_CHUNKS
+                chunks = chunks[:REVIEW_MAX_CHUNKS]
+
+            parts: list[str] = []
+            for chunk in chunks or [None]:
+                if chunk is None:
+                    body = _numbered_source(file_content)
+                else:
+                    body = _numbered_source(chunk.text, start=chunk.start_line)
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": f"{user}\n\n```\n{body}\n```"},
+                    ],
+                    max_tokens=2048,
+                )
+                piece = response.choices[0].message.content or ""
+                if piece:
+                    parts.append(piece)
+
+            raw = "\n\n".join(parts)
 
             if not raw:
                 return "No review output."
@@ -2348,8 +2404,31 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
                     severity_counts,
                 )
                 findings = parse_findings(raw)
+                # The model's claims are checked against the file before a
+                # reader sees them: a gap the syntax tree refutes is not
+                # reported, and a finding that names a symbol is anchored to
+                # where that symbol is actually defined.
+                verifier_notes: list[str] = []
+                try:
+                    from review_engine.finding_verifier import verify_findings
+                    findings, verifier_notes = verify_findings(
+                        relative_path, file_content, findings
+                    )
+                except Exception:
+                    pass
                 if findings:
                     output = format_summary(findings, relative_path)
+                elif verifier_notes:
+                    output = f"OK — no findings survived verification ({len(verifier_notes)} dropped)."
+                if verifier_notes:
+                    output += "\n\nDropped as contradicted by the file:\n" + "\n".join(
+                        f"  - {note}" for note in verifier_notes
+                    )
+                if truncated:
+                    output += (
+                        f"\n\nNot reviewed: {truncated} further section(s) of this "
+                        f"file exceeded the {REVIEW_MAX_CHUNKS}-chunk budget."
+                    )
             except Exception:
                 pass
 
