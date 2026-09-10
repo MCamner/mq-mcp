@@ -42,6 +42,25 @@ Next:      harden repo-context evidence and refusal behavior
 Later:     CG-2.2+ timeline
 ```
 
+Active backlog summary:
+
+```text
+Size:      medium-large, but concentrated
+Now:       repo-context evidence hardening
+Next:      Bridget context awareness, learn-loop preview, and delegation hints
+Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
+           autonomous loops, cloud memory, generic memory engine,
+           CodeGraph-as-producer, promotion scoring/merge logic
+```
+
+Roadmap reading rule:
+
+* Treat "Current status", "Active backlog summary", and the final Bridget v2
+  section as the active planning surface.
+* Treat completed release sections as historical evidence, not open backlog.
+* Treat items explicitly marked `deferred`, `Later`, or listed under
+  "Explicitly deferred" as non-blocking unless a new task reactivates them.
+
 Version labels below describe historical milestones. A capability is not a
 separate release merely because an earlier roadmap assigned it a version.
 `VERSION`, `CHANGELOG.md`, and the latest Git tag remain authoritative for what
@@ -2158,17 +2177,21 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 
 ### Recommended build order
 
+This is the active Bridget backlog. It is intentionally smaller than the full
+roadmap: older release sections above are historical, and explicitly deferred
+items do not count as current work.
+
 ```text
-Phase 0  Boundaries          first
-Phase 3  Context awareness    ⭐
-Phase 1  Learn loop           ⭐
-Phase 4  mq-agent delegation  ⭐ (finish auto-suggest + boundary doc)
-Phase 2  Working memory
-Phase 2.5 Memory boundary
-Phase 3.5 CodeGraph awareness
-Phase 5  Terminal presence
-Phase 6  Metrics
-Phase 7  Validation
+1. Phase 0    Boundaries
+2. Phase 3    Context awareness
+3. Phase 1    Learn loop
+4. Phase 4    mq-agent delegation (finish auto-suggest + boundary doc)
+5. Phase 2    Working memory
+6. Phase 2.5  Memory boundary
+7. Phase 3.5  CodeGraph awareness
+8. Phase 5    Terminal presence
+9. Phase 6    Metrics
+10. Phase 7   Validation
 ```
 
 > Bridget is a context-aware execution assistant with local working memory, intelligent delegation, and CodeGraph-assisted understanding — long-term knowledge stays in mqobsidian, orchestration stays in mq-agent.
