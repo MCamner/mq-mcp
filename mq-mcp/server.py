@@ -926,9 +926,12 @@ def _resolve_repo_signal_bin() -> str:
     if env:
         return env
     home = Path.home()
-    candidate = home / "repo-signal" / ".venv" / "bin" / "repo-signal"
-    if candidate.exists():
-        return str(candidate)
+    for candidate in (
+        home / "repo-signal" / ".venv" / "bin" / "repo-signal",
+        home / ".local" / "bin" / "repo-signal",
+    ):
+        if candidate.exists():
+            return str(candidate)
     return "repo-signal"
 
 

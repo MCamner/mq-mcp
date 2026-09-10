@@ -1303,5 +1303,402 @@
         "skill": "python-comment-review"
       }
     ]
+  },
+  "test_refuted_findings_never_re0": {
+    "checks.py": [
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788984899.36557,
+        "timestamp_iso": "2026-09-09T20:14:59Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983117.172218,
+        "timestamp_iso": "2026-09-09T19:45:17Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983015.905461,
+        "timestamp_iso": "2026-09-09T19:43:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982415.821735,
+        "timestamp_iso": "2026-09-09T19:33:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982403.327322,
+        "timestamp_iso": "2026-09-09T19:33:23Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982386.785661,
+        "timestamp_iso": "2026-09-09T19:33:06Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      }
+    ]
+  },
+  "test_the_operator_is_told_what0": {
+    "checks.py": [
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788984899.370073,
+        "timestamp_iso": "2026-09-09T20:14:59Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983117.177126,
+        "timestamp_iso": "2026-09-09T19:45:17Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983015.911434,
+        "timestamp_iso": "2026-09-09T19:43:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982415.826488,
+        "timestamp_iso": "2026-09-09T19:33:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982403.33289,
+        "timestamp_iso": "2026-09-09T19:33:23Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982386.7898712,
+        "timestamp_iso": "2026-09-09T19:33:06Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      }
+    ]
+  },
+  "test_the_surviving_finding_poi0": {
+    "checks.py": [
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788984899.3749561,
+        "timestamp_iso": "2026-09-09T20:14:59Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983117.1817951,
+        "timestamp_iso": "2026-09-09T19:45:17Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983015.915757,
+        "timestamp_iso": "2026-09-09T19:43:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982415.8308039,
+        "timestamp_iso": "2026-09-09T19:33:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982403.337118,
+        "timestamp_iso": "2026-09-09T19:33:23Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982386.793505,
+        "timestamp_iso": "2026-09-09T19:33:06Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      }
+    ]
+  },
+  "test_the_model_is_given_line_n0": {
+    "checks.py": [
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788984899.379612,
+        "timestamp_iso": "2026-09-09T20:14:59Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983117.1858659,
+        "timestamp_iso": "2026-09-09T19:45:17Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788983015.920168,
+        "timestamp_iso": "2026-09-09T19:43:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982415.834759,
+        "timestamp_iso": "2026-09-09T19:33:35Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982403.3407638,
+        "timestamp_iso": "2026-09-09T19:33:23Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "checks.py",
+        "mode": "comment",
+        "timestamp": 1788982386.797432,
+        "timestamp_iso": "2026-09-09T19:33:06Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 1,
+        "severity_counts": {
+          "MISSING": 1
+        },
+        "findings_text": "Review findings — checks.py: 1 total  [MISSING=1]\n\n[MISSING] checks.py:15\nPublic function genuinely_undocumented is missing a docstring; add a one-line description.\n\nDropped as contradicted by the file:\n  - checks.py: reported a missing module docstring; the file has one\n  - checks.py: asked for a return annotation on check_tests_pass(); the signature already carries one",
+        "skill": "python-comment-review"
+      }
+    ]
+  },
+  "test_a_large_file_is_reviewed_0": {
+    "big.py": [
+      {
+        "file_path": "big.py",
+        "mode": "comment",
+        "timestamp": 1788984899.714686,
+        "timestamp_iso": "2026-09-09T20:14:59Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 3,
+        "severity_counts": {
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — big.py: 3 total  [NOTE=3]\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "big.py",
+        "mode": "comment",
+        "timestamp": 1788983117.52052,
+        "timestamp_iso": "2026-09-09T19:45:17Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 3,
+        "severity_counts": {
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — big.py: 3 total  [NOTE=3]\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "big.py",
+        "mode": "comment",
+        "timestamp": 1788983016.268118,
+        "timestamp_iso": "2026-09-09T19:43:36Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 3,
+        "severity_counts": {
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — big.py: 3 total  [NOTE=3]\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "big.py",
+        "mode": "comment",
+        "timestamp": 1788982416.1665,
+        "timestamp_iso": "2026-09-09T19:33:36Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 3,
+        "severity_counts": {
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — big.py: 3 total  [NOTE=3]\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.",
+        "skill": "python-comment-review"
+      },
+      {
+        "file_path": "big.py",
+        "mode": "comment",
+        "timestamp": 1788982403.6671739,
+        "timestamp_iso": "2026-09-09T19:33:23Z",
+        "model": "gpt-4.1-mini",
+        "finding_count": 3,
+        "severity_counts": {
+          "NOTE": 3
+        },
+        "findings_text": "Review findings — big.py: 3 total  [NOTE=3]\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.\n\n[NOTE] big.py:1\nNothing of note.",
+        "skill": "python-comment-review"
+      }
+    ]
   }
 }
