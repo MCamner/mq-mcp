@@ -45,6 +45,19 @@ repository, or contains no verifiable files, mq-mcp returns an `unknown` / `low`
 refusal with empty evidence without calling the model. The learning layer reads
 exports but does not execute repo-signal or git.
 
+That refusal is a decision, not a missing feature. A `git ls-files` fallback
+would raise availability, but it would also move these Class B tools onto a
+subprocess, which ADR-003 classifies as Class D and gates behind subprocess
+confirmation. Because the human-readable previews do not yet name the context
+source, such a fallback would be invisible at the operator boundary. It is
+therefore rejected as implicit behavior, and may be reconsidered only as an
+explicit contract change that moves safety class, docstrings, contracts, and
+visible provenance together.
+
+See
+[ADR-007](../architecture_memory/decisions/ADR-007-no-implicit-git-fallback-for-learn-context.md)
+for the decision and its preconditions.
+
 ## Input
 
 The input is mq-mcp review findings, such as output from:
