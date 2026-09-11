@@ -48,15 +48,32 @@ exports but does not execute repo-signal or git.
 That refusal is a decision, not a missing feature. A `git ls-files` fallback
 would raise availability, but it would also move these Class B tools onto a
 subprocess, which ADR-003 classifies as Class D and gates behind subprocess
-confirmation. Because the human-readable previews do not yet name the context
-source, such a fallback would be invisible at the operator boundary. It is
-therefore rejected as implicit behavior, and may be reconsidered only as an
-explicit contract change that moves safety class, docstrings, contracts, and
-visible provenance together.
+confirmation. It is therefore rejected as implicit behavior, and may be
+reconsidered only as an explicit contract change that moves safety class,
+docstrings, contracts, and visible provenance together.
 
 See
 [ADR-007](../architecture_memory/decisions/ADR-007-no-implicit-git-fallback-for-learn-context.md)
-for the decision and its preconditions.
+for the decision and its preconditions. Of those preconditions, only visible
+provenance is met: the previews below now name the source. Safety class,
+docstrings, contracts, and the fallback itself are unchanged.
+
+### Provenance in the preview
+
+Both extraction previews print a `repo context:` block above the evidence, so a
+reader can see what produced it without reading the prompt:
+
+- verified export — `source: repo-signal export (primary)`, with the schema,
+  repo name, `generated_at`, and how many files were listed or omitted
+- no verified export — `source: none`, and an explicit statement that no other
+  source is consulted
+- a snapshot carrying some other provenance header — `source: unrecognized`,
+  and the evidence is labelled unverified
+
+The last case exists so a future second source cannot inherit repo-signal's
+label by default. Rendering is pure text over the snapshot the engine already
+built: it reads no file and runs no command. The machine-readable `PROVENANCE`
+line sent to the model is unchanged.
 
 ## Input
 
