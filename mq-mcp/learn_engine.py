@@ -14,6 +14,7 @@ import hashlib
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, cast
 
@@ -216,15 +217,49 @@ def _looks_like_prompt_injection(value: str) -> bool:
 
 
 _REPO_CONTEXT_MAX_FILES = 400
+_REPO_CONTEXT_MAX_AGE_SECONDS = 24 * 60 * 60
+_REPO_CONTEXT_MAX_FUTURE_SKEW_SECONDS = 5 * 60
 
 
-def load_repo_context_snapshot(repo_root: Path, *, max_files: int = _REPO_CONTEXT_MAX_FILES) -> str:
-    """Return a provenance-marked repo-signal file list for Ollama grounding.
+def _repo_context_timestamp_is_fresh(
+    generated_at: str,
+    *,
+    now: datetime | None = None,
+    max_age_seconds: int = _REPO_CONTEXT_MAX_AGE_SECONDS,
+    max_future_skew_seconds: int = _REPO_CONTEXT_MAX_FUTURE_SKEW_SECONDS,
+) -> bool:
+    """Return True only for a parseable, timezone-aware, fresh producer timestamp."""
+    if max_age_seconds < 0 or max_future_skew_seconds < 0:
+        return False
+    try:
+        generated = datetime.fromisoformat(generated_at.strip().replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+    if generated.tzinfo is None:
+        return False
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        return False
+    age_seconds = (
+        current.astimezone(timezone.utc) - generated.astimezone(timezone.utc)
+    ).total_seconds()
+    return -max_future_skew_seconds <= age_seconds <= max_age_seconds
 
-    Only a matching ``symbol_index.v1`` export is accepted. The learning layer
-    reads the artifact but never runs repo-signal or git itself. Missing,
-    malformed, or cross-repo artifacts return an empty snapshot so callers can
-    refuse repository-specific extraction deterministically.
+
+def load_repo_context_snapshot(
+    repo_root: Path,
+    *,
+    max_files: int = _REPO_CONTEXT_MAX_FILES,
+    max_age_seconds: int = _REPO_CONTEXT_MAX_AGE_SECONDS,
+    now: datetime | None = None,
+) -> str:
+    """Return a fresh, provenance-marked repo-signal file list for Ollama grounding.
+
+    Only a matching ``symbol_index.v1`` export no older than 24 hours is
+    accepted. The learning layer reads the artifact but never runs repo-signal
+    or git itself. Missing, malformed, stale, future-dated, or cross-repo
+    artifacts return an empty snapshot so callers can refuse repository-specific
+    extraction deterministically.
     """
     index_path = repo_root / ".repo-signal" / "exports" / "symbol_index.json"
     try:
@@ -239,6 +274,12 @@ def load_repo_context_snapshot(repo_root: Path, *, max_files: int = _REPO_CONTEX
         return ""
     generated_at = artifact.get("generated_at")
     if not isinstance(generated_at, str) or not generated_at.strip():
+        return ""
+    if not _repo_context_timestamp_is_fresh(
+        generated_at,
+        now=now,
+        max_age_seconds=max_age_seconds,
+    ):
         return ""
     entries = artifact.get("files")
     if not isinstance(entries, list):

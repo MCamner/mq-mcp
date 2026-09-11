@@ -34,14 +34,16 @@ Repository-specific extraction requires a verified repo context. mq-mcp reads
 
 - `schema` is `symbol_index.v1`
 - `repo_name` matches the requested repository
-- `generated_at` is present
+- `generated_at` is a timezone-aware timestamp no more than 24 hours old
+- `generated_at` is not more than 5 minutes in the future, allowing bounded
+  clock skew without trusting materially future-dated evidence
 - every included path resolves to an existing file inside that repository
 
 The context sent to Ollama includes those provenance fields. If the artifact is
-missing, malformed, belongs to another repository, or contains no verifiable
-files, mq-mcp returns an `unknown` / `low` refusal with empty evidence without
-calling the model. The learning layer reads exports but does not execute
-repo-signal or git.
+missing, malformed, stale, materially future-dated, belongs to another
+repository, or contains no verifiable files, mq-mcp returns an `unknown` / `low`
+refusal with empty evidence without calling the model. The learning layer reads
+exports but does not execute repo-signal or git.
 
 ## Input
 
