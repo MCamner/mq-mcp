@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Fixed
+
+* The test suite no longer writes `review_engine/memory/review_history.json`.
+  Tests reached the tracked store through `ReviewMemory`'s default argument,
+  which bound the module constant at import and could not be redirected, so a
+  full suite run left the working tree dirty and `git add -A` would have
+  committed generated review history. The default now resolves on call, every
+  test gets its own store, and the tracked file is hashed across the session so
+  a future write path fails the run rather than being noticed by hand. Where
+  reviews are kept in normal use is unchanged.
+
 ### Added
 
 * Bridget roadmap follow-through: bounded session-context injection, per-day
