@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -222,31 +223,42 @@ def test_validate_learn_record_allows_empty_evidence_only_at_low_confidence():
         engine.validate_learn_record(_valid_extraction(confidence="high", evidence=[]))
 
 
+def _write_repo_signal_index(tmp_path, generated_at, *, repo_name=None, files=None):
+    ctx_dir = tmp_path / ".repo-signal" / "exports"
+    ctx_dir.mkdir(parents=True, exist_ok=True)
+    (ctx_dir / "symbol_index.json").write_text(
+        json.dumps({
+            "schema": "symbol_index.v1",
+            "repo_name": repo_name or tmp_path.name,
+            "generated_at": generated_at,
+            "files": files if files is not None else [{"path": "README.md"}],
+        }),
+        encoding="utf-8",
+    )
+
+
 def test_load_repo_context_snapshot_uses_repo_signal_provenance(tmp_path):
     engine = _load_engine()
 
     # Absent verified artifact -> empty snapshot, which forces refusal.
     assert engine.load_repo_context_snapshot(tmp_path) == ""
 
-    ctx_dir = tmp_path / ".repo-signal" / "exports"
-    ctx_dir.mkdir(parents=True)
     (tmp_path / "mq-mcp").mkdir()
     (tmp_path / "mq-mcp" / "server.py").write_text("", encoding="utf-8")
     (tmp_path / "README.md").write_text("", encoding="utf-8")
-    (ctx_dir / "symbol_index.json").write_text(
-        json.dumps({
-            "schema": "symbol_index.v1",
-            "repo_name": tmp_path.name,
-            "generated_at": "2026-08-11T10:00:00Z",
-            "files": [
-                {"path": "mq-mcp/server.py"},
-                {"path": "README.md"},
-                {"not_a_path": True},
-            ],
-        }),
-        encoding="utf-8",
+    _write_repo_signal_index(
+        tmp_path,
+        "2026-08-11T10:00:00Z",
+        files=[
+            {"path": "mq-mcp/server.py"},
+            {"path": "README.md"},
+            {"not_a_path": True},
+        ],
     )
-    snap = engine.load_repo_context_snapshot(tmp_path)
+    snap = engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+    )
     assert "PROVENANCE source=repo-signal schema=symbol_index.v1" in snap
     assert f"repo={tmp_path.name}" in snap
     assert "mq-mcp/server.py" in snap
@@ -256,36 +268,75 @@ def test_load_repo_context_snapshot_uses_repo_signal_provenance(tmp_path):
 
 def test_load_repo_context_snapshot_rejects_wrong_repo(tmp_path):
     engine = _load_engine()
-    ctx_dir = tmp_path / ".repo-signal" / "exports"
-    ctx_dir.mkdir(parents=True)
-    (ctx_dir / "symbol_index.json").write_text(
-        json.dumps({
-            "schema": "symbol_index.v1",
-            "repo_name": "another-repo",
-            "generated_at": "2026-08-11T10:00:00Z",
-            "files": [{"path": "invented.py"}],
-        }),
-        encoding="utf-8",
+    _write_repo_signal_index(
+        tmp_path,
+        "2026-08-11T10:00:00Z",
+        repo_name="another-repo",
+        files=[{"path": "invented.py"}],
     )
 
-    assert engine.load_repo_context_snapshot(tmp_path) == ""
+    assert engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+    ) == ""
 
 
 def test_load_repo_context_snapshot_omits_missing_and_outside_files(tmp_path):
     engine = _load_engine()
-    ctx_dir = tmp_path / ".repo-signal" / "exports"
-    ctx_dir.mkdir(parents=True)
-    (ctx_dir / "symbol_index.json").write_text(
-        json.dumps({
-            "schema": "symbol_index.v1",
-            "repo_name": tmp_path.name,
-            "generated_at": "2026-08-11T10:00:00Z",
-            "files": [{"path": "missing.py"}, {"path": "../outside.py"}],
-        }),
-        encoding="utf-8",
+    _write_repo_signal_index(
+        tmp_path,
+        "2026-08-11T10:00:00Z",
+        files=[{"path": "missing.py"}, {"path": "../outside.py"}],
     )
 
-    assert engine.load_repo_context_snapshot(tmp_path) == ""
+    assert engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+    ) == ""
+
+
+def test_load_repo_context_snapshot_rejects_stale_evidence(tmp_path):
+    engine = _load_engine()
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    _write_repo_signal_index(tmp_path, "2026-08-11T10:00:00Z")
+
+    assert engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 12, 10, 0, 1, tzinfo=timezone.utc),
+    ) == ""
+
+
+def test_load_repo_context_snapshot_rejects_invalid_or_naive_timestamp(tmp_path):
+    engine = _load_engine()
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    now = datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc)
+
+    for generated_at in ("not-a-timestamp", "2026-08-11T10:00:00"):
+        _write_repo_signal_index(tmp_path, generated_at)
+        assert engine.load_repo_context_snapshot(tmp_path, now=now) == ""
+
+
+def test_load_repo_context_snapshot_rejects_far_future_evidence(tmp_path):
+    engine = _load_engine()
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    _write_repo_signal_index(tmp_path, "2026-08-11T10:05:01Z")
+
+    assert engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 10, 0, tzinfo=timezone.utc),
+    ) == ""
+
+
+def test_load_repo_context_snapshot_allows_small_clock_skew(tmp_path):
+    engine = _load_engine()
+    (tmp_path / "README.md").write_text("", encoding="utf-8")
+    _write_repo_signal_index(tmp_path, "2026-08-11T10:05:00Z")
+
+    snap = engine.load_repo_context_snapshot(
+        tmp_path,
+        now=datetime(2026, 8, 11, 10, 0, tzinfo=timezone.utc),
+    )
+    assert "README.md" in snap
 
 
 def test_validate_learn_record_requires_approval_for_storage():
