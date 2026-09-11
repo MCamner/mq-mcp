@@ -8,6 +8,22 @@
   session logs, `--forget`, `--learn-last` preview, `--dashboard`, quiet/status
   CLI affordances, read-only CodeGraph symbol/dependency/hotspot lookups, and
   explicit Bridget/mq-agent/mqobsidian boundary docs.
+* Added `ADR-007`: repository-specific learn extraction does not silently fall
+  back from repo-signal evidence to a git subprocess. Missing or stale evidence
+  keeps failing closed. The ADR records the preconditions — visible provenance,
+  declared safety class, deterministic repo-scoped invocation, and tests — that
+  must move together before a fallback can be reconsidered.
+
+### Changed
+
+* `ollama_learn_extract` and `learn_extract_from_last_review` now reject
+  repo-context evidence that is not demonstrably current. A
+  `.repo-signal/exports/symbol_index.json` export is accepted only when
+  `generated_at` is timezone-aware, no more than 24 hours old, and no more than
+  5 minutes in the future. Evidence that is missing, malformed, stale,
+  materially future-dated, or from another repository yields the existing
+  deterministic `unknown` / `low` refusal with empty evidence instead of
+  grounding the model in unverifiable context.
 
 ## [2.0.2] - 2026-07-19
 
