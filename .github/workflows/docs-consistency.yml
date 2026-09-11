@@ -19,21 +19,49 @@ jobs:
 
       - name: Python version in install.md is not 3.14
         run: |
+          if [[ ! -f docs/install.md ]]; then
+            echo "FAIL: docs/install.md is missing — nothing was checked"
+            exit 1
+          fi
+
           if grep -q '3\.14' docs/install.md; then
             echo "FAIL: docs/install.md still references Python 3.14"
             exit 1
+          else
+            GREP_RC=$?
+            if [[ "$GREP_RC" -ne 1 ]]; then
+              echo "FAIL: docs/install.md could not be checked (grep exit $GREP_RC)"
+              exit 1
+            fi
           fi
           echo "PASS: docs/install.md Python version OK"
 
       - name: No stale tool counts (13 tools, 14 tools)
         run: |
-          STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>/dev/null || true)
-          if [[ -n "$STALE" ]]; then
+          for path in README.md TOOL_INDEX.md SAFETY_MODEL.md; do
+            if [[ ! -f "$path" ]]; then
+              echo "FAIL: missing input, so nothing was checked: $path"
+              exit 1
+            fi
+          done
+          if [[ ! -d docs ]]; then
+            echo "FAIL: missing input, so nothing was checked: docs"
+            exit 1
+          fi
+
+          if STALE=$(grep -rn '\b13 tools\b\|\b14 tools\b' README.md docs/ TOOL_INDEX.md SAFETY_MODEL.md 2>&1); then
             echo "FAIL: Stale tool count found:"
             echo "$STALE"
             exit 1
+          else
+            GREP_RC=$?
+            if [[ "$GREP_RC" -ne 1 ]]; then
+              echo "FAIL: stale tool-count scan could not complete (grep exit $GREP_RC)"
+              echo "$STALE"
+              exit 1
+            fi
           fi
-          echo "PASS: No stale tool count references"
+          echo "PASS: No stale tool count references, across 4 input paths"
 
       - name: VERSION matches pyproject.toml
         run: |
