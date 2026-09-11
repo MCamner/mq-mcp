@@ -53,8 +53,11 @@ class ReviewEntry:
 
 
 class ReviewMemory:
-    def __init__(self, history_file: Path = HISTORY_FILE) -> None:
-        self._path = history_file
+    def __init__(self, history_file: Path | None = None) -> None:
+        # Resolved on call, not bound at import: a default argument would
+        # capture the module constant once and make the store unredirectable,
+        # which is how the test suite came to write the tracked file (#69).
+        self._path = history_file if history_file is not None else HISTORY_FILE
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._data: dict[str, dict[str, list[dict]]] = self._load()
 
