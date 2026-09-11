@@ -167,6 +167,28 @@ def test_last_review_absent_returns_none(tmp_path):
     assert br.last_review(tmp_path) is None
 
 
+def test_git_diff_brief_reports_changed_files(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed", encoding="utf-8")
+
+    brief = br.git_diff_brief(repo)
+
+    assert "recent work:" in brief
+    assert "f.txt" in brief
+
+
+def test_project_context_block_auto_detects_repo(tmp_path, monkeypatch):
+    repo = _git_repo(tmp_path / "repo")
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project")
+
+    out = br.project_context_block()
+
+    assert "Working repo (auto-detected)" in out
+    assert "recent work:" in out
+    assert "recent review:" in out
+
+
 # --- synchronous handlers (no MCP/OpenAI) -----------------------------------
 
 
@@ -276,6 +298,53 @@ def test_handle_continue_resumes_last_repl_session(tmp_path, monkeypatch, capsys
     assert "No project pinned" in out
 
 
+def test_handle_forget_calls_context(tmp_path, monkeypatch, capsys):
+    jsonl = tmp_path / "bridget-history.jsonl"
+    ctx = BridgetContext(path=tmp_path / "ctx.md", history_path=jsonl)
+    ctx.record("p", [], "s")
+    date = ctx.read_history(limit=1)[0]["ts"][:10]
+    monkeypatch.setattr(
+        br, "BridgetContext", functools.partial(BridgetContext, path=tmp_path / "ctx.md", history_path=jsonl)
+    )
+
+    br.handle_forget(date)
+
+    assert "Forgot 1 Bridget session" in capsys.readouterr().out
+
+
+def test_handle_learn_last_previews_diff(tmp_path, monkeypatch, capsys):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "f.txt").write_text("changed", encoding="utf-8")
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(br, "PROJECT_FILE", tmp_path / "missing-project")
+
+    br.handle_learn_last()
+
+    out = capsys.readouterr().out
+    data = json.loads(out)
+    assert data["status"] == "preview"
+    assert data["write_performed"] is False
+    assert data["learning_origin"] == "bridget"
+    assert data["record"]["source"] == "diff"
+
+
+def test_handle_dashboard_prints_metrics(tmp_path, monkeypatch, capsys):
+    jsonl = tmp_path / "bridget-history.jsonl"
+    ctx = BridgetContext(path=tmp_path / "ctx.md", history_path=jsonl)
+    ctx.record("p", ["git_status"], "s")
+    monkeypatch.setattr(
+        br,
+        "BridgetContext",
+        functools.partial(BridgetContext, path=tmp_path / "ctx.md", history_path=jsonl),
+    )
+
+    br.handle_dashboard()
+
+    out = capsys.readouterr().out
+    assert "Bridget dashboard" in out
+    assert "sessions: 1" in out
+
+
 # --- pre-flight dispatcher --------------------------------------------------
 
 
@@ -293,4 +362,10 @@ def test_maybe_handle_runtime_command_routes(monkeypatch):
     assert calls["project"] == "mq-mcp"
     assert br.maybe_handle_runtime_command(["--project"]) is True
     assert calls["project"] is None
+    monkeypatch.setattr(br, "handle_forget", lambda date: calls.update(forget=date))
+    assert br.maybe_handle_runtime_command(["--forget", "2026-09-10"]) is True
+    assert calls["forget"] == "2026-09-10"
+    monkeypatch.setattr(br, "handle_dashboard", lambda: calls.update(dashboard=True))
+    assert br.maybe_handle_runtime_command(["--dashboard"]) is True
+    assert calls["dashboard"] is True
     assert br.maybe_handle_runtime_command(["hello world"]) is False

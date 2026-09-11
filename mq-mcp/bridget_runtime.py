@@ -1,13 +1,13 @@
 """
-bridget_runtime.py — Bridget Runtime helpers for --project / --history / --continue.
+bridget_runtime.py — Bridget Runtime helpers for --project / --history / --continue / --forget.
 
 Self-contained: pure helpers plus synchronous command handlers that print and
 return. No OpenAI client and no MCP session are needed, so bridge.py intercepts
 these flags before the async bridge starts (same pattern as --workflow).
 
-Boundary: this only *reads and pins context* (project, git state, prior sessions,
-last review). It never writes learning or promotes anything — sessions are
-context, not evidence.
+Boundary: this only *reads, pins, and deletes session context* (project, git
+state, prior sessions, last review). It never writes learning or promotes
+anything — sessions are context, not evidence.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import subprocess
 from pathlib import Path
 
 from bridget_context import CONTEXT_DIR, BridgetContext
+import learn_engine
 
 # Persistent "current project" pin, sibling to the session stores in ~/.mq.
 PROJECT_FILE = CONTEXT_DIR / "bridget-project"
@@ -160,21 +161,67 @@ def last_review(path: str | Path) -> str | None:
     )
 
 
+def _last_review_entry(path: str | Path) -> dict | None:
+    hist = Path(path) / "review_engine" / "memory" / "review_history.json"
+    if not hist.exists():
+        return None
+    try:
+        data = json.loads(hist.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    newest: dict | None = None
+    for entries in data.values():
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, dict) and (
+                newest is None or entry.get("timestamp", 0) > newest.get("timestamp", 0)
+            ):
+                newest = entry
+    return newest
+
+
+def git_diff_brief(path: str | Path) -> str:
+    """Short read-only recent-work hint from the current git diff."""
+    out = _git(path, ["diff", "--name-only"])
+    files = [ln for ln in (out or "").splitlines() if ln.strip()]
+    if not files:
+        return "  recent work: no unstaged diff"
+    shown = files[:_MAX_DIRTY_SHOWN]
+    more = len(files) - len(shown)
+    suffix = f" (+{more})" if more > 0 else ""
+    return f"  recent work: {', '.join(shown)}{suffix}"
+
+
 # ----------------------------------------------------------------------
-# System-prompt injection (used by run_bridge for a pinned project)
+# System-prompt injection (used by run_bridge)
 # ----------------------------------------------------------------------
 
 
 def project_context_block() -> str:
-    """Return a system-prompt block for the pinned project, or '' if none."""
+    """Return a system-prompt repo context block.
+
+    A pinned project wins. Without one, Bridget auto-detects the current git
+    root so one-shot calls launched inside a repo still start informed.
+    """
     proj = get_project()
+    source = "pinned"
     if not proj:
-        return ""
+        root = _git(Path.cwd(), ["rev-parse", "--show-toplevel"])
+        if not root:
+            return ""
+        proj = {"name": Path(root).name, "path": root}
+        source = "auto-detected"
+    review = last_review(proj["path"]) or "  recent review: none"
     return (
         "\n\n---\n"
-        "## Pinned project\n\n"
+        f"## Working repo ({source})\n\n"
         f"{proj['name']} ({proj['path']})\n"
-        f"{repo_brief(proj['path'])}\n\n"
+        f"{repo_brief(proj['path'])}\n"
+        f"{git_diff_brief(proj['path'])}\n"
+        f"{review}\n\n"
         "Treat this repo as the working context for this session.\n---\n"
     )
 
@@ -267,8 +314,99 @@ def handle_continue() -> None:
     print(last_review(proj["path"]) or "  recent review: none")
 
 
+def handle_forget(date: str | None) -> None:
+    if not date:
+        print("Usage: bridget --forget YYYY-MM-DD")
+        return
+    try:
+        removed = BridgetContext().forget_day(date)
+    except ValueError as exc:
+        print(f"Could not forget sessions: {exc}")
+        return
+    if removed:
+        print(f"Forgot {removed} Bridget session(s) from {date}.")
+    else:
+        print(f"No Bridget sessions found for {date}.")
+
+
+def _current_repo() -> dict | None:
+    proj = get_project()
+    if proj:
+        return proj
+    root = _git(Path.cwd(), ["rev-parse", "--show-toplevel"])
+    if not root:
+        return None
+    return {"name": Path(root).name, "path": root}
+
+
+def handle_learn_last() -> None:
+    repo = _current_repo()
+    if not repo:
+        print("No git repo detected and no project pinned.")
+        return
+    root = Path(repo["path"])
+    diff_files = [ln for ln in (_git(root, ["diff", "--name-only"]) or "").splitlines() if ln.strip()]
+    review = _last_review_entry(root)
+    if diff_files:
+        source = "diff"
+        task = f"review recent diff in {repo['name']}"
+        lesson = f"Recent work touched: {', '.join(diff_files[:5])}"
+        validation = [f"git diff --name-only: {item}" for item in diff_files[:5]]
+        files = diff_files[:10]
+    elif review:
+        source = "review"
+        file_path = str(review.get("file_path") or "unknown")
+        task = f"review {file_path}"
+        lesson = str(review.get("summary") or f"Review findings for {file_path}")
+        validation = [last_review(root) or f"last review: {file_path}"]
+        files = [file_path]
+    else:
+        print("No recent diff or review history found to draft from.")
+        return
+
+    record = learn_engine.make_learning(
+        root,
+        repo=repo["name"],
+        source=source,
+        task=task,
+        lesson=lesson,
+        validation=validation,
+        files_touched=files,
+        tags=["bridget-preview", "learning-origin:bridget", source],
+        risk="unknown",
+    ).to_dict()
+    preview = {
+        "status": "preview",
+        "write_performed": False,
+        "learning_origin": "bridget",
+        "storage": "not stored; call approved learn tool after review",
+        "record": record,
+    }
+    print(json.dumps(learn_engine.redact_secrets(preview), ensure_ascii=False, indent=2))
+
+
+def handle_dashboard() -> None:
+    metrics = BridgetContext().metrics()
+    totals = metrics["totals"]
+    print("Bridget dashboard:")
+    print(f"  sessions: {totals['sessions']} ({totals['chat_sessions']} chat)")
+    print(f"  tool calls: {totals['tool_calls']}")
+    print(f"  delegations: {totals['delegations']}")
+    print(f"  learning suggestions: {totals['learning_suggestions']}")
+    print(f"  accepted learning: {totals['accepted_learning']}")
+    print(f"  history hits: {totals['history_hits']}")
+    print(f"  context hits: {totals['context_hits']}")
+    if metrics["by_day"]:
+        print("  by day:")
+        for day, row in sorted(metrics["by_day"].items())[-7:]:
+            print(
+                f"    {day}: sessions {row['sessions']}, tools {row['tool_calls']}, "
+                f"delegations {row['delegations']}, learn suggestions {row['learning_suggestions']}"
+            )
+
+
 def maybe_handle_runtime_command(argv: list[str]) -> bool:
-    """Handle --history / --continue / --project synchronously as a pre-flight.
+    """Handle --history / --continue / --project / --forget as a pre-flight.
 
     Returns True if a runtime command was handled (caller should exit), so these
     flags never reach the async bridge or the OpenAI/MCP path.
@@ -282,6 +420,17 @@ def maybe_handle_runtime_command(argv: list[str]) -> bool:
         return True
     if "--continue" in argv:
         handle_continue()
+        return True
+    if "--forget" in argv:
+        i = argv.index("--forget")
+        date = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("-") else None
+        handle_forget(date)
+        return True
+    if "--learn-last" in argv:
+        handle_learn_last()
+        return True
+    if "--dashboard" in argv:
+        handle_dashboard()
         return True
     if "--project" in argv:
         i = argv.index("--project")

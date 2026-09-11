@@ -348,6 +348,15 @@ def test_parse_prompt_oneshot_sets_chat_false(bridge, monkeypatch):
     assert do_mode is False
 
 
+def test_parse_prompt_quiet_sets_global_and_strips_flag(bridge, monkeypatch):
+    monkeypatch.setattr(bridge.sys, "argv", ["bridge.py", "--quiet", "hello"])
+
+    prompt, *_rest = bridge.parse_prompt()
+
+    assert prompt == "hello"
+    assert bridge.QUIET_MODE is True
+
+
 # --- Phase 4: record_chat_session ----------------------------------------------
 
 

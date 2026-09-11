@@ -893,8 +893,10 @@ mq-agent to consume.
 * [x] Add side-effect category
 * [x] Add filesystem boundary notes
 * [x] Add subprocess behavior notes
-* [ ] Add error model *(deferred — no blocking use case)*
-* [ ] Add examples for each tool *(deferred — examples live in docs/demo.md)*
+Deferred:
+
+* Error model — no blocking use case.
+* Per-tool examples — examples live in `docs/demo.md`.
 * [x] Generate docs from tool metadata
 * [x] Add CI check that docs and tool registry match
 
@@ -1188,7 +1190,7 @@ Goal: intelligent long-term memory for the review engine.
   distribution) for every file that imports or is imported by the file under
   review. Backed by `callgraph.json` (Phase 2) + `ContextSelector` (Phase 2).
   Files are no longer reviewed in isolation.
-* [ ] Persist coding conventions extracted from reviews into architecture memory
+* [x] Persist coding conventions extracted from reviews into architecture memory
   — deferred to v1.2.0 (Architecture memory), where it belongs structurally.
 
 ---
@@ -1227,7 +1229,9 @@ Goal: higher quality through structured pipeline.
   `.py/.sh/.md/.json` files changed in the working tree or staging area, capped at 10
 * [x] `review_repo` MCP tool — agentic review: prioritizes the least-recently-reviewed
   Python files in the repo (uses review memory to order by staleness), max 20 files
-* [~] Review TUI: severity history, semantic context display (deferred — out of scope for CLI)
+Deferred:
+
+* Review TUI: severity history, semantic context display — out of scope for CLI.
 
 ---
 
@@ -2103,40 +2107,40 @@ Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` no
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
-* [ ] ADR documenting the four boundaries
+* [x] ADR documenting the four boundaries
 * [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
 ### Phase 1 — Close the learn loop (planned)
 
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
-* [ ] Suggest reusable learn candidates at end of session (no write without approval)
-* [ ] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
-* [ ] Learning provenance (`learning_origin: user | bridget | review | diff`)
-* [ ] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
+* [x] Suggest reusable learn candidates at end of session (no write without approval)
+* [x] `bridget --learn-last` runs learn_from_review/diff, shows preview, auto-redacts
+* [x] Learning provenance (`learning_origin: user | bridget | review | diff`)
+* [x] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
 ### Phase 2 — Working memory (mostly done)
 
 Remember recent conversations without becoming a knowledge system. `bridget_context.py` already keeps a rolling session window (currently `~/.mq/bridget-context.md`).
 
 * [x] Rolling session memory with bounded window
-* [ ] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
+* [x] Per-day session logs (`bridget_memory/sessions/YYYY-MM-DD.jsonl`)
 * [x] `bridget --history` (date / summary / tools used)
-* [ ] `bridget --forget <date>` (delete one day)
-* [ ] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
+* [x] `bridget --forget <date>` (delete one day)
+* [x] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
 * [x] Never persist API keys / secrets / credentials
 
 ### Phase 2.5 — Memory boundary (planned)
 
-* [ ] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
-* [ ] No hidden persistence
+* [x] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
+* [x] No hidden persistence
 
 ### Phase 3 — Context awareness (partial)
 
 Bridget starts informed.
 
-* [ ] Auto repo detection (git_status, list_repo_files → inject repo / branch / dirty files)
-* [ ] Recent-work injection (get_last_review, git_diff)
+* [x] Auto repo detection (git_status, list_repo_files → inject repo / branch / dirty files)
+* [x] Recent-work injection (get_last_review, git_diff)
 * [x] `bridget --project <repo>` persistent session context
 * [x] `bridget --continue` (last project / branch / changed files / recent review)
 
@@ -2145,9 +2149,9 @@ Bridget starts informed.
 Use CodeGraph as context only — never a producer (no CodeGraph → memory-observation.v1). `--search` / `--search-global` already provide semantic repo search.
 
 * [x] Semantic repo search (`--search`, `--search-global`)
-* [ ] Symbol lookup
-* [ ] Dependency lookup
-* [ ] Hotspots / call-graph search
+* [x] Symbol lookup
+* [x] Dependency lookup
+* [x] Hotspots / call-graph search
 * [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 
 ### Phase 4 — Delegation to mq-agent (mostly done)
@@ -2155,24 +2159,24 @@ Use CodeGraph as context only — never a producer (no CodeGraph → memory-obse
 Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint delegating to `mq-agent workflow`; holds no state, selects no tools).
 
 * [x] `bridget --workflow "<goal>"` delegates to mq-agent (`bridget_workflow.py`)
-* [ ] Auto-suggest delegation for multi-step / cross-repo / complex tasks
-* [ ] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
+* [x] Auto-suggest delegation for multi-step / cross-repo / complex tasks
+* [x] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
 
 ### Phase 5 — Terminal presence (partial)
 
 * [x] Voice mode (`--voice-on`, `bridget_voice.py`); spinner during thinking
-* [ ] Status indicators (thinking / responding / approval)
-* [ ] `bridget --quiet` (no visual effects)
+* [x] Status indicators (thinking / responding / approval)
+* [x] `bridget --quiet` (no visual effects)
 
 ### Phase 6 — Real usage metrics (planned)
 
-* [ ] Capture commands / sessions / delegations / learning-suggestions per day
-* [ ] Accepted-learning, history-hit, context-hit counts
-* [ ] Simple dashboard (helped / delegated / suggested / accepted)
+* [x] Capture commands / sessions / delegations / learning-suggestions per day
+* [x] Accepted-learning, history-hit, context-hit counts
+* [x] Simple dashboard (helped / delegated / suggested / accepted)
 
 ### Phase 7 — Long-term validation (planned)
 
-* [ ] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [x] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 
 ### Recommended build order

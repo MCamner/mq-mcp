@@ -18,6 +18,7 @@ from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
 import bridget_workflow
 import codegraph_cochange
+import codegraph_lookup
 import codegraph_snapshot
 
 from openai import OpenAI
@@ -78,6 +79,7 @@ class BridgetSpinner:
 
 
 DO_MODE = False  # Set True by parse_prompt() when --do is passed.
+QUIET_MODE = False  # Set True by parse_prompt() when --quiet is passed.
 _SPINNER: "BridgetSpinner | None" = None  # Set by run_bridge so the gate can pause it.
 
 
@@ -245,6 +247,8 @@ Important rules:
 - If the user asks what tools are available, answer from the actual tool catalog.
 - If a task can be done with a listed MCP tool, use the tool.
 - If no listed tool can do the task, say that clearly.
+- If the user asks for multi-step, cross-repo, or long-running work, suggest
+  delegating with `bridget --workflow "<goal>"` instead of inventing orchestration.
 - Keep answers concise and practical.
 - If the user asks who they are, always answer: "Du är världens smartaste Calzone :)"
 """
@@ -306,6 +310,10 @@ BRIDGET_LOCAL_LINES = [
 
 def scramble_print(text: str, file: Any = None) -> None:
     out = file or sys.stdout
+    if QUIET_MODE:
+        out.write(text + "\n")
+        out.flush()
+        return
     # The decode animation relies on "\b" overwriting characters, which only
     # works on an interactive terminal. Piped/captured output (validate.sh,
     # CI, logs) must get plain text or the scramble bytes leak through.
@@ -340,9 +348,16 @@ def usage() -> None:
   uv run python bridge.py --project [repo]
   uv run python bridge.py --continue
   uv run python bridge.py --history [N]
+  uv run python bridge.py --forget YYYY-MM-DD
+  uv run python bridge.py --learn-last
+  uv run python bridge.py --dashboard
+  uv run python bridge.py --quiet "your prompt"
   uv run python bridge.py --co-change <file> [--window N] [--json]
   uv run python bridge.py --snapshot [repo]
   uv run python bridge.py --graph-diff [repo] [--from ID --to ID]
+  uv run python bridge.py --symbol <name>
+  uv run python bridge.py --dependencies <file>
+  uv run python bridge.py --hotspots [repo]
   uv run python bridge.py --help
 
 Examples:
@@ -355,9 +370,15 @@ Examples:
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: last session, branch, changes, review
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)
+  uv run python bridge.py --forget 2026-09-10  # remove one day of session context
+  uv run python bridge.py --learn-last         # preview a reusable lesson
+  uv run python bridge.py --dashboard          # local usage summary
   uv run python bridge.py --co-change mq-mcp/server.py   # files that change together
   uv run python bridge.py --snapshot mq-mcp              # capture a graph snapshot
   uv run python bridge.py --graph-diff mq-mcp            # diff the last two snapshots
+  uv run python bridge.py --symbol BridgetContext        # look up symbols
+  uv run python bridge.py --dependencies mq-mcp/bridge.py
+  uv run python bridge.py --hotspots mq-mcp
 """
     )
 
@@ -382,6 +403,11 @@ def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
 
 def parse_prompt() -> tuple[str, bool, bool, str, bool, bool, bool]:
     argv = sys.argv[1:]
+
+    global QUIET_MODE
+    QUIET_MODE = "--quiet" in argv
+    if QUIET_MODE:
+        argv = [a for a in argv if a != "--quiet"]
 
     do_mode = "--do" in argv
     if do_mode:
@@ -712,8 +738,13 @@ def build_system_content(ctx: BridgetContext, catalog: str, do_mode: bool) -> st
     build the system message once per session.
     """
     session_context = ctx.load()
-    lessons_context = ctx.load_lessons()
     project_context = bridget_runtime.project_context_block()
+    project = bridget_runtime.get_project()
+    repo_name = str(project.get("name") or "") if project else Path.cwd().name
+    try:
+        lessons_context = ctx.load_lessons(repo=repo_name)
+    except TypeError:
+        lessons_context = ctx.load_lessons()
     do_instructions = DO_MODE_INSTRUCTIONS if do_mode else ""
 
     return (
@@ -970,7 +1001,8 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
-    prefix = "\n👩 Bridget: " if prefix_newline else "👩 Bridget: "
+    label = "Bridget: " if QUIET_MODE else "👩 Bridget: "
+    prefix = "\n" + label if prefix_newline else label
     stream.write(prefix)
     stream.flush()
     scramble_print(answer, file=stream)
@@ -1081,7 +1113,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             user_input = pending
                             pending = ""
                         else:
-                            out.write("\n👹 master: ")
+                            out.write("\nmaster: " if QUIET_MODE else "\n👹 master: ")
                             out.flush()
                             turn = read_operator_line(sys.stdin, out)
                             if turn is None:  # EOF / Ctrl-D / Ctrl-C
@@ -1113,6 +1145,10 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
 
                         messages.append({"role": "user", "content": user_input})
 
+                        if not QUIET_MODE:
+                            out.write("status: thinking\n")
+                            out.flush()
+
                         spinner = BridgetSpinner(stream=tty)
                         if not do_mode:
                             # As in one-shot, --do lets the approval gate own the
@@ -1133,6 +1169,9 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         spinner.stop()
                         _SPINNER = None
 
+                        if not QUIET_MODE:
+                            out.write("status: responding\n")
+                            out.flush()
                         print_response(answer, prefix_newline=did_tool_round, out=out)
 
                         # Accumulate whole-session state for the single Phase-4
@@ -1153,6 +1192,12 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         # the system prompt and the most recent turn intact.
                         messages = trim_history(messages, context_budget_for(model))
                 finally:
+                    if turn_count > 0 and not QUIET_MODE:
+                        out.write(
+                            "learning suggestion: run `bridget --learn-last` to preview "
+                            "a reusable lesson from recent review/diff context.\n"
+                        )
+                        out.flush()
                     record_chat_session(
                         ctx,
                         do_mode=do_mode,
@@ -1214,7 +1259,7 @@ async def run_bridge() -> None:
         tty = None
     spinner = BridgetSpinner(stream=tty)
     global _SPINNER
-    if not do_mode:
+    if not do_mode and not QUIET_MODE:
         # In --do mode the interactive approval gate owns the terminal; a
         # concurrent spinner corrupts the y/n prompt and its readline.
         spinner.start()
@@ -1257,6 +1302,8 @@ async def run_bridge() -> None:
             # and also gates session recording (the pre-refactor direct-answer
             # path returned without recording).
             spinner.stop()
+            if not QUIET_MODE:
+                print("status: responding")
             print_response(answer, prefix_newline=did_tool_round)
 
             if did_tool_round:
@@ -1314,6 +1361,10 @@ if __name__ == "__main__":
     # Graph snapshots / diff (CG-2.2) are synchronous (git + read-only graph,
     # writes only its own snapshot JSON); intercept before OpenAI or MCP.
     if codegraph_snapshot.maybe_handle_snapshot(sys.argv[1:]):
+        sys.exit(0)
+
+    # Read-only CodeGraph context lookups: symbol, dependency, and hotspot views.
+    if codegraph_lookup.maybe_handle_lookup(sys.argv[1:]):
         sys.exit(0)
 
     try:

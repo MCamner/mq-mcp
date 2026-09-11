@@ -71,6 +71,9 @@ Notes:
   `BRIDGET_CONTEXT_BUDGET`.
 * The session is recorded once at exit, not per turn. `bridget --history` tags
   it with its turn count and `bridget --continue` shows its summary.
+* Session injection is bounded to recent context only. `bridget --forget
+  YYYY-MM-DD` removes one day of Bridget session context.
+* `bridget --quiet` disables visual effects for calmer or captured output.
 * An initial prompt is optional: `bridget --chat "start here"` runs that first
   turn, then drops into the prompt.
 * Piped input works for scripting: `printf 'list tools\nexit\n' | bridget --chat`.
@@ -78,6 +81,28 @@ Notes:
 `--chat` is not the default and does not own workflow orchestration — it only
 holds conversational context. Planning, routing, and retries remain `mq-agent`'s
 job (see [orchestration-boundary.md](orchestration-boundary.md)).
+
+## Bridget context helpers
+
+```bash
+uv --directory mq-mcp run python bridge.py --learn-last
+uv --directory mq-mcp run python bridge.py --dashboard
+uv --directory mq-mcp run python bridge.py --forget 2026-09-10
+```
+
+`--learn-last` prints a redacted preview only. It does not store a learning
+record and does not promote session history into knowledge.
+
+## Bridget CodeGraph lookups
+
+```bash
+uv --directory mq-mcp run python bridge.py --symbol BridgetContext
+uv --directory mq-mcp run python bridge.py --dependencies mq-mcp/bridge.py
+uv --directory mq-mcp run python bridge.py --hotspots mq-mcp
+```
+
+These commands read local CodeGraph context only. They do not write memory
+observations or learning records.
 
 ## Bridget Identity
 

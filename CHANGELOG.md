@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Bridget roadmap follow-through: bounded session-context injection, per-day
+  session logs, `--forget`, `--learn-last` preview, `--dashboard`, quiet/status
+  CLI affordances, read-only CodeGraph symbol/dependency/hotspot lookups, and
+  explicit Bridget/mq-agent/mqobsidian boundary docs.
+
 ## [2.0.2] - 2026-07-19
 
 ### Fixed

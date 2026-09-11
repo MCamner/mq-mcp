@@ -43,6 +43,25 @@ def test_load_lessons_dedupes_paraphrases(monkeypatch, tmp_path):
     assert out.count("\n- ") == 1  # the near-identical paraphrase is collapsed
 
 
+def test_load_lessons_filters_by_repo_and_query(monkeypatch, tmp_path):
+    store = tmp_path / "lessons.jsonl"
+    _write_lessons(store, [
+        {"repo": "mq-mcp", "risk": "medium", "summary": "update bridge tests after CLI flag changes"},
+        {"repo": "mq-agent", "risk": "high", "summary": "keep route contracts synchronized"},
+        {"risk": "medium", "summary": "general release hygiene"},
+    ])
+    monkeypatch.setattr(bridget_context, "LESSONS_FILE", store)
+
+    out = BridgetContext(path=tmp_path / "ctx.md").load_lessons(
+        repo="mq-mcp",
+        query="bridge",
+    )
+
+    assert "update bridge tests" in out
+    assert "route contracts" not in out
+    assert "general release hygiene" not in out
+
+
 def test_load_lessons_empty_when_no_store(monkeypatch, tmp_path):
     monkeypatch.setattr(bridget_context, "LESSONS_FILE", tmp_path / "missing.jsonl")
     assert BridgetContext(path=tmp_path / "ctx.md").load_lessons() == ""
@@ -98,3 +117,58 @@ def test_record_one_shot_keeps_flat_shape(tmp_path):
     assert "do_mode" not in entry
     assert "duration_s" not in entry
     assert "REPL session" not in (tmp_path / "ctx.md").read_text(encoding="utf-8")
+
+
+def test_record_writes_daily_session_log(monkeypatch, tmp_path):
+    monkeypatch.setattr(bridget_context, "SESSION_DIR", tmp_path / "sessions")
+    ctx = _ctx(tmp_path)
+
+    ctx.record("p", [], "a")
+
+    daily = list((tmp_path / "sessions").glob("*.jsonl"))
+    assert len(daily) == 1
+    assert json.loads(daily[0].read_text(encoding="utf-8"))["summary"] == "a"
+
+
+def test_load_injects_only_three_bounded_recent_sessions(tmp_path):
+    ctx = _ctx(tmp_path)
+    for i in range(5):
+        ctx.record(f"prompt {i}", [], "x" * 800)
+
+    out = ctx.load()
+
+    assert "temporary context only" in out
+    assert out.count("Temporary context: yes") == 3
+    assert "x" * 650 not in out
+
+
+def test_forget_day_removes_history_daily_and_context(monkeypatch, tmp_path):
+    monkeypatch.setattr(bridget_context, "SESSION_DIR", tmp_path / "sessions")
+    ctx = _ctx(tmp_path)
+    ctx.record("p1", [], "a1")
+    date = ctx.read_history(limit=1)[0]["ts"][:10]
+
+    removed = ctx.forget_day(date)
+
+    assert removed == 1
+    assert ctx.read_history(limit=0) == []
+    assert not list((tmp_path / "sessions").glob("*.jsonl"))
+    assert not (tmp_path / "ctx.md").exists()
+
+
+def test_metrics_are_derived_from_history(tmp_path):
+    ctx = BridgetContext(
+        path=tmp_path / "ctx.md",
+        history_path=tmp_path / "history.jsonl",
+        metrics_path=tmp_path / "metrics.json",
+    )
+    ctx.record("p", ["git_status"], "learning suggestion", turns=2, chat_mode=True)
+
+    metrics = ctx.metrics()
+
+    assert metrics["totals"]["sessions"] == 1
+    assert metrics["totals"]["chat_sessions"] == 1
+    assert metrics["totals"]["tool_calls"] == 1
+    assert metrics["totals"]["learning_suggestions"] == 1
+    assert metrics["totals"]["accepted_learning"] >= 0
+    assert (tmp_path / "metrics.json").exists()

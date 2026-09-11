@@ -108,6 +108,8 @@ Run the bridge with a prompt:
 cd mq-mcp
 uv run python bridge.py "List the available MCP tools."
 uv run python bridge.py --chat        # interactive multi-turn session
+uv run python bridge.py --learn-last  # preview a redacted learning candidate
+uv run python bridge.py --dashboard   # summarize local Bridget usage context
 ```
 
 ## Requirements
@@ -174,6 +176,10 @@ See [`docs/integration.md`](docs/integration.md) for how `mq-mcp`, `mq-hal`, and
 See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the
 practical boundary between `mq-mcp`, `mq-agent`, `mq-hal`, `repo-signal`, and
 `mq-image-analyze`.
+
+See [`docs/bridget-agent-boundary.md`](docs/bridget-agent-boundary.md) for the
+short Bridget vs mq-agent operating rule: Bridget executes nearby work; mq-agent
+plans coordinated work.
 
 See [`docs/LEARN_OLLAMA.md`](docs/LEARN_OLLAMA.md) for the optional
 Ollama-backed learn extraction policy. Ollama may be used only for local pattern
