@@ -314,6 +314,66 @@ def load_repo_context_snapshot(
     return body
 
 
+_REPO_CONTEXT_HEADER_PREFIX = "PROVENANCE source=repo-signal schema=symbol_index.v1"
+_REPO_CONTEXT_OMITTED = re.compile(r"^\.\.\. \((\d+) more files omitted\)$")
+
+
+def render_repo_context_provenance(snapshot: str) -> list[str]:
+    """Human-readable lines naming the source of the evidence in a preview.
+
+    The prompt has carried a PROVENANCE header since repo-context grounding
+    existed, but the operator never saw it. ADR-007 makes visible provenance a
+    precondition for ever admitting a second evidence source, because a reader
+    who cannot see the source cannot tell a verified export from a fallback.
+
+    Pure text over the snapshot the caller already holds: this reads no file and
+    runs no command, so rendering can never widen the trust source it describes.
+    """
+    lines = snapshot.splitlines()
+    header = lines[0] if lines else ""
+
+    if not snapshot.strip():
+        return [
+            "repo context:",
+            "  source:       none — no verified repo-signal export",
+            "  effect:       repository-specific extraction refused; "
+            "no other source is consulted",
+        ]
+
+    if not header.startswith(_REPO_CONTEXT_HEADER_PREFIX):
+        return [
+            "repo context:",
+            "  source:       unrecognized — no repo-signal provenance header",
+            "  effect:       treat this evidence as unverified",
+        ]
+
+    fields = dict(
+        part.split("=", 1) for part in header.split() if "=" in part
+    )
+
+    listed = 0
+    omitted = 0
+    for line in lines[1:]:
+        match = _REPO_CONTEXT_OMITTED.match(line)
+        if match:
+            omitted = int(match.group(1))
+        elif line.strip():
+            listed += 1
+
+    files = f"{listed} listed"
+    if omitted:
+        files += f", {omitted} omitted"
+
+    return [
+        "repo context:",
+        "  source:       repo-signal export (primary)",
+        f"  schema:       {fields.get('schema', '-')}",
+        f"  repo:         {fields.get('repo', '-')}",
+        f"  generated_at: {fields.get('generated_at', '-')}",
+        f"  files:        {files}",
+    ]
+
+
 def _missing_repo_context_record() -> dict[str, Any]:
     """Return the deterministic refusal used when verified context is required."""
     return {

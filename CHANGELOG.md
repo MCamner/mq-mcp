@@ -16,6 +16,14 @@
 
 ### Changed
 
+* `ollama_learn_extract` and `learn_extract_from_last_review` previews now
+  print a `repo context:` block above the evidence, naming the source that
+  produced it: a verified repo-signal export (with schema, repo, `generated_at`
+  and file count), no verified export at all, or a snapshot carrying some other
+  provenance header, which is labelled unverified rather than inheriting the
+  repo-signal label. This satisfies the first precondition in `ADR-007`;
+  the fallback logic, safety classes and tool contracts are unchanged, and the
+  `PROVENANCE` line sent to the model is byte-identical.
 * `ollama_learn_extract` and `learn_extract_from_last_review` now reject
   repo-context evidence that is not demonstrably current. A
   `.repo-signal/exports/symbol_index.json` export is accepted only when

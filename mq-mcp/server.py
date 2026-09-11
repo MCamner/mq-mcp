@@ -4805,6 +4805,8 @@ def ollama_learn_extract(review_findings: str) -> str:
         "",
         f"summary: {record.get('summary', '-')}",
         "",
+        *eng.render_repo_context_provenance(repo_context),
+        "",
         "evidence:",
     ]
     for item in record.get("evidence", []):
@@ -4900,6 +4902,8 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         f"confidence:   {record.get('confidence', '-')}",
         "",
         f"summary: {record.get('summary', '-')}",
+        "",
+        *eng.render_repo_context_provenance(repo_context),
         "",
         "evidence:",
     ]
