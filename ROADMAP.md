@@ -35,11 +35,10 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-Released:  v2.0.2  Release Gate v2 + Bridget interactive foundation
-On main:   CG-2.1 co-change, CG-2.2 graph snapshots, model-routing tools,
-           Ruff baseline and consolidated mq-learn MCP contract
-Next:      harden repo-context evidence and refusal behavior
-Later:     CG-2.2+ timeline
+Released:  v2.1.0  Bridget Runtime and Evidence Integrity
+On main:   nothing unreleased
+Next:      undecided — no scope is committed
+Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
 
 Active backlog summary:
@@ -267,13 +266,17 @@ This is not a problem to solve. It is a tension to design.
 | v1.10.0 | Learning Contract Layer                     | Done          |
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
-| v2.1.0  | Bridget interactive session foundation      | Shipped in v2.0.2                    |
+| v2.1.0  | Bridget Runtime and Evidence Integrity      | Done                                 |
 | v2.2.0  | mq-learn integration                        | Partial; re-scope                    |
 | v1.12.0 | Repo-context evidence hardening             | Legacy label; fold into next release |
 
 ---
 
-## v2.1.0 — Bridget interactive session foundation (done)
+## Bridget interactive session foundation (done)
+
+Planned as v2.1.0 and shipped inside `v2.0.2`. The `v2.1.0` that was eventually
+released is a different, larger package — see the release table above and
+`CHANGELOG.md`.
 
 > **Scope split (as shipped):**
 >
@@ -396,7 +399,7 @@ Non-goals:
 * no persisted full REPL transcripts by default
 * no unbounded tool loops or unbounded tool output in message history
 
-Future decision (not in v2.1.0): whether bare `bridget` should open interactive
+Future decision, still open: whether bare `bridget` should open interactive
 mode with `bridget -1 "prompt"` for one-shot. Decide only after `--chat` proves
 stable in real use.
 
