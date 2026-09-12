@@ -1,8 +1,139 @@
 # Changelog
 
-## Unreleased
+## [2.1.0] - 2026-09-12
+
+Bridget runtime, evidence and provenance integrity, and deterministic
+isolation. Bridget gains a credential model, an approval gate that reads what
+a call leaves behind, and a session that survives bad input; mq-mcp becomes the
+first producer of runtime identity; learn extraction refuses evidence it cannot
+verify and says where the evidence it does accept came from; and the test suite
+stops depending on, or mutating, ambient repository state.
+
+### Added
+
+* Bridget roadmap follow-through: bounded session-context injection, per-day
+  session logs, `--forget`, `--learn-last` preview, `--dashboard`, quiet/status
+  CLI affordances, read-only CodeGraph symbol/dependency/hotspot lookups, and
+  explicit Bridget/mq-agent/mqobsidian boundary docs.
+
+* mq-mcp is the first producer of `mq.runtime-identity.v1`. mq-agent's runtime
+  provenance could compare a checkout, an installed runtime and a release, but
+  had no running process to compare against. The identity is captured when the
+  process starts, not read from disk per request: a process started from commit
+  A and still running after the checkout moved to B reports A, because
+  answering B would describe the working tree instead of itself and conceal the
+  drift a consumer is asking about.
+
+* Read-only routing tools (`mq_route_inspect`, `mq_route_report`,
+  `mq_route_verify`) expose mq-agent's route decisions through MCP, with
+  self-contained contract fixtures.
+
+* `ADR-007`: repository-specific learn extraction does not silently fall back
+  from repo-signal evidence to a git subprocess. Missing or stale evidence
+  keeps failing closed. The ADR records the preconditions — visible provenance,
+  declared safety class, deterministic repo-scoped invocation, and tests — that
+  must move together before a fallback can be reconsidered.
+
+* Pushing a `v*` tag publishes the GitHub release. Notes come from that
+  version's CHANGELOG section, never from the commit range: where a tag was
+  placed late the range describes the wrong work. Publication by hand is a step
+  that gets skipped — mq-hal shipped v2.3.0 and v2.4.0 as tags nobody released,
+  unnoticed for a month.
+
+* The repo's skills are discoverable by Claude Code and Codex through relative
+  symlinks under `.claude/skills/` and `.agents/skills/`, so a fresh clone is
+  wired the same way. The MQ convention keeps skills in `skills/`, which no
+  agent searched.
+
+### Changed
+
+* Bridget gates tool calls on effect, not on class letter. The bridge exposed
+  all 122 model-facing tools while the approval gate stopped only `shell_exec`,
+  so `update_repo_file`, `run_mqlaunch`, `edit_image` and `open_in_app` — four
+  names SAFETY_MODEL.md lists under high-risk areas — ran without consent.
+  `bridget_safety` reads `docs/tool_contracts.json` and gates on what a call
+  leaves behind: `write: true` always, Class D unless its only effect is on
+  screen, and anything absent from the contract. Gating on the class letter
+  would have caught 53 tools including `set_volume`; gating on `subprocess`
+  would have caught `git_status`, which shells out and changes nothing. The
+  effect rule gates 41 of 130 and leaves 39 read-only subprocess tools silent.
+
+* Bridget reads its OpenAI credential from the macOS Keychain. The API secret
+  is out of the environment template.
+
+* `ollama_learn_extract` and `learn_extract_from_last_review` reject
+  repo-context evidence that is not demonstrably current. A
+  `.repo-signal/exports/symbol_index.json` export is accepted only when
+  `generated_at` is timezone-aware, no more than 24 hours old, and no more than
+  5 minutes in the future. Evidence that is missing, malformed, stale,
+  materially future-dated, or from another repository yields a deterministic
+  `unknown` / `low` refusal with empty evidence instead of grounding the model
+  in unverifiable context.
+
+* Both extraction previews print a `repo context:` block above the evidence,
+  naming the source that produced it: a verified repo-signal export (with
+  schema, repo, `generated_at` and file count), no verified export at all, or a
+  snapshot carrying some other provenance header, which is labelled unverified
+  rather than inheriting the repo-signal label. This satisfies the first
+  precondition in `ADR-007`; the fallback logic, safety classes and tool
+  contracts are unchanged, and the `PROVENANCE` line sent to the model is
+  byte-identical.
+
+* `review_file` and `review_repo` send numbered source and verify what the
+  model claims. Findings are checked against the syntax tree and anchored to
+  where their subject is defined, and what is dropped is reported rather than
+  swallowed. Files over 200 KB are chunked instead of refused, which had made
+  the largest file in a repo the one nothing reviewed.
+
+* `mcp` is constrained to `>=1.27.1,<2`. mcp 2.0 removed `mcp.server.fastmcp`,
+  which `server.py` imports `FastMCP` from. `uv.lock` already held this repo at
+  a working version, but a lock records one resolution rather than a rule — an
+  open bound would have accepted 2.x the moment anyone regenerated it, in the
+  stack's central MCP server. The same open bound left mq-image-analyze red for
+  nine days. The boundary is also declared in `.mq/repo-contract.json` so
+  mq-agent's stack compatibility gate can compare it across repositories.
+
+* `.mq/repo-contract.json` declares `release_mode: direct`. Branch protection
+  is data the release tool reads before it mutates, rather than a push error it
+  discovers afterwards. Undeclared repos stay blocked by design.
 
 ### Fixed
+
+* `mq_route_shadow` declares the write it performs. mq-agent's `route shadow`
+  began appending every outcome to its local evidence store, so the tool
+  stopped being read-only while `tool_contracts.json` still said
+  `class B, write: false, side_effects: []` and the docstring, README,
+  TOOL_INDEX and TOOL_SAFETY all claimed it stored nothing. The bridge also
+  pinned `--timeout 30`, undoing an upstream raise to 180s: real material takes
+  30-90s, so grounded runs were being recorded as `model-unavailable` — false
+  evidence in the store the promotion gate reads.
+
+* Runtime provenance trusts the recorded system, not the shape of the string.
+  The producer's hex filter checked the revision and never the VCS that
+  produced it, so an `svn` revision of seven hex-valid characters became a
+  commit and made the identity `verified`. `recorded_commit()` now requires
+  `vcs == "git"`, and `usable_commit()` uses `fullmatch`, because `$` also
+  matches before a trailing newline.
+
+* One bad byte on stdin ends a turn, not the session. Under a normal UTF-8
+  locale the REPL read stdin raw, so a paste carrying latin-1 or a multibyte
+  sequence cut in half raised `UnicodeDecodeError` inside readline, escaped
+  through the MCP client session and killed the bridge with a nested
+  `ExceptionGroup` traceback that never said the fix was to retype the line.
+  stdin now decodes with `errors="replace"`.
+
+* The release-notes reader fails instead of publishing a truncated section. It
+  previously cut a section over 120,000 characters and published the remainder,
+  quietly breaking the rule the design rests on — that what reaches the release
+  page is exactly the changelog section. Missing, empty and oversized sections
+  all fail loudly; a correct section is published verbatim.
+
+* The docs gates require their inputs before reporting PASS, so a missing file
+  can no longer be mistaken for a passing check.
+
+* Learn extraction normalizes ungrounded provider output to `unknown` / `low`
+  rather than presenting it as a confident pattern, and the Ollama extraction
+  prompt is hardened against instructions embedded in review findings.
 
 * The test suite no longer writes `review_engine/memory/review_history.json`.
   Tests reached the tracked store through `ReviewMemory`'s default argument,
@@ -12,37 +143,6 @@
   test gets its own store, and the tracked file is hashed across the session so
   a future write path fails the run rather than being noticed by hand. Where
   reviews are kept in normal use is unchanged.
-
-### Added
-
-* Bridget roadmap follow-through: bounded session-context injection, per-day
-  session logs, `--forget`, `--learn-last` preview, `--dashboard`, quiet/status
-  CLI affordances, read-only CodeGraph symbol/dependency/hotspot lookups, and
-  explicit Bridget/mq-agent/mqobsidian boundary docs.
-* Added `ADR-007`: repository-specific learn extraction does not silently fall
-  back from repo-signal evidence to a git subprocess. Missing or stale evidence
-  keeps failing closed. The ADR records the preconditions — visible provenance,
-  declared safety class, deterministic repo-scoped invocation, and tests — that
-  must move together before a fallback can be reconsidered.
-
-### Changed
-
-* `ollama_learn_extract` and `learn_extract_from_last_review` previews now
-  print a `repo context:` block above the evidence, naming the source that
-  produced it: a verified repo-signal export (with schema, repo, `generated_at`
-  and file count), no verified export at all, or a snapshot carrying some other
-  provenance header, which is labelled unverified rather than inheriting the
-  repo-signal label. This satisfies the first precondition in `ADR-007`;
-  the fallback logic, safety classes and tool contracts are unchanged, and the
-  `PROVENANCE` line sent to the model is byte-identical.
-* `ollama_learn_extract` and `learn_extract_from_last_review` now reject
-  repo-context evidence that is not demonstrably current. A
-  `.repo-signal/exports/symbol_index.json` export is accepted only when
-  `generated_at` is timezone-aware, no more than 24 hours old, and no more than
-  5 minutes in the future. Evidence that is missing, malformed, stale,
-  materially future-dated, or from another repository yields the existing
-  deterministic `unknown` / `low` refusal with empty evidence instead of
-  grounding the model in unverifiable context.
 
 ## [2.0.2] - 2026-07-19
 
