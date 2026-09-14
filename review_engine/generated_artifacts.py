@@ -77,6 +77,26 @@ def _last_review_timestamp(file_path: str, review_memory_path: Path) -> float | 
     return None
 
 
+def _repo_identity(repo_root: Path) -> str:
+    """Return the repo's declared name, falling back to the directory name.
+
+    The directory is not the repo: a git worktree's directory differs from the
+    repo it belongs to, so repo_root.name cannot be compared against a repo
+    name. .mq/repo-contract.json carries a committed, worktree-stable identity.
+    A missing or unusable contract falls back rather than failing the build.
+    """
+    try:
+        contract = json.loads(
+            (repo_root / ".mq" / "repo-contract.json").read_text(encoding="utf-8")
+        )
+        name = contract["repo"]
+        if isinstance(name, str) and name.strip():
+            return name
+    except Exception:
+        pass
+    return repo_root.name
+
+
 def _hub_scores(callgraph_path: Path) -> dict[str, int]:
     """Return {file_path: importer_count} from callgraph.json."""
     if not callgraph_path.exists():
@@ -162,20 +182,19 @@ def build_rich_architecture_map(
         repo_root:      Repo root path.
         out_dir:        Output directory. Defaults to generated/architecture/.
         flat_arch_map:  Pre-built {file_path: role_str} to avoid re-scanning.
-                        If None, reads from review_engine/context/architecture_map.json.
+                        If None, the repo is scanned so that generated_at
+                        describes a scan that actually ran.
 
     Returns the built dict.
     """
     out_dir = out_dir or (repo_root / "generated" / "architecture")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load flat map
+    # Without a handed-over map, scan. Reading the builder's intermediate from
+    # disk would stamp a map of unknown age with the current time (ADR-008).
     if flat_arch_map is None:
-        flat_path = repo_root / "review_engine" / "context" / "architecture_map.json"
-        try:
-            flat_arch_map = json.loads(flat_path.read_text(encoding="utf-8"))
-        except Exception:
-            flat_arch_map = {}
+        from review_engine.repo_context_builder import scan_architecture_map
+        flat_arch_map = scan_architecture_map(repo_root)
 
     review_memory_path = repo_root / "review_engine" / "memory" / "review_history.json"
     callgraph_path = repo_root / "review_engine" / "context" / "callgraph.json"
@@ -194,7 +213,7 @@ def build_rich_architecture_map(
 
     result: dict[str, Any] = {
         "schema": ARCHITECTURE_MAP_SCHEMA,
-        "repo_name": repo_root.name,
+        "repo_name": _repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(files),
         "files": files,
@@ -228,7 +247,7 @@ def build_ownership_map(
 
     result: dict[str, Any] = {
         "schema": OWNERSHIP_MAP_SCHEMA,
-        "repo_name": repo_root.name,
+        "repo_name": _repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(ownership),
         "files": ownership,

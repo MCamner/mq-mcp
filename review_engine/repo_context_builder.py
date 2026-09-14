@@ -142,21 +142,14 @@ def _should_ignore(rel: Path) -> bool:
     return False
 
 
-def build_context(
-    repo_root: Path = REPO_ROOT,
-    out_dir: Optional[Path] = None,
-) -> dict:
-    """
-    Scan repo_root and produce architecture_map and file_summary_index.
-    Returns both as dicts. Writes JSON files to out_dir if provided.
-    """
-    out_dir = out_dir or (repo_root / "review_engine" / "context")
-    out_dir.mkdir(parents=True, exist_ok=True)
+def scan_architecture_map(repo_root: Path = REPO_ROOT) -> dict[str, str]:
+    """Return {relative_path: role} for every scanned file.
 
-    architecture_map: dict[str, str] = {}
-    file_summary_index: list[dict] = []
-
+    Pure: walks the repo and assigns roles, writes nothing. Callers that need
+    the role map without the side effects of build_context use this.
+    """
     root = repo_root.resolve()
+    architecture_map: dict[str, str] = {}
 
     for path in sorted(root.rglob("*")):
         if not path.is_file():
@@ -169,11 +162,28 @@ def build_context(
             continue
         if len(rel.parts) > 6:
             continue
+        architecture_map[str(rel)] = _role_for(str(rel))
 
-        rel_str = str(rel)
-        role = _role_for(rel_str)
-        architecture_map[rel_str] = role
+    return architecture_map
 
+
+def build_context(
+    repo_root: Path = REPO_ROOT,
+    out_dir: Optional[Path] = None,
+) -> dict:
+    """
+    Scan repo_root and produce architecture_map and file_summary_index.
+    Returns both as dicts. Writes JSON files to out_dir if provided.
+    """
+    out_dir = out_dir or (repo_root / "review_engine" / "context")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    root = repo_root.resolve()
+    architecture_map = scan_architecture_map(root)
+    file_summary_index: list[dict] = []
+
+    for rel_str in architecture_map:
+        path = root / rel_str
         # Only build full summaries for code and docs — skip binary/data files
         if path.suffix in {".py", ".sh", ".md", ".txt", ".toml", ".yaml", ".yml", ".json"}:
             if path.stat().st_size < 500_000:  # skip huge JSON data files
