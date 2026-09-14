@@ -53,7 +53,7 @@ def test_record_review_creates_file(vault: Path) -> None:
     assert created.exists()
     assert created.parent == vault / "reviews"
     content = created.read_text()
-    assert "review.v1" in content
+    assert "review.v2" in content
     assert "mq-mcp/server.py" in content
     assert "HIGH" in content
 

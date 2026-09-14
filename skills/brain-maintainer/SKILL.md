@@ -59,7 +59,7 @@ Per `docs/KNOWLEDGE_CONTRACT.md`, Obsidian is the passive knowledge store: it re
 * append-only to new date-stamped files — never edit or delete existing vault notes
 * local-only — no sync, no push, no network
 * explicit — no automatic background writes; callers gate on user approval
-* schema-tagged — every record carries its schema version (`decision.v1`, `review.v1`, `session.v1`, `learn.v1`) in frontmatter
+* schema-tagged — every record carries its schema version (`decision.v1`, `review.v2`, `session.v1`, `learn.v1`) in frontmatter
 * scoped to the vault — `MQ_OBSIDIAN_DIR` or `~/mqobsidian`, never repo paths
 
 HAL reads the vault, mq-agent orchestrates writes, mqlaunch only opens it. Keep that direction of flow.

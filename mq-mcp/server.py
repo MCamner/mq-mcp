@@ -5768,7 +5768,7 @@ def brain_record_review(
     """Write a code review summary to mqobsidian/reviews/.
 
     Class C — writes to local mqobsidian vault. Requires user approval.
-    Schema: review.v1
+    Schema: review.v2
     Confidence must be: high, medium, or low.
 
     `producer` is the caller's own `mq.runtime-identity.v1` record: which code

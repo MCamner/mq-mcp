@@ -210,3 +210,16 @@ def test_an_unreadable_contract_refuses_rather_than_writing(vault, pinned_identi
     assert result["ok"] is False
     assert result["ingress"]["reasons"] == ["ingress-contract-unavailable"]
     assert reviews(vault) == []
+
+
+@pytest.mark.parametrize("with_provenance", [True, False])
+def test_every_new_review_is_written_as_the_current_schema(vault, pinned_identity, producer, observation, with_provenance):
+    """The schema version describes the writer's contract, not which optional
+    fields a particular record happened to carry. One writer, one version —
+    otherwise two shapes both claim to be the same schema."""
+    if with_provenance:
+        record(producer=producer, receiver_observation=observation)
+    else:
+        record()
+    content = reviews(vault)[0].read_text(encoding="utf-8")
+    assert "schema_version: review.v2" in content

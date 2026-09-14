@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION_DECISION = "decision.v1"
-SCHEMA_VERSION_REVIEW = "review.v1"
+SCHEMA_VERSION_REVIEW = "review.v2"
 SCHEMA_VERSION_SESSION = "session.v1"
 SCHEMA_VERSION_LEARN = "learn.v1"
 
