@@ -158,7 +158,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `learn_from_diff` | Create a learning record with current git diff as context | Write outside repo, commit |
 | `bootstrap_learning_memory` | Seed the learn layer from architecture memory ADRs | Write outside repo, commit |
 | `brain_record_decision` | Write an ADR to mqobsidian/decisions/ | Write outside repo (vault) |
-| `brain_record_review` | Write a code review summary to mqobsidian/reviews/ | Write outside repo (vault) |
+| `brain_record_review` | Write a code review summary to mqobsidian/reviews/ | Write outside repo (vault); refuses and writes nothing when the provenance it is handed contradicts itself |
 | `brain_record_session` | Write a session note to mqobsidian/sessions/ | Write outside repo (vault) |
 | `brain_record_learning` | Write a learned engineering pattern to mqobsidian/learn/ | Write outside repo (vault) |
 | `brain_promote_learning` | Promote `learn/<slug>.md` to learn/verified/ | Write outside repo (vault) |

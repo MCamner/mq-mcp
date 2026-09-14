@@ -28,7 +28,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "mq-mcp" / "runtime_identity.py"
 SERVER_PATH = ROOT / "mq-mcp" / "server.py"
-SCHEMA_PATH = ROOT / "tests" / "fixtures" / "mq-agent-schemas" / "runtime_identity.schema.json"
+SCHEMA_PATH = ROOT / "schemas" / "vendor" / "mq.runtime-identity.v1.schema.json"
 
 
 def _load_module():

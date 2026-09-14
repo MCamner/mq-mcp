@@ -1,6 +1,6 @@
 # Knowledge Contract — MQ Second Brain
 
-Version: 0.1.0  
+Version: 0.2.0  
 Owner: mq-mcp  
 Vault: `~/mqobsidian`
 
@@ -79,9 +79,45 @@ Slugs are kebab-case, max 40 characters, no special characters.
 | Schema | Used by | Fields |
 | ------ | ------- | ------ |
 | `decision.v1` | `record_decision()` | title, context, decision, rationale, consequences, tags |
-| `review.v1` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence |
+| `review.v2` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence, ingress_decision |
 | `session.v1` | `record_session()` | title, repos, summary, outcomes, follow_ups |
 | `learn.v1` | `record_learning()` | pattern_name, pattern_type, summary, evidence, confidence |
+
+---
+
+## Ingress provenance
+
+A review may arrive with the identity of the runtime that produced it and with
+what the caller observed about this mq-mcp. `brain_record_review` decides
+admission before anything is written:
+
+| Payload | Outcome |
+| ------- | ------- |
+| an identity that fails `mq.runtime-identity.v1` | refused, nothing written |
+| an observation of a different mq-mcp process than the one answering | refused, nothing written |
+| no provenance at all | written, decision `accept_with_warning` |
+| a receiver carrying findings, e.g. `RTP010` | written, decision `accept_with_warning` |
+| verified producer and this runtime | written, decision `accept` |
+
+`ingress_decision` appears in the frontmatter only when provenance was
+supplied, and the decision, its reasons and any findings are written into a
+`## Provenance` section of the note.
+
+The writer moved from `review.v1` to `review.v2` when it gained the ability to
+record provenance. The version describes the writer's contract, not which
+optional fields a given record happened to carry, so every new review is
+written as `review.v2` whether or not provenance was supplied — two shapes both
+claiming `review.v1` would make the version useless for deciding what a reader
+may expect. Existing `review.v1` files are valid and are never rewritten; a
+reader that handles both sees provenance only on `v2`.
+
+Absence is recorded as absence. A record with no producer identity says so
+rather than carrying one inferred from the checkout, the latest tag, or the
+runtime that happened to receive it.
+
+mq-agent owns the comparison that produces RTP findings and their meaning. This
+contract stores what it was told, plus the one check mq-mcp can make itself:
+that the observation is about the process holding the record.
 
 ---
 

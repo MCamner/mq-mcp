@@ -54,6 +54,7 @@ if str(APP_ROOT) not in sys.path:
 # Imported after APP_ROOT joins sys.path, and imported as a module rather than
 # a function so the snapshot it takes at import is reachable and inspectable.
 import runtime_identity as _runtime_identity  # noqa: E402
+import brain_ingress as _brain_ingress  # noqa: E402
 
 # Active review root override. Defaults to None (→ REPO_ROOT, the mq-mcp repo
 # itself). review_repo sets this for the duration of an external-repo review so
@@ -5761,21 +5762,66 @@ def brain_record_review(
     suggested_next_steps: list[str],
     confidence: str = "medium",
     raw_summary: str = "",
+    producer: dict | None = None,
+    receiver_observation: dict | None = None,
 ) -> dict:
     """Write a code review summary to mqobsidian/reviews/.
 
     Class C — writes to local mqobsidian vault. Requires user approval.
-    Schema: review.v1
+    Schema: review.v2
     Confidence must be: high, medium, or low.
+
+    `producer` is the caller's own `mq.runtime-identity.v1` record: which code
+    produced this review. `receiver_observation` is what the caller observed
+    about this mq-mcp — `{component, running, findings}` — including any
+    RTP finding it already derived. Both are optional, and a caller that sends
+    neither still writes; the decision records that nothing was supplied rather
+    than inventing an identity.
+
+    A record that contradicts itself — an identity failing its contract, or an
+    observation of a different mq-mcp process than the one answering — is
+    refused and nothing is written. Something merely absent or behind is a
+    warning, and the decision is stored with the review.
     """
-    return _obsidian_record_review(
+    try:
+        decision = _brain_ingress.reduce_brain_ingress(
+            producer=producer,
+            receiver_observation=receiver_observation,
+            receiver_identity=_runtime_identity.identity(),
+        )
+    except _brain_ingress.IdentityContractUnavailable as exc:
+        # Fail closed: with no contract to check against, nothing is checked.
+        return {
+            "ok": False,
+            "error": f"ingress refused: {exc}",
+            "ingress": {
+                "decision": _brain_ingress.REFUSE,
+                "findings": [],
+                "reasons": ["ingress-contract-unavailable"],
+            },
+        }
+
+    if decision["decision"] == _brain_ingress.REFUSE:
+        return {
+            "ok": False,
+            "error": "ingress refused: " + ", ".join(decision["reasons"]),
+            "ingress": decision,
+        }
+
+    result = _obsidian_record_review(
         source=source,
         finding_count=finding_count,
         top_risks=list(top_risks),
         suggested_next_steps=list(suggested_next_steps),
         confidence=confidence,
         raw_summary=raw_summary,
+        provenance={
+            **decision,
+            "producer": producer,
+            "receiver_observation": receiver_observation,
+        },
     )
+    return {**result, "ingress": decision}
 
 
 @mcp.tool()

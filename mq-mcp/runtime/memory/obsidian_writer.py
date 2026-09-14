@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION_DECISION = "decision.v1"
-SCHEMA_VERSION_REVIEW = "review.v1"
+SCHEMA_VERSION_REVIEW = "review.v2"
 SCHEMA_VERSION_SESSION = "session.v1"
 SCHEMA_VERSION_LEARN = "learn.v1"
 
@@ -137,6 +137,43 @@ def record_decision(
     return _write("decisions", filename, fm + f"# {title}\n\n" + _body(*sections))
 
 
+def _identity_line(record: Any) -> str:
+    """One identity, written as what it carries and nothing more."""
+    if not isinstance(record, dict):
+        return "not supplied"
+    component = record.get("component", "unknown")
+    version = record.get("version") or "no version"
+    commit = record.get("commit") or "no commit"
+    quality = record.get("identity_quality", "unknown")
+    return f"{component} {version} ({commit}) — {quality}"
+
+
+def _provenance_section(provenance: dict[str, Any]) -> str:
+    """The ingress decision, beside the evidence it admitted.
+
+    A note whose provenance is absent says so. Nothing is inferred here: the
+    decision and its reasons were settled by the ingress reducer, and this
+    renders them without adding a conclusion of its own.
+    """
+    receiver = provenance.get("receiver_observation")
+    running = receiver.get("running") if isinstance(receiver, dict) else None
+    reasons = provenance.get("reasons") or []
+    findings = provenance.get("findings") or []
+    lines = [
+        f"**Decision:** {provenance.get('decision', 'unknown')}",
+        "",
+        f"**Producer:** {_identity_line(provenance.get('producer'))}",
+        f"**Receiver:** {_identity_line(running)}",
+    ]
+    if reasons:
+        lines += ["", "**Reasons:**"] + [f"- {r}" for r in reasons]
+    if findings:
+        lines += ["", "**Findings:**"] + [
+            f"- {f.get('component', '?')}: {f.get('code', '?')}" for f in findings
+        ]
+    return "\n".join(lines)
+
+
 def record_review(
     source: str,
     finding_count: int,
@@ -144,8 +181,13 @@ def record_review(
     suggested_next_steps: list[str],
     confidence: str = "medium",
     raw_summary: str = "",
+    provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Write a code review summary to reviews/.
+
+    `provenance` is the ingress decision from `brain_ingress`, written with the
+    record so a reader can tell a review produced by an identified runtime from
+    one that merely arrived. The caller decides admission; this only records it.
 
     Returns {"ok": True, "path": "..."} or {"ok": False, "error": "..."}.
     """
@@ -154,20 +196,25 @@ def record_review(
 
     slug = _slug(source)
     filename = f"{_today()}-{slug}.md"
-    fm = _frontmatter(
-        schema_version=SCHEMA_VERSION_REVIEW,
-        written_by="mq-mcp/obsidian_writer",
-        timestamp=_now_iso(),
-        source=source,
-        finding_count=finding_count,
-        confidence=confidence,
-    )
+    fm_fields: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION_REVIEW,
+        "written_by": "mq-mcp/obsidian_writer",
+        "timestamp": _now_iso(),
+        "source": source,
+        "finding_count": finding_count,
+        "confidence": confidence,
+    }
+    if provenance:
+        fm_fields["ingress_decision"] = provenance.get("decision", "unknown")
+    fm = _frontmatter(**fm_fields)
     risks_md = "\n".join(f"- {r}" for r in top_risks) or "- none"
     steps_md = "\n".join(f"- {s}" for s in suggested_next_steps) or "- none"
     meta = f"**Findings:** {finding_count}  \n**Confidence:** {confidence}"
     sections = [("Summary", meta), ("Top risks", risks_md), ("Suggested next steps", steps_md)]
     if raw_summary:
         sections.append(("Full summary", raw_summary))
+    if provenance:
+        sections.append(("Provenance", _provenance_section(provenance)))
     return _write("reviews", filename, fm + f"# Review: {source}\n\n" + _body(*sections))
 
 
