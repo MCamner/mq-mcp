@@ -1,6 +1,6 @@
 # Knowledge Contract — MQ Second Brain
 
-Version: 0.2.0  
+Version: 0.2.1  
 Owner: mq-mcp  
 Vault: `~/mqobsidian`
 
@@ -79,7 +79,7 @@ Slugs are kebab-case, max 40 characters, no special characters.
 | Schema | Used by | Fields |
 | ------ | ------- | ------ |
 | `decision.v1` | `record_decision()` | title, context, decision, rationale, consequences, tags |
-| `review.v2` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence, ingress_decision |
+| `review.v2` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence, ingress_decision, optional `producer_*` runtime fingerprint |
 | `session.v1` | `record_session()` | title, repos, summary, outcomes, follow_ups |
 | `learn.v1` | `record_learning()` | pattern_name, pattern_type, summary, evidence, confidence |
 
@@ -100,7 +100,14 @@ admission before anything is written:
 | verified producer and this runtime | written, decision `accept` |
 
 `ingress_decision` appears in the frontmatter only when provenance was
-supplied, and the decision, its reasons and any findings are written into a
+supplied. When an admitted producer identity is supplied, the writer also
+projects its stable runtime fingerprint into frontmatter as
+`producer_component`, `producer_version`, `producer_commit`, and
+`producer_identity_quality`. Optional producer values that were not observed
+are omitted rather than invented. A review with no producer identity therefore
+has no `producer_*` frontmatter fields.
+
+The decision, its reasons and any findings are also written into a
 `## Provenance` section of the note.
 
 The writer moved from `review.v1` to `review.v2` when it gained the ability to
