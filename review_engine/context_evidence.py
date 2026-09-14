@@ -115,6 +115,26 @@ class ReviewContextResult:
         return lines
 
 
+def repo_identity(repo_root: Path) -> str:
+    """Return the repo's declared name, falling back to the directory name.
+
+    The directory is not the repo: a git worktree's directory differs from the
+    repo it belongs to. .mq/repo-contract.json carries a committed,
+    worktree-stable identity. A missing or unusable contract falls back rather
+    than failing the caller.
+    """
+    try:
+        contract = json.loads(
+            (repo_root / ".mq" / "repo-contract.json").read_text(encoding="utf-8")
+        )
+        name = contract["repo"]
+        if isinstance(name, str) and name.strip():
+            return name
+    except Exception:
+        pass
+    return repo_root.name
+
+
 def _refused(status: str, *reasons: str) -> ReviewContextResult:
     return ReviewContextResult(status=status, reasons=list(reasons))
 

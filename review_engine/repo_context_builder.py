@@ -26,6 +26,9 @@ IGNORED_DIRS = {
     ".git", ".venv", "__pycache__", ".mypy_cache", ".pytest_cache",
     ".ruff_cache", "node_modules", "dist", "build", "backups",
     "semantic_memory",
+    # Build output, not source. Mapping it would also make the context
+    # artifact count itself against its own coverage (ADR-008).
+    "generated",
 }
 
 IGNORED_FILES = {

@@ -9,7 +9,7 @@ Checks:
   2. Contract coverage — all @mcp.tool() functions present in tool_contracts.json.
   3. Safety doc coverage — all tools mentioned in docs/TOOL_SAFETY.md.
   4. Phantom contracts — tools in tool_contracts.json not found in server.py.
-  5. Architecture map freshness — architecture_map.json older than server.py.
+  5. Repo-context evidence — whether review can use architecture_map.v1 (ADR-008).
   6. RUNTIME_CONTRACT.md existence — RISK if the identity contract is missing.
   7. RUNTIME_CONTRACT.md freshness — NOTE/WARNING if server.py is newer.
   8. Reference document existence — WARNING for each doc listed in the reference
@@ -60,8 +60,66 @@ class DriftDetector:
         self._contracts = REPO_ROOT / "docs" / "tool_contracts.json"
         self._safety = REPO_ROOT / "docs" / "TOOL_SAFETY.md"
         self._readme = REPO_ROOT / "README.md"
-        self._arch_map = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
+        self._arch_map = REPO_ROOT / "generated" / "architecture" / "architecture_map.json"
         self._runtime_contract = REPO_ROOT / "docs" / "RUNTIME_CONTRACT.md"
+
+    def _context_evidence_findings(self) -> list[DriftFinding]:
+        """Report whether review can actually use the repo-context evidence.
+
+        Asks the loader, not the filesystem. An mtime comparison says one file
+        is older than another; it does not say whether the evidence is current,
+        complete, or about this repo.
+        """
+        from review_engine.context_evidence import (
+            INVALID,
+            MISSING,
+            load_review_context,
+            repo_identity,
+        )
+
+        location = "generated/architecture/architecture_map.json"
+        result = load_review_context(
+            self._arch_map,
+            repo_root=REPO_ROOT,
+            expected_repo=repo_identity(REPO_ROOT),
+        )
+
+        if result.status == MISSING:
+            return [DriftFinding(
+                severity="WARNING",
+                location=location,
+                description=(
+                    "No repo-context evidence. Review runs without architecture "
+                    "context. Run build_repo_context() to generate it."
+                ),
+            )]
+
+        if result.status == INVALID:
+            return [DriftFinding(
+                severity="RISK",
+                location=location,
+                description=(
+                    f"Repo-context evidence refused: {', '.join(result.reasons)}. "
+                    f"Review ignores it entirely. Run build_repo_context() to rebuild."
+                ),
+            )]
+
+        if not result.reasons:
+            return []
+
+        # Usable, but narrower than it looks. Stale and dangling entries are
+        # worth interrupting for; incomplete coverage alone is a note.
+        severity = "NOTE" if result.reasons == ["partial-coverage"] else "WARNING"
+        detail = f"Repo-context evidence is usable but limited: {', '.join(result.reasons)}."
+        if "stale" in result.reasons and result.age_hours is not None:
+            detail += f" Underlying scan is {result.age_hours:.0f}h old."
+        if result.scanned_count:
+            detail += f" Covers {result.entry_count}/{result.scanned_count} files."
+        return [DriftFinding(
+            severity=severity,
+            location=location,
+            description=detail + " Run build_repo_context() to refresh.",
+        )]
 
     def _server_tools(self) -> list[str]:
         """Extract @mcp.tool() function names from server.py via AST."""
@@ -197,27 +255,8 @@ class DriftDetector:
         except Exception:
             pass
 
-        # 7 — Architecture map freshness
-        if self._arch_map.exists():
-            map_mtime = self._arch_map.stat().st_mtime
-            server_mtime = self._server.stat().st_mtime
-            if server_mtime > map_mtime:
-                hours = (server_mtime - map_mtime) / 3600
-                sev = "WARNING" if hours > 24 else "NOTE"
-                findings.append(DriftFinding(
-                    severity=sev,
-                    location="review_engine/context/architecture_map.json",
-                    description=(
-                        f"architecture_map.json is {hours:.0f}h older than server.py. "
-                        f"Run build_repo_context() to refresh."
-                    ),
-                ))
-        else:
-            findings.append(DriftFinding(
-                severity="WARNING",
-                location="review_engine/context/architecture_map.json",
-                description="architecture_map.json missing. Run build_repo_context() to generate.",
-            ))
+        # 7 — Repo-context evidence (ADR-008)
+        findings.extend(self._context_evidence_findings())
 
         # 8 — RUNTIME_CONTRACT.md existence
         if not self._runtime_contract.exists():

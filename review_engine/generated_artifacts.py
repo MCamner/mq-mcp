@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from review_engine.context_evidence import repo_identity
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 ARCHITECTURE_MAP_SCHEMA = "architecture_map.v1"
@@ -75,26 +77,6 @@ def _last_review_timestamp(file_path: str, review_memory_path: Path) -> float | 
     except Exception:
         pass
     return None
-
-
-def _repo_identity(repo_root: Path) -> str:
-    """Return the repo's declared name, falling back to the directory name.
-
-    The directory is not the repo: a git worktree's directory differs from the
-    repo it belongs to, so repo_root.name cannot be compared against a repo
-    name. .mq/repo-contract.json carries a committed, worktree-stable identity.
-    A missing or unusable contract falls back rather than failing the build.
-    """
-    try:
-        contract = json.loads(
-            (repo_root / ".mq" / "repo-contract.json").read_text(encoding="utf-8")
-        )
-        name = contract["repo"]
-        if isinstance(name, str) and name.strip():
-            return name
-    except Exception:
-        pass
-    return repo_root.name
 
 
 def _hub_scores(callgraph_path: Path) -> dict[str, int]:
@@ -213,7 +195,7 @@ def build_rich_architecture_map(
 
     result: dict[str, Any] = {
         "schema": ARCHITECTURE_MAP_SCHEMA,
-        "repo_name": _repo_identity(repo_root),
+        "repo_name": repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(files),
         "files": files,
@@ -247,7 +229,7 @@ def build_ownership_map(
 
     result: dict[str, Any] = {
         "schema": OWNERSHIP_MAP_SCHEMA,
-        "repo_name": _repo_identity(repo_root),
+        "repo_name": repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(ownership),
         "files": ownership,
