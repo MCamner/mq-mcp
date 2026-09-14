@@ -1875,19 +1875,42 @@ def _load_review_contract(mode: str) -> str:
     return ""
 
 
-def _load_architecture_role(relative_path: str) -> str:
-    """Return the architecture role for a file from the cached context map, if available."""
-    ctx_path = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
-    if not ctx_path.exists():
-        return ""
-    try:
-        data = json.loads(ctx_path.read_text(encoding="utf-8"))
-        return data.get(relative_path, "")
-    except Exception:
-        return ""
+def _review_context_for(repo_root):
+    """Verify the repo-context evidence for the repo under review (ADR-008).
+
+    Loads generated/architecture/architecture_map.json from the repo being
+    reviewed — not from mq-mcp — so a review of another repo cannot be handed
+    this repo's architecture map.
+    """
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    from review_engine.context_evidence import load_review_context, repo_identity
+
+    return load_review_context(
+        repo_root / "generated" / "architecture" / "architecture_map.json",
+        repo_root=repo_root,
+        expected_repo=repo_identity(repo_root),
+    )
 
 
-def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: int = 4) -> str:
+def _load_architecture_role(relative_path: str, context=None) -> str:
+    """Return the verified architecture role for a file, or "".
+
+    Empty means this repo's context evidence has no verified role for the file.
+    It is never a fallback to an unverified source: the builder-internal map at
+    review_engine/context/architecture_map.json is not review evidence.
+    """
+    ctx = context if context is not None else _review_context_for(REPO_ROOT)
+    return ctx.role_for(relative_path)
+
+
+def _context_provenance_block(context) -> str:
+    """Operator-readable account of the context this review was given."""
+    return "\n".join(context.provenance_lines())
+
+
+def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: int = 4, context=None) -> str:
     """Build rich cross-file context from callgraph, arch map, and review memory.
 
     For each file that imports or is imported by relative_path, includes:
@@ -1910,13 +1933,7 @@ def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: in
     if not deps and not dependents:
         return ""
 
-    arch_map: dict = {}
-    arch_map_path = REPO_ROOT / "review_engine" / "context" / "architecture_map.json"
-    if arch_map_path.exists():
-        try:
-            arch_map = json.loads(arch_map_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+    ctx = context if context is not None else _review_context_for(REPO_ROOT)
 
     lines = ["## Cross-file context"]
     if is_hub:
@@ -1934,8 +1951,8 @@ def _build_rich_cross_file_context(relative_path: str, mem=None, max_related: in
         fname = Path(file_rel).name
         lines.append(f"\n**{fname}** ({relation} this file)")
 
-        role = arch_map.get(file_rel, "")
-        if role and role != "unknown":
+        role = ctx.role_for(file_rel)
+        if role:
             lines.append(f"Role: {role}")
 
         syms = symbols_map.get(file_rel, [])[:5]
@@ -2164,6 +2181,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
     # allowlisted external repo just for the lookup; the review is then recorded
     # under that repo. Without it, the file belongs to the mq-mcp repo itself.
     repo_name: str | None = None
+    review_root = REPO_ROOT
     try:
         if repo_path is not None:
             try:
@@ -2173,6 +2191,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
             if not _root.exists() or not _root.is_dir():
                 return f"review_file failed: repo_path is not a directory: {repo_path}"
             repo_name = _root.name
+            review_root = _root
             _tok = _REVIEW_ROOT.set(_root)
             try:
                 target = resolve_repo_file(relative_path)
@@ -2209,7 +2228,8 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
     if str(REPO_ROOT) not in _sys.path:
         _sys.path.insert(0, str(REPO_ROOT))
 
-    arch_role = _load_architecture_role(relative_path)
+    review_context = _review_context_for(review_root)
+    arch_role = _load_architecture_role(relative_path, context=review_context)
 
     # Load skill via router
     try:
@@ -2231,7 +2251,9 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
     # Build rich cross-file context: arch role, symbols, last review for related files
     cross_file_ctx = ""
     try:
-        cross_file_ctx = _build_rich_cross_file_context(relative_path, mem=_mem)
+        cross_file_ctx = _build_rich_cross_file_context(
+            relative_path, mem=_mem, context=review_context
+        )
     except Exception:
         pass
 
@@ -2324,7 +2346,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
             except Exception:
                 pass
 
-            return output
+            return f"{output}\n\n{_context_provenance_block(review_context)}"
 
         else:
             role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
@@ -2450,7 +2472,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
             except Exception:
                 pass
 
-            return output
+            return f"{output}\n\n{_context_provenance_block(review_context)}"
     except Exception as exc:
         return f"review_file failed (API call): {exc}"
 
@@ -3719,7 +3741,8 @@ def risk_review_file(relative_path: str, mode: str = "security") -> str:
         skill_name, skill_content = "none", ""
 
     # Architecture role and past context
-    arch_role = _load_architecture_role(relative_path)
+    review_context = _review_context_for(REPO_ROOT)
+    arch_role = _load_architecture_role(relative_path, context=review_context)
     past_context = ""
     _mem = None
     try:
@@ -3788,7 +3811,7 @@ def risk_review_file(relative_path: str, mode: str = "security") -> str:
     except Exception:
         pass
 
-    return output
+    return f"{output}\n\n{_context_provenance_block(review_context)}"
 
 
 @mcp.tool()

@@ -13,7 +13,7 @@ review_file(relative_path, mode)
   │
   ├── 1. Path safety          resolve_repo_file(path)
   ├── 2. Contract loading     reviews/contracts/{mode}-review.md
-  ├── 3. Architecture context review_engine/context/architecture_map.json
+  ├── 3. Architecture context generated/architecture/architecture_map.json
   ├── 4. Skill routing        review_engine/review_router.route_file(path)
   ├── 5. Memory context       review_engine/review_memory.format_past_context(path)
   ├── 6. Model call           OpenAI chat.completions (system + user prompt)
@@ -89,13 +89,50 @@ Available contracts:
 
 ## Stage 3 — Architecture context
 
-`_load_architecture_role(relative_path)` reads `review_engine/context/architecture_map.json` and looks up the file's declared architecture role (e.g., `"MCP server — tool registry and HTTP endpoints"`).
+`_review_context_for(repo_root)` verifies `generated/architecture/architecture_map.json` (schema `architecture_map.v1`) **from the repo under review**, then `_load_architecture_role(relative_path, context=...)` looks up that file's role (e.g. `"MCP server — tool registry and HTTP endpoints"`).
 
 The role string is injected into the user prompt as `Architecture role: ...`. This gives the model grounding: it knows whether it is reviewing a server entry point, a test helper, or a config file.
 
-If the map is missing or the file has no entry, this stage is silently skipped.
+Reading the repo under review rather than mq-mcp matters. The earlier code read mq-mcp's own map whatever `repo_path` pointed at, so reviewing another repo described its files using mq-mcp's roles for any path that collided.
+
+The loader returns a status and never raises (ADR-008):
+
+| Status | Meaning | Effect on the review |
+| --- | --- | --- |
+| `verified` | identity checks out, current, covers the repo | roles injected |
+| `stale` | identity checks out, scan older than 24h | roles injected, age reported |
+| `invalid` | wrong schema, wrong repo, malformed, path escaping the repo, timestamp from the future | nothing injected |
+| `missing` | no artifact | nothing injected |
+
+The builder-internal map at `review_engine/context/architecture_map.json` is not review evidence and is not read here.
+
+An empty role is never a fallback to a weaker source. It means the verified artifact has no role for that file.
 
 Rebuild with: `build_repo_context()` MCP tool or `python review_engine/repo_context_builder.py`.
+
+## Stage 3b — Context provenance in the output
+
+`review_file` and `risk_review_file` append the loader's account to what the operator is shown:
+
+```text
+Context
+  source       architecture_map.v1
+  repo         mq-mcp
+  generated_at 2026-09-14T12:34:01+00:00
+  age          2h
+  coverage     280/282 files
+  status       verified
+```
+
+or, when nothing was usable:
+
+```text
+Context
+  status       unavailable
+  reason       repo-mismatch
+```
+
+It is appended after the review is persisted, so stored findings stay free of run metadata. It never contains an absolute path.
 
 ---
 
@@ -264,6 +301,8 @@ Max 10 entries per file. Oldest entries are discarded.
 | `review_engine/review_router.py` | Routes files to skills |
 | `review_engine/severity_engine.py` | Parses and sorts findings |
 | `review_engine/review_memory.py` | Persistent review history |
-| `review_engine/context/architecture_map.json` | Generated: file → architecture role |
+| `review_engine/context_evidence.py` | Verifies repo-context evidence, reports status |
+| `generated/architecture/architecture_map.json` | Canonical review context (architecture_map.v1) |
+| `review_engine/context/architecture_map.json` | Builder-internal intermediate — not review evidence |
 | `review_engine/context/file_summary_index.json` | Generated: file → public symbols |
 | `review_engine/memory/review_history.json` | Generated: per-file review history |

@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from review_engine.context_evidence import repo_identity
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 ARCHITECTURE_MAP_SCHEMA = "architecture_map.v1"
@@ -162,20 +164,19 @@ def build_rich_architecture_map(
         repo_root:      Repo root path.
         out_dir:        Output directory. Defaults to generated/architecture/.
         flat_arch_map:  Pre-built {file_path: role_str} to avoid re-scanning.
-                        If None, reads from review_engine/context/architecture_map.json.
+                        If None, the repo is scanned so that generated_at
+                        describes a scan that actually ran.
 
     Returns the built dict.
     """
     out_dir = out_dir or (repo_root / "generated" / "architecture")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load flat map
+    # Without a handed-over map, scan. Reading the builder's intermediate from
+    # disk would stamp a map of unknown age with the current time (ADR-008).
     if flat_arch_map is None:
-        flat_path = repo_root / "review_engine" / "context" / "architecture_map.json"
-        try:
-            flat_arch_map = json.loads(flat_path.read_text(encoding="utf-8"))
-        except Exception:
-            flat_arch_map = {}
+        from review_engine.repo_context_builder import scan_architecture_map
+        flat_arch_map = scan_architecture_map(repo_root)
 
     review_memory_path = repo_root / "review_engine" / "memory" / "review_history.json"
     callgraph_path = repo_root / "review_engine" / "context" / "callgraph.json"
@@ -194,7 +195,7 @@ def build_rich_architecture_map(
 
     result: dict[str, Any] = {
         "schema": ARCHITECTURE_MAP_SCHEMA,
-        "repo_name": repo_root.name,
+        "repo_name": repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(files),
         "files": files,
@@ -228,7 +229,7 @@ def build_ownership_map(
 
     result: dict[str, Any] = {
         "schema": OWNERSHIP_MAP_SCHEMA,
-        "repo_name": repo_root.name,
+        "repo_name": repo_identity(repo_root),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "file_count": len(ownership),
         "files": ownership,
