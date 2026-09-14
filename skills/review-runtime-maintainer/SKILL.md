@@ -21,6 +21,33 @@ Use this skill for mq-mcp's central cognition runtime.
 * Learning engine or lesson storage changes — use `learn-engine-maintainer`
 * Bridge or Bridget changes — use `bridget-bridge-maintainer`
 
+## Repo-context evidence integrity
+
+Canonical persisted review context:
+
+```text
+generated/architecture/architecture_map.json
+schema: architecture_map.v1
+```
+
+Rules (ADR-008):
+
+* `review_engine/context/architecture_map.json` is builder-internal. Review
+  consumers must not read it.
+* Validate `schema` before consuming anything.
+* `repo_name` must identify the review target. It is not the directory name —
+  a worktree's directory differs from the repo.
+* `generated_at` governs freshness and must describe when the underlying scan
+  ran, not when the enrichment pass ran. Filesystem mtime is not provenance.
+* Refuse artifacts that misrepresent their identity: wrong schema, wrong repo,
+  malformed JSON or shape, paths escaping the repo root.
+* Degrade, do not refuse, on age and partial coverage. The limit must be
+  reported, not hidden.
+* Never fall back silently from refused evidence to unverified evidence.
+* Missing evidence may degrade a review. It must not be fabricated.
+* Review output and previews must expose the context source and its
+  verification status.
+
 ## Evals
 
 ### Should trigger
@@ -29,12 +56,16 @@ Use this skill for mq-mcp's central cognition runtime.
 * "add a new review contract for security passes"
 * "review_diff picks the wrong repo context"
 * "update the golden reviews after the output format change"
+* "review_repo is using stale architecture context"
+* "architecture_map belongs to another repo"
+* "show which context artifact review_file used"
 
 ### Should not trigger
 
 * "orchestrate reviews from mq-agent" → use the mq-agent `mq-mcp-review-orchestration` skill
 * "add a screenshot tool" → use `mcp-tool-safety-maintainer`
 * "store a verified lesson from this review" → use `learn-engine-maintainer`
+* "learn repo snapshot is stale" → use `learn-engine-maintainer`
 * "fix Bridget tool discovery" → use `bridget-bridge-maintainer`
 
 ## Core Files
@@ -44,6 +75,7 @@ Use this skill for mq-mcp's central cognition runtime.
 * `reviews/skills/`
 * `reviews/golden/`
 * `docs/architecture/REVIEW_PIPELINE.md`
+* `architecture_memory/decisions/ADR-008-review-context-is-verified-evidence.md`
 * `docs/architecture/SYSTEM_OVERVIEW.md`
 * `docs/RUNTIME_CONTRACT.md`
 * `mq-mcp/server.py` review-related MCP tools
