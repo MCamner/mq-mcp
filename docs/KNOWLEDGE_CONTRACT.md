@@ -79,9 +79,38 @@ Slugs are kebab-case, max 40 characters, no special characters.
 | Schema | Used by | Fields |
 | ------ | ------- | ------ |
 | `decision.v1` | `record_decision()` | title, context, decision, rationale, consequences, tags |
-| `review.v1` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence |
+| `review.v1` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence, ingress_decision |
 | `session.v1` | `record_session()` | title, repos, summary, outcomes, follow_ups |
 | `learn.v1` | `record_learning()` | pattern_name, pattern_type, summary, evidence, confidence |
+
+---
+
+## Ingress provenance
+
+A review may arrive with the identity of the runtime that produced it and with
+what the caller observed about this mq-mcp. `brain_record_review` decides
+admission before anything is written:
+
+| Payload | Outcome |
+| ------- | ------- |
+| an identity that fails `mq.runtime-identity.v1` | refused, nothing written |
+| an observation of a different mq-mcp process than the one answering | refused, nothing written |
+| no provenance at all | written, decision `accept_with_warning` |
+| a receiver carrying findings, e.g. `RTP010` | written, decision `accept_with_warning` |
+| verified producer and this runtime | written, decision `accept` |
+
+`ingress_decision` is additive to `review.v1`: it appears in the frontmatter
+only when provenance was supplied, and a note written without it stays a valid
+`review.v1` record. The decision, its reasons and any findings are written into
+a `## Provenance` section of the note.
+
+Absence is recorded as absence. A record with no producer identity says so
+rather than carrying one inferred from the checkout, the latest tag, or the
+runtime that happened to receive it.
+
+mq-agent owns the comparison that produces RTP findings and their meaning. This
+contract stores what it was told, plus the one check mq-mcp can make itself:
+that the observation is about the process holding the record.
 
 ---
 
