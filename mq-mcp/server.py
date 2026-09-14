@@ -928,7 +928,10 @@ def _resolve_repo_signal_bin() -> str:
         return env
     home = Path.home()
     candidate = home / "repo-signal" / ".venv" / "bin" / "repo-signal"
-    if candidate.exists():
+    # is_file, not exists: exists() is true for a directory too, and returning
+    # one turns _run_repo_signal's documented FileNotFoundError into an
+    # IsADirectoryError from subprocess.
+    if candidate.is_file():
         return str(candidate)
     return "repo-signal"
 
