@@ -148,6 +148,25 @@ def _identity_line(record: Any) -> str:
     return f"{component} {version} ({commit}) — {quality}"
 
 
+def _producer_frontmatter(provenance: dict[str, Any]) -> dict[str, Any]:
+    """Project the admitted producer identity into stable review frontmatter.
+
+    The ingress reducer has already validated the producer before the writer is
+    reached. Keep only the four runtime-fingerprint fields a downstream reader
+    needs and omit unknown values rather than serializing Python ``None``.
+    """
+    producer = provenance.get("producer")
+    if not isinstance(producer, dict):
+        return {}
+
+    projected: dict[str, Any] = {}
+    for field in ("component", "version", "commit", "identity_quality"):
+        value = producer.get(field)
+        if value is not None:
+            projected[f"producer_{field}"] = value
+    return projected
+
+
 def _provenance_section(provenance: dict[str, Any]) -> str:
     """The ingress decision, beside the evidence it admitted.
 
@@ -188,6 +207,8 @@ def record_review(
     `provenance` is the ingress decision from `brain_ingress`, written with the
     record so a reader can tell a review produced by an identified runtime from
     one that merely arrived. The caller decides admission; this only records it.
+    An admitted producer is projected to `producer_*` frontmatter fields so
+    provenance remains queryable without parsing the Markdown body.
 
     Returns {"ok": True, "path": "..."} or {"ok": False, "error": "..."}.
     """
@@ -206,6 +227,7 @@ def record_review(
     }
     if provenance:
         fm_fields["ingress_decision"] = provenance.get("decision", "unknown")
+        fm_fields.update(_producer_frontmatter(provenance))
     fm = _frontmatter(**fm_fields)
     risks_md = "\n".join(f"- {r}" for r in top_risks) or "- none"
     steps_md = "\n".join(f"- {s}" for s in suggested_next_steps) or "- none"
