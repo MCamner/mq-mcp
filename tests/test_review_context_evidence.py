@@ -311,3 +311,35 @@ def test_a_usable_result_does_hand_out_its_entries(tmp_path):
 
         assert result.role_for("review_engine/router.py") == "review engine"
         assert result.entry_for("review_engine/router.py")["hub_score"] == 3
+
+
+# ── coverage must not flatter itself ─────────────────────────────────────────
+
+def test_coverage_separates_entries_from_entries_with_a_role(tmp_path):
+    """"286/286 files" reads as complete when a third say "unknown".
+
+    The builder's role heuristics are path-based and match nothing for most of
+    mq-mcp's own modules, so a full-coverage artifact can still tell the model
+    nothing about them. Report both numbers.
+    """
+    repo = _repo(tmp_path)
+    payload = _artifact()
+    payload["files"]["docs/guide.md"]["role"] = "unknown"
+
+    result = _load(tmp_path, payload, repo=repo)
+
+    assert result.entry_count == 2
+    assert result.roled_count == 1
+    assert "286" not in "".join(result.provenance_lines())
+    assert "2/2 files, 1 with a role" in "\n".join(result.provenance_lines())
+
+
+def test_an_artifact_of_nothing_but_unknowns_says_so(tmp_path):
+    payload = _artifact()
+    for entry in payload["files"].values():
+        entry["role"] = "unknown"
+
+    result = _load(tmp_path, payload)
+
+    assert result.roled_count == 0
+    assert "0 with a role" in "\n".join(result.provenance_lines())

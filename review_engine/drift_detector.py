@@ -114,7 +114,10 @@ class DriftDetector:
         if "stale" in result.reasons and result.age_hours is not None:
             detail += f" Underlying scan is {result.age_hours:.0f}h old."
         if result.scanned_count:
-            detail += f" Covers {result.entry_count}/{result.scanned_count} files."
+            detail += (
+                f" Covers {result.entry_count}/{result.scanned_count} files, "
+                f"{result.roled_count} with a role."
+            )
         return [DriftFinding(
             severity=severity,
             location=location,

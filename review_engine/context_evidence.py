@@ -61,6 +61,7 @@ class ReviewContextResult:
     generated_at: datetime | None = None
     age_hours: float | None = None
     entry_count: int = 0
+    roled_count: int = 0
     scanned_count: int = 0
     missing_files: list[str] = field(default_factory=list)
     _files: dict[str, dict] = field(default_factory=dict, repr=False)
@@ -108,7 +109,10 @@ class ReviewContextResult:
             lines.append(f"  generated_at {self.generated_at.isoformat()}")
         if self.age_hours is not None:
             lines.append(f"  age          {self.age_hours:.0f}h")
-        lines.append(f"  coverage     {self.entry_count}/{self.scanned_count} files")
+        lines.append(
+            f"  coverage     {self.entry_count}/{self.scanned_count} files, "
+            f"{self.roled_count} with a role"
+        )
         lines.append(f"  status       {self.status}")
         if self.reasons:
             lines.append(f"  limits       {', '.join(self.reasons)}")
@@ -241,6 +245,10 @@ def load_review_context(
         generated_at=generated_at,
         age_hours=age_hours,
         entry_count=len(present),
+        roled_count=sum(
+            1 for entry in present.values()
+            if isinstance(entry.get("role"), str) and entry["role"] not in ("", "unknown")
+        ),
         scanned_count=scanned_count,
         missing_files=missing_files,
         _files=present,
