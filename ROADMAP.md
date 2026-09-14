@@ -45,8 +45,9 @@ Active backlog summary:
 
 ```text
 Size:      medium-large, but concentrated
-Now:       repo-context evidence hardening
+Now:       nothing committed
 Next:      Bridget context awareness, learn-loop preview, and delegation hints
+Done:      repo-context evidence hardening (ADR-008)
 Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,
            CodeGraph-as-producer, promotion scoring/merge logic
@@ -268,7 +269,7 @@ This is not a problem to solve. It is a tension to design.
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
 | v2.1.0  | Bridget Runtime and Evidence Integrity      | Done                                 |
 | v2.2.0  | mq-learn integration                        | Partial; re-scope                    |
-| v1.12.0 | Repo-context evidence hardening             | Legacy label; fold into next release |
+| v1.12.0 | Repo-context evidence hardening             | Done; landed unversioned under ADR-008 |
 
 ---
 
