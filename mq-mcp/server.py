@@ -5761,6 +5761,7 @@ def brain_record_review(
     suggested_next_steps: list[str],
     confidence: str = "medium",
     raw_summary: str = "",
+    runtime_fingerprint: dict | None = None,
 ) -> dict:
     """Write a code review summary to mqobsidian/reviews/.
 
@@ -5775,6 +5776,7 @@ def brain_record_review(
         suggested_next_steps=list(suggested_next_steps),
         confidence=confidence,
         raw_summary=raw_summary,
+        runtime_fingerprint=runtime_fingerprint,
     )
 
 

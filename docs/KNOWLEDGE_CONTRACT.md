@@ -1,6 +1,6 @@
 # Knowledge Contract — MQ Second Brain
 
-Version: 0.1.0  
+Version: 0.1.1  
 Owner: mq-mcp  
 Vault: `~/mqobsidian`
 
@@ -58,6 +58,13 @@ All writes from mq-mcp must:
 4. Be **schema-validated** before writing
 5. Include a `written_by`, `schema_version`, and `timestamp` header
 
+Review ingress applies a producer provenance policy before writing:
+
+- Missing `runtime_fingerprint` is `ACCEPT_WITH_WARNING` and still writes.
+- Valid `runtime_fingerprint` is `ACCEPT` and is projected into `producer_*`
+  frontmatter fields.
+- Malformed `runtime_fingerprint` is `REFUSE` and writes no review file.
+
 ---
 
 ## File naming
@@ -79,7 +86,7 @@ Slugs are kebab-case, max 40 characters, no special characters.
 | Schema | Used by | Fields |
 | ------ | ------- | ------ |
 | `decision.v1` | `record_decision()` | title, context, decision, rationale, consequences, tags |
-| `review.v1` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence |
+| `review.v1` | `record_review()` | source, finding_count, top_risks, suggested_next_steps, confidence; optional producer_component, producer_version, producer_commit, producer_identity_quality |
 | `session.v1` | `record_session()` | title, repos, summary, outcomes, follow_ups |
 | `learn.v1` | `record_learning()` | pattern_name, pattern_type, summary, evidence, confidence |
 

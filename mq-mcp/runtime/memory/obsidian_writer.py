@@ -27,6 +27,9 @@ SCHEMA_VERSION_REVIEW = "review.v1"
 SCHEMA_VERSION_SESSION = "session.v1"
 SCHEMA_VERSION_LEARN = "learn.v1"
 
+_FINGERPRINT_FIELDS = ("component", "version", "commit", "identity_quality")
+_IDENTITY_QUALITIES = {"verified", "claimed", "unknown"}
+
 
 # ---------------------------------------------------------------------------
 # Vault resolution
@@ -93,6 +96,31 @@ def _frontmatter(**fields: Any) -> str:
     return "\n".join(lines)
 
 
+def _review_ingress_decision(
+    runtime_fingerprint: dict[str, Any] | None,
+) -> tuple[str, str | None]:
+    """Validate producer identity carried by the caller.
+
+    Missing identity is allowed with a warning because older producers and dry
+    integration paths may not carry it yet. Malformed identity is refused before
+    writing; accepting contradictory provenance would be worse than having none.
+    """
+    if runtime_fingerprint is None:
+        return "ACCEPT_WITH_WARNING", "missing producer runtime_fingerprint"
+    if not isinstance(runtime_fingerprint, dict):
+        return "REFUSE", "runtime_fingerprint must be an object"
+    missing = [field for field in _FINGERPRINT_FIELDS if not runtime_fingerprint.get(field)]
+    if missing:
+        return "REFUSE", f"runtime_fingerprint missing fields: {', '.join(missing)}"
+    commit = str(runtime_fingerprint["commit"])
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return "REFUSE", "runtime_fingerprint commit must be a 40-character lowercase hex SHA"
+    quality = str(runtime_fingerprint["identity_quality"])
+    if quality not in _IDENTITY_QUALITIES:
+        return "REFUSE", f"runtime_fingerprint identity_quality not allowed: {quality}"
+    return "ACCEPT", None
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -144,6 +172,7 @@ def record_review(
     suggested_next_steps: list[str],
     confidence: str = "medium",
     raw_summary: str = "",
+    runtime_fingerprint: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Write a code review summary to reviews/.
 
@@ -152,23 +181,46 @@ def record_review(
     if not vault_exists():
         return {"ok": False, "error": f"Vault not found: {_vault()}"}
 
+    ingress_decision, ingress_reason = _review_ingress_decision(runtime_fingerprint)
+    if ingress_decision == "REFUSE":
+        return {
+            "ok": False,
+            "error": ingress_reason or "review ingress refused",
+            "ingress_decision": ingress_decision,
+        }
+
     slug = _slug(source)
     filename = f"{_today()}-{slug}.md"
-    fm = _frontmatter(
-        schema_version=SCHEMA_VERSION_REVIEW,
-        written_by="mq-mcp/obsidian_writer",
-        timestamp=_now_iso(),
-        source=source,
-        finding_count=finding_count,
-        confidence=confidence,
-    )
+    fm_fields: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION_REVIEW,
+        "written_by": "mq-mcp/obsidian_writer",
+        "timestamp": _now_iso(),
+        "source": source,
+        "finding_count": finding_count,
+        "confidence": confidence,
+    }
+    fm_fields["ingress_decision"] = ingress_decision
+    if ingress_reason:
+        fm_fields["ingress_reason"] = ingress_reason
+    if runtime_fingerprint:
+        fm_fields.update(
+            producer_component=runtime_fingerprint.get("component", ""),
+            producer_version=runtime_fingerprint.get("version", ""),
+            producer_commit=runtime_fingerprint.get("commit", ""),
+            producer_identity_quality=runtime_fingerprint.get("identity_quality", ""),
+        )
+    fm = _frontmatter(**fm_fields)
     risks_md = "\n".join(f"- {r}" for r in top_risks) or "- none"
     steps_md = "\n".join(f"- {s}" for s in suggested_next_steps) or "- none"
     meta = f"**Findings:** {finding_count}  \n**Confidence:** {confidence}"
     sections = [("Summary", meta), ("Top risks", risks_md), ("Suggested next steps", steps_md)]
     if raw_summary:
         sections.append(("Full summary", raw_summary))
-    return _write("reviews", filename, fm + f"# Review: {source}\n\n" + _body(*sections))
+    result = _write("reviews", filename, fm + f"# Review: {source}\n\n" + _body(*sections))
+    result["ingress_decision"] = ingress_decision
+    if ingress_reason:
+        result["ingress_reason"] = ingress_reason
+    return result
 
 
 def record_session(

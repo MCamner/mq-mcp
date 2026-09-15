@@ -36,7 +36,7 @@ Current project phase:
 
 ```text
 Released:  v2.1.0  Bridget Runtime and Evidence Integrity
-On main:   nothing unreleased
+On main:   brain ingress provenance receiver policy (unreleased)
 Next:      undecided — no scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
@@ -46,6 +46,7 @@ Active backlog summary:
 ```text
 Size:      medium-large, but concentrated
 Now:       repo-context evidence hardening
+Closed:    brain ingress provenance (producer fingerprint admission)
 Next:      Bridget context awareness, learn-loop preview, and delegation hints
 Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,

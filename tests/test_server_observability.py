@@ -17,6 +17,22 @@ def _req(host: str | None = "127.0.0.1:8765", path: str = "/health"):
     return SimpleNamespace(headers=headers, url=SimpleNamespace(path=path))
 
 
+class _JsonReq:
+    def __init__(
+        self,
+        payload: dict,
+        host: str | None = "127.0.0.1:8765",
+        path: str = "/tools/brain_record_review",
+    ) -> None:
+        self.headers = {} if host is None else {"host": host}
+        self.url = SimpleNamespace(path=path)
+        self.path_params = {"name": path.rsplit("/", 1)[-1]}
+        self._payload = payload
+
+    async def json(self) -> dict:
+        return self._payload
+
+
 @pytest.fixture(scope="module")
 def server():
     spec = importlib.util.spec_from_file_location("mq_mcp_server_observability", SERVER_PATH)
@@ -59,6 +75,78 @@ async def test_call_http_tool_rejects_dns_rebinding_origin(server):
     response = await server.call_http_tool(_req(host="evil.com", path="/tools/get_public_ip"))
     assert response.status_code == 403
     assert "loopback" in json.loads(response.body)["error"]
+
+
+@pytest.mark.anyio
+async def test_brain_record_review_http_accepts_missing_fingerprint_with_warning(
+    server, monkeypatch, tmp_path
+):
+    monkeypatch.setenv("MQ_OBSIDIAN_DIR", str(tmp_path))
+
+    response = await server.call_http_tool(_JsonReq({
+        "source": "repo-signal:mq-agent",
+        "finding_count": 1,
+        "top_risks": [],
+        "suggested_next_steps": [],
+    }))
+    payload = json.loads(response.body)
+    text = payload[0]["text"]
+    result = json.loads(text)
+
+    assert result["ok"] is True
+    assert result["ingress_decision"] == "ACCEPT_WITH_WARNING"
+    created = list((tmp_path / "reviews").glob("*.md"))
+    assert len(created) == 1
+    assert "ingress_decision: ACCEPT_WITH_WARNING" in created[0].read_text()
+
+
+@pytest.mark.anyio
+async def test_brain_record_review_http_accepts_valid_fingerprint(server, monkeypatch, tmp_path):
+    monkeypatch.setenv("MQ_OBSIDIAN_DIR", str(tmp_path))
+    commit = "a" * 40
+
+    response = await server.call_http_tool(_JsonReq({
+        "source": "repo-signal:mq-agent",
+        "finding_count": 1,
+        "top_risks": [],
+        "suggested_next_steps": [],
+        "runtime_fingerprint": {
+            "component": "mq-agent",
+            "version": "1.28.0",
+            "commit": commit,
+            "identity_quality": "verified",
+        },
+    }))
+    result = json.loads(json.loads(response.body)[0]["text"])
+
+    assert result["ok"] is True
+    assert result["ingress_decision"] == "ACCEPT"
+    content = next((tmp_path / "reviews").glob("*.md")).read_text()
+    assert "producer_component: mq-agent" in content
+    assert f"producer_commit: {commit}" in content
+
+
+@pytest.mark.anyio
+async def test_brain_record_review_http_refuses_invalid_fingerprint(server, monkeypatch, tmp_path):
+    monkeypatch.setenv("MQ_OBSIDIAN_DIR", str(tmp_path))
+
+    response = await server.call_http_tool(_JsonReq({
+        "source": "repo-signal:mq-agent",
+        "finding_count": 1,
+        "top_risks": [],
+        "suggested_next_steps": [],
+        "runtime_fingerprint": {
+            "component": "mq-agent",
+            "version": "1.28.0",
+            "commit": "not-a-sha",
+            "identity_quality": "verified",
+        },
+    }))
+    result = json.loads(json.loads(response.body)[0]["text"])
+
+    assert result["ok"] is False
+    assert result["ingress_decision"] == "REFUSE"
+    assert not (tmp_path / "reviews").exists()
 
 
 @pytest.mark.anyio

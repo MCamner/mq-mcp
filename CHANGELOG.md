@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+* `brain_record_review` now applies receiver ingress policy before writing a
+  review note: missing producer fingerprint is accepted with warning, valid
+  producer fingerprint is projected into `producer_*` frontmatter, and malformed
+  fingerprint is refused without creating a file.
+
+### Changed
+
+* `docs/KNOWLEDGE_CONTRACT.md` documents the additive `review.v1` producer
+  provenance fields and the `ACCEPT` / `ACCEPT_WITH_WARNING` / `REFUSE`
+  admission behavior.
+
 ## [2.1.0] - 2026-09-12
 
 Bridget runtime, evidence and provenance integrity, and deterministic

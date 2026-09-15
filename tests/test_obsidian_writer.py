@@ -52,10 +52,60 @@ def test_record_review_creates_file(vault: Path) -> None:
     created = Path(result["path"])
     assert created.exists()
     assert created.parent == vault / "reviews"
+    assert result["ingress_decision"] == "ACCEPT_WITH_WARNING"
     content = created.read_text()
     assert "review.v1" in content
     assert "mq-mcp/server.py" in content
     assert "HIGH" in content
+    assert "ingress_decision: ACCEPT_WITH_WARNING" in content
+    assert "ingress_reason: missing producer runtime_fingerprint" in content
+
+
+def test_record_review_projects_runtime_fingerprint(vault: Path) -> None:
+    result = record_review(
+        source="repo-signal:mq-agent",
+        finding_count=1,
+        top_risks=[],
+        suggested_next_steps=[],
+        runtime_fingerprint={
+            "component": "mq-agent",
+            "version": "1.28.0",
+            "commit": "a" * 40,
+            "identity_quality": "verified",
+            "ignored": "not written",
+        },
+    )
+
+    assert result["ok"] is True
+    assert result["ingress_decision"] == "ACCEPT"
+    content = Path(result["path"]).read_text()
+    assert "schema_version: review.v1" in content
+    assert "ingress_decision: ACCEPT" in content
+    assert "producer_component: mq-agent" in content
+    assert "producer_version: 1.28.0" in content
+    assert f"producer_commit: {'a' * 40}" in content
+    assert "producer_identity_quality: verified" in content
+    assert "ignored" not in content
+
+
+def test_record_review_refuses_invalid_runtime_fingerprint(vault: Path) -> None:
+    result = record_review(
+        source="repo-signal:mq-agent",
+        finding_count=1,
+        top_risks=[],
+        suggested_next_steps=[],
+        runtime_fingerprint={
+            "component": "mq-agent",
+            "version": "1.28.0",
+            "commit": "not-a-sha",
+            "identity_quality": "verified",
+        },
+    )
+
+    assert result["ok"] is False
+    assert result["ingress_decision"] == "REFUSE"
+    assert "40-character lowercase hex SHA" in result["error"]
+    assert not list((vault / "reviews").glob("*.md"))
 
 
 def test_record_review_missing_vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
