@@ -36,7 +36,9 @@ Current project phase:
 
 ```text
 Released:  v2.1.0  Bridget Runtime and Evidence Integrity
-On main:   nothing unreleased
+On main:   brain ingress provenance, repo-context evidence as verified
+           evidence (ADR-008), and the recovered vector-store skill —
+           unreleased
 Next:      undecided — no scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
