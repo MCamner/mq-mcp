@@ -3,7 +3,12 @@
   // This file only scopes which files markdownlint-cli2 and CI lint.
   "globs": ["**/*.md"],
   "ignores": [
-    ".venv/**",
+    // Anchored with **/ because the glob is matched against the whole path:
+    // ".venv/**" only excludes a virtualenv at the repo root, while the globs
+    // above lint **/*.md. mq-mcp's own project directory is a subdirectory, so
+    // `uv run` there creates mq-mcp/.venv and put 111 dependency files into
+    // the lint surface. CI never saw it because CI never creates one.
+    "**/.venv/**",
     "node_modules/**",
     "backups/**",
     // Agent/skill definitions embed example fences (nested ```), which the
