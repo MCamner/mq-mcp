@@ -10,7 +10,6 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-# These workflows or steps cannot be run by the read-only local preflight.
 CI_ONLY = {
     "markdownlint.yml": "CI-only: Node markdownlint action; READY does not attest Markdown style.",
     "release.yml": "CI-only: publishing a release requires a pushed version tag.",
@@ -95,10 +94,10 @@ def verify(root: Path, *, check_docs: bool = True) -> list[str]:
         for label, command in LOCAL_COMMANDS.items():
             if command not in text:
                 errors.append(f"local gate missing {label}: {command}")
-        # Check executable lines rather than comments, which document exceptions.
+        # `bash -n scripts/validate.sh` is safe syntax inspection, not execution.
         executable = "\n".join(line for line in text.splitlines()
                                if not line.lstrip().startswith("#"))
-        if re.search(r"\b(?:bash\s+)?scripts/validate\.sh\b|generate_tool_contracts\.py", executable):
+        if re.search(r"(?:\./|bash\s+(?!-n\s+))scripts/validate\.sh\b|generate_tool_contracts\.py", executable):
             errors.append("write-capable CI generator invoked from read-only gate")
     if not check_docs:
         return errors
