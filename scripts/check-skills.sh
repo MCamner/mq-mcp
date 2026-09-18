@@ -7,7 +7,9 @@
 #   3. skill cross-references ("use `<skill>`") point to existing skills
 #   4. backticked file paths in SKILL.md files exist in the repo
 #   5. SKILLS.md matches what generate_skills_index() produces from frontmatter
-#   6. every built-in skill is discoverable through .agents/skills/
+#   6. every skill is discoverable, identically, through both .agents/skills/
+#      (Codex) and .claude/skills/ (Claude Code), as a link into skills/ rather
+#      than a copy of it
 #
 # Usage:
 #   ./scripts/check-skills.sh          # check only
@@ -118,21 +120,66 @@ else
   ok "SKILLS.md matches skill frontmatter"
 fi
 
-# --- 6: Codex discovery ------------------------------------------------------
+# --- 6: agent discovery parity ----------------------------------------------
+#
+# Both agents must see the same skill surface. The previous version of this
+# check looked at .agents/skills/ only, so a skill that never reached
+# .claude/skills/ passed silently -- which is exactly how
+# openai-vector-store-refresh came to be invisible to Claude Code from the
+# commit that added it.
+#
+# `if` rather than `[[ ... ]] && ok`, because this script runs under `set -e`:
+# the && form returns non-zero when the check failed and aborts the script
+# before it can print why.
 
+AGENT_TREES=(.agents/skills .claude/skills)
 DISCOVERY_FAIL=0
+
+# 6a: every canonical skill reaches both agents, byte-identical.
 for skill_md in skills/*/SKILL.md; do
   name="$(basename "$(dirname "$skill_md")")"
-  discovered=".agents/skills/$name/SKILL.md"
-  if [[ ! -f "$discovered" ]]; then
-    fail "$name is not discoverable at $discovered"
-    DISCOVERY_FAIL=1
-  elif ! cmp -s "$skill_md" "$discovered"; then
-    fail "$discovered differs from canonical $skill_md"
-    DISCOVERY_FAIL=1
-  fi
+  for tree in "${AGENT_TREES[@]}"; do
+    discovered="$tree/$name/SKILL.md"
+    if [[ ! -f "$discovered" ]]; then
+      fail "$name is not discoverable at $discovered"
+      DISCOVERY_FAIL=1
+    elif ! cmp -s "$skill_md" "$discovered"; then
+      fail "$discovered differs from canonical $skill_md"
+      DISCOVERY_FAIL=1
+    fi
+  done
 done
-[[ $DISCOVERY_FAIL -eq 0 ]] && ok "Codex skill discovery"
+
+# 6b: every entry is a link into skills/, not a copy and not a second root.
+# Comparing content cannot see a copy: it is identical on the day it is made
+# and drifts silently afterwards.
+for tree in "${AGENT_TREES[@]}"; do
+  [[ -d "$tree" ]] || continue
+  for entry in "$tree"/*; do
+    [[ -e "$entry" || -L "$entry" ]] || continue
+    name="$(basename "$entry")"
+    expected="../../skills/$name"
+    if [[ ! -d "skills/$name" ]]; then
+      fail "$tree/$name has no canonical definition at skills/$name/"
+      DISCOVERY_FAIL=1
+      continue
+    fi
+    if [[ ! -L "$entry" ]]; then
+      fail "$entry is a copy; it must be a symlink to $expected"
+      DISCOVERY_FAIL=1
+      continue
+    fi
+    target="$(readlink "$entry")"
+    if [[ "$target" != "$expected" ]]; then
+      fail "$entry links to '$target'; expected '$expected'"
+      DISCOVERY_FAIL=1
+    fi
+  done
+done
+
+if [[ $DISCOVERY_FAIL -eq 0 ]]; then
+  ok "agent discovery parity"
+fi
 
 if [[ $FAIL -ne 0 ]]; then
   echo "check-skills: FAILED"
