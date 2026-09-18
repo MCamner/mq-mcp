@@ -10,7 +10,9 @@
 # This is the canonical, read-only entrypoint. It runs mq-mcp's own read-only
 # governance checks; it does NOT run scripts/release-check.sh, which exports the
 # tool registry (a write) and so is not preflight-safe. --dry-run is accepted;
-# this check never mutates the tree.
+# this check never mutates the tracked tree.
+# scripts/check-gate-parity.py explicitly documents write-capable and CI-only
+# steps: READY does not claim that registry export or release publishing ran.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -72,9 +74,17 @@ run "runtime truth (version/tool-count/safety coverage)" bash scripts/check-runt
 run "tool contracts (entries + safety classes)" bash scripts/check-tool-contracts.sh
 run "semantic memory audit" bash scripts/check-semantic-memory.sh
 
-say "--- Python compile ---"
+say "--- Agent and CI parity ---"
+run "skills" bash scripts/check-skills.sh
+run "profiles" "$PYTHON_BIN" scripts/check-profiles.py
+run "stability" "$PYTHON_BIN" scripts/check-stability.py
+run "validate.sh syntax" bash -n scripts/validate.sh
+run "check-gate-parity.py" "$PYTHON_BIN" scripts/check-gate-parity.py
+
+say "--- Python compile and tests ---"
 run "compileall mq-mcp" env PYTHONPYCACHEPREFIX="$COMPILE_CACHE" \
   "$PYTHON_BIN" -m compileall -q -x '(^|/)\.venv/' mq-mcp/
+run "pytest" uv --directory mq-mcp run --no-sync pytest ../tests/ -q
 
 # Note: generated/ tool artifacts are gitignored and produced by the tool
 # registry export (a write). Their presence/validity is enforced by CI on push,
