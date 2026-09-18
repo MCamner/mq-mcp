@@ -1,0 +1,38 @@
+name: Release gate parity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: mq-mcp/.python-version
+
+      - name: Install dependencies
+        working-directory: mq-mcp
+        run: uv sync
+
+      - name: Validate gate parity
+        run: python3 scripts/check-gate-parity.py
+
+      - name: Test parity failures
+        run: python3 scripts/check-gate-parity.py --self-test
+
+      - name: Run release preflight
+        run: |
+          ./release-check.sh --json | python3 -c 'import json,sys; p=json.load(sys.stdin); assert p["schema"]=="repo_release_check.v1" and p["status"]=="READY", p'
