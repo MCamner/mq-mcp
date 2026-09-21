@@ -22,6 +22,9 @@ npm-debug.log*
 secrets.*
 settings.local.json
 .claude/settings.local.json
+# MCP server configs: machine-local, and they carry absolute paths.
+.mcp.json
+.cursor/mcp.json
 .assets/
 
 # Logs
