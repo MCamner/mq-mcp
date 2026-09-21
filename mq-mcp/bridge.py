@@ -14,6 +14,11 @@ from typing import Any, Optional, cast
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 from bridget_context import BridgetContext
+from bridget_chat_name import (
+    chat_identity_context,
+    chat_prompt_label,
+    prompt_chat_name,
+)
 from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
 import bridget_workflow
@@ -1079,6 +1084,13 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
     global _SPINNER
 
     try:
+        interactive = bool(getattr(sys.stdin, 'isatty', lambda: False)())
+        chat_name = prompt_chat_name(
+            sys.stdin, out, interactive=interactive, read_line=read_operator_line
+        )
+        if chat_name is None:
+            return
+
         async with stdio_client(server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
@@ -1086,6 +1098,8 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 catalog, openai_tools = await discover_tools(session)
                 ctx = BridgetContext()
                 system_content = build_system_content(ctx, catalog, do_mode)
+                if interactive:
+                    system_content += chat_identity_context(chat_name)
                 messages: list[ChatCompletionMessageParam] = [
                     {"role": "system", "content": system_content},
                 ]
@@ -1113,7 +1127,9 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             user_input = pending
                             pending = ""
                         else:
-                            out.write("\nmaster: " if QUIET_MODE else "\n👹 master: ")
+                            out.write(
+                                chat_prompt_label(chat_name, interactive=interactive, quiet=QUIET_MODE)
+                            )
                             out.flush()
                             turn = read_operator_line(sys.stdin, out)
                             if turn is None:  # EOF / Ctrl-D / Ctrl-C
