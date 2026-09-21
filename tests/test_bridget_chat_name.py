@@ -67,9 +67,9 @@ def test_eof_ends_onboarding_without_starting_chat():
 
 
 def test_chat_label_uses_name_and_preserves_piped_mode():
-    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n👤 Calzone: "
+    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n▗█▖ Calzone: "
     assert naming.chat_prompt_label("Anna", interactive=True, quiet=True) == "\nAnna: "
-    assert naming.chat_prompt_label("master", interactive=False, quiet=False) == "\n👹 master: "
+    assert naming.chat_prompt_label("master", interactive=False, quiet=False) == "\n▙█▟ master: "
     assert naming.chat_prompt_label("master", interactive=False, quiet=True) == "\nmaster: "
 
 

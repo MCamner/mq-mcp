@@ -17,7 +17,7 @@ Expected output (abbreviated):
 Model: gpt-4.1
 Prompt: List the available MCP tools.
 
-👩 Bridget: Here are the available MCP tools:
+▚█▞ Bridget: Here are the available MCP tools:
 
 1.  tool_safety_report — returns the MCP tool safety classification
 2.  hal_repo_report — read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
@@ -52,13 +52,13 @@ uv --directory mq-mcp run python bridge.py --chat
 ```text
 Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för att avsluta.
 
-👹 master: which tools can read git state?
-👩 Bridget: git_status and git_diff …
+▙█▟ master: which tools can read git state?
+▚█▞ Bridget: git_status and git_diff …
 
-👹 master: use git_status here
-👩 Bridget: …
+▙█▟ master: use git_status here
+▚█▞ Bridget: …
 
-👹 master: exit
+▙█▟ master: exit
 Hej då.
 ```
 

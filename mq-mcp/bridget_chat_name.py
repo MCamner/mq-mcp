@@ -153,8 +153,8 @@ def prompt_chat_name(
 def chat_prompt_label(name: str, *, interactive: bool, quiet: bool) -> str:
     """Render the chosen name in a TTY, without changing piped output."""
     if not interactive:
-        return "\nmaster: " if quiet else "\n👹 master: "
-    return f"\n{name}: " if quiet else f"\n👤 {name}: "
+        return "\nmaster: " if quiet else "\n▙█▟ master: "
+    return f"\n{name}: " if quiet else f"\n▗█▖ {name}: "
 
 
 def chat_identity_context(name: str) -> str:

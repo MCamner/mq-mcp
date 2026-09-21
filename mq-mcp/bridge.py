@@ -1006,7 +1006,7 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
-    label = "Bridget: " if QUIET_MODE else "👩 Bridget: "
+    label = "Bridget: " if QUIET_MODE else "▚█▞ Bridget: "
     prefix = "\n" + label if prefix_newline else label
     stream.write(prefix)
     stream.flush()
