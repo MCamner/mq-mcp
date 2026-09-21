@@ -14,7 +14,7 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift, unsafe-command, and read-only perception-review checks complete the deterministic release gate, on top of the brain/Obsidian tools, local Ollama learn provider, and mq-agent learn compatibility aliases.
+v2.1.0 — Bridget runtime, evidence and provenance integrity, and deterministic isolation: Bridget gains a credential model, an approval gate that reads what a call leaves behind, and a session that survives bad input; mq-mcp becomes the first producer of `mq.runtime-identity.v1`; learn extraction refuses evidence it cannot verify and records where accepted evidence came from; and the test suite no longer depends on, or mutates, ambient repository state.
 
 This repository is useful as:
 
