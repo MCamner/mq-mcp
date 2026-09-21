@@ -73,6 +73,33 @@ def test_chat_label_uses_name_and_preserves_piped_mode():
     assert naming.chat_prompt_label("master", interactive=False, quiet=True) == "\nmaster: "
 
 
+def test_chat_label_colors_only_the_sprite_and_only_on_a_terminal():
+    """Green marks the operator, but never leaks into captured output.
+
+    The launcher captures Bridget's stdout, so a colour escape must be gated
+    on the *output* stream being a terminal, exactly like the scramble
+    animation. Only the sprite is coloured; the name stays the terminal's
+    default so an operator name can never be mistaken for Bridget's voice.
+    """
+    green, reset = "\x1b[32m", "\x1b[0m"
+
+    assert naming.chat_prompt_label(
+        "Calzone", interactive=True, quiet=False, color=True
+    ) == f"\n{green}▗█▖{reset} Calzone: "
+    assert naming.chat_prompt_label(
+        "master", interactive=False, quiet=False, color=True
+    ) == f"\n{green}▙█▟{reset} master: "
+
+    # Not a terminal: byte-identical to the uncoloured label.
+    assert naming.chat_prompt_label(
+        "Calzone", interactive=True, quiet=False, color=False
+    ) == "\n▗█▖ Calzone: "
+    # --quiet still wins over colour.
+    assert naming.chat_prompt_label(
+        "Calzone", interactive=True, quiet=True, color=True
+    ) == "\nCalzone: "
+
+
 def test_name_is_session_data_in_model_context():
     name = 'Anna "A"'
     context = naming.chat_identity_context(name)

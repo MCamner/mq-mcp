@@ -998,6 +998,11 @@ async def run_turn(
     )
 
 
+_BRIDGET_SPRITE = "▚█▞"
+_AMBER = "\x1b[33m"
+_RESET = "\x1b[0m"
+
+
 def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -> None:
     """Print Bridget's answer with the decode animation and optional voice.
 
@@ -1006,7 +1011,12 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
-    label = "Bridget: " if QUIET_MODE else "▚█▞ Bridget: "
+    isatty = getattr(stream, "isatty", None)
+    # Amber only on a real terminal: the launcher captures this stream.
+    sprite = _BRIDGET_SPRITE
+    if isatty and isatty():
+        sprite = f"{_AMBER}{sprite}{_RESET}"
+    label = "Bridget: " if QUIET_MODE else sprite + " Bridget: "
     prefix = "\n" + label if prefix_newline else label
     stream.write(prefix)
     stream.flush()
@@ -1127,8 +1137,14 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             user_input = pending
                             pending = ""
                         else:
+                            out_isatty = getattr(out, "isatty", None)
                             out.write(
-                                chat_prompt_label(chat_name, interactive=interactive, quiet=QUIET_MODE)
+                                chat_prompt_label(
+                                    chat_name,
+                                    interactive=interactive,
+                                    quiet=QUIET_MODE,
+                                    color=bool(out_isatty and out_isatty()),
+                                )
                             )
                             out.flush()
                             turn = read_operator_line(sys.stdin, out)

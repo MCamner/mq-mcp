@@ -466,6 +466,26 @@ def test_print_response_newline_prefix(bridge, monkeypatch):
     assert buf.getvalue() == "\n▚█▞ Bridget: x\n"
 
 
+def test_print_response_colors_sprite_amber_on_a_terminal(bridge, monkeypatch):
+    """Bridget's sprite is amber on a TTY and plain everywhere else."""
+    monkeypatch.setattr(bridge, "speak_if_enabled", lambda *_a, **_k: None)
+    monkeypatch.setattr(
+        bridge, "scramble_print", lambda text, file=None: file.write(text + "\n")
+    )
+
+    class Tty(io.StringIO):
+        def isatty(self):
+            return True
+
+    tty = Tty()
+    bridge.print_response("answer text", out=tty)
+    assert tty.getvalue() == "\x1b[33m▚█▞\x1b[0m Bridget: answer text\n"
+
+    plain = io.StringIO()  # no isatty -> no escapes at all
+    bridge.print_response("answer text", out=plain)
+    assert plain.getvalue() == "▚█▞ Bridget: answer text\n"
+
+
 # --- Phase 3: context window management ----------------------------------------
 
 
