@@ -14,6 +14,20 @@ from typing import Any, Optional, cast
 from bridget_voice import handle_voice_command, speak_if_enabled
 from ask import run_ask
 from bridget_context import BridgetContext
+from bridget_chat_name import (
+    chat_identity_context,
+    chat_prompt_label,
+    prompt_chat_name,
+)
+from bridget_chat_ui import (
+    clear_screen_sequence,
+    render_help_card,
+    render_hud,
+    render_response_card,
+    render_session_card,
+    render_tool_summary,
+    thinking_frame,
+)
 from bridget_safety import load_safety_map, needs_approval, tool_class
 import bridget_runtime
 import bridget_workflow
@@ -43,10 +57,11 @@ class BridgetSpinner:
     FRAMES = "⠁⠃⠇⠏⠟⠿⠟⠏⠇⠃"
     INTERVAL = 0.08
 
-    def __init__(self, stream: Any = None) -> None:
+    def __init__(self, stream: Any = None, *, rich: bool = False) -> None:
         self._stream = stream or sys.stdout
         isatty = getattr(self._stream, "isatty", None)
         self._enabled = bool(isatty and isatty())
+        self._rich = rich
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -72,7 +87,8 @@ class BridgetSpinner:
         idx = 0
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
-            self._stream.write(f"\r{frame}")
+            display = thinking_frame(frame, color=True) if self._rich else f"\r{frame}"
+            self._stream.write(display)
             self._stream.flush()
             idx += 1
             self._stop_event.wait(self.INTERVAL)
@@ -993,6 +1009,11 @@ async def run_turn(
     )
 
 
+_BRIDGET_SPRITE = "▚█▞"
+_AMBER = "\x1b[33m"
+_RESET = "\x1b[0m"
+
+
 def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -> None:
     """Print Bridget's answer with the decode animation and optional voice.
 
@@ -1001,7 +1022,12 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     passes /dev/tty so answers stay visible even when a launcher captures stdout.
     """
     stream = out or sys.stdout
-    label = "Bridget: " if QUIET_MODE else "👩 Bridget: "
+    isatty = getattr(stream, "isatty", None)
+    # Amber only on a real terminal: the launcher captures this stream.
+    sprite = _BRIDGET_SPRITE
+    if isatty and isatty():
+        sprite = f"{_AMBER}{sprite}{_RESET}"
+    label = "Bridget: " if QUIET_MODE else sprite + " Bridget: "
     prefix = "\n" + label if prefix_newline else label
     stream.write(prefix)
     stream.flush()
@@ -1009,7 +1035,7 @@ def print_response(answer: str, prefix_newline: bool = False, out: Any = None) -
     speak_if_enabled(answer)
 
 
-CHAT_EXIT_WORDS = {"exit", "quit", "q"}
+CHAT_EXIT_WORDS = {"exit", "quit", "q", "/exit"}
 
 
 def record_chat_session(
@@ -1079,6 +1105,13 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
     global _SPINNER
 
     try:
+        interactive = bool(getattr(sys.stdin, 'isatty', lambda: False)())
+        chat_name = prompt_chat_name(
+            sys.stdin, out, interactive=interactive, read_line=read_operator_line
+        )
+        if chat_name is None:
+            return
+
         async with stdio_client(server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
@@ -1086,15 +1119,38 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 catalog, openai_tools = await discover_tools(session)
                 ctx = BridgetContext()
                 system_content = build_system_content(ctx, catalog, do_mode)
+                if interactive:
+                    system_content += chat_identity_context(chat_name)
                 messages: list[ChatCompletionMessageParam] = [
                     {"role": "system", "content": system_content},
                 ]
                 client = OpenAI()
-
-                out.write(
-                    "Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för "
-                    "att avsluta.\n"
+                out_isatty = getattr(out, "isatty", None)
+                chat_color = bool(out_isatty and out_isatty())
+                pinned = bridget_runtime.get_project()
+                project_name = (
+                    str(pinned.get("name") or "") if pinned else Path.cwd().name
                 )
+                project_branch = (
+                    bridget_runtime.current_branch(pinned["path"]) if pinned else None
+                )
+
+                if interactive:
+                    out.write(
+                        render_session_card(
+                            chat_name,
+                            model=model,
+                            tool_count=len(openai_tools),
+                            project=project_name,
+                            branch=project_branch,
+                            color=chat_color,
+                        )
+                    )
+                else:
+                    out.write(
+                        "Bridget REPL — skriv 'exit', 'quit', 'q' eller Ctrl-D för "
+                        "att avsluta.\n"
+                    )
                 out.flush()
 
                 # Phase 4: accumulate whole-session state; recorded once in the
@@ -1113,7 +1169,38 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             user_input = pending
                             pending = ""
                         else:
-                            out.write("\nmaster: " if QUIET_MODE else "\n👹 master: ")
+                            if interactive:
+                                context_percent = round(
+                                    estimate_tokens(messages)
+                                    * 100
+                                    / max(1, context_budget_for(model))
+                                )
+                                pinned = bridget_runtime.get_project()
+                                project_name = (
+                                    str(pinned.get("name") or "")
+                                    if pinned else Path.cwd().name
+                                )
+                                project_branch = (
+                                    bridget_runtime.current_branch(pinned["path"])
+                                    if pinned else None
+                                )
+                                out.write(
+                                    render_hud(
+                                        project=project_name,
+                                        branch=project_branch,
+                                        tool_count=len(openai_tools),
+                                        context_percent=context_percent,
+                                        color=chat_color,
+                                    )
+                                )
+                            out.write(
+                                chat_prompt_label(
+                                    chat_name,
+                                    interactive=interactive,
+                                    quiet=QUIET_MODE,
+                                    color=bool(out_isatty and out_isatty()),
+                                )
+                            )
                             out.flush()
                             turn = read_operator_line(sys.stdin, out)
                             if turn is None:  # EOF / Ctrl-D / Ctrl-C
@@ -1128,6 +1215,45 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             out.write("Hej då.\n")
                             out.flush()
                             break
+
+                        if interactive and user_input.startswith("/"):
+                            command = user_input.split(maxsplit=1)[0].lower()
+                            if command == "/help":
+                                out.write(render_help_card(color=chat_color))
+                            elif command == "/status":
+                                out.write(
+                                    render_session_card(
+                                        chat_name,
+                                        model=model,
+                                        tool_count=len(openai_tools),
+                                        project=project_name,
+                                        branch=project_branch,
+                                        color=chat_color,
+                                    )
+                                )
+                            elif command == "/clear":
+                                out.write(clear_screen_sequence())
+                                out.write(
+                                    render_session_card(
+                                        chat_name,
+                                        model=model,
+                                        tool_count=len(openai_tools),
+                                        project=project_name,
+                                        branch=project_branch,
+                                        color=chat_color,
+                                    )
+                                )
+                            elif command == "/face":
+                                show_bridget_face()
+                            else:
+                                out.write(
+                                    render_response_card(
+                                        "Okänt lokalt kommando. Skriv /help.",
+                                        color=chat_color,
+                                    )
+                                )
+                            out.flush()
+                            continue
 
                         # Per-turn route intercepts, same as the one-shot path:
                         # voice command, face trigger, goto-repo. Each handles
@@ -1145,11 +1271,11 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
 
                         messages.append({"role": "user", "content": user_input})
 
-                        if not QUIET_MODE:
+                        if not QUIET_MODE and not interactive:
                             out.write("status: thinking\n")
                             out.flush()
 
-                        spinner = BridgetSpinner(stream=tty)
+                        spinner = BridgetSpinner(stream=tty, rich=interactive)
                         if not do_mode:
                             # As in one-shot, --do lets the approval gate own the
                             # terminal; a concurrent spinner corrupts the y/n
@@ -1169,10 +1295,20 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                         spinner.stop()
                         _SPINNER = None
 
-                        if not QUIET_MODE:
-                            out.write("status: responding\n")
+                        if interactive:
+                            out.write(
+                                render_tool_summary(called_tools, color=chat_color)
+                            )
+                            out.write(render_response_card(answer, color=chat_color))
                             out.flush()
-                        print_response(answer, prefix_newline=did_tool_round, out=out)
+                            speak_if_enabled(answer)
+                        else:
+                            if not QUIET_MODE:
+                                out.write("status: responding\n")
+                                out.flush()
+                            print_response(
+                                answer, prefix_newline=did_tool_round, out=out
+                            )
 
                         # Accumulate whole-session state for the single Phase-4
                         # record at exit: the latest exchange plus every tool
