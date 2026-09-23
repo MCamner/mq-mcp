@@ -1,6 +1,13 @@
+import importlib.util
 import re
+from pathlib import Path
 
-import bridget_chat_ui as ui
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "mq-mcp" / "bridget_chat_ui.py"
+SPEC = importlib.util.spec_from_file_location("bridget_chat_ui_test_target", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+ui = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(ui)
 
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
