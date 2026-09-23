@@ -177,7 +177,15 @@ def test_real_tty_typing_stays_within_box_and_restores_terminal():
             found += os.read(master, 4096)
         assert "│ » Calzone".encode() in found
         assert "╰".encode() in found
-        assert termios.tcgetattr(slave) == original
+        restored = termios.tcgetattr(slave)
+        # BSD/macOS may set PENDIN while returning from cbreak to canonical
+        # input when bytes were queued on the pseudo-terminal. PENDIN is
+        # kernel-maintained pending-input state, not a mode chosen by Bridget;
+        # compare every stable terminal setting while ignoring only that bit.
+        transient = getattr(termios, "PENDIN", 0)
+        restored[3] &= ~transient
+        original[3] &= ~transient
+        assert restored == original
     finally:
         if thread.is_alive():
             os.write(master, b"\x04")
