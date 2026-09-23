@@ -81,6 +81,26 @@ def test_readme_release_link_matches_version():
     )
 
 
+def test_readme_status_section_names_no_superseded_version():
+    """The Status prose must not claim a version the repo has moved past.
+
+    The badge and release-link tests above check that the README *mentions* the
+    current version. They pass just as happily when a stale release summary
+    sits below the badge claiming an older one — which is how the Status line
+    was left at v2.0.0 through the 2.1.0 release.
+    """
+    version = _current_version()
+    readme = README.read_text()
+    m = re.search(r"^## Status\s*\n(.*?)(?=^## )", readme, re.S | re.M)
+    assert m is not None, "Could not find a '## Status' section in README"
+    claimed = set(re.findall(r"\bv?(\d+\.\d+\.\d+)\b", m.group(1)))
+    stale = sorted(claimed - {version})
+    assert not stale, (
+        f"README Status section claims version(s) {', '.join(stale)} "
+        f"but VERSION is {version}"
+    )
+
+
 def test_readme_tool_count_matches_runtime():
     runtime_count = len(_runtime_tool_names())
     readme = README.read_text()
