@@ -15,22 +15,23 @@ This workflow is for OpenAI vector stores and MQ semantic repository memory. It 
 
 Refreshing uploads repo-derived content to OpenAI. Before running the upload step, state the repo path and target vector store ID and get explicit approval if the user has not already granted it in the current turn. Never print API keys or `.env` contents.
 
-Deletion or replacement of existing vector-store files is destructive. Prefer the non-destructive MQ flow below unless the user explicitly requests cleanup.
+Deletion or replacement of vector-store attachments is destructive. Use `--cleanup-stale` only when cleanup was explicitly requested. mq-agent verifies the new generation before detaching stale retrieval attachments and retains underlying OpenAI Storage files.
 
 ## Preferred MQ Flow
 
-For `macos-scripts`, prefer the `mq-agent` semantic memory commands:
+Prefer mq-agent's identity-scoped latest-only flow for MQ repositories:
 
 ```bash
-mq-agent memory status --json
-mq-agent memory build /Users/mansys/macos-scripts
-mq-agent memory refresh --approve /Users/mansys/macos-scripts
+mq-agent memory status /path/to/repo --json
+mq-agent memory build /path/to/repo
+mq-agent memory refresh /path/to/repo --approve --cleanup-stale
+mq-agent memory status /path/to/repo --json
 ```
 
 If `OPENAI_API_KEY` is missing from the process environment, load it without printing it:
 
 ```bash
-zsh -lc 'set -a; source ~/.env 2>/dev/null || true; source /Users/mansys/macos-scripts/.env 2>/dev/null || true; set +a; mq-agent memory refresh --approve /Users/mansys/macos-scripts'
+zsh -lc 'set -a; source ~/.env 2>/dev/null || true; set +a; mq-agent memory refresh /path/to/repo --approve --cleanup-stale'
 ```
 
 Use `memory build` as the preview. It should report the intended `repo-signal semantic-upload` action and must not upload.
@@ -47,7 +48,7 @@ curl -sS "https://api.openai.com/v1/vector_stores/$VECTOR_STORE_ID" \
 mq-agent memory search "recent repo-specific terms" --json
 ```
 
-Report the vector store ID, status, file counts, newest uploaded file, and whether retrieval worked.
+Report the vector store ID, configured/reachable/freshness state, authoritative generation count, non-authoritative retrieval count, newest upload, and whether retrieval worked.
 
 For `macos-scripts`, the active store should come from `mq-agent memory status --json`, not old helper-script defaults. Historical scripts may reference an older default store.
 
@@ -87,3 +88,18 @@ Keep the final report short:
   retrieval or MCP verification result without printing secrets.
 - A sandbox-only Python/httpx `Operation not permitted` failure is diagnosed
   separately from MCP server health by checking the HTTP endpoints directly.
+
+## Postcondition
+
+A successful latest-only refresh requires:
+
+- `status == ready`
+- `freshness == fresh`
+- `authoritative_active_count == 1`
+- `non_authoritative_retrieval_count == 0`
+- `stored_source_revision == current_source_revision`
+
+For mq-mcp, `ask.py` now defaults to the canonical store. The historical
+`OPENAI_VECTOR_STORE_ID` variable no longer steers ask; intentional isolated
+overrides use `MQ_MCP_VECTOR_STORE_ID`. Full-store upload scripts must never
+be used against the shared canonical store during a normal repo refresh.

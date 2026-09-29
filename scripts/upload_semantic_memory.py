@@ -2,13 +2,15 @@
 """
 Upload the cross-repo semantic memory pack to the 'semantic repository memory' vector store.
 
-Replaces all existing files in the store with the current pack contents.
+Historical whole-store rebuild utility. Replaces every existing file in the
+shared canonical store and is therefore disabled by default.
 
 Run from mq-mcp/mq-mcp dir:
   bash ../scripts/build_semantic_memory_pack.sh
   uv run python ../scripts/upload_semantic_memory.py
 """
 
+import os
 from pathlib import Path
 from openai import OpenAI
 
@@ -77,6 +79,14 @@ def upload_pack(client: OpenAI) -> None:
 
 
 def main() -> None:
+    if os.getenv("MQ_MCP_ALLOW_FULL_CANONICAL_REBUILD", "").strip() != "1":
+        raise SystemExit(
+            "Full canonical-store replacement is disabled by default. "
+            "Use mq-agent memory refresh <repo> --approve --cleanup-stale. "
+            "Set MQ_MCP_ALLOW_FULL_CANONICAL_REBUILD=1 only for an explicit "
+            "whole-store recovery."
+        )
+
     client = OpenAI()
 
     vs = client.vector_stores.retrieve(VECTOR_STORE_ID)

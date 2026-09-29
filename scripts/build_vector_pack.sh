@@ -200,10 +200,11 @@ generate_symbol_memory
   echo "## Vector store maintenance"
   echo
   echo "- \`bash scripts/build_vector_pack.sh\`: rebuilds \`/tmp/mq-mcp-vector-pack\`."
-  echo "- \`uv --directory mq-mcp run python ../scripts/upload_vector_pack.py\`: replaces files in the active local vector store."
-  echo "- \`python3 scripts/create_vector_store.py\`: creates a new \`mq-mcp-repo-knowledge\` store and uploads the pack."
+  echo "- Canonical repo memory is refreshed with \`mq-agent memory refresh ~/mq-mcp --approve --cleanup-stale\`."
+  echo "- \`upload_vector_pack.py\` is legacy isolated-store maintenance and refuses the shared canonical store."
+  echo "- \`create_vector_store.py\` is a retired compatibility path and is disabled unless explicitly opted in."
   echo "- \`mq-mcp-symbol-memory.md\`: generated offline from repo-signal symbols and included in the local pack when repo-signal is available."
-  echo "- Active local store is read from \`OPENAI_VECTOR_STORE_ID\`."
+  echo "- \`ask\` defaults to canonical memory; an intentional isolated override uses \`MQ_MCP_VECTOR_STORE_ID\`."
 } > "$PACK/entrypoints-and-commands.md"
 echo "  [generated] entrypoints-and-commands.md"
 (( copied++ )) || true

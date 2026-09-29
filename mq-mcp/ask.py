@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ask questions using OpenAI vector stores.
+Ask questions using the canonical OpenAI vector store.
 
 Usage:
   uv run python ask.py "What does server.py do?"
@@ -16,8 +16,9 @@ import time
 from openai import OpenAI
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
-VECTOR_STORE_ID = os.getenv("OPENAI_VECTOR_STORE_ID", "")
-SEMANTIC_MEMORY_ID = os.getenv("OPENAI_SEMANTIC_MEMORY_ID", "")
+CANONICAL_VECTOR_STORE_ID = "vs_69ffa9a4ef5c81919d7d237c3ecdc260"
+LOCAL_OVERRIDE_ENV = "MQ_MCP_VECTOR_STORE_ID"
+GLOBAL_OVERRIDE_ENV = "OPENAI_SEMANTIC_MEMORY_ID"
 
 SYSTEM_LOCAL = """You are a repo-aware assistant for the mq-mcp repository.
 Always search the repository knowledge base before answering. Base your answers on what you find there.
@@ -32,6 +33,40 @@ If you find relevant information, cite which repo and file it came from.
 Answer in the same language as the question."""
 
 _SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?#@%&"
+
+
+def _env_value(name: str) -> str:
+    return os.getenv(name, "").strip()
+
+
+def resolve_local_vector_store_id() -> str:
+    """Resolve ask's primary store without honoring the retired legacy env."""
+    return _env_value(LOCAL_OVERRIDE_ENV) or CANONICAL_VECTOR_STORE_ID
+
+
+def resolve_global_vector_store_id() -> str:
+    """Resolve global memory, defaulting to the same canonical store."""
+    return _env_value(GLOBAL_OVERRIDE_ENV) or CANONICAL_VECTOR_STORE_ID
+
+
+def resolve_store_ids(global_only: bool = False) -> tuple[list[str], str, str]:
+    """Return deduplicated store ids plus system prompt and display label."""
+    global_store = resolve_global_vector_store_id()
+    if global_only:
+        return [global_store], SYSTEM_GLOBAL, "global memory"
+
+    local_store = resolve_local_vector_store_id()
+    store_ids = [local_store]
+    if global_store not in store_ids:
+        store_ids.append(global_store)
+
+    if len(store_ids) > 1:
+        label = "local + global"
+    elif local_store == CANONICAL_VECTOR_STORE_ID:
+        label = "canonical memory"
+    else:
+        label = "local memory"
+    return store_ids, SYSTEM_LOCAL, label
 
 
 def scramble_print(text: str) -> None:
@@ -58,25 +93,7 @@ def scramble_print(text: str) -> None:
 
 
 def run_ask(prompt: str, model: str = MODEL, global_only: bool = False) -> None:
-    store_ids: list[str] = []
-
-    if global_only:
-        if not SEMANTIC_MEMORY_ID:
-            print("ERROR: OPENAI_SEMANTIC_MEMORY_ID not set in environment")
-            raise SystemExit(1)
-        store_ids = [SEMANTIC_MEMORY_ID]
-        system = SYSTEM_GLOBAL
-        label = "global memory"
-    else:
-        if not VECTOR_STORE_ID:
-            print("ERROR: OPENAI_VECTOR_STORE_ID not set in environment")
-            raise SystemExit(1)
-        store_ids = [VECTOR_STORE_ID]
-        if SEMANTIC_MEMORY_ID:
-            store_ids.append(SEMANTIC_MEMORY_ID)
-        system = SYSTEM_LOCAL
-        label = "local + global" if SEMANTIC_MEMORY_ID else "local"
-
+    store_ids, system, label = resolve_store_ids(global_only=global_only)
     client = OpenAI()
 
     print(f"--- ask [{label}] ---")
