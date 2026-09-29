@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Creates an OpenAI vector store named mq-mcp-repo-knowledge
-and uploads all relevant files from /tmp/mq-mcp-vector-pack.
+Historical utility for creating an isolated mq-mcp-repo-knowledge store.
+
+The normal ask path now uses the shared canonical store. This legacy creation
+path is disabled unless explicitly opted in.
 
 Run from repo root:
   bash scripts/build_vector_pack.sh
   python3 scripts/create_vector_store.py
 """
 
+import os
 import re
 from pathlib import Path
 from openai import OpenAI
@@ -26,7 +29,7 @@ def update_env(vector_store_id: str) -> None:
     Create the file when absent. This function does not load the value into the
     current process environment.
     """
-    key = "OPENAI_VECTOR_STORE_ID"
+    key = "MQ_MCP_VECTOR_STORE_ID"
     line = f"{key}={vector_store_id}\n"
 
     if not ENV_FILE.exists():
@@ -47,6 +50,14 @@ def update_env(vector_store_id: str) -> None:
 
 
 def main() -> None:
+    if os.getenv("MQ_MCP_ALLOW_LEGACY_VECTOR_STORE_CREATE", "").strip() != "1":
+        raise SystemExit(
+            "mq-mcp-repo-knowledge is retired for normal ask usage. "
+            "Use the canonical store via mq-agent memory refresh ~/mq-mcp. "
+            "Set MQ_MCP_ALLOW_LEGACY_VECTOR_STORE_CREATE=1 only for an "
+            "explicit isolated rollback store."
+        )
+
     client = OpenAI()
 
     files = sorted(
@@ -85,7 +96,7 @@ def main() -> None:
 
     print()
     print(f"Done. {ok} uploaded, {failed} failed.")
-    print(f"OPENAI_VECTOR_STORE_ID={vector_store.id}")
+    print(f"MQ_MCP_VECTOR_STORE_ID={vector_store.id}")
     print()
 
     update_env(vector_store.id)

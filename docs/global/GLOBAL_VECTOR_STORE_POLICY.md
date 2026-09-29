@@ -38,17 +38,36 @@ Example: `mq-mcp/mq-mcp/server.py` → `mq-mcp__mq-mcp__server.py`
 
 `.toml` files are renamed to `.toml.txt` (OpenAI vector store does not index `.toml`).
 
-## Rebuild procedure
+## Refresh procedure
+
+Use identity-scoped latest-only refresh through mq-agent. Do not clear the
+shared canonical store to refresh one repository.
 
 ```bash
-# 1. Build pack
-bash ~/mq-mcp/scripts/build_semantic_memory_pack.sh
-
-# 2. Upload (replaces all files in the store)
-cd ~/mq-mcp/mq-mcp && uv run python ../scripts/upload_semantic_memory.py
+mq-agent memory status ~/mq-mcp --json
+mq-agent memory refresh ~/mq-mcp --approve --cleanup-stale
+mq-agent memory status ~/mq-mcp --json
 ```
+
+A successful refresh requires one authoritative generation, zero
+non-authoritative retrieval generations, and matching stored/current source
+revisions. Underlying OpenAI Storage file objects are retained.
+
+The historical full-pack upload scripts are guarded because they detach every
+file in their target store. They are not the normal refresh path.
 
 ## Store IDs
 
-- **semantic repository memory**: `vs_69ffa9a4ef5c81919d7d237c3ecdc260` — global cross-repo master
-- **mq-mcp-repo-knowledge**: `vs_6a0513bc1adc8191bc18affe4383d83f` — mq-mcp only, used by `ask` CLI
+- **semantic repository memory**: `vs_69ffa9a4ef5c81919d7d237c3ecdc260` — canonical cross-repo store and default for `ask`.
+- **mq-mcp-repo-knowledge**: `vs_6a0513bc1adc8191bc18affe4383d83f` — retired consumer path. `ask` no longer reads it by default; physical historical files may remain until explicit cleanup.
+
+## Resolver policy
+
+`ask.py` ignores the historical `OPENAI_VECTOR_STORE_ID` setting so an old
+local `.env` cannot silently reactivate the retired store. The default is the
+canonical store. An intentional isolated override must use
+`MQ_MCP_VECTOR_STORE_ID`.
+
+`OPENAI_SEMANTIC_MEMORY_ID` remains an optional global-memory override. When
+it resolves to the canonical ID, `ask` deduplicates it rather than sending the
+same vector store twice to `file_search`.

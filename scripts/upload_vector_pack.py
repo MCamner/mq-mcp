@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Upload /tmp/mq-mcp-vector-pack to the active mq-mcp OpenAI vector store.
+Upload /tmp/mq-mcp-vector-pack to an explicitly isolated mq-mcp vector store.
 
-This replaces all existing files in OPENAI_VECTOR_STORE_ID with the current
-pack contents. Load mq-mcp/.env before running if the variable is not already
-in the environment.
+This legacy maintenance path replaces every file in MQ_MCP_VECTOR_STORE_ID.
+It refuses the shared canonical store. Normal repository memory refreshes must
+use mq-agent's identity-scoped latest-only flow.
 
 Run from repo root:
   bash scripts/build_vector_pack.sh
-  set -a; source mq-mcp/.env; set +a
+  export MQ_MCP_VECTOR_STORE_ID=vs_isolated
   python3 scripts/upload_vector_pack.py
 """
 
@@ -17,8 +17,24 @@ import os
 
 from openai import OpenAI
 
+CANONICAL_VECTOR_STORE_ID = "vs_69ffa9a4ef5c81919d7d237c3ecdc260"
 PACK_DIR = Path("/tmp/mq-mcp-vector-pack")
 ALLOWED_SUFFIXES = {".md", ".txt", ".py", ".sh", ".yml", ".yaml", ".html"}
+
+
+def resolve_target_store() -> str:
+    vector_store_id = os.getenv("MQ_MCP_VECTOR_STORE_ID", "").strip()
+    if not vector_store_id:
+        raise SystemExit(
+            "MQ_MCP_VECTOR_STORE_ID is not set. "
+            "Use mq-agent memory refresh for canonical repo memory."
+        )
+    if vector_store_id == CANONICAL_VECTOR_STORE_ID:
+        raise SystemExit(
+            "Refusing full-store replacement of the shared canonical store. "
+            "Use: mq-agent memory refresh ~/mq-mcp --approve --cleanup-stale"
+        )
+    return vector_store_id
 
 
 def pack_files() -> list[Path]:
@@ -77,9 +93,7 @@ def upload_pack(client: OpenAI, vector_store_id: str, files: list[Path]) -> tupl
 
 
 def main() -> None:
-    vector_store_id = os.getenv("OPENAI_VECTOR_STORE_ID", "").strip()
-    if not vector_store_id:
-        raise SystemExit("OPENAI_VECTOR_STORE_ID is not set.")
+    vector_store_id = resolve_target_store()
 
     files = pack_files()
     if not files:
