@@ -89,7 +89,6 @@ Keep the final report short:
 - A sandbox-only Python/httpx `Operation not permitted` failure is diagnosed
   separately from MCP server health by checking the HTTP endpoints directly.
 
-
 ## Postcondition
 
 A successful latest-only refresh requires:
