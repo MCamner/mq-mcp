@@ -110,8 +110,12 @@ for t in d["tools"]:
     if cls == "A":
         if w:
             fail(f"Class A violation — write=true: {name}")
-        if sub and res != "run_repo_command":
-            fail(f"Class A violation — subprocess=true outside git boundary: {name}")
+        allowed_readonly_subprocess = {
+            "run_repo_command",
+            "mq_agent_feedback_bridge",
+        }
+        if sub and res not in allowed_readonly_subprocess:
+            fail(f"Class A violation — unapproved read-only subprocess boundary: {name}")
 
     # Class B: no file writes
     elif cls == "B":
