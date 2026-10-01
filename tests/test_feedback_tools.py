@@ -159,6 +159,7 @@ def test_feedback_tools_are_registered_and_safety_classified() -> None:
         assert by_name[name]["class"] == "A"
         assert by_name[name]["write"] is False
         assert by_name[name]["subprocess"] is True
+        assert by_name[name]["resolver"] == "mq_agent_feedback_bridge"
         assert by_name[name]["side_effects"] == []
 
     run = by_name["mq_feedback_run"]
