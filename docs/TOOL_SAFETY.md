@@ -11,7 +11,7 @@ Two path resolvers enforce access boundaries:
 | --- | --- | --- |
 | `resolve_repo_file(path)` | Repo-relative paths inside `REPO_ROOT` | Absolute paths, `../` traversal, anything outside repo |
 | `resolve_allowed_local_file(path)` | Repo-relative paths + absolute paths within `MQ_MCP_ALLOWED_PATHS` | Anything outside repo and all allowed roots |
-| `mq_agent_feedback_bridge` | Fixed read-only `mq-agent feedback ... --json` subprocesses | Arbitrary commands, feedback writes, activation/review mutations |
+| fixed mq-agent feedback bridge | Fixed read-only `mq-agent feedback ... --json` subprocesses | Arbitrary commands, feedback writes, activation/review mutations |
 
 `REPO_ROOT` is always included in `resolve_allowed_local_file` — no configuration needed for repo files.
 
