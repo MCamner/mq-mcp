@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 130 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 136 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -29,7 +29,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
 Read-only tools pass without a prompt even when they shell out: 27 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 41 of 130 tools are
+operator to dismiss the prompt unread. As classified today, 42 of 136 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -88,6 +88,12 @@ Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` wi
 
 ---
 
+| \`mq_feedback_status\` | Read mq-agent Feedback Engine storage/coverage status | Write feedback evidence, change production behavior |
+| \`mq_feedback_inspect\` | Read one experiment/comparison/candidate chain | Recompute verdicts, write state |
+| \`mq_feedback_compare\` | Read the latest stored comparison | Derive new evidence, change verdicts |
+| \`mq_feedback_report\` | Read the stable aggregate feedback report | Write evidence or policy |
+| \`mq_feedback_candidates\` | Read effective improvement candidates | Approve, reject, hand off, or activate candidates |
+
 ## Class B — Read-only, allowed external paths
 
 These tools cannot write files. Some run fixed read-only subprocesses; they can
@@ -143,6 +149,8 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
+| \`mq_feedback_run\` | Delegate a bounded zero-effect context experiment to mq-agent and append local feedback evidence | Affect the production task, activate routing/context/memory policy, write durable memory |
+
 | `update_repo_file` | Replace exact text in allowed repo files | Write outside repo, commit, auto-delete, binary files |
 | `edit_image` | Rotate or convert images in repo or allowed roots | Write outside allowed roots, commit, delete |
 | `set_clipboard` | Copy text to the macOS clipboard via pbcopy | Access files, run arbitrary commands |
