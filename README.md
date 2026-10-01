@@ -211,13 +211,13 @@ See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the f
 mq-mcp exposes mq-agent's Feedback Engine without owning evidence, verdict or
 candidate policy:
 
-- \`mq_feedback_status\`, \`mq_feedback_inspect\`, \`mq_feedback_compare\`,
-  \`mq_feedback_report\`, and \`mq_feedback_candidates\` are Class A read-only
+* `mq_feedback_status`, `mq_feedback_inspect`, `mq_feedback_compare`,
+  `mq_feedback_report`, and `mq_feedback_candidates` are Class A read-only
   delegates that return mq-agent JSON.
-- \`mq_feedback_run\` is Class C because it starts bounded local computation and
+* `mq_feedback_run` is Class C because it starts bounded local computation and
   appends runtime feedback evidence through mq-agent. It has zero production
   task effect and no activation authority.
-- No MCP feedback tool can approve, reject, purge, hand off, or activate a
+* No MCP feedback tool can approve, reject, purge, hand off, or activate a
   candidate.
 
 ## Safety notes
