@@ -5,7 +5,14 @@
   "summary": "Claude Desktop mcpServers entry for a local mq-mcp server.",
   "client": "claude-desktop",
   "command": "uv",
-  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "args": [
+    "--directory",
+    "{{MQ_MCP_APP_DIR}}",
+    "run",
+    "mcp",
+    "run",
+    "server.py"
+  ],
   "env": {
     "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
     "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}}"
@@ -13,7 +20,14 @@
   "mcpServers": {
     "mq-mcp": {
       "command": "uv",
-      "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+      "args": [
+        "--directory",
+        "{{MQ_MCP_APP_DIR}}",
+        "run",
+        "mcp",
+        "run",
+        "server.py"
+      ],
       "env": {
         "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
         "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}}"
@@ -30,7 +44,13 @@
     "mq_context_pack",
     "mq_route_verify",
     "mq_route_report",
-    "repo_signal_analyze"
+    "repo_signal_analyze",
+    "mq_feedback_status",
+    "mq_feedback_inspect",
+    "mq_feedback_compare",
+    "mq_feedback_report",
+    "mq_feedback_candidates",
+    "mq_feedback_run"
   ],
   "safety_notes": [
     "Use absolute local paths when copying this into claude_desktop_config.json.",
