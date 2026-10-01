@@ -5,7 +5,14 @@
   "summary": "Codex-oriented profile for repo inspection, validation, and mq ecosystem context.",
   "client": "codex",
   "command": "uv",
-  "args": ["--directory", "{{MQ_MCP_APP_DIR}}", "run", "mcp", "run", "server.py"],
+  "args": [
+    "--directory",
+    "{{MQ_MCP_APP_DIR}}",
+    "run",
+    "mcp",
+    "run",
+    "server.py"
+  ],
   "env": {
     "MQ_MCP_ALLOWED_PATHS": "{{MQ_MCP_REPO_ROOT}}",
     "MQ_MCP_LOCAL_REPOS": "{{MQ_MCP_REPO_ROOT}},{{MQ_HAL_REPO}},{{REPO_SIGNAL_REPO}},{{MACOS_SCRIPTS_REPO}}"
@@ -23,7 +30,13 @@
     "mq_route_verify",
     "mq_route_report",
     "repo_signal_inspect",
-    "repo_signal_doctor_json"
+    "repo_signal_doctor_json",
+    "mq_feedback_status",
+    "mq_feedback_inspect",
+    "mq_feedback_compare",
+    "mq_feedback_report",
+    "mq_feedback_candidates",
+    "mq_feedback_run"
   ],
   "safety_notes": [
     "Good default for coding sessions that need repo context plus safety metadata.",
