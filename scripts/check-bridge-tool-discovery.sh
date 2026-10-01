@@ -42,6 +42,12 @@ require_text "$tools_output" "list_local_repos"
 require_text "$tools_output" "repo_signal_analyze"
 require_text "$tools_output" "repo_signal_checklist"
 require_text "$tools_output" "hal_repo_report"
+require_text "$tools_output" "mq_feedback_status"
+require_text "$tools_output" "mq_feedback_inspect"
+require_text "$tools_output" "mq_feedback_compare"
+require_text "$tools_output" "mq_feedback_report"
+require_text "$tools_output" "mq_feedback_candidates"
+require_text "$tools_output" "mq_feedback_run"
 
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   prompt_output="$(uv run python bridge.py "List the available MCP tools." 2>/dev/null || true)"
