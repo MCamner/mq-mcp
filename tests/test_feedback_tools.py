@@ -129,7 +129,7 @@ def test_feedback_run_delegates_budgets_and_task_without_shell(monkeypatch, tmp_
     )
 
     assert result["status"] == "PASS"
-    assert captured["command"][-18:] == [
+    assert captured["command"][-15:] == [
         "feedback",
         "run",
         "--task",
