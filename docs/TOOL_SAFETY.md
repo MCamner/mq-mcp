@@ -11,6 +11,7 @@ Two path resolvers enforce access boundaries:
 | --- | --- | --- |
 | `resolve_repo_file(path)` | Repo-relative paths inside `REPO_ROOT` | Absolute paths, `../` traversal, anything outside repo |
 | `resolve_allowed_local_file(path)` | Repo-relative paths + absolute paths within `MQ_MCP_ALLOWED_PATHS` | Anything outside repo and all allowed roots |
+| `mq_agent_feedback_bridge` | Fixed read-only `mq-agent feedback ... --json` subprocesses | Arbitrary commands, feedback writes, activation/review mutations |
 
 `REPO_ROOT` is always included in `resolve_allowed_local_file` — no configuration needed for repo files.
 
@@ -26,7 +27,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
   `open_*` app launchers)
 * a tool absent from the contract — gated, so nothing unclassified runs silently
 
-Read-only tools pass without a prompt even when they shell out: 27 Class A/B
+Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
 operator to dismiss the prompt unread. As classified today, 42 of 136 tools are
@@ -38,7 +39,7 @@ A denial returns an error string to the model; it does not end the turn.
 
 ## Class A — Read-only, repo-scoped
 
-These tools cannot write files, cannot run processes, and cannot access anything outside the repository root.
+These tools cannot write files. They may use a fixed, contract-declared read-only subprocess boundary; arbitrary subprocess execution remains forbidden.
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
