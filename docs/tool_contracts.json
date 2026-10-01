@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.1.0",
-  "tool_count": 130,
+  "tool_count": 136,
   "tools": [
     {
       "name": "analyze_csv",
@@ -623,6 +623,69 @@
       "class": "B",
       "description": "Return mq-agent task context on stdout without writing a pack. Read-only.",
       "resolver": "none",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_candidates",
+      "class": "A",
+      "description": "Return effective mq-agent feedback improvement candidates. Read-only.",
+      "resolver": "mq_agent_feedback_bridge",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_compare",
+      "class": "A",
+      "description": "Return the latest stored mq-agent feedback comparison. Read-only.",
+      "resolver": "mq_agent_feedback_bridge",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_inspect",
+      "class": "A",
+      "description": "Return one mq-agent feedback experiment/comparison/candidate chain. Read-only.",
+      "resolver": "mq_agent_feedback_bridge",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_report",
+      "class": "A",
+      "description": "Return the stable mq-agent feedback aggregate report. Read-only.",
+      "resolver": "mq_agent_feedback_bridge",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_run",
+      "class": "C",
+      "description": "Run a bounded zero-effect mq-agent feedback experiment and record local evidence.",
+      "resolver": "resolve_allowed_local_file",
+      "write": true,
+      "subprocess": true,
+      "side_effects": [
+        "feedback-evidence-write",
+        "bounded-compute"
+      ],
+      "examples": []
+    },
+    {
+      "name": "mq_feedback_status",
+      "class": "A",
+      "description": "Return mq-agent Feedback Engine storage and coverage status. Read-only.",
+      "resolver": "mq_agent_feedback_bridge",
       "write": false,
       "subprocess": true,
       "side_effects": [],

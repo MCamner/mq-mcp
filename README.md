@@ -18,7 +18,7 @@ v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift,
 
 This repository is useful as:
 
-* a local MCP server with 130 documented, safety-classified tools
+* a local MCP server with 136 documented, safety-classified tools
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -36,7 +36,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 130 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 136 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -167,7 +167,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 130 MCP tools with descriptions.
+Expected response lists all 136 MCP tools with descriptions.
 
 ## Integration map
 
@@ -205,6 +205,20 @@ GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integr
 **Which tools require explicit human approval:** Class C (writes files) and Class D (opens apps or runs subprocesses). Examples: `update_repo_file`, `run_tests`, `open_terminal`, `set_reminder`.
 
 See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the full boundary definition and profile-to-class mapping.
+
+## Feedback Engine bridge
+
+mq-mcp exposes mq-agent's Feedback Engine without owning evidence, verdict or
+candidate policy:
+
+* `mq_feedback_status`, `mq_feedback_inspect`, `mq_feedback_compare`,
+  `mq_feedback_report`, and `mq_feedback_candidates` are Class A read-only
+  delegates that return mq-agent JSON.
+* `mq_feedback_run` is Class C because it starts bounded local computation and
+  appends runtime feedback evidence through mq-agent. It has zero production
+  task effect and no activation authority.
+* No MCP feedback tool can approve, reject, purge, hand off, or activate a
+  candidate.
 
 ## Safety notes
 

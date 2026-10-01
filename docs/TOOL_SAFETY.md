@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 130 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 136 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -11,6 +11,7 @@ Two path resolvers enforce access boundaries:
 | --- | --- | --- |
 | `resolve_repo_file(path)` | Repo-relative paths inside `REPO_ROOT` | Absolute paths, `../` traversal, anything outside repo |
 | `resolve_allowed_local_file(path)` | Repo-relative paths + absolute paths within `MQ_MCP_ALLOWED_PATHS` | Anything outside repo and all allowed roots |
+| fixed mq-agent feedback bridge | Fixed read-only `mq-agent feedback ... --json` subprocesses | Arbitrary commands, feedback writes, activation/review mutations |
 
 `REPO_ROOT` is always included in `resolve_allowed_local_file` — no configuration needed for repo files.
 
@@ -26,10 +27,10 @@ document's machine-readable twin, `docs/tool_contracts.json`:
   `open_*` app launchers)
 * a tool absent from the contract — gated, so nothing unclassified runs silently
 
-Read-only tools pass without a prompt even when they shell out: 27 Class A/B
+Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 41 of 130 tools are
+operator to dismiss the prompt unread. As classified today, 42 of 136 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -38,7 +39,7 @@ A denial returns an error string to the model; it does not end the turn.
 
 ## Class A — Read-only, repo-scoped
 
-These tools cannot write files, cannot run processes, and cannot access anything outside the repository root.
+These tools cannot write files. They may use a fixed, contract-declared read-only subprocess boundary; arbitrary subprocess execution remains forbidden.
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
@@ -87,6 +88,12 @@ These tools cannot write files, cannot run processes, and cannot access anything
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
 
 ---
+
+| \`mq_feedback_status\` | Read mq-agent Feedback Engine storage/coverage status | Write feedback evidence, change production behavior |
+| \`mq_feedback_inspect\` | Read one experiment/comparison/candidate chain | Recompute verdicts, write state |
+| \`mq_feedback_compare\` | Read the latest stored comparison | Derive new evidence, change verdicts |
+| \`mq_feedback_report\` | Read the stable aggregate feedback report | Write evidence or policy |
+| \`mq_feedback_candidates\` | Read effective improvement candidates | Approve, reject, hand off, or activate candidates |
 
 ## Class B — Read-only, allowed external paths
 
@@ -143,6 +150,8 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 
 | Tool | What it can do | What it cannot do |
 | --- | --- | --- |
+| \`mq_feedback_run\` | Delegate a bounded zero-effect context experiment to mq-agent and append local feedback evidence | Affect the production task, activate routing/context/memory policy, write durable memory |
+
 | `update_repo_file` | Replace exact text in allowed repo files | Write outside repo, commit, auto-delete, binary files |
 | `edit_image` | Rotate or convert images in repo or allowed roots | Write outside allowed roots, commit, delete |
 | `set_clipboard` | Copy text to the macOS clipboard via pbcopy | Access files, run arbitrary commands |

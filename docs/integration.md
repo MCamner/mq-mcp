@@ -141,3 +141,35 @@ mqlaunch
 The smoke test verifies that the main integration tools are present in
 `server.py`, `README.md`, `docs/integration.md`, `docs/TOOL_SAFETY.md`,
 and `scripts/validate.sh`.
+
+## Feedback Engine integration
+
+Feedback Engine policy remains in `mq-agent`. `mq-mcp` exposes only thin MCP
+delegates:
+
+```text
+Codex / Claude
+      |
+      v
+mq-mcp: mq_feedback_*
+      |
+      v
+mq-agent: feedback ...
+      |
+      +--> ~/.mq/feedback runtime evidence
+      |
+      `--> mqobsidian review path only after explicit human handoff
+```
+
+The read-only tools `mq_feedback_status`, `mq_feedback_inspect`,
+`mq_feedback_compare`, `mq_feedback_report`, and `mq_feedback_candidates` use
+the fixed `mq_agent_feedback_bridge` subprocess boundary and return mq-agent
+JSON without recomputing verdicts.
+
+`mq_feedback_run` is separately Class C because it invokes bounded local
+collection and appends feedback evidence. It cannot activate routing, context
+policy, or memory promotion.
+
+Codex and Claude receive the same six MCP tools through their profiles and the
+same canonical `feedback-review` skill. There is no client-specific feedback
+policy.

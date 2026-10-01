@@ -58,6 +58,12 @@ TOOL_META: dict[str, dict] = {
     "mq_context_pack":        {"class": "B", "resolver": "none",                         "write": False, "subprocess": True,  "side_effects": []},
     "mq_route_verify":        {"class": "B", "resolver": "none",                         "write": False, "subprocess": False, "side_effects": []},
     "mq_route_report":        {"class": "B", "resolver": "resolve_allowed_local_file",   "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_status":      {"class": "A", "resolver": "mq_agent_feedback_bridge",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_inspect":     {"class": "A", "resolver": "mq_agent_feedback_bridge",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_compare":     {"class": "A", "resolver": "mq_agent_feedback_bridge",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_report":      {"class": "A", "resolver": "mq_agent_feedback_bridge",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_candidates":  {"class": "A", "resolver": "mq_agent_feedback_bridge",                         "write": False, "subprocess": True,  "side_effects": []},
+    "mq_feedback_run":         {"class": "C", "resolver": "resolve_allowed_local_file",   "write": True,  "subprocess": True,  "side_effects": ["feedback-evidence-write", "bounded-compute"]},
 
     "edit_image":             {"class": "C", "resolver": "resolve_allowed_local_file",  "write": True,  "subprocess": False, "side_effects": ["file-write"]},
     "set_clipboard":          {"class": "C", "resolver": "none",                         "write": True,  "subprocess": True,  "side_effects": ["clipboard-write"]},

@@ -948,6 +948,71 @@ def _run_repo_signal(args: list[str], cwd: Path, timeout: int = 60) -> subproces
 
 
 @mcp.tool()
+def mq_feedback_status() -> dict[str, Any]:
+    """Return mq-agent Feedback Engine storage and coverage status. Read-only."""
+    import feedback_bridge
+
+    return feedback_bridge.status()
+
+
+@mcp.tool()
+def mq_feedback_inspect(feedback_run_id: str) -> dict[str, Any]:
+    """Return one mq-agent feedback experiment/comparison/candidate chain. Read-only."""
+    import feedback_bridge
+
+    return feedback_bridge.inspect(feedback_run_id)
+
+
+@mcp.tool()
+def mq_feedback_compare(feedback_run_id: str) -> dict[str, Any]:
+    """Return the latest stored mq-agent feedback comparison. Read-only."""
+    import feedback_bridge
+
+    return feedback_bridge.compare(feedback_run_id)
+
+
+@mcp.tool()
+def mq_feedback_report(task_class: str = "", since: str = "") -> dict[str, Any]:
+    """Return the stable mq-agent feedback aggregate report. Read-only."""
+    import feedback_bridge
+
+    return feedback_bridge.report(task_class=task_class, since=since)
+
+
+@mcp.tool()
+def mq_feedback_candidates() -> dict[str, Any]:
+    """Return effective mq-agent feedback improvement candidates. Read-only."""
+    import feedback_bridge
+
+    return feedback_bridge.candidates()
+
+
+@mcp.tool()
+def mq_feedback_run(
+    task: str,
+    repo_path: str = ".",
+    task_class: str = "repo-review",
+    timeout_ms: int = 2000,
+    max_context_bytes: int = 65536,
+    max_sources: int = 64,
+) -> dict[str, Any]:
+    """Run a bounded zero-effect mq-agent feedback experiment and record local evidence."""
+    import feedback_bridge
+
+    target = resolve_allowed_local_file(repo_path)
+    if not target.is_dir():
+        raise ValueError("feedback repo_path must resolve to a directory")
+    return feedback_bridge.run(
+        task,
+        repo=str(target),
+        task_class=task_class,
+        timeout_ms=timeout_ms,
+        max_context_bytes=max_context_bytes,
+        max_sources=max_sources,
+    )
+
+
+@mcp.tool()
 def mq_route_inspect(task: str, authoritative_agent: str = "codex") -> dict[str, Any]:
     """Return mq-agent's deterministic model-route recommendation. Read-only."""
     import model_routing
