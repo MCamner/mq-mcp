@@ -8,7 +8,8 @@
     "safety_class.v1",
     "tool_registry.v1",
     "learn_contract.v1",
-    "brain_write.v1"
+    "brain_write.v1",
+    "mq.review-receipt.v1"
   ],
   "compatibility": {
     "protocols": {
