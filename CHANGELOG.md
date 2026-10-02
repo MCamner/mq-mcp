@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+* Optional `mq.review-receipt.v1` output for file, diff, repo, and risk
+  reviews. A receipt binds the result to the exact git commit and source bytes
+  observed by mq-mcp, records the reviewing runtime identity, and refuses the
+  binding if the source changes while the review is running. Receipt generation
+  is read-only and does not persist a file.
+
 ## [2.1.0] - 2026-09-12
 
 Bridget runtime, evidence and provenance integrity, and deterministic
