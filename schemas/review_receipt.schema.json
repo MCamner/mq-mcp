@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mq.local/schemas/mq.review-receipt.v1.schema.json",
+  "title": "MQ Review Receipt v1",
+  "type": "object",
+  "required": [
+    "receipt_id", "schema", "status", "reason", "started_at", "completed_at",
+    "subject", "stability", "producer", "review"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "schema": {"const": "mq.review-receipt.v1"},
+    "status": {"enum": ["ISSUED", "REFUSED"]},
+    "reason": {"type": "string"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "subject": {
+      "type": "object",
+      "required": ["repo", "commit", "branch", "worktree_clean", "scope", "snapshot_sha256"],
+      "properties": {
+        "repo": {"type": "string"},
+        "commit": {"type": ["string", "null"]},
+        "branch": {"type": ["string", "null"]},
+        "worktree_clean": {"type": ["boolean", "null"]},
+        "snapshot_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "scope": {
+          "type": "object",
+          "required": ["type", "file_count", "files"],
+          "properties": {
+            "type": {"enum": ["file", "diff", "repo"]},
+            "path": {"type": "string"},
+            "file_count": {"type": "integer", "minimum": 0},
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["path", "state", "sha256"],
+                "properties": {
+                  "path": {"type": "string"},
+                  "state": {"enum": ["present", "missing", "unreadable"]},
+                  "sha256": {
+                    "anyOf": [
+                      {"type": "null"},
+                      {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "stability": {
+      "type": "object",
+      "required": ["before", "after", "unchanged"],
+      "properties": {
+        "before": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "after": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "unchanged": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "producer": {"type": "object"},
+    "review": {
+      "type": "object",
+      "required": ["kind", "mode", "result_sha256", "result"],
+      "properties": {
+        "kind": {"enum": ["file", "diff", "repo"]},
+        "mode": {"type": "string"},
+        "result_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

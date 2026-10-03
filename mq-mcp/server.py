@@ -2223,8 +2223,39 @@ def _detect_security_patterns(file_path: str, content: str) -> str:
 
 # ── review_file ───────────────────────────────────────────────────────────────
 
+def _run_with_review_receipt(
+    *,
+    root: Path,
+    kind: str,
+    mode: str,
+    run,
+    relative_path: str | None = None,
+) -> dict:
+    """Bind a review result to the exact subject snapshot seen by mq-mcp."""
+    from review_engine.review_receipt import run_receipted_review
+
+    return run_receipted_review(
+        root=root,
+        kind=kind,
+        mode=mode,
+        run=run,
+        producer=_runtime_identity.identity(),
+        relative_path=relative_path,
+    )
+
+
+def _receipt_review_root(repo_path: str | None) -> Path:
+    """Resolve the subject root for a receipted review, with no silent fallback."""
+    if repo_path is None:
+        return REPO_ROOT.resolve()
+    root = resolve_allowed_local_file(repo_path)
+    if not root.exists() or not root.is_dir():
+        raise ValueError(f"repo_path is not a directory: {repo_path}")
+    return root.resolve()
+
+
 @mcp.tool()
-def review_file(relative_path: str, mode: str = "comment", deep: bool = False, repo_path: str | None = None) -> str:
+def review_file(relative_path: str, mode: str = "comment", deep: bool = False, repo_path: str | None = None, receipt: bool = False) -> str | dict:
     """Run an AI review on a repo file using the configured review contract.
 
     Uses the OpenAI API (OPENAI_API_KEY must be set). The review contract
@@ -2242,8 +2273,30 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
               relative_path lives in. When set, the file resolves within that repo
               and the review is recorded under that repo in review memory. When
               omitted, the file is the mq-mcp repo's own.
+        receipt: When True, return mq.review-receipt.v1 binding the result to
+              the exact file bytes and git commit. Refuses the binding if the
+              subject changes while the review is running.
     """
     import openai as _openai
+
+    if receipt:
+        try:
+            receipt_root = _receipt_review_root(repo_path)
+        except ValueError as exc:
+            return f"review_file failed: {exc}"
+        return _run_with_review_receipt(
+            root=receipt_root,
+            kind="file",
+            mode=mode,
+            relative_path=relative_path,
+            run=lambda: review_file(
+                relative_path,
+                mode=mode,
+                deep=deep,
+                repo_path=repo_path,
+                receipt=False,
+            ),
+        )
 
     # Resolve the target file. With repo_path, confine resolution to that
     # allowlisted external repo just for the lookup; the review is then recorded
@@ -3684,7 +3737,7 @@ def extract_coding_conventions(relative_path: str) -> str:
 
 
 @mcp.tool()
-def review_diff(mode: str = "comment", deep: bool = False) -> str:
+def review_diff(mode: str = "comment", deep: bool = False, receipt: bool = False) -> str | dict:
     """Review all files changed in the working tree or staging area.
 
     Gets changed file paths from git diff, then runs review_file on each one.
@@ -3694,7 +3747,17 @@ def review_diff(mode: str = "comment", deep: bool = False) -> str:
     Args:
         mode: Review mode passed to each review_file call. Defaults to 'comment'.
         deep: If True, runs multi-pass review for each file. Defaults to False.
+        receipt: When True, return mq.review-receipt.v1 bound to the exact
+              reviewable changed-file snapshot and git commit.
     """
+    if receipt:
+        return _run_with_review_receipt(
+            root=REPO_ROOT.resolve(),
+            kind="diff",
+            mode=mode,
+            run=lambda: review_diff(mode=mode, deep=deep, receipt=False),
+        )
+
     import subprocess
 
     try:
@@ -3745,7 +3808,7 @@ def review_diff(mode: str = "comment", deep: bool = False) -> str:
 
 
 @mcp.tool()
-def risk_review_file(relative_path: str, mode: str = "security") -> str:
+def risk_review_file(relative_path: str, mode: str = "security", receipt: bool = False) -> str | dict:
     """Targeted risk pass on a single file with a declared risk mode.
 
     Runs a grep-based pre-scan (detect_security_patterns) then an AI review
@@ -3764,6 +3827,15 @@ def risk_review_file(relative_path: str, mode: str = "security") -> str:
 
     Safety: Class A — read-only, no side effects beyond review memory write.
     """
+    if receipt:
+        return _run_with_review_receipt(
+            root=REPO_ROOT.resolve(),
+            kind="file",
+            mode=f"risk:{mode}",
+            relative_path=relative_path,
+            run=lambda: risk_review_file(relative_path, mode=mode, receipt=False),
+        )
+
     import openai as _openai
     import sys as _sys
 
@@ -3883,7 +3955,7 @@ def risk_review_file(relative_path: str, mode: str = "security") -> str:
 
 
 @mcp.tool()
-def risk_review_diff(mode: str = "security") -> str:
+def risk_review_diff(mode: str = "security", receipt: bool = False) -> str | dict:
     """Risk pass over all files changed in the working tree or staging area.
 
     Runs risk_review_file on each changed file with the given mode. Gets
@@ -3894,6 +3966,14 @@ def risk_review_diff(mode: str = "security") -> str:
 
     Safety: Class A — read-only, no side effects beyond review memory writes.
     """
+    if receipt:
+        return _run_with_review_receipt(
+            root=REPO_ROOT.resolve(),
+            kind="diff",
+            mode=f"risk:{mode}",
+            run=lambda: risk_review_diff(mode=mode, receipt=False),
+        )
+
     import subprocess as _sp
 
     _VALID_RISK_MODES = {"security", "risk", "architecture"}
@@ -4126,7 +4206,7 @@ def bootstrap_semantic_memory() -> str:
 
 
 @mcp.tool()
-def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None = None) -> str:
+def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None = None, receipt: bool = False) -> str | dict:
     """Review the least-recently-reviewed Python files in a repo.
 
     Uses review history to prioritize files that have never been reviewed or
@@ -4144,7 +4224,26 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
         max_files: Number of files to review. Capped at 20. Defaults to 5.
         repo_path: Optional absolute or repo-relative path to an external repo
             to review. When omitted, reviews the mq-mcp repo.
+        receipt: When True, return mq.review-receipt.v1 bound to the exact
+            Python source-tree snapshot and git commit observed by mq-mcp.
     """
+    if receipt:
+        try:
+            receipt_root = _receipt_review_root(repo_path)
+        except ValueError as exc:
+            return f"review_repo failed: {exc}"
+        return _run_with_review_receipt(
+            root=receipt_root,
+            kind="repo",
+            mode=mode,
+            run=lambda: review_repo(
+                mode=mode,
+                max_files=max_files,
+                repo_path=repo_path,
+                receipt=False,
+            ),
+        )
+
     import sys as _sys
     if str(REPO_ROOT) not in _sys.path:
         _sys.path.insert(0, str(REPO_ROOT))
