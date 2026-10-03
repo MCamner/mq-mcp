@@ -250,4 +250,5 @@ def test_route_shadow_declares_its_evidence_write() -> None:
 def test_codex_and_claude_profiles_recommend_same_route_tools() -> None:
     for profile_name in ("codex.json", "claude-desktop.json"):
         profile = json.loads((ROOT / "profiles" / profile_name).read_text(encoding="utf-8"))
-        assert TOOL_NAMES <= set(profile["recommended_tools"])
+        assert TOOL_NAMES - {"mq_route_shadow"} <= set(profile["recommended_tools"])
+        assert "mq_route_shadow" not in profile["recommended_tools"]
