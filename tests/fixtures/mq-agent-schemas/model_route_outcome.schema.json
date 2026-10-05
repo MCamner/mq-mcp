@@ -1,7 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mq.local/schemas/model_route_outcome.schema.json",
-  "title": "MQ model route outcome",
+  "title": "mq.model-route-outcome.v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -22,8 +21,23 @@
     "recorded_at"
   ],
   "properties": {
-    "schema": {"const": "mq.model-route-outcome.v1"},
-    "decision_id": {"type": "string", "minLength": 1},
+    "schema": {
+      "const": "mq.model-route-outcome.v1"
+    },
+    "decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "description": "Identity of this routing observation. `decision_id` is a hash of the task, so repeated runs of one task share it; `run_id` keeps those runs distinguishable from duplicated records. It does not identify the enclosing execution and must never be redefined to — see `execution_run_id`.",
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_run_id": {
+      "description": "Identifier of the enclosing execution outcome when this routing observation occurred within an execution. Absent for standalone routing observations such as CLI shadow runs. Historical pre-correlation observations remain valid without it: absence means correlation was not recorded, not that the observation is invalid, and they are not backfilled. Distinct from `run_id`, which identifies this observation rather than the run around it.",
+      "type": "string",
+      "minLength": 1
+    },
     "task_class": {
       "enum": [
         "diff-summary",
@@ -41,44 +55,121 @@
       ]
     },
     "selected_route": {
-      "enum": ["local-shadow", "cloud-required", "approved-local"]
+      "description": "Which execution strategy carried this routing decision. It identifies the strategy, never the concrete model: `local-shadow` is local model inference, `deterministic-local` is local execution with no model inference at all, `cloud-required` means the policy requires cloud execution, and `approved-local` is a reserved promotion state that is not a legitimate runtime write. Model identity stays in `local_model`, which is null when the strategy runs no model. Values like `qwen-local` or `gpt-cloud` would collapse the two and are therefore not admissible here.",
+      "enum": [
+        "local-shadow",
+        "deterministic-local",
+        "cloud-required",
+        "approved-local"
+      ]
     },
-    "local_model": {"type": ["string", "null"]},
-    "authoritative_agent": {"enum": ["codex", "claude"]},
-    "attempted": {"type": "boolean"},
-    "model_output_received": {"type": "boolean"},
-    "schema_valid": {"type": "boolean"},
+    "application": {
+      "description": "Whether this routing decision affected a real execution. `advisory` is a recommendation only, with no model call and no run affected. `shadow` means the decision was actually evaluated and no execution was affected by the result, whether or not a run enclosed it. `applied` means the route governed a real execution. Route readiness counts `applied` and nothing else: an advisory or shadow observation is real evidence of routing behaviour and never evidence that a route was applied. Optional, so observations predating this field stay valid; absent means the mode was not recorded, not that it was advisory or shadow, and an absent value is never counted as applied. An `applied` observation must carry `execution_run_id`; that invariant is enforced by the emitter and its tests rather than by schema conditionals.",
+      "enum": [
+        "advisory",
+        "shadow",
+        "applied"
+      ]
+    },
+    "local_model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "authoritative_agent": {
+      "enum": [
+        "codex",
+        "claude"
+      ]
+    },
+    "attempted": {
+      "type": "boolean"
+    },
+    "model_output_received": {
+      "type": "boolean"
+    },
+    "schema_valid": {
+      "type": "boolean"
+    },
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "checks"],
+      "required": [
+        "status",
+        "checks"
+      ],
       "properties": {
-        "status": {"enum": ["PASS", "FAIL", "SKIPPED", "UNAVAILABLE"]},
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "SKIPPED",
+            "UNAVAILABLE"
+          ]
+        },
         "checks": {
           "type": "array",
           "uniqueItems": true,
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "grounding": {
+          "description": "How much of the candidate's evidence was verbatim. Optional: records predating this field carry no grounding, and its absence means unmeasured, never zero. Present so a FAIL can distinguish an invented citation from one paraphrased item out of five.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "grounded_items",
+            "total_items"
+          ],
+          "properties": {
+            "grounded_items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "total_items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         }
       }
     },
-    "accepted_by_agent": {"type": "boolean"},
-    "accepted_by_operator": {"type": "boolean"},
-    "escalated": {"type": "boolean"},
+    "accepted_by_agent": {
+      "type": "boolean"
+    },
+    "accepted_by_operator": {
+      "type": "boolean"
+    },
+    "escalated": {
+      "type": "boolean"
+    },
     "escalation_reason": {
+      "description": "Why the route escalated. `context-window-exceeded` and `context-truncated` both mean the model was not given the material the verifier checks against, and they differ by when that was discovered: `context-window-exceeded` is a refusal before inference, when the prompt does not fit the configured window; `context-truncated` is discovered afterwards, when the backend reports having processed fewer prompt tokens than were sent. Neither is `model-unavailable` — the model was reachable and willing; the material was not. Both must stay distinguishable from `verification-failed`, which means the model saw the material and cited it wrongly. `generation-timeout` is the caller's deadline expiring while the backend was generating: it was reached, it accepted the request and it was producing tokens, so nothing about it was unavailable. The rule is where the run stopped, not how long it took — backend reached and generation started and deadline exceeded is `generation-timeout`; a backend that cannot be reached or a model that cannot be invoked is `model-unavailable`. Keeping them apart matters because a store of timeouts recorded as `model-unavailable` claims an unreachable-runtime path was exercised when it never was.",
       "oneOf": [
-        {"type": "null"},
+        {
+          "type": "null"
+        },
         {
           "enum": [
             "model-unavailable",
+            "generation-timeout",
             "schema-invalid",
             "verification-failed",
             "malformed-output",
             "policy-requires-cloud",
-            "operator-required"
+            "operator-required",
+            "context-window-exceeded",
+            "context-truncated"
           ]
         }
       ]
     },
-    "recorded_at": {"type": "string", "format": "date-time"}
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   }
 }

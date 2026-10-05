@@ -32,5 +32,11 @@ gone, while ingress must still validate a record that arrives on a machine with
 no mq-agent checkout at all.
 
 The drift test compares against the owner's file when this machine has the
-sibling checkout (`MQ_AGENT_HOME`, else `~/mq-agent`) and skips when it does
-not, so drift is reported as unverified rather than assumed absent.
+sibling checkout (`MQ_CANONICAL_AGENT_ROOT`, else `MQ_AGENT_HOME`, else
+`~/mq-agent`) and skips when it does not, so drift is reported as unverified
+rather than assumed absent. CI checks out mq-agent `main` and sets
+`MQ_CANONICAL_AGENT_ROOT`, so there the test runs instead of skipping.
+
+The same test covers the route-schema test fixtures in
+`tests/fixtures/mq-agent-schemas/`, which the model-routing tests validate
+against.

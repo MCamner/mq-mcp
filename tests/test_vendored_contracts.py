@@ -38,13 +38,26 @@ ROOT = Path(__file__).resolve().parents[1]
 #: Where runtime reads it. Not under tests/ — production depends on this file.
 VENDORED = ROOT / "schemas" / "vendor" / "mq.runtime-identity.v1.schema.json"
 
-#: The owner's copy, when this machine has one. MQ_AGENT_HOME is how mq-mcp
-#: already locates the sibling checkout — see mq-mcp/model_routing.py.
-CANONICAL = (
-    Path(os.environ.get("MQ_AGENT_HOME", Path.home() / "mq-agent")).expanduser()
-    / "schemas"
-    / "runtime_identity.schema.json"
-)
+#: The owner's checkout, when this machine has one. MQ_AGENT_HOME is how mq-mcp
+#: already locates the sibling checkout — see mq-mcp/model_routing.py. CI sets
+#: MQ_CANONICAL_AGENT_ROOT to a fresh mq-agent checkout instead, so the drift
+#: tests run there rather than skip; MQ_AGENT_HOME stays unset for the tests
+#: that rely on mq-agent being absent.
+CANONICAL_AGENT_ROOT = Path(
+    os.environ.get("MQ_CANONICAL_AGENT_ROOT")
+    or os.environ.get("MQ_AGENT_HOME")
+    or Path.home() / "mq-agent"
+).expanduser()
+
+CANONICAL = CANONICAL_AGENT_ROOT / "schemas" / "runtime_identity.schema.json"
+
+#: Test fixtures copied from mq-agent's route schemas. Runtime reads the live
+#: files from the sibling checkout, but the tests validate against these copies
+#: — so a stale copy lets the tests pass against a contract mq-agent no longer
+#: has. model_route_outcome drifted that way: mq-agent added `application` and
+#: three escalation reasons, and mq-mcp kept testing the August shape.
+ROUTE_FIXTURES = ROOT / "tests" / "fixtures" / "mq-agent-schemas"
+ROUTE_SCHEMAS = ("model_route_decision.schema.json", "model_route_outcome.schema.json")
 
 CONTRACT_ID = "mq.runtime-identity.v1"
 
@@ -73,4 +86,16 @@ def test_vendored_copy_matches_the_canonical_schema():
     assert VENDORED.read_bytes() == CANONICAL.read_bytes(), (
         f"vendored copy has drifted from {CANONICAL}. "
         "mq-agent owns this contract: re-vendor rather than editing the copy."
+    )
+
+
+@pytest.mark.parametrize("name", ROUTE_SCHEMAS)
+def test_route_fixture_matches_the_canonical_schema(name):
+    canonical = CANONICAL_AGENT_ROOT / "schemas" / name
+    if not canonical.is_file():
+        pytest.skip(f"canonical mq-agent schema not on this machine: {canonical}")
+    fixture = ROUTE_FIXTURES / name
+    assert fixture.read_bytes() == canonical.read_bytes(), (
+        f"{fixture.relative_to(ROOT)} has drifted from {canonical}. "
+        "mq-agent owns this contract: re-copy rather than editing the fixture."
     )

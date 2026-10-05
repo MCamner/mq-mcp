@@ -30,7 +30,8 @@ STEPS = {
         "Checkout", "Set up uv", "Set up Python", "Install dependencies",
         "Validate shell script syntax", "Compile Python files", "Run local validation",
         "Check tool contracts", "Check profiles", "Check stability baseline",
-        "Verify tool_contracts.json is up to date", "Run tests",
+        "Verify tool_contracts.json is up to date",
+        "Check out canonical mq-agent contracts", "Run tests",
     ],
     "gate-parity.yml": [
         "Checkout", "Set up uv", "Set up Python", "Install dependencies",
