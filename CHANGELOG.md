@@ -4,6 +4,11 @@
 
 ### Added
 
+* Release Gate v2 results are validated against their published schema,
+  `contracts/release_gate_v2.schema.json`, for pass, warning and blocked runs.
+  The schema was the documented shape (mq-agent carries a copy) but nothing
+  checked the result against it.
+
 * Optional `mq.review-receipt.v1` output for file, diff, repo, and risk
   reviews. A receipt binds the result to the exact git commit and source bytes
   observed by mq-mcp, records the reviewing runtime identity, and refuses the
