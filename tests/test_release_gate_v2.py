@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_DIR = ROOT / "mq-mcp"
@@ -398,3 +400,34 @@ def test_release_gate_render_includes_operator_sections(tmp_path):
     assert "Blockers:" in output
     assert "Warnings:" in output
     assert "Next actions:" in output
+
+
+def _gate_result(tmp_path, scenario):
+    runner = load_release_gate_module("runner")
+    repo = write_repo(tmp_path)
+    if scenario == "pass":
+        return runner.run_release_gate(repo, "v1.4.0", test_command=["true"], lint_command=["true"])
+    if scenario == "blocked":
+        (repo / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
+        return runner.run_release_gate(repo, "v1.4.0", test_command=["true"])
+    return runner.run_release_gate(repo, "v1.4.0")
+
+
+
+@pytest.mark.parametrize("scenario", ["pass", "warning", "blocked"])
+def test_release_gate_result_conforms_to_its_published_schema(tmp_path, scenario):
+    """contracts/release_gate_v2.schema.json is the published shape of this
+    result — mq-agent carries a copy — but nothing validated the result against
+    it, so a renamed field or a new status would have shipped unannounced.
+    The `checks[]` items are covered too: those carry `next_action`, which is
+    null for a passing check."""
+    from jsonschema import Draft202012Validator
+
+    schema_path = Path(__file__).resolve().parents[1] / "contracts" / "release_gate_v2.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    result = _gate_result(tmp_path, scenario)
+    assert result.status == scenario
+    doc = json.loads(json.dumps(result.to_dict()))
+    errors = sorted(Draft202012Validator(schema).iter_errors(doc), key=lambda e: list(e.path))
+    assert not errors, "\n".join(f"{list(e.path)}: {e.message}" for e in errors)
