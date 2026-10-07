@@ -36,6 +36,7 @@ Review engine tools:
 * detect_architecture_drift: detects drift between declared documentation and actual runtime state
 * review_diff: reviews all git-changed files using the configured review mode (requires OPENAI_API_KEY); `receipt=true` binds the result to the exact changed-file snapshot
 * review_repo: reviews the least-recently-reviewed repo files (requires OPENAI_API_KEY); `receipt=true` binds the result to the Python source-tree snapshot
+* review_perception: validates content-addressed `perception.v1` evidence and runs risk/architecture review without reopening the image; optional receipt binds exact evidence/review ids and runtime identity
 * review_runtime_contract: verifies RUNTIME_CONTRACT.md claims against actual server state; structural checks + AI architecture pass
 * validate_orchestration_contract: verifies tool set satisfies the orchestration contract; checks profiles, safety classes, error prefixes (Class A)
 * list_architecture_docs: lists docs/architecture/ with freshness status relative to server.py
