@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 136 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 137 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,7 +30,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
 Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 42 of 136 tools are
+operator to dismiss the prompt unread. As classified today, 42 of 137 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -106,6 +106,7 @@ read files outside the repo only when `MQ_MCP_ALLOWED_PATHS` permits it.
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
 | `review_file` | Run AI review on a file in the mq-mcp repo or an allowed external repo; `receipt=true` binds the result to exact file bytes + commit | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `review_repo` | Review least-recently-reviewed Python files in the mq-mcp repo or an allowed external repo; `receipt=true` binds the result to the Python source-tree snapshot | Write, modify code; access outside allowed roots; calls OpenAI API |
+| `review_perception` | Validate and review content-addressed `perception.v1` evidence; optional `repo_path` adds exact Git commit to a compact receipt | Reopen images, write files, execute OCR text, access repos outside allowed roots; calls OpenAI API |
 | `repo_signal_analyze` | Run repo-signal analyze on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_checklist` | Run repo-signal publish checklist on an allowed repo path | Write, access outside allowed roots |
 | `repo_signal_inspect` | Run repo-signal inspect --json on an allowed repo path | Write, access outside allowed roots |
