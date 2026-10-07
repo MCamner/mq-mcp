@@ -18,7 +18,7 @@ v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift,
 
 This repository is useful as:
 
-* a local MCP server with 136 documented, safety-classified tools
+* a local MCP server with 137 documented, safety-classified tools
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -36,7 +36,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 136 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 137 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -167,7 +167,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 136 MCP tools with descriptions.
+Expected response lists all 137 MCP tools with descriptions.
 
 ## Integration map
 
@@ -220,6 +220,19 @@ candidate policy:
 * No MCP feedback tool can approve, reject, purge, hand off, or activate a
   candidate.
 
+## Perception Review v2
+
+`review_perception` consumes a validated, content-addressed `perception.v1`
+record from mq-image-analyze. It never reopens the image. Risk and architecture
+findings are returned as `mq.perception-review.v1`, and every finding references
+the exact producer `evidence_id`.
+
+With `receipt=true`, mq-mcp also returns a compact
+`mq.perception-review-receipt.v1` binding the perception evidence id, review id,
+mq-mcp runtime identity, and—when `repo_path` is supplied—the exact Git commit.
+The receipt contains no raw image, base64 payload, OCR body, detected regions,
+or local image path.
+
 ## Safety notes
 
 See [`docs/security.md`](docs/security.md) for the MCP safety policy.
@@ -247,7 +260,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 130 tools across five safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 137 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 

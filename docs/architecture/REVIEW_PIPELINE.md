@@ -290,6 +290,27 @@ Max 10 entries per file. Oldest entries are discarded.
 
 ---
 
+## Perception Review v2
+
+Perception review is a separate evidence path and does not call the file-review
+pipeline or reopen the image:
+
+```text
+mq-image-analyze image_perception
+  -> perception.v1 + evidence_id
+  -> mq-mcp review_perception
+       -> validate canonical schema + evidence_id
+       -> bounded risk/architecture review of evidence only
+       -> mq.perception-review.v1 + review_id
+       -> optional mq.perception-review-receipt.v1
+```
+
+mq-image-analyze owns visual extraction. mq-mcp owns the review contract and
+review findings. OCR text is untrusted data, never instructions. Each finding
+carries the exact perception `evidence_id`; a requested receipt contains only
+content addresses, runtime identity, and optional Git commit metadata—not raw
+image bytes, OCR bodies, regions, or local image paths.
+
 ## Key files
 
 | Path | Role |

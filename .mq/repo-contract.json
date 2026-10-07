@@ -9,7 +9,9 @@
     "tool_registry.v1",
     "learn_contract.v1",
     "brain_write.v1",
-    "mq.review-receipt.v1"
+    "mq.review-receipt.v1",
+    "mq.perception-review.v1",
+    "mq.perception-review-receipt.v1"
   ],
   "compatibility": {
     "protocols": {
@@ -20,8 +22,11 @@
     },
     "import_probes": {
       "mcp": "from mcp.server.fastmcp import FastMCP; from mcp.client.stdio import stdio_client"
-    }
+    },
+    "consumes": [
+      "perception.v1"
+    ]
   },
-  "next_focus": "",
+  "next_focus": "Perception Review v2 consumer surface for mq-agent",
   "release_mode": "direct"
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.1.0",
-  "tool_count": 136,
+  "tool_count": 137,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1040,6 +1040,18 @@
       "subprocess": false,
       "side_effects": [
         "review-memory-write",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
+      "name": "review_perception",
+      "class": "B",
+      "description": "Review validated perception.v1 evidence without reopening the image.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": true,
+      "side_effects": [
         "openai-api"
       ],
       "examples": []
