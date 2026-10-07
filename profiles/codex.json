@@ -24,6 +24,7 @@
     "git_status",
     "git_diff",
     "tool_safety_report",
+    "review_perception",
     "mq_route_inspect",
     "mq_route_shadow",
     "mq_context_pack",
