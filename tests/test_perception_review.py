@@ -153,3 +153,15 @@ def test_receipt_fails_closed_when_requested_repo_commit_is_unknown() -> None:
     )
     assert receipt["status"] == "REFUSED"
     assert receipt["reason"] == "repository-commit-unavailable"
+
+
+def test_review_perception_is_in_tool_contract_and_both_client_profiles() -> None:
+    contracts = json.loads((ROOT / "docs" / "tool_contracts.json").read_text(encoding="utf-8"))
+    tool = next(item for item in contracts["tools"] if item["name"] == "review_perception")
+    assert tool["class"] == "B"
+    assert tool["resolver"] == "resolve_allowed_local_file"
+    assert tool["write"] is False
+    assert tool["subprocess"] is True
+    for profile_name in ("codex.json", "claude-desktop.json"):
+        profile = json.loads((ROOT / "profiles" / profile_name).read_text(encoding="utf-8"))
+        assert "review_perception" in profile["recommended_tools"]
