@@ -2255,6 +2255,74 @@ def _receipt_review_root(repo_path: str | None) -> Path:
 
 
 @mcp.tool()
+def review_perception(
+    perception: dict[str, Any],
+    producer: str,
+    mode: str = "risk",
+    receipt: bool = False,
+    repo_path: str | None = None,
+) -> str | dict[str, Any]:
+    """Review validated perception.v1 evidence without reopening the image.
+
+    mq-image-analyze owns visual extraction. This tool consumes only the
+    content-addressed perception.v1 object, validates its canonical schema and
+    evidence id, and runs mq-mcp's risk/architecture review over that evidence.
+
+    Args:
+        perception: Complete perception.v1 object from mq-image-analyze.
+        producer: ui, architecture, or ocr.
+        mode: risk or architecture.
+        receipt: When true, return the review plus a compact
+            mq.perception-review-receipt.v1. The receipt never contains image
+            bytes, OCR bodies, regions, or local image paths.
+        repo_path: Optional allowed repository whose exact current commit should
+            be bound into the receipt. No source files are read for perception.
+
+    Safety: Class B — read-only. Uses OpenAI for review and may run read-only
+    git identity probes only when repo_path is supplied.
+    """
+    try:
+        from review_engine.perception_review import (
+            build_review as _build_perception_review,
+            issue_receipt as _issue_perception_receipt,
+            repository_context as _perception_repository_context,
+        )
+
+        contract_path = REPO_ROOT / "reviews" / "contracts" / "perception-review.md"
+        if not contract_path.is_file():
+            return "review_perception failed: missing perception review contract"
+        contract = contract_path.read_text(encoding="utf-8")
+
+        repository = None
+        if repo_path not in (None, ""):
+            if repo_path in (".", "./"):
+                review_root = REPO_ROOT.resolve()
+            else:
+                review_root = resolve_allowed_local_file(repo_path)
+                if not review_root.exists() or not review_root.is_dir():
+                    return f"review_perception failed: repo_path is not a directory: {repo_path}"
+            repository = _perception_repository_context(review_root)
+
+        review = _build_perception_review(
+            perception,
+            producer=producer,
+            mode=mode,
+            contract=contract,
+            reviewer=_runtime_identity.identity(),
+        )
+        if not receipt:
+            return review
+        return {
+            "review": review,
+            "receipt": _issue_perception_receipt(review, repository=repository),
+        }
+    except ValueError as exc:
+        return f"review_perception failed: {exc}"
+    except Exception as exc:
+        return f"review_perception failed: {exc}"
+
+
+@mcp.tool()
 def review_file(relative_path: str, mode: str = "comment", deep: bool = False, repo_path: str | None = None, receipt: bool = False) -> str | dict:
     """Run an AI review on a repo file using the configured review contract.
 
