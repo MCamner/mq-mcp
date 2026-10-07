@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mq.local/schemas/perception.v1.schema.json",
+  "title": "perception.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "source_type",
+    "source_path",
+    "ocr_text",
+    "visual_summary",
+    "detected_regions",
+    "risk_signals",
+    "confidence",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "perception.v1"},
+    "evidence_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "source_type": {"enum": ["screenshot", "diagram", "ui", "terminal", "browser"]},
+    "source_path": {"type": "string"},
+    "ocr_text": {"type": "string"},
+    "visual_summary": {"type": "string"},
+    "detected_regions": {"type": "array"},
+    "risk_signals": {"type": "array"},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "limitations": {"type": "array"}
+  }
+}
