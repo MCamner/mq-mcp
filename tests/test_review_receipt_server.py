@@ -55,6 +55,7 @@ def test_review_diff_receipt_uses_mq_mcp_review_root(monkeypatch):
 
 
 def test_review_repo_receipt_uses_external_review_root(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     repo = tmp_path / "repo-signal"
     repo.mkdir()
     monkeypatch.setattr(server, "resolve_allowed_local_file", lambda p: repo)

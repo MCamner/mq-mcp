@@ -4295,6 +4295,12 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
         receipt: When True, return mq.review-receipt.v1 bound to the exact
             Python source-tree snapshot and git commit observed by mq-mcp.
     """
+    # Every file review needs the key. Without it each file answered
+    # "requires OPENAI_API_KEY" while this tool still reported the files as
+    # reviewed, and an ISSUED receipt could claim a review that never ran.
+    # Checked before the receipt branch and the file loop.
+    if not os.getenv("OPENAI_API_KEY", ""):
+        return "review_repo failed: OPENAI_API_KEY is required"
     if receipt:
         try:
             receipt_root = _receipt_review_root(repo_path)
