@@ -34,6 +34,8 @@ def _make_repo(base: Path, name: str, files: list[str]) -> Path:
 @pytest.fixture
 def echo_review_file(monkeypatch):
     """Replace review_file with a probe that records the resolved absolute path."""
+    # review_repo refuses to run without a key; the probe never calls OpenAI.
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     seen: list[Path] = []
 
     def _fake_review_file(relative_path, mode="comment", deep=False, repo_path=None):
@@ -130,3 +132,42 @@ def test_review_root_restored_after_external(echo_review_file, monkeypatch, tmp_
     review_repo(max_files=1)
     for p in echo_review_file:
         assert str(p).startswith(str(ROOT.resolve()))
+
+
+# F. Fail closed when no review can actually run.
+#
+# Without OPENAI_API_KEY every per-file review returned "requires
+# OPENAI_API_KEY", yet review_repo reported "N file(s) reviewed" and a caller
+# recorded the run as a success. The precondition is checked before the
+# receipt branch and the file loop, so neither a review text nor an ISSUED
+# receipt can claim a review that never happened.
+@pytest.mark.parametrize("value", [None, ""])
+def test_missing_api_key_fails_before_any_file_review(monkeypatch, value):
+    calls: list[str] = []
+    monkeypatch.setattr(
+        _mod, "review_file", lambda path, **_kw: calls.append(path) or "OK"
+    )
+    if value is None:
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("OPENAI_API_KEY", value)
+
+    out = review_repo(max_files=1)
+
+    assert out == "review_repo failed: OPENAI_API_KEY is required"
+    assert calls == []
+
+
+def test_missing_api_key_issues_no_receipt(monkeypatch, tmp_path):
+    target = _make_repo(tmp_path, "repo-signal", ["a.py"])
+    monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    receipts: list[object] = []
+    monkeypatch.setattr(
+        _mod, "_run_with_review_receipt", lambda **kw: receipts.append(kw) or {}
+    )
+
+    out = review_repo(repo_path=str(target), receipt=True)
+
+    assert out == "review_repo failed: OPENAI_API_KEY is required"
+    assert receipts == []
