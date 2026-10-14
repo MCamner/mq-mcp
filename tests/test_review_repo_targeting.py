@@ -80,6 +80,51 @@ def test_external_repo_reviewed(echo_review_file, monkeypatch, tmp_path):
         assert "mq-mcp" not in str(p.relative_to(target.resolve()))
 
 
+def test_structured_repo_review_reports_complete_measured_coverage(
+    echo_review_file, monkeypatch, tmp_path
+):
+    target = _make_repo(tmp_path, "complete-repo", ["a.py", "b.py"])
+    monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+
+    out = review_repo(repo_path=str(target), max_files=5, structured=True)
+
+    assert out["ok"] is True
+    assert isinstance(out["review"], str)
+    assert out["completeness"] == {
+        "status": "complete",
+        "steps": [
+            {
+                "step": 1,
+                "status": "complete",
+                "source_item_count": 2,
+                "executed_call_count": 2,
+            }
+        ],
+    }
+
+
+def test_structured_repo_review_reports_partial_when_file_cap_truncates(
+    echo_review_file, monkeypatch, tmp_path
+):
+    target = _make_repo(tmp_path, "partial-repo", ["a.py", "b.py", "c.py"])
+    monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+
+    out = review_repo(repo_path=str(target), max_files=2, structured=True)
+
+    assert out["ok"] is True
+    assert out["completeness"] == {
+        "status": "partial",
+        "steps": [
+            {
+                "step": 1,
+                "status": "partial",
+                "source_item_count": 3,
+                "executed_call_count": 2,
+            }
+        ],
+    }
+
+
 # C. Missing path — clear failure, no fallback.
 def test_missing_path_fails(echo_review_file, monkeypatch, tmp_path):
     monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
