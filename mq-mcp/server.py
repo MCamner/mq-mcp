@@ -2363,6 +2363,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
                 deep=deep,
                 repo_path=repo_path,
                 receipt=False,
+                structured=structured,
             ),
         )
 
@@ -4274,7 +4275,7 @@ def bootstrap_semantic_memory() -> str:
 
 
 @mcp.tool()
-def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None = None, receipt: bool = False) -> str | dict:
+def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None = None, receipt: bool = False, structured: bool = False) -> str | dict:
     """Review the least-recently-reviewed Python files in a repo.
 
     Uses review history to prioritize files that have never been reviewed or
@@ -4294,6 +4295,8 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
             to review. When omitted, reviews the mq-mcp repo.
         receipt: When True, return mq.review-receipt.v1 bound to the exact
             Python source-tree snapshot and git commit observed by mq-mcp.
+        structured: When True, return the review text plus measured fan-out
+            completeness. Default False preserves the historical text contract.
     """
     # Every file review needs the key. Without it each file answered
     # "requires OPENAI_API_KEY" while this tool still reported the files as
@@ -4370,7 +4373,29 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
         f"review_repo: {len(to_review)} file(s) reviewed  mode={mode}  "
         f"repo={root.name}  review_root={root}"
     )
-    return header + "\n\n" + "\n\n".join(results)
+    review_text = header + "\n\n" + "\n\n".join(results)
+    if not structured:
+        return review_text
+
+    source_item_count = len(py_files)
+    executed_call_count = len(to_review)
+    complete = source_item_count > 0 and executed_call_count == source_item_count
+    step_status = "complete" if complete else "partial"
+    return {
+        "ok": True,
+        "review": review_text,
+        "completeness": {
+            "status": "complete" if complete else "partial",
+            "steps": [
+                {
+                    "step": 1,
+                    "status": step_status,
+                    "source_item_count": source_item_count,
+                    "executed_call_count": executed_call_count,
+                }
+            ],
+        },
+    }
 
 
 @mcp.tool()
