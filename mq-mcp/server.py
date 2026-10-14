@@ -2363,7 +2363,6 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
                 deep=deep,
                 repo_path=repo_path,
                 receipt=False,
-                structured=structured,
             ),
         )
 
@@ -4318,6 +4317,7 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
                 max_files=max_files,
                 repo_path=repo_path,
                 receipt=False,
+                structured=structured,
             ),
         )
 
