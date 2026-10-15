@@ -1,8 +1,12 @@
 """Regression tests for Bridget's MCP subprocess environment boundary."""
 
 import os
+import sys
+from pathlib import Path
 
-from bridge import mcp_child_env
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mq-mcp"))
+
+from bridge import mcp_child_env  # noqa: E402
 
 
 def test_child_env_only_forwards_server_allowlist(monkeypatch):
