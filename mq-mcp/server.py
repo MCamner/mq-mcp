@@ -3949,14 +3949,16 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
         skill_name, skill_content = "none", ""
 
     # Architecture role and past context
-    review_context = _review_context_for(REPO_ROOT)
+    review_root = (_REVIEW_ROOT.get() or REPO_ROOT).resolve()
+    review_repo_name = review_root.name if review_root != REPO_ROOT.resolve() else None
+    review_context = _review_context_for(review_root)
     arch_role = _load_architecture_role(relative_path, context=review_context)
     past_context = ""
     _mem = None
     try:
         from review_engine.review_memory import ReviewMemory as _ReviewMemory
         _mem = _ReviewMemory()
-        past_context = _mem.format_past_context(relative_path)
+        past_context = _mem.format_past_context(relative_path, repo=review_repo_name)
     except Exception:
         pass
 
@@ -4015,6 +4017,7 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
                 severity_counts=scounts,
                 model=model,
                 skill=skill_name,
+                repo=review_repo_name,
             )
     except Exception:
         pass
