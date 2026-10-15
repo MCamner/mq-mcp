@@ -19,6 +19,7 @@ v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift,
 This repository is useful as:
 
 * a local MCP server with 139 documented, safety-classified tools
+* `risk_review_repo(mode='security', repo_path=...)` performs a bounded, allowlisted repository risk review with file-level pre-scans and optional review receipt.
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
