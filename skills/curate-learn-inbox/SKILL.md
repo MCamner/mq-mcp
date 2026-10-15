@@ -29,9 +29,11 @@ auto-filling it as truth is a failure mode, not a shortcut.
 
 ## Flow
 
-1. **List** — `learn_inbox` shows pending candidates (reads the queue only).
-2. **Preview** — `learn_inbox_draft` (select by `commit` prefix and/or
-   `pattern_name`; must match exactly one) returns a draft with
+1. **List** — `learn_inbox` shows pending candidates and their `candidate_id`
+   (reads the queue only). `learn_queue_from_last_review` adds one from a
+   file's last review.
+2. **Preview** — `learn_inbox_draft` (select by `candidate_id`, `commit` prefix
+   and/or `pattern_name`; must match exactly one) returns a draft with
    `task` / `lesson` / `validation` / `risk` / `repo` / `source` / `tags`.
    Writes nothing.
 3. **Verify** — confirm the evidence by hand, generalize an over-local lesson,
@@ -50,12 +52,13 @@ auto-filling it as truth is a failure mode, not a shortcut.
 
 ## Core Files
 
-* `mq-mcp/learn_engine.py` — `build_record_learning_draft`, `draft_inbox_candidate`, `drop_inbox_candidate`
-* `mq-mcp/server.py` — `learn_inbox`, `learn_inbox_draft`, `learn_inbox_drop` tools
+* `mq-mcp/learn_engine.py` — `inbox_candidate_id`, `queue_review_candidate`, `build_record_learning_draft`, `draft_inbox_candidate`, `drop_inbox_candidate`
+* `mq-mcp/server.py` — `learn_inbox`, `learn_inbox_draft`, `learn_inbox_drop`, `learn_queue_from_last_review` tools
 * `learn_engine/memory/inbox.jsonl` — pending queue
 * `learn_engine/memory/lessons.jsonl` — curated store
 * `tests/test_learn_inbox_draft.py`
 * `tests/test_learn_inbox_drop.py`
+* `tests/test_learn_inbox_candidate_id.py`
 * `RUNBOOK.md` — "Learn inbox curation (SOP)" section
 
 ## Evals

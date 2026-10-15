@@ -18,7 +18,7 @@ v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift,
 
 This repository is useful as:
 
-* a local MCP server with 137 documented, safety-classified tools
+* a local MCP server with 138 documented, safety-classified tools
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
 * a v1 stability baseline with `mq-mcp stability validate` and `docs/stability.json`
@@ -36,7 +36,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 137 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 138 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -167,7 +167,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 137 MCP tools with descriptions.
+Expected response lists all 138 MCP tools with descriptions.
 
 ## Integration map
 
@@ -260,7 +260,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 137 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 138 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -368,12 +368,13 @@ The local MCP server exposes 137 tools across the documented safety classes. See
 * `learn_hygiene` — reports learn memory hygiene: duplicates, invalid records, low-confidence storage, and missing validation (Class A)
 * `learning_status` — returns learn layer stats: counts by source, risk, and repo (Class A)
 * `learn_status` — mq-agent-compatible alias for `learning_status` (Class A)
-* `learn_inbox` — lists pending learn candidates auto-extracted from commits by the post-commit hook, awaiting review (Class A)
-* `learn_inbox_drop` — removes exactly one pending candidate from the inbox after promotion/skip; previews by default, `apply=True` to remove; never touches the curated store (Class C)
-* `learn_inbox_draft` — maps one inbox candidate to a review-ready `record_learning` draft (task/lesson/validation/risk/repo/source/tags); preview-only, writes nothing, validation is always a MANUAL VALIDATION REQUIRED instruction so promotion stays a human decision (Class A)
+* `learn_inbox` — lists pending learn candidates (from the post-commit hook or `learn_queue_from_last_review`) with their `candidate_id`, awaiting review (Class A)
+* `learn_inbox_drop` — removes exactly one pending candidate (by `candidate_id`, `commit` and/or `pattern_name`) from the inbox after promotion/skip; previews by default, `apply=True` to remove; never touches the curated store (Class C)
+* `learn_inbox_draft` — maps one inbox candidate (by `candidate_id`, `commit` and/or `pattern_name`) to a review-ready `record_learning` draft (task/lesson/validation/risk/repo/source/tags); preview-only, writes nothing, validation is always a MANUAL VALIDATION REQUIRED instruction so promotion stays a human decision (Class A)
 * `ollama_learn_status` — reports whether the local Ollama server is running and the mq-learn model is installed; read-only (Class B)
 * `ollama_learn_extract` — dry-run extraction of a learn pattern from review findings via local Ollama; no storage, preview only (Class B)
 * `learn_extract_from_last_review` — loads stored review findings for a file, runs dry-run Ollama extraction, returns a preview candidate; no storage (Class B)
+* `learn_queue_from_last_review` — runs the same extraction and queues a medium/high-confidence candidate in the pending inbox, returning its `candidate_id`; never writes the curated store (Class C)
 * `promote_learning` — previews how a lesson would appear in a target doc, no file writes (Class A)
 
 **Brain tools (Class A/C):**

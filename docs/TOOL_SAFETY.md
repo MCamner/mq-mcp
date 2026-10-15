@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 137 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 138 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,7 +30,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
 Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 42 of 137 tools are
+operator to dismiss the prompt unread. As classified today, 43 of 138 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -82,7 +82,7 @@ These tools cannot write files. They may use a fixed, contract-declared read-onl
 | `promote_learning` | Preview how a lesson would look in a target doc (no file writes) | Write any file, commit, execute |
 | `learning_status` | Return learn layer stats: counts by source, risk, and repo | Write, network |
 | `learn_status` | Compatibility alias for `learning_status` | Write, network |
-| `learn_inbox` | List pending learn candidates queued by the post-commit hook | Write, network |
+| `learn_inbox` | List pending learn candidates and their `candidate_id` | Write, network |
 | `learn_inbox_draft` | Map one inbox candidate to a review-ready record_learning draft (task/lesson/validation/risk/repo/source/tags) | Write any store, network, execute; validation is always a MANUAL VALIDATION REQUIRED instruction, never auto-filled |
 
 Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` with `cwd=REPO_ROOT`); `list_openable_apps` uses no resolver (static output only)
@@ -164,6 +164,7 @@ These tools can modify files on disk. They are scoped to the repo or explicitly 
 | `export_symbol_index` | Write callgraph symbol map to generated/symbols/symbol_index.json | Write outside repo, commit |
 | `record_learning` | Append a verified lesson to REPO_ROOT/learn_engine/memory/lessons.jsonl | Write outside repo, commit, execute; secrets are redacted before write |
 | `learn_inbox_drop` | Remove exactly one pending candidate from REPO_ROOT/learn_engine/memory/inbox.jsonl after promotion/skip | Touch the curated lessons store, write outside repo, commit, execute; aborts unless the selector matches exactly one row |
+| `learn_queue_from_last_review` | Queue a medium/high-confidence candidate extracted from a file's last review in REPO_ROOT/learn_engine/memory/inbox.jsonl | Touch the curated lessons store, write outside repo, commit, execute; refusals, placeholders and low confidence are not queued |
 | `learn_from_review` | Create a learning record from the last review findings for a file | Write outside repo, commit |
 | `learn_from_diff` | Create a learning record with current git diff as context | Write outside repo, commit |
 | `bootstrap_learning_memory` | Seed the learn layer from architecture memory ADRs | Write outside repo, commit |
@@ -322,6 +323,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
 | `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `learn_inbox_drop` | C | REPO_ROOT/learn_engine/memory/inbox.jsonl | Yes | No |
+| `learn_queue_from_last_review` | C | review_memory (read) + <http://localhost:11434/api/generate> + REPO_ROOT/learn_engine/memory/inbox.jsonl | Yes | No |
 | `learn_from_review` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `learn_from_diff` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
 | `bootstrap_learning_memory` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
