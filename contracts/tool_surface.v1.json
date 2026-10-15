@@ -1,0 +1,2587 @@
+{
+  "schema": "mq-mcp.tool-surface.v1",
+  "producer": "mq-mcp",
+  "tool_count": 137,
+  "tools": [
+    {
+      "name": "analyze_csv",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "analyze_guitar_pro",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "bootstrap_learning_memory",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "bootstrap_semantic_memory",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "brain_promote_learning",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "slug",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "f9fa913a91304ed89451ccd3beb24ebf4d557e15b14be7bbd7aba47f53a0fd7c"
+    },
+    {
+      "name": "brain_record_decision",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "consequences",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "context",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "decision",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "rationale",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": [
+            "array"
+          ],
+          "required": false
+        },
+        {
+          "name": "title",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "0751c71281ea51f3f347f162ef8acd9a62a888cc725b3f6dfd4fdb25ef841f38"
+    },
+    {
+      "name": "brain_record_learning",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "confidence",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "evidence",
+          "type": [
+            "array"
+          ],
+          "required": true
+        },
+        {
+          "name": "pattern_name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "pattern_type",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "recommended_action",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "summary",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "af25059c4be98a3b9817e04806e6187a1b05f4a23d4836a15981409ac9ca23d2"
+    },
+    {
+      "name": "brain_record_review",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "confidence",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "finding_count",
+          "type": [
+            "integer"
+          ],
+          "required": true
+        },
+        {
+          "name": "producer",
+          "type": [
+            "null",
+            "object"
+          ],
+          "required": false
+        },
+        {
+          "name": "raw_summary",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receiver_observation",
+          "type": [
+            "null",
+            "object"
+          ],
+          "required": false
+        },
+        {
+          "name": "source",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "suggested_next_steps",
+          "type": [
+            "array"
+          ],
+          "required": true
+        },
+        {
+          "name": "top_risks",
+          "type": [
+            "array"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "56c9b0cd28c1256fddf257f9870f5cffc3c7ce5bc3bb242d99c0835c42f5dfed"
+    },
+    {
+      "name": "brain_record_session",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "follow_ups",
+          "type": [
+            "array"
+          ],
+          "required": false
+        },
+        {
+          "name": "outcomes",
+          "type": [
+            "array"
+          ],
+          "required": false
+        },
+        {
+          "name": "repos",
+          "type": [
+            "array"
+          ],
+          "required": false
+        },
+        {
+          "name": "summary",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "57dd5b70716e95f2726f116af1b16f856b2651a0e2232e32494710249cec7d38"
+    },
+    {
+      "name": "brain_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "build_repo_context",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "check_port",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "port",
+          "type": [
+            "integer"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "56a38263e36833fdbc1c74a942710d9fa32f81752dc7cd757e1d6f4e4c924e12"
+    },
+    {
+      "name": "create_note",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "body",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "title",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "ca96b5a22712048991b80eabc53cd721af5e281a3f08864a5b553ac7bf1af079"
+    },
+    {
+      "name": "detect_architecture_drift",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "edit_image",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "action",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "value",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "ad765aaabc93d1d1446e3cbc416206f73467424d3d3d9acea8f63dc30ed1a729"
+    },
+    {
+      "name": "explain_learned_pattern",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "03105025f9efa1e1193b14902a77db0ee0ecc82d169cf3ca3e90e9b7fcaaa45a"
+    },
+    {
+      "name": "export_symbol_index",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "extract_coding_conventions",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "find_large_files",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "min_mb",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "12ddc60f03f7953e0abee4902fc3135184b679f0ccc026164f446a00646576b6"
+    },
+    {
+      "name": "find_recent_files",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "days",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "598a7e4fa4fa7a6806a96fe4f2ef6b24898c2dfddf2eeca48d7b4b1420257698"
+    },
+    {
+      "name": "get_architecture_decision",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "adr_id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "47e95a5b21c90b0116819bd4204af57a54d4c91a4dbeb59095ab5fb16c89eb5a"
+    },
+    {
+      "name": "get_battery_status",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "get_clipboard",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "get_last_review",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "get_learning",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "learning_id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "f80700100b149ccd8cf546896c37f4d2d119be3d5a8a97615b61eaa346674f23"
+    },
+    {
+      "name": "get_public_ip",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "get_semantic_memory",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "key",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "8fe9854d8b07eb875cf5663cf06f7609c9206ee5cdcdf9cb1fff4156fa92821c"
+    },
+    {
+      "name": "get_system_resources",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "get_todays_events",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "get_wifi_info",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "git_diff",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "a631fcd54755a9aaca2f0a7c10c8ada896b65d5ba4d7208172dd238ff986c354"
+    },
+    {
+      "name": "git_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "hal_repo_report",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cc10567f129fb3479e92e8ac37e036e9005045a143a255d377ffe6325890cbf9"
+    },
+    {
+      "name": "image_analyze",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "image_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "b9ee4175f467c1c1bf7726428ad6b33bf2dd58c976974073275bd6e435482ea2"
+    },
+    {
+      "name": "image_analyze_ui",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "image_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "6ac83f61464a7c616b730175002bdabfe23b33b873053d99608613407a163856"
+    },
+    {
+      "name": "image_observe_architecture",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "image_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "6ac83f61464a7c616b730175002bdabfe23b33b873053d99608613407a163856"
+    },
+    {
+      "name": "learn_extract_from_last_review",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "a9731a47b99cef932a9c6d3b7086a9fb9ee33988f4e94965804cc5c92274d243"
+    },
+    {
+      "name": "learn_from_diff",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "lesson",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "risk",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "validation",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "476c6126475065f561d48e884448c59a7d373dec940ef9f33f1f4828adbf65a9"
+    },
+    {
+      "name": "learn_from_review",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "risk",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "4cbf97da6a9d87b66c0a82d19d17db32cf1cd88f138d480f0f4e2c17e3a6677a"
+    },
+    {
+      "name": "learn_hygiene",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "learn_inbox",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "b24ed4f7ae116415f807f9d680ab99270b8a153f09ebc486c7e221f68415682f"
+    },
+    {
+      "name": "learn_inbox_draft",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "commit",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "pattern_name",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "79cf0549be7916fcfaf1aa1b6f592b7708573f4aae3b00bbdd2825fba8f219c6"
+    },
+    {
+      "name": "learn_inbox_drop",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "apply",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "commit",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "pattern_name",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "578d42c5cb011f7ea0d4cc8b78ec9e8b3f997ea4eea52d0b7b66c716a0b08b8b"
+    },
+    {
+      "name": "learn_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cc5d4d29d8cf9d8a2f1d4d1af33d1c121461d5d2162da10ab4dd45f6e480d2e8"
+    },
+    {
+      "name": "learning_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cc5d4d29d8cf9d8a2f1d4d1af33d1c121461d5d2162da10ab4dd45f6e480d2e8"
+    },
+    {
+      "name": "list_architecture_decisions",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_architecture_docs",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_learnings",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "risk",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "source",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "3c7ea3379f87dd66f3e14e3beddbba565738ba72fc5b239bf36332e45f3bf99c"
+    },
+    {
+      "name": "list_local_repos",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_openable_apps",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_repo_files",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "max_depth",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "87c3dac83349c1d8f7e41be90dfd8427754ada71f10d4660446462cb997e541d"
+    },
+    {
+      "name": "list_review_contracts",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_review_history",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_review_skills",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_running_apps",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_semantic_memory",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "lock_screen",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "mq_context_pack",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "target",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "1e8590e45cb2ac210f5c6d541e13bf2290fc9e47996b3d3d5c5ee70e7dc14531"
+    },
+    {
+      "name": "mq_feedback_candidates",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "mq_feedback_compare",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "feedback_run_id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "28cebfa013a88c914fb13cc4a8a2e76dff2ab00952c88ac5418bfa42c7b0e8fa"
+    },
+    {
+      "name": "mq_feedback_inspect",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "feedback_run_id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "28cebfa013a88c914fb13cc4a8a2e76dff2ab00952c88ac5418bfa42c7b0e8fa"
+    },
+    {
+      "name": "mq_feedback_report",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "since",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task_class",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "200bd1507ef8cee34986c9c95ef4c90c69ba13b42031b4a30e5fdea2149b75e1"
+    },
+    {
+      "name": "mq_feedback_run",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "max_context_bytes",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "max_sources",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "task_class",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "timeout_ms",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "6d1f032156b05712a603289341608054cb7660ff59d2b6e340c8c1c305ae8355"
+    },
+    {
+      "name": "mq_feedback_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "mq_route_inspect",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "authoritative_agent",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "df327ebe5a7e08e34b0e3e577acbb37fae6d0515b1e687e5923edf0f2c966e37"
+    },
+    {
+      "name": "mq_route_report",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "source",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "6a5b7da731e92735c6f09a261a2db8ca1e3fbdfba7e417f91aad11da4947b8d1"
+    },
+    {
+      "name": "mq_route_shadow",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "authoritative_agent",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "timeout",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "43564dc5429b4baf935ab03a2a1ed3cafb50ac5d1f52278d1163a8108c8a09ee"
+    },
+    {
+      "name": "mq_route_verify",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "candidate",
+          "type": [
+            "object"
+          ],
+          "required": true
+        },
+        {
+          "name": "decision",
+          "type": [
+            "object"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "3c538d854016d9ff72bfc9fcb15914c9ca6d11e68a47d8cd56577e92a6e52cae"
+    },
+    {
+      "name": "ollama_learn_extract",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "review_findings",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "a2bf0188de503f3168f8c62c9b3d59111076c4900797127e99872c10964cc16a"
+    },
+    {
+      "name": "ollama_learn_status",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "open_app",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "app_name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "652279041233cf285338a276486571f7185f62c684f10179f516b5134cf31ccc"
+    },
+    {
+      "name": "open_chrome",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "url",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "4fa6d8a67e5cf2cdd0462eab93dd894702dac1dc35db37d6201bbd02a6f1f808"
+    },
+    {
+      "name": "open_finder",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cd087dd625ebba35320c66a0a209c40fc3d1e0df1cfbfba7ce3b944f3056bb67"
+    },
+    {
+      "name": "open_in_app",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "open_messages",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "contact",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "f066ae96260b146ac5475a6ea03188bfb25220d098a4917426c73ed577f4f5a0"
+    },
+    {
+      "name": "open_repo_terminal",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "a58e349df5d7298b9041abf529ab658206917132ea4f89e0c529bd09373fc2af"
+    },
+    {
+      "name": "open_spotify",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "uri",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "6ed85e688bde39f4073961820093880b8066ab577aa8275efcdd2d154b0c068c"
+    },
+    {
+      "name": "open_terminal",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cd087dd625ebba35320c66a0a209c40fc3d1e0df1cfbfba7ce3b944f3056bb67"
+    },
+    {
+      "name": "open_url",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "url",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "3469faad6569a34d1b3560fd74c78a2c52560fbc1e56dddc13eab5484be21391"
+    },
+    {
+      "name": "open_vscode",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "cd087dd625ebba35320c66a0a209c40fc3d1e0df1cfbfba7ce3b944f3056bb67"
+    },
+    {
+      "name": "promote_learning",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "learning_id",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "target",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "12f25a76e2e1764c7b7bee32482075ae6bc33404065f24a2a7e91c3d1e497274"
+    },
+    {
+      "name": "read_repo_file",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "c6270561373628351d39edc90ba6ca1a9f5b145c5fbf3ec03a0dda891ef4d5f8"
+    },
+    {
+      "name": "record_architecture_decision",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "area",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "category",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "consequences",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "decision",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "rationale",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "d43136a3c8df98c6237d51cc47833d7896a9d7aa20282d7e0da840d7890d90d3"
+    },
+    {
+      "name": "record_learning",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "lesson",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "risk",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "source",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "tags",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "task",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "validation",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "460f4e8e3b50091a205b566f795a1e5755dc3d4e50611a6d171d109cf9689dca"
+    },
+    {
+      "name": "release_gate_run",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "lint_command",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "target",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "test_command",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "4c64af6eccdc030bd906ad0ee3f41196a86bf8fd584a36ee5e4b45cb7af641d8"
+    },
+    {
+      "name": "repo_signal_analyze",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_checklist",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_doctor_json",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_inspect",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_positioning",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_report",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "repo_signal_status",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "repo_signal_suggest",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e211a1513d255f24b47c0158fae0621bb82d0a0748dce3f354158a3baee47012"
+    },
+    {
+      "name": "review_architecture_doc",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "doc_name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "fcb74124112d9273feb4fbf2a18f04b5d96bea1adae73e9647c069620c2620ed"
+    },
+    {
+      "name": "review_diff",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "deep",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "62fee3c4cb0147267e5e75fd7769174469fd596884a2914422b0594b10c35601"
+    },
+    {
+      "name": "review_file",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "deep",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "54ea107377367eb8bec5a04e9f3e4831b86d8d51a07401be61987cd16a27847d"
+    },
+    {
+      "name": "review_perception",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "perception",
+          "type": [
+            "object"
+          ],
+          "required": true
+        },
+        {
+          "name": "producer",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "272a683760a560607ee71cbd95e1b47a2421f62869e301e8335ed76a8f9b37bc"
+    },
+    {
+      "name": "review_repo",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "max_files",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "structured",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "e877444b31de6d789c968be46b5b28bb5ccc0762495539471dee0c66e6988dbc"
+    },
+    {
+      "name": "review_runtime_contract",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "risk_review_diff",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "130b9f5ad81ff95fe2eb6fb71dca0ad0020c818dfaf03a1b3e6f73cc1c1bc7b8"
+    },
+    {
+      "name": "risk_review_file",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "9a6cda91620f4b19a7a2d16be171aece24b60d024fe83e2f3251b622205cf601"
+    },
+    {
+      "name": "run_mqlaunch",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_ask",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "question",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "0af215e77e8170f789c407d0c426fd470894e0b3dc361629c3feac90f04edcd3"
+    },
+    {
+      "name": "run_mqlaunch_bundle",
+      "safety_class": "D",
+      "write": true,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_demo",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_doctor",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_perf",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_release_check",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_selftest",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_system_check",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_mqlaunch_version",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "run_tests",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "repo_name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "29fe52b8e0cb75ee45d2ff42c6ee1aec5d87dea805910017b0b77014cf88e9a6"
+    },
+    {
+      "name": "search_learned_patterns",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "query",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "32b126d219548b6a291f63aa84013d0d47e56b2555e60472b2d6d6f74856a437"
+    },
+    {
+      "name": "search_learnings",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "query",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "32b126d219548b6a291f63aa84013d0d47e56b2555e60472b2d6d6f74856a437"
+    },
+    {
+      "name": "search_repo",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "glob",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "query",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "1c6edcbc9ed2c920c6b1e18184ce35161854603c07ffd1dd80564e637ad738d3"
+    },
+    {
+      "name": "search_semantic_memory",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "max_results",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "query",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "29ff9919f7027d3d1f6d2d3882637668c279dbc8f13eeb29bb1ca40b7859f060"
+    },
+    {
+      "name": "set_clipboard",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "text",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "f59ef97b81b7e716ac34bf20b839cf6a548d72fe9047f0f53b6f45e3946e09c3"
+    },
+    {
+      "name": "set_reminder",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "minutes",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "text",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "8622b9308815273f1d1d0462bb3b4b4fbcb11796cbfbb6e22216875a87a55c4f"
+    },
+    {
+      "name": "set_volume",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "level",
+          "type": [
+            "integer"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "24dd64611706e38aacef9e4098ba3b7cc5588f63b88283e4cb530b464a992d97"
+    },
+    {
+      "name": "set_wallpaper",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "756e92d5596fe22f14389fcce79ae1394b20d6a9ef974e4037a635c8b6507081"
+    },
+    {
+      "name": "shell_exec",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "command",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "working_dir",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "5a2d59e9bddd0f5adc9b5f8d78821057c3f5e8873d61305080193fe8b5828f0e"
+    },
+    {
+      "name": "show_notification",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "message",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "subtitle",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "title",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "b79bb0256dcdd529b846c99679efb00ec3511cddc45069d933c7117e773521ab"
+    },
+    {
+      "name": "speak_text",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "text",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "voice",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "b257c0c85f8f765f90f6134eb2b2c3e47064cf2326355bc9500d1b6932e769c2"
+    },
+    {
+      "name": "store_semantic_memory",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "content",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "14f7ee3a11d8d9fce1ae8dd1d58ce0d01e67bbd31f7acaeba9f8f7fd9c77d9f9"
+    },
+    {
+      "name": "summarize_learnings",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "40c16b1ae915237aea9d971ccd15e83d721659f22669da2d8c6d45543cd00ce6"
+    },
+    {
+      "name": "take_screenshot",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "output_path",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "feb53631f3b015f713a2228500a74a3e8a201727b75b526fdb1c25e62b3a135b"
+    },
+    {
+      "name": "toggle_dark_mode",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "tool_safety_report",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "ums_audit_log",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "command_id",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "days",
+          "type": [
+            "integer"
+          ],
+          "required": false
+        },
+        {
+          "name": "status",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "ff4320a5f7b2a3bf2c5d0c1b82442abda1e149c4efae43901f942a27ad997b27"
+    },
+    {
+      "name": "ums_command_catalog",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "section",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "61b258673af4c50d3c97a4bdf508bc13ae718ebf732bb991b668a77e47b5b3b4"
+    },
+    {
+      "name": "update_repo_file",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "new_text",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "old_text",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "ab6e688fd6024c4429bc41691b24eaa6c387e636c93b3ca2673ea1326b3c3049"
+    },
+    {
+      "name": "validate_orchestration_contract",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "validate_project",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "zephyr_analyze",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "file",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "70a554b34a695764ee490c374bb4f7350facfe8193b3c309ed0ff9bab14318f1"
+    },
+    {
+      "name": "zephyr_diff",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "file_a",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "file_b",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "3306299967644cec6b8cb6fc497b85c69870cb22e157e7adbd6f4a002f3d0bf0"
+    },
+    {
+      "name": "zephyr_review",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "file",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "template",
+          "type": [
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "93a1207c62d0c5a03a5809fe4230c462ac8f5434f970a12a8c7f8b710b606d23"
+    },
+    {
+      "name": "zephyr_validate",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "file",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "70a554b34a695764ee490c374bb4f7350facfe8193b3c309ed0ff9bab14318f1"
+    }
+  ]
+}

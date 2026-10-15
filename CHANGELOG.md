@@ -4,6 +4,17 @@
 
 ### Added
 
+* `mq-mcp.tool-surface.v1` (`contracts/tool_surface.v1.json`): every registered
+  tool with its ADR-003 class and the parameters it accepts (name, JSON types,
+  required) plus a `signature_sha256`. Generated from the in-process FastMCP
+  registry by `scripts/export_tool_surface.py`; `tests/test_tool_surface.py`
+  fails when the committed file is stale, so CI and `release-check.sh` both
+  enforce it. Consumers such as mq-agent's stack compatibility gate can check
+  their calls without a running server, which may lag `main`. A registered tool
+  with no class in `docs/tool_contracts.json` fails the export instead of being
+  published as unknown. Declared in `.mq/repo-contract.json` under `contracts`
+  and `compatibility.produces`.
+
 * Release Gate v2 results are validated against their published schema,
   `contracts/release_gate_v2.schema.json`, for pass, warning and blocked runs.
   The schema was the documented shape (mq-agent carries a copy) but nothing
