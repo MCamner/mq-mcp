@@ -1120,6 +1120,19 @@
       "examples": []
     },
     {
+      "name": "risk_review_repo",
+      "class": "A",
+      "description": "Bounded risk review of an allowed repository using file-level pre-scan and declared risk contract.",
+      "resolver": "resolve_allowed_local_file",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [
+        "review-memory-write",
+        "openai-api"
+      ],
+      "examples": []
+    },
+    {
       "name": "run_mqlaunch",
       "class": "D",
       "description": "Öppnar mqlaunch i ett nytt Terminal-fönster. mqlaunch är ett interaktivt TUI och kräver en riktig terminal.",
