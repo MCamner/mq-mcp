@@ -4068,14 +4068,14 @@ def risk_review_repo(mode: str = "security", receipt: bool = False, repo_path: s
                     or result.startswith("No review output.")
                 ):
                     return f"risk_review_repo failed: {relative}: {result}"
-                reviews.append(f"--- {relative} ---\\n{result}")
+                reviews.append(f"--- {relative} ---\n{result}")
         finally:
             _REVIEW_ROOT.reset(token)
 
         header = f"risk_review_repo: {len(selected)} file(s) reviewed  mode={mode}"
         if len(candidates) > len(selected):
             header += "  [capped at 5]"
-        return header + "\\n\\n" + "\\n\\n".join(reviews)
+        return header + "\n\n" + "\n\n".join(reviews)
 
     if receipt:
         return _run_with_review_receipt(
