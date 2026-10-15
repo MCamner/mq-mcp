@@ -4855,6 +4855,7 @@ def learn_inbox(limit: int = 20) -> str:
 
     Safety: Class A — read-only; reads the inbox file only.
     """
+    eng = _learn_engine()
     inbox = REPO_ROOT / "learn_engine" / "memory" / "inbox.jsonl"
     if not inbox.exists():
         return "Learn inbox empty — no auto-extracted candidates pending."
@@ -4874,7 +4875,7 @@ def learn_inbox(limit: int = 20) -> str:
     lines = [f"Learn inbox: {len(records)} pending candidate(s), showing {len(shown)}", ""]
     for rec in shown:
         lines += [
-            f"- {rec.get('pattern_name', '-')}  "
+            f"- {eng.inbox_candidate_id(rec)}  {rec.get('pattern_name', '-')}  "
             f"[{rec.get('confidence', '-')}] "
             f"({rec.get('commit', '-')} @ {rec.get('captured_at', '-')})",
             f"    {rec.get('summary', '-')}",
@@ -4887,8 +4888,8 @@ def learn_inbox(limit: int = 20) -> str:
             lines.append(f"    action: {action}")
     lines += [
         "",
-        "Promote a candidate with record_learning / learn_from_diff, then remove "
-        "it from learn_engine/memory/inbox.jsonl.",
+        "Preview a candidate with learn_inbox_draft(candidate_id=...), promote it "
+        "with record_learning, then clear it with learn_inbox_drop.",
     ]
     return "\n".join(lines)
 
@@ -4911,14 +4912,17 @@ def _log_inbox_drop(removed: dict) -> None:
 
 
 @mcp.tool()
-def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = False) -> str:
+def learn_inbox_drop(
+    commit: str = "", pattern_name: str = "", apply: bool = False, candidate_id: str = ""
+) -> str:
     """Remove one pending candidate from the learn inbox after promotion/skip.
 
     Closes the manual gap in the curation flow: once a candidate surfaced by
     learn_inbox has been promoted (record_learning) or deliberately skipped,
     its pending row in learn_engine/memory/inbox.jsonl must be cleared. This
-    tool removes exactly one row, selected by commit SHA (prefix match) and/or
-    pattern_name. It never touches the curated lessons store.
+    tool removes exactly one row, selected by candidate_id (exact), commit SHA
+    (prefix match) and/or pattern_name. It never touches the curated lessons
+    store.
 
     Safety guards:
       * Acts only when the selector matches exactly one row — zero or multiple
@@ -4930,17 +4934,18 @@ def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = Fal
         commit:       Source commit SHA (full or short) to match.
         pattern_name: Candidate pattern_name to match (case-insensitive).
         apply:        False (default) previews; True performs the removal.
+        candidate_id: Candidate ID shown by learn_inbox (exact match).
 
     Safety: Class C — local write to REPO_ROOT/learn_engine/memory/inbox.jsonl
     (pending queue only), no curated-store write, no command execution.
     """
     eng = _learn_engine()
     result = eng.drop_inbox_candidate(
-        REPO_ROOT, commit=commit, pattern_name=pattern_name, apply=apply
+        REPO_ROOT, commit=commit, pattern_name=pattern_name, candidate_id=candidate_id, apply=apply
     )
     status = result.get("status")
     if status == "no-selector":
-        return "Specify commit and/or pattern_name to identify the candidate to drop."
+        return "Specify candidate_id, commit and/or pattern_name to identify the candidate to drop."
     if status == "empty":
         return "Learn inbox is empty — nothing to drop."
     if status == "no-match":
@@ -4972,12 +4977,12 @@ def learn_inbox_drop(commit: str = "", pattern_name: str = "", apply: bool = Fal
 
 
 @mcp.tool()
-def learn_inbox_draft(commit: str = "", pattern_name: str = "") -> str:
+def learn_inbox_draft(commit: str = "", pattern_name: str = "", candidate_id: str = "") -> str:
     """Preview a review-ready record_learning draft for one inbox candidate.
 
     Standardizes the inbox-candidate -> record_learning mapping so curation has
     less manual variation, without auto-promoting. Selects exactly one pending
-    candidate (by commit SHA prefix and/or pattern_name) and returns a draft with
+    candidate (by candidate_id, commit SHA prefix and/or pattern_name) and returns a draft with
     the fields a reviewer confirms before any write: task, lesson, validation,
     risk, repo, source, tags.
 
@@ -4990,17 +4995,18 @@ def learn_inbox_draft(commit: str = "", pattern_name: str = "") -> str:
     Args:
         commit:       Source commit SHA (full or short prefix) to match.
         pattern_name: Candidate pattern_name to match (case-insensitive).
+        candidate_id: Candidate ID shown by learn_inbox (exact match).
 
     Safety: Class A — read-only; reads the inbox queue only, no write, no
     command execution. write_performed is always false.
     """
     eng = _learn_engine()
     result = eng.draft_inbox_candidate(
-        REPO_ROOT, commit=commit, pattern_name=pattern_name
+        REPO_ROOT, commit=commit, pattern_name=pattern_name, candidate_id=candidate_id
     )
     status = result.get("status")
     if status == "no-selector":
-        return "Specify commit and/or pattern_name to identify the candidate to preview."
+        return "Specify candidate_id, commit and/or pattern_name to identify the candidate to preview."
     if status == "empty":
         return "Learn inbox is empty — no candidate to preview."
     if status == "no-match":
@@ -5012,6 +5018,7 @@ def learn_inbox_draft(commit: str = "", pattern_name: str = "") -> str:
         return "\n".join(lines)
 
     payload = {
+        "candidate_id": result.get("candidate_id"),
         "candidate": result.get("candidate"),
         "draft": result.get("draft"),
         "write_performed": result.get("write_performed", False),
@@ -5110,20 +5117,13 @@ def ollama_learn_extract(review_findings: str) -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
-def learn_extract_from_last_review(relative_path: str, repo_path: str | None = None) -> str:
-    """Dry-run extraction of a learn pattern from the last review for a file.
+def _extract_from_last_review(
+    relative_path: str, repo_path: str | None, tool_name: str
+) -> tuple[str, str, dict] | str:
+    """Run the dry-run learn extraction for a file's last review.
 
-    Loads stored review findings for the given repo-relative path, passes them
-    to the local Ollama mq-learn model, and returns a preview candidate.
-    Always dry-run — no storage, no mutations.
-
-    Args:
-        relative_path: Repo-relative path of the reviewed file.
-        repo_path: Optional external repo (within the allowlist) the file lives
-            in; selects that repo's review-memory namespace. Defaults to mq-mcp.
-
-    Safety: Class B — reads local review memory + local HTTP to Ollama only.
+    Returns (repo_name, repo_context, result), or an error string when
+    repo_path is outside the allowlist or not a directory.
     """
     import sys as _sys
     if str(REPO_ROOT) not in _sys.path:
@@ -5135,9 +5135,9 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         try:
             _root = resolve_allowed_local_file(repo_path)
         except ValueError as exc:
-            return f"learn_extract_from_last_review failed: {exc}"
+            return f"{tool_name} failed: {exc}"
         if not _root.is_dir():
-            return f"learn_extract_from_last_review failed: repo_path is not a directory: {repo_path}"
+            return f"{tool_name} failed: repo_path is not a directory: {repo_path}"
         repo_name = _root.name
         context_root = _root
 
@@ -5157,6 +5157,29 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         repo_context=repo_context,
         require_repo_context=True,
     )
+    return repo_name, repo_context, result
+
+
+@mcp.tool()
+def learn_extract_from_last_review(relative_path: str, repo_path: str | None = None) -> str:
+    """Dry-run extraction of a learn pattern from the last review for a file.
+
+    Loads stored review findings for the given repo-relative path, passes them
+    to the local Ollama mq-learn model, and returns a preview candidate.
+    Always dry-run — no storage, no mutations.
+
+    Args:
+        relative_path: Repo-relative path of the reviewed file.
+        repo_path: Optional external repo (within the allowlist) the file lives
+            in; selects that repo's review-memory namespace. Defaults to mq-mcp.
+
+    Safety: Class B — reads local review memory + local HTTP to Ollama only.
+    """
+    extracted = _extract_from_last_review(relative_path, repo_path, "learn_extract_from_last_review")
+    if isinstance(extracted, str):
+        return extracted
+    _repo_name, repo_context, result = extracted
+    eng = _learn_engine()
 
     if result.get("status") == "no_review":
         return "\n".join([
@@ -5207,6 +5230,37 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         "  use record_learning or approved store path if this should become memory",
     ]
     return "\n".join(lines)
+
+
+@mcp.tool()
+def learn_queue_from_last_review(relative_path: str, repo_path: str | None = None) -> str:
+    """Extract a learn candidate from a file's last review and queue it for review.
+
+    Runs the same extraction as learn_extract_from_last_review and, when the
+    provider returns a medium/high-confidence candidate, appends it to the
+    pending learn inbox with a stable candidate_id. The candidate is then
+    listed by learn_inbox, previewed by learn_inbox_draft(candidate_id=...),
+    promoted with record_learning and cleared with learn_inbox_drop. Nothing
+    reaches the curated lessons store from this tool.
+
+    Args:
+        relative_path: Repo-relative path of the reviewed file.
+        repo_path: Optional external repo (within the allowlist) the file lives
+            in; selects that repo's review-memory namespace. Defaults to mq-mcp.
+
+    Returns JSON: {"status": "queued"|"duplicate"|"not-queued", "candidate_id",
+    "candidate", "reason"}.
+
+    Safety: Class C — local write to REPO_ROOT/learn_engine/memory/inbox.jsonl
+    (pending queue only) + local HTTP to Ollama, no curated-store write, no
+    command execution.
+    """
+    extracted = _extract_from_last_review(relative_path, repo_path, "learn_queue_from_last_review")
+    if isinstance(extracted, str):
+        return json.dumps({"status": "not-queued", "reason": extracted}, ensure_ascii=False)
+    repo_name, _repo_context, result = extracted
+    queued = _learn_engine().queue_review_candidate(REPO_ROOT, result, repo=repo_name)
+    return json.dumps(queued, ensure_ascii=False, indent=2)
 
 
 @mcp.tool()

@@ -154,6 +154,7 @@ TOOL_META: dict[str, dict] = {
     "ollama_learn_status":         {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "ollama_learn_extract":        {"class": "B", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},
     "learn_extract_from_last_review": {"class": "B", "resolver": "resolve_repo_file",  "write": False, "subprocess": False, "side_effects": []},
+    "learn_queue_from_last_review": {"class": "C", "resolver": "resolve_repo_file",    "write": True,  "subprocess": False, "side_effects": ["file-write"]},
 
     # Brain / mqobsidian tools (v1.11.0)
     "brain_status":                 {"class": "A", "resolver": "none",                   "write": False, "subprocess": False, "side_effects": []},

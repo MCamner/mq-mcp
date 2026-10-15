@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 137,
+  "tool_count": 138,
   "tools": [
     {
       "name": "analyze_csv",
@@ -805,6 +805,13 @@
       "subprocess": false,
       "parameters": [
         {
+          "name": "candidate_id",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
           "name": "commit",
           "type": [
             "string"
@@ -819,7 +826,7 @@
           "required": false
         }
       ],
-      "signature_sha256": "79cf0549be7916fcfaf1aa1b6f592b7708573f4aae3b00bbdd2825fba8f219c6"
+      "signature_sha256": "72b174123832501996a0c4f27cd1ad6509cd840514259f5fbe27a257b4bd55bb"
     },
     {
       "name": "learn_inbox_drop",
@@ -835,6 +842,13 @@
           "required": false
         },
         {
+          "name": "candidate_id",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
           "name": "commit",
           "type": [
             "string"
@@ -849,7 +863,31 @@
           "required": false
         }
       ],
-      "signature_sha256": "578d42c5cb011f7ea0d4cc8b78ec9e8b3f997ea4eea52d0b7b66c716a0b08b8b"
+      "signature_sha256": "a1b04778fc647e9db44ba4efd1ce907ebeff025eb296432114405d9f8404eec1"
+    },
+    {
+      "name": "learn_queue_from_last_review",
+      "safety_class": "C",
+      "write": true,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "relative_path",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "a9731a47b99cef932a9c6d3b7086a9fb9ee33988f4e94965804cc5c92274d243"
     },
     {
       "name": "learn_status",

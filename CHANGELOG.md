@@ -4,6 +4,18 @@
 
 ### Added
 
+* Learn inbox candidates have a stable `candidate_id`, derived from the row's
+  content so existing rows need no migration. `learn_inbox` shows it, and
+  `learn_inbox_draft` and `learn_inbox_drop` accept it as an exact selector
+  next to `commit` and `pattern_name`. The new Class C tool
+  `learn_queue_from_last_review` runs the last-review extraction and queues a
+  medium/high-confidence candidate in the pending inbox, returning its ID;
+  refusals, placeholders and low confidence are not queued, and the curated
+  store is never written. This gives mq-agent an explicit candidate to store
+  (`learn store <candidate-id>`) instead of guessing `record_learning`
+  arguments. A draft for a queued review candidate names that candidate's repo
+  instead of always `mq-mcp`.
+
 * `mq-mcp.tool-surface.v1` (`contracts/tool_surface.v1.json`): every registered
   tool with its ADR-003 class and the parameters it accepts (name, JSON types,
   required) plus a `signature_sha256`. Generated from the in-process FastMCP

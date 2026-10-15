@@ -839,21 +839,40 @@ def _inbox_commit_matches(row_commit: str, query: str) -> bool:
     return a[:n] == b[:n]
 
 
+_CANDIDATE_ID_FIELDS = ("source", "commit", "file", "repo", "captured_at", "pattern_name", "summary")
+
+
+def inbox_candidate_id(record: dict[str, Any]) -> str:
+    """Stable ID for one pending candidate, derived from the row's content.
+
+    Rows carry no stored ID (the post-commit hook predates it), so the ID is a
+    hash of the fields that identify the candidate: the same row always yields
+    the same ID, and legacy rows are addressable without migrating the queue.
+    """
+    key = {name: str(record.get(name, "")) for name in _CANDIDATE_ID_FIELDS}
+    digest = hashlib.sha256(json.dumps(key, sort_keys=True, ensure_ascii=False).encode("utf-8"))
+    return "cand-" + digest.hexdigest()[:12]
+
+
 def select_inbox_candidates(
     records: list[dict[str, Any]],
     *,
     commit: str = "",
     pattern_name: str = "",
+    candidate_id: str = "",
 ) -> list[int]:
     """Return indices of inbox rows matching every non-empty selector (AND).
 
     commit matches by SHA prefix in either direction; pattern_name matches
-    case-insensitively on the exact value.
+    case-insensitively on the exact value; candidate_id matches exactly.
     """
     commit = (commit or "").strip()
     pattern_name = (pattern_name or "").strip().lower()
+    candidate_id = (candidate_id or "").strip().lower()
     matches: list[int] = []
     for index, record in enumerate(records):
+        if candidate_id and inbox_candidate_id(record) != candidate_id:
+            continue
         if commit and not _inbox_commit_matches(str(record.get("commit", "")), commit):
             continue
         if pattern_name and str(record.get("pattern_name", "")).strip().lower() != pattern_name:
@@ -867,6 +886,7 @@ def drop_inbox_candidate(
     *,
     commit: str = "",
     pattern_name: str = "",
+    candidate_id: str = "",
     apply: bool = False,
 ) -> dict[str, Any]:
     """Remove exactly one pending candidate from the inbox queue.
@@ -879,10 +899,11 @@ def drop_inbox_candidate(
     """
     commit = (commit or "").strip()
     pattern_name = (pattern_name or "").strip()
-    if not commit and not pattern_name:
+    candidate_id = (candidate_id or "").strip()
+    if not commit and not pattern_name and not candidate_id:
         return {
             "status": "no-selector",
-            "message": "Specify commit and/or pattern_name.",
+            "message": "Specify candidate_id, commit and/or pattern_name.",
         }
     path = inbox_path(repo_root)
     if not path.exists():
@@ -890,7 +911,9 @@ def drop_inbox_candidate(
     records = load_inbox(repo_root)
     if not records:
         return {"status": "empty", "message": "Inbox is empty."}
-    matches = select_inbox_candidates(records, commit=commit, pattern_name=pattern_name)
+    matches = select_inbox_candidates(
+        records, commit=commit, pattern_name=pattern_name, candidate_id=candidate_id
+    )
     if not matches:
         return {
             "status": "no-match",
@@ -903,6 +926,7 @@ def drop_inbox_candidate(
             "matched": len(matches),
             "candidates": [
                 {
+                    "candidate_id": inbox_candidate_id(records[i]),
                     "commit": records[i].get("commit", ""),
                     "pattern_name": records[i].get("pattern_name", ""),
                 }
@@ -1037,7 +1061,7 @@ def build_record_learning_draft(candidate: dict[str, Any]) -> dict[str, Any]:
         "lesson": _draft_lesson(candidate),
         "validation": _draft_validation(candidate),
         "risk": _DRAFT_RISK,
-        "repo": _DRAFT_REPO,
+        "repo": str(candidate.get("repo") or "").strip() or _DRAFT_REPO,
         "source": _DRAFT_SOURCE,
         "tags": _draft_tags(candidate),
     }
@@ -1053,6 +1077,7 @@ def draft_inbox_candidate(
     *,
     commit: str = "",
     pattern_name: str = "",
+    candidate_id: str = "",
 ) -> dict[str, Any]:
     """Select exactly one inbox candidate and return its record_learning draft.
 
@@ -1061,12 +1086,15 @@ def draft_inbox_candidate(
     """
     commit = (commit or "").strip()
     pattern_name = (pattern_name or "").strip()
-    if not commit and not pattern_name:
-        return {"status": "no-selector", "message": "Specify commit and/or pattern_name."}
+    candidate_id = (candidate_id or "").strip()
+    if not commit and not pattern_name and not candidate_id:
+        return {"status": "no-selector", "message": "Specify candidate_id, commit and/or pattern_name."}
     records = load_inbox(repo_root)
     if not records:
         return {"status": "empty", "message": "Inbox is empty."}
-    matches = select_inbox_candidates(records, commit=commit, pattern_name=pattern_name)
+    matches = select_inbox_candidates(
+        records, commit=commit, pattern_name=pattern_name, candidate_id=candidate_id
+    )
     if not matches:
         return {"status": "no-match", "matched": 0, "message": "No pending candidate matches."}
     if len(matches) > 1:
@@ -1075,6 +1103,7 @@ def draft_inbox_candidate(
             "matched": len(matches),
             "candidates": [
                 {
+                    "candidate_id": inbox_candidate_id(records[i]),
                     "commit": records[i].get("commit", ""),
                     "pattern_name": records[i].get("pattern_name", ""),
                 }
@@ -1082,8 +1111,59 @@ def draft_inbox_candidate(
             ],
             "message": "Selector matched multiple rows; refine to target exactly one.",
         }
-    preview = build_record_learning_draft(records[matches[0]])
-    return {"status": "ok", **preview}
+    target = records[matches[0]]
+    preview = build_record_learning_draft(target)
+    return {"status": "ok", "candidate_id": inbox_candidate_id(target), **preview}
+
+
+_QUEUE_CONFIDENCE = {"medium", "high"}
+_QUEUE_KEY_FIELDS = ("source", "file", "repo", "pattern_name", "summary")
+
+
+def queue_review_candidate(
+    repo_root: Path,
+    extraction: dict[str, Any],
+    *,
+    repo: str,
+) -> dict[str, Any]:
+    """Queue one extracted review candidate in the pending inbox.
+
+    Takes the result of learn_extract_from_last_review and appends it to the
+    inbox under the same bar the post-commit hook applies: a real provider
+    record with medium/high confidence. Refusals, placeholders and low
+    confidence are not queued. Writes only the pending queue — never the
+    curated store; promotion stays record_learning after human review.
+    """
+    if extraction.get("status") != "dry_run" or extraction.get("reason") != "explicit approval required":
+        return {"status": "not-queued", "reason": str(extraction.get("reason") or extraction.get("status") or "no candidate")}
+    record = extraction.get("record") or {}
+    if record.get("confidence") not in _QUEUE_CONFIDENCE:
+        return {"status": "not-queued", "reason": f"confidence {record.get('confidence', '-')!r} is below the inbox bar (medium/high)"}
+
+    entry = redact_secrets({
+        "status": "pending",
+        "source": "review",
+        "commit": "",
+        "file": str(extraction.get("file") or ""),
+        "repo": repo,
+        "captured_at": datetime.now().isoformat(timespec="seconds"),
+        "pattern_name": record.get("pattern_name", ""),
+        "pattern_type": record.get("pattern_type", ""),
+        "confidence": record.get("confidence", ""),
+        "summary": record.get("summary", ""),
+        "evidence": record.get("evidence", []),
+        "recommended_action": record.get("recommended_action", ""),
+    })
+    key = tuple(str(entry.get(name, "")) for name in _QUEUE_KEY_FIELDS)
+    for existing in load_inbox(repo_root):
+        if tuple(str(existing.get(name, "")) for name in _QUEUE_KEY_FIELDS) == key:
+            return {"status": "duplicate", "candidate_id": inbox_candidate_id(existing), "candidate": existing}
+
+    path = inbox_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return {"status": "queued", "candidate_id": inbox_candidate_id(entry), "candidate": entry}
 
 
 def hygiene_report(repo_root: Path) -> dict[str, Any]:
