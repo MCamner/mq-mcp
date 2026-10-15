@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 138,
+  "tool_count": 139,
   "tools": [
     {
       "name": "analyze_csv",
@@ -2021,6 +2021,37 @@
         }
       ],
       "signature_sha256": "9a6cda91620f4b19a7a2d16be171aece24b60d024fe83e2f3251b622205cf601"
+    },
+    {
+      "name": "risk_review_repo",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "receipt",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "d225c3ebc98f0dc0a8c482fc32cd331e55cabee851f0b6ff68b1fe5bc3a00a90"
     },
     {
       "name": "run_mqlaunch",
