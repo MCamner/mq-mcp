@@ -69,6 +69,7 @@ These tools cannot write files. They may use a fixed, contract-declared read-onl
 | `get_semantic_memory` | Return full content of a semantic memory item by key | Write, modify memory store |
 | `list_semantic_memory` | List all semantic memory items with previews | Write, modify memory store |
 | `repo_signal_status` | Report whether repo-signal export packs are present and merged | Write, modify packs |
+| `risk_review_repo` | Bounded allowlisted repository risk pass with grep pre-scan and AI review; `receipt=true` binds the source tree | Write, commit, network |
 | `risk_review_file` | Targeted risk pass with grep pre-scan + AI review; `receipt=true` returns a read-only exact-code receipt | Write, commit, network |
 | `risk_review_diff` | Risk pass over changed files; `receipt=true` returns a read-only exact-code receipt | Write, commit, network |
 | `list_review_skills` | List available review skills, path-prefix routes, and extension routes | Write, commit |
