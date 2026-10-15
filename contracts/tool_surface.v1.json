@@ -585,17 +585,34 @@
             "string"
           ],
           "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
         }
       ],
-      "signature_sha256": "a631fcd54755a9aaca2f0a7c10c8ada896b65d5ba4d7208172dd238ff986c354"
+      "signature_sha256": "6e073529ab808ead3045f268784344efada71b042402b523dabf6b8e54b1a288"
     },
     {
       "name": "git_status",
       "safety_class": "A",
       "write": false,
       "subprocess": true,
-      "parameters": [],
-      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "604f4526a42850dad542276b3fb35f5ab5946f2a5d4c01e6264f6ebe9855452f"
     },
     {
       "name": "hal_repo_report",
@@ -1723,8 +1740,17 @@
       "safety_class": "A",
       "write": false,
       "subprocess": false,
-      "parameters": [],
-      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "604f4526a42850dad542276b3fb35f5ab5946f2a5d4c01e6264f6ebe9855452f"
     },
     {
       "name": "repo_signal_suggest",
@@ -1765,6 +1791,13 @@
       "subprocess": false,
       "parameters": [
         {
+          "name": "context",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
           "name": "deep",
           "type": [
             "boolean"
@@ -1784,9 +1817,17 @@
             "boolean"
           ],
           "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
         }
       ],
-      "signature_sha256": "62fee3c4cb0147267e5e75fd7769174469fd596884a2914422b0594b10c35601"
+      "signature_sha256": "f3ea98293304d63a48fbca73f969108adf37837fdcd28e0059dfb39d1c9ff307"
     },
     {
       "name": "review_file",
@@ -2083,10 +2124,18 @@
           "type": [
             "string"
           ],
-          "required": true
+          "required": false
+        },
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
         }
       ],
-      "signature_sha256": "29fe52b8e0cb75ee45d2ff42c6ee1aec5d87dea805910017b0b77014cf88e9a6"
+      "signature_sha256": "300e6365d49f64e7e84bb85e6f78ce8d661563602347e55a35ef572de38e8252"
     },
     {
       "name": "search_learned_patterns",
