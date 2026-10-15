@@ -1122,7 +1122,7 @@
     {
       "name": "risk_review_repo",
       "class": "A",
-      "description": "Bounded risk review of an allowed repository using file-level pre-scan and declared risk contract.",
+      "description": "Risk-review a bounded set of Python files in an allowed repository.",
       "resolver": "resolve_repo_file",
       "write": false,
       "subprocess": false,
