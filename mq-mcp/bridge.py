@@ -1075,6 +1075,25 @@ def record_chat_session(
     )
 
 
+_MCP_CHILD_ENV_ALLOWLIST = frozenset({
+    "HOME", "PATH", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE",
+    "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE",
+    "OPENAI_API_KEY", "OPENAI_MODEL",
+    "MQ_IMAGE_BIN", "MQ_MCP_ALLOWED_PATHS", "MQ_MCP_LOCAL_REPOS",
+    "MQ_MCP_HOST", "MQ_MCP_PORT", "MQ_MCP_REQUEST_LOG",
+    "MQ_MCP_TRANSPORT", "MQ_UMS_DIR", "REPO_SIGNAL_BIN", "ZEPHYR_BIN",
+})
+
+
+def mcp_child_env(*, do_mode: bool = False) -> dict[str, str]:
+    """Forward only values needed by the local MCP server, not the full parent env."""
+    env = {key: value for key, value in os.environ.items()
+           if key in _MCP_CHILD_ENV_ALLOWLIST}
+    if do_mode:
+        env["MQ_MCP_ALLOW_SHELL_EXEC"] = "1"
+    return env
+
+
 async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
     """Interactive Bridget REPL (Phase 2 + Phase 4 persistence).
 
@@ -1093,7 +1112,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
     server_params = StdioServerParameters(
         command=SERVER_COMMAND,
         args=SERVER_ARGS,
-        env=os.environ.copy(),
+        env=mcp_child_env(do_mode=do_mode),
     )
 
     try:
@@ -1354,9 +1373,6 @@ async def run_bridge() -> None:
     # In --do mode, enable the server's shell_exec tool for the child process
     # only. Set before server_params copies the environment. Other clients,
     # which never set this, get shell_exec disabled server-side.
-    if do_mode:
-        os.environ["MQ_MCP_ALLOW_SHELL_EXEC"] = "1"
-
     # Interactive REPL keeps the session alive across turns; delegate before the
     # one-shot intercepts (they run per-turn inside run_chat). Not the default.
     if chat_mode:
@@ -1383,7 +1399,7 @@ async def run_bridge() -> None:
     server_params = StdioServerParameters(
         command=SERVER_COMMAND,
         args=SERVER_ARGS,
-        env=os.environ.copy(),
+        env=mcp_child_env(do_mode=do_mode),
     )
 
     # Spinner status goes to /dev/tty so it never interleaves with the answer
