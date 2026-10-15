@@ -4023,6 +4023,71 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
 
 
 @mcp.tool()
+def risk_review_repo(mode: str = "security", receipt: bool = False, repo_path: str | None = None) -> str | dict:
+    """Risk-review a bounded set of Python files in an allowed repository.
+
+    Uses the existing file-level grep pre-scan and risk contract. Explicit
+    repository paths must be allowlisted; no silent fallback is permitted.
+    The review is read-only apart from existing review-memory and API effects.
+    """
+    valid_modes = {"security", "risk", "architecture"}
+    if mode not in valid_modes:
+        return f"risk_review_repo failed: mode must be one of {sorted(valid_modes)}, got {mode!r}"
+    if not os.getenv("OPENAI_API_KEY", ""):
+        return "risk_review_repo failed: OPENAI_API_KEY is required"
+    try:
+        root = _receipt_review_root(repo_path)
+    except ValueError as exc:
+        return f"risk_review_repo failed: {exc}"
+
+    def run() -> str:
+        # Never follow symlinked files outside the approved repository.
+        candidates = sorted(
+            p for p in root.rglob("*.py")
+            if p.is_file()
+            and not p.is_symlink()
+            and p.resolve().is_relative_to(root)
+            and not any(
+                part.startswith(".") or part in {"__pycache__", "node_modules"}
+                for part in p.relative_to(root).parts
+            )
+        )
+        if not candidates:
+            return f"risk_review_repo: no Python files found in repo ({root.name})."
+
+        selected = candidates[:5]
+        reviews = []
+        token = _REVIEW_ROOT.set(root)
+        try:
+            for source in selected:
+                relative = source.relative_to(root).as_posix()
+                result = risk_review_file(relative, mode=mode, receipt=False)
+                if not isinstance(result, str) or (
+                    result.startswith("risk_review_file failed")
+                    or result.startswith("risk_review_file blocked")
+                    or result.startswith("No review output.")
+                ):
+                    return f"risk_review_repo failed: {relative}: {result}"
+                reviews.append(f"--- {relative} ---\\n{result}")
+        finally:
+            _REVIEW_ROOT.reset(token)
+
+        header = f"risk_review_repo: {len(selected)} file(s) reviewed  mode={mode}"
+        if len(candidates) > len(selected):
+            header += "  [capped at 5]"
+        return header + "\\n\\n" + "\\n\\n".join(reviews)
+
+    if receipt:
+        return _run_with_review_receipt(
+            root=root,
+            kind="repo",
+            mode=f"risk:{mode}",
+            run=run,
+        )
+    return run()
+
+
+@mcp.tool()
 def risk_review_diff(mode: str = "security", receipt: bool = False) -> str | dict:
     """Risk pass over all files changed in the working tree or staging area.
 
