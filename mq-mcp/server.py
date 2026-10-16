@@ -2666,17 +2666,69 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
         return f"review_file failed (API call): {exc}"
 
 
+_GENERATED_CONTEXT_FILES = (
+    "generated/architecture/architecture_map.json",
+    "generated/architecture/ownership_map.json",
+)
+
+
+def _build_target_repo_context(repo_path: str) -> str:
+    """Write review evidence into an allowlisted repo, only where git ignores it."""
+    try:
+        root = _receipt_review_root(repo_path)
+    except ValueError as exc:
+        return f"build_repo_context failed: {exc}"
+
+    # check-ignore exits 0 only for an untracked path an ignore rule covers;
+    # a tracked file, a missing rule or a non-repo all refuse.
+    for rel in _GENERATED_CONTEXT_FILES:
+        check = subprocess.run(
+            ["git", "-C", str(root), "check-ignore", "-q", rel],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+        if check.returncode != 0:
+            return (
+                f"build_repo_context blocked: {rel} is not gitignored in {root.name}. "
+                "Add generated/.gitignore with '*.json' there first."
+            )
+
+    import sys as _sys
+    if str(REPO_ROOT) not in _sys.path:
+        _sys.path.insert(0, str(REPO_ROOT))
+    from review_engine.generated_artifacts import (
+        build_ownership_map as _build_own,
+        build_rich_architecture_map as _build_arch,
+    )
+
+    try:
+        arch = _build_arch(repo_root=root)
+        own = _build_own(repo_root=root)
+    except Exception as exc:
+        return f"build_repo_context failed: {exc}"
+    return (
+        f"build_repo_context: {arch['repo_name']}"
+        f"\n{_GENERATED_CONTEXT_FILES[0]}  [{arch['schema']}  {arch['file_count']} files]"
+        f"\n{_GENERATED_CONTEXT_FILES[1]}     [{own['schema']}  {own['file_count']} files]"
+    )
+
+
 @mcp.tool()
-def build_repo_context() -> str:
+def build_repo_context(repo_path: str | None = None) -> str:
     """Rebuild the repo context artifacts used by the review engine.
 
-    Generates:
+    Without repo_path, rebuilds mq-mcp's own context:
       review_engine/context/architecture_map.json  — role of each file
       review_engine/context/file_summary_index.json — symbols and docstrings
       review_engine/context/callgraph.json          — import graph, hub files
+      generated/architecture/{architecture,ownership}_map.json
 
-    Read-only analysis. Does not modify repo files.
+    With repo_path (allowlisted), writes only the two generated/architecture/
+    artifacts that review reads for that repo (ADR-008), and refuses unless
+    git ignores both, so the step never leaves changes to commit there.
     """
+    if repo_path is not None:
+        return _build_target_repo_context(repo_path)
+
     import sys as _sys
     if str(REPO_ROOT) not in _sys.path:
         _sys.path.insert(0, str(REPO_ROOT))

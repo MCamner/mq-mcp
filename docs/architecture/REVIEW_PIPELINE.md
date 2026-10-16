@@ -110,6 +110,8 @@ An empty role is never a fallback to a weaker source. It means the verified arti
 
 Rebuild with: `build_repo_context()` MCP tool or `python review_engine/repo_context_builder.py`.
 
+For another repo, `build_repo_context(repo_path=...)` writes only the two `generated/architecture/` artifacts there. The path must be allowlisted, and the repo must gitignore both files (`generated/.gitignore` with `*.json`), otherwise the tool refuses. Review never builds its own context.
+
 ## Stage 3b — Context provenance in the output
 
 `review_file` and `risk_review_file` append the loader's account to what the operator is shown:
