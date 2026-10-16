@@ -293,8 +293,17 @@
       "safety_class": "C",
       "write": true,
       "subprocess": true,
-      "parameters": [],
-      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "parameters": [
+        {
+          "name": "repo_path",
+          "type": [
+            "null",
+            "string"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "604f4526a42850dad542276b3fb35f5ab5946f2a5d4c01e6264f6ebe9855452f"
     },
     {
       "name": "check_port",

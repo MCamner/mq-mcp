@@ -4,6 +4,16 @@
 
 ### Added
 
+* `build_repo_context(repo_path=...)` writes review context for another
+  allowlisted repo. Review reads `generated/architecture/architecture_map.json`
+  from the repo under review, but until now only mq-mcp could build it, so a
+  review of any other repo always ran with context `missing`. With
+  `repo_path`, the tool writes only `architecture_map.json` and
+  `ownership_map.json` there, and refuses unless git ignores both (a tracked
+  file, a missing ignore rule and a non-repo all refuse), so it never leaves
+  changes to commit. Review itself still writes nothing (ADR-008). Without
+  `repo_path`, behaviour is unchanged.
+
 * Learn inbox candidates have a stable `candidate_id`, derived from the row's
   content so existing rows need no migration. `learn_inbox` shows it, and
   `learn_inbox_draft` and `learn_inbox_drop` accept it as an exact selector
