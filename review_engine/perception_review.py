@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -113,15 +112,11 @@ def _model_findings(
     client: Any = None,
     model: str | None = None,
 ) -> list[dict[str, Any]]:
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    from review_engine.model_runtime import review_client, review_model
+
     if client is None:
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY not set")
-        import openai as _openai
-
-        client = _openai.OpenAI(api_key=api_key)
-
-    chosen_model = model or os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        client = review_client()
+    chosen_model = model or review_model()
     evidence = model_evidence(payload)
     system = (
         "You review already-extracted visual evidence. Never infer pixels, text, "

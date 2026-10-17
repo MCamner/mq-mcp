@@ -35,6 +35,7 @@ def _make_repo(base: Path, name: str, files: list[str]) -> Path:
 def echo_review_file(monkeypatch):
     """Replace review_file with a probe that records the resolved absolute path."""
     # review_repo refuses to run without a key; the probe never calls OpenAI.
+    monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     seen: list[Path] = []
 
@@ -193,8 +194,10 @@ def test_missing_api_key_fails_before_any_file_review(monkeypatch, value):
         _mod, "review_file", lambda path, **_kw: calls.append(path) or "OK"
     )
     if value is None:
+        monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     else:
+        monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
         monkeypatch.setenv("OPENAI_API_KEY", value)
 
     out = review_repo(max_files=1)
@@ -206,6 +209,7 @@ def test_missing_api_key_fails_before_any_file_review(monkeypatch, value):
 def test_missing_api_key_issues_no_receipt(monkeypatch, tmp_path):
     target = _make_repo(tmp_path, "repo-signal", ["a.py"])
     monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+    monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     receipts: list[object] = []
     monkeypatch.setattr(

@@ -50,6 +50,7 @@ def fake_openai(monkeypatch):
     calls: list[str] = []
 
     def _install(text=MODEL_OUTPUT):
+        monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         monkeypatch.setitem(sys.modules, "openai", type(
             "_FakeOpenAIModule", (),
