@@ -15,7 +15,8 @@
   ],
   "properties": {
     "pattern_name": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "pattern_type": {
       "type": "string",
@@ -30,7 +31,8 @@
       ]
     },
     "summary": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "evidence": {
       "type": "array",
@@ -39,7 +41,8 @@
       }
     },
     "recommended_action": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "confidence": {
       "type": "string",

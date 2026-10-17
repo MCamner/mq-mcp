@@ -387,6 +387,20 @@ def _missing_repo_context_record() -> dict[str, Any]:
     }
 
 
+def _learn_system_prompt() -> str:
+    """Keep the original mq-learn safety contract with any Learning model.
+
+    Read at request time so a missing or malformed contract fails closed before
+    contacting the provider, rather than silently running an unguarded model.
+    """
+    source = Path(__file__).resolve().parents[1] / "models/ollama/Modelfile.mq-learn"
+    text = source.read_text(encoding="utf-8")
+    system = text.split('SYSTEM """', 1)[1].split('"""', 1)[0].strip()
+    if not system:
+        raise ValueError("Learning system prompt is empty")
+    return system
+
+
 def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
     lines = [
         "Extract one learn pattern from these mq-mcp review findings.",
@@ -427,7 +441,7 @@ def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
 def ollama_learn_status(
     *,
     endpoint: str = "http://localhost:11434/api/tags",
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     http_get: Callable[..., Any] | None = None,
     timeout: int = 5,
 ) -> dict[str, Any]:
@@ -459,9 +473,9 @@ def ollama_learn_status(
         }
 
     models = body.get("models", []) if isinstance(body, dict) else []
-    names = {item.get("name", "").split(":")[0] for item in models if isinstance(item, dict)}
+    names = {item.get("name", "").removesuffix(":latest") for item in models if isinstance(item, dict)}
 
-    if model not in names:
+    if model.removesuffix(":latest") not in names:
         return {
             "status": "unavailable",
             "reason": f"model {model!r} not found",
@@ -483,7 +497,7 @@ def learn_extract_from_last_review(
     relative_path: str,
     *,
     review_loader: Callable[[str], str | None],
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     repo_context: str = "",
@@ -518,7 +532,7 @@ def learn_extract_from_last_review(
 def ollama_learn_extract(
     review_findings: str,
     *,
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     repo_context: str = "",
@@ -552,9 +566,11 @@ def ollama_learn_extract(
     payload = {
         "model": model,
         "prompt": _ollama_prompt(review_findings.strip(), repo_context),
+        "system": _learn_system_prompt(),
+        "think": False,
         "format": LEARN_EXTRACTION_SCHEMA,
         "stream": False,
-        "options": {"temperature": 0.1, "num_ctx": 4096, "num_predict": 700, "seed": 42},
+        "options": {"temperature": 0.1, "top_p": 0.8, "repeat_penalty": 1.1, "num_ctx": 4096, "num_predict": 700, "seed": 42},
     }
 
     try:
@@ -589,7 +605,7 @@ def ollama_learn_extract(
 def learn_extract_pattern(
     review_findings: str,
     *,
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     approve: bool = False,
@@ -612,10 +628,14 @@ def learn_extract_pattern(
     payload = {
         "model": model,
         "prompt": _ollama_prompt(review_findings.strip(), repo_context),
+        "system": _learn_system_prompt(),
+        "think": False,
         "format": LEARN_EXTRACTION_SCHEMA,
         "stream": False,
         "options": {
             "temperature": 0.1,
+            "top_p": 0.8,
+            "repeat_penalty": 1.1,
             "num_ctx": 4096,
             "num_predict": 700,
             "seed": 42,

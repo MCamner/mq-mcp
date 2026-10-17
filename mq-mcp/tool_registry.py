@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -194,7 +195,12 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
         "writes_files": writes,
         "uses_subprocess": uses_sub,
         "uses_network": name in _USES_NETWORK,
-        "requires_api_key": name in _REQUIRES_API_KEY,
+        "requires_api_key": name in _REQUIRES_API_KEY and (
+            name not in {"review_file", "review_diff", "review_repo", "review_perception",
+                         "risk_review_file", "risk_review_diff", "review_architecture_doc",
+                         "review_runtime_contract", "extract_coding_conventions"}
+            or os.environ.get("MQ_MCP_REVIEW_PROVIDER", "ollama").lower() == "openai"
+        ),
         "resolver": raw.get("resolver", "none"),
         "description": raw.get("description", ""),
         "side_effects": raw.get("side_effects", []),
