@@ -41,7 +41,6 @@
     "tool_safety_report",
     "review_perception",
     "mq_route_inspect",
-    "mq_route_shadow",
     "mq_context_pack",
     "mq_route_verify",
     "mq_route_report",
@@ -50,8 +49,7 @@
     "mq_feedback_inspect",
     "mq_feedback_compare",
     "mq_feedback_report",
-    "mq_feedback_candidates",
-    "mq_feedback_run"
+    "mq_feedback_candidates"
   ],
   "safety_notes": [
     "Use absolute local paths when copying this into claude_desktop_config.json.",

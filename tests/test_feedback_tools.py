@@ -182,7 +182,9 @@ def test_no_feedback_activation_tool_exists() -> None:
 def test_codex_and_claude_profiles_discover_same_feedback_tools() -> None:
     for profile_name in ("codex.json", "claude-desktop.json"):
         profile = json.loads((ROOT / "profiles" / profile_name).read_text(encoding="utf-8"))
-        assert ALL_TOOLS <= set(profile["recommended_tools"])
+        recommended = set(profile["recommended_tools"])
+        assert READ_TOOLS <= recommended
+        assert "mq_feedback_run" not in recommended
 
 
 def test_feedback_skill_is_symlinked_identically_for_codex_and_claude() -> None:
