@@ -55,6 +55,7 @@ def test_review_diff_receipt_uses_mq_mcp_review_root(monkeypatch):
 
 
 def test_review_repo_receipt_uses_external_review_root(monkeypatch, tmp_path):
+    monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     repo = tmp_path / "repo-signal"
     repo.mkdir()
@@ -95,6 +96,7 @@ def test_receipt_false_preserves_existing_review_file_signature_path(monkeypatch
     repo.mkdir()
     (repo / "missing.py").write_text("x = 1\n", encoding="utf-8")
     monkeypatch.setattr(server, "resolve_allowed_local_file", lambda p: repo)
+    monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     result = server.review_file(

@@ -163,3 +163,12 @@ request, with thinking disabled and the existing JSON fields and validation. The
 schema also requires nonempty candidate text, matching the existing validator. Candidates remain read-only (`should_store: false`); storage
 requires the existing explicit approval path. Keep `mq-learn` installed for
 rollback. OpenAI and Nomic Embed are unchanged.
+
+## Local review provider
+
+Reviews default to the existing OpenAI provider. To explicitly use local
+Qwen3.5 9B, set `MQ_MCP_REVIEW_PROVIDER=ollama`. The local model defaults
+to `qwen3.5:9b` and may be overridden using `MQ_MCP_REVIEW_MODEL`.
+OpenAI requires `OPENAI_API_KEY`; its model selection remains separate.
+Neither provider may fall back automatically to the other. Existing review/evidence/approval
+contracts remain in force. Bridget remains a separately invoked cloud client.

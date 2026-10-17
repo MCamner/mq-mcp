@@ -91,6 +91,7 @@ def fake_openai(monkeypatch):
     calls: list[str] = []
 
     def _install(text: str):
+        monkeypatch.setenv("MQ_MCP_REVIEW_PROVIDER", "openai")
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         # server.py does `import openai as _openai` inside the function, so the
         # substitution has to happen in sys.modules rather than on the module.

@@ -56,6 +56,15 @@ if str(APP_ROOT) not in sys.path:
 import runtime_identity as _runtime_identity  # noqa: E402
 import brain_ingress as _brain_ingress  # noqa: E402
 
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from review_engine.model_runtime import (  # noqa: E402
+    review_client as _review_client,
+    review_model as _review_model,
+    review_requires_key as _review_requires_key,
+)
+
+
 # Active review root override. Defaults to None (→ REPO_ROOT, the mq-mcp repo
 # itself). review_repo sets this for the duration of an external-repo review so
 # that resolve_repo_file resolves and validates file paths against the target
@@ -2480,13 +2489,13 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
         pass
 
     api_key = os.getenv("OPENAI_API_KEY", "")
-    if not api_key:
+    if _review_requires_key() and not api_key:
         return "review_file requires OPENAI_API_KEY to be set."
 
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+    model = _review_model()
 
     try:
-        client = _openai.OpenAI(api_key=api_key)
+        client = _review_client(_openai)
 
         if deep:
             try:
@@ -2949,7 +2958,7 @@ def review_runtime_contract() -> str:
        - No secret leakage guarantee: _redacted_env present in server.py
        - RUNTIME_CONTRACT.md itself exists on disk
 
-    2. AI architecture pass (requires OPENAI_API_KEY) — injects current runtime
+    2. AI architecture pass (local Qwen by default) — injects current runtime
        state (tool count, safety class breakdown, resolver names) as context and
        runs the architecture review contract against RUNTIME_CONTRACT.md, asking
        the model to identify claims that diverge from the actual implementation.
@@ -3077,7 +3086,7 @@ def review_runtime_contract() -> str:
 
     # — AI architecture pass —
     api_key = os.getenv("OPENAI_API_KEY", "")
-    if not api_key:
+    if _review_requires_key() and not api_key:
         return (
             f"{structural_section}\n\n"
             f"{runtime_state}\n\n"
@@ -3113,8 +3122,8 @@ def review_runtime_contract() -> str:
             f"```\n{contract_text}\n```"
         )
 
-        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        client = _openai.OpenAI(api_key=api_key)
+        model = _review_model()
+        client = _review_client(_openai)
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -3514,7 +3523,7 @@ def review_architecture_doc(doc_name: str) -> str:
       - with extension: "SYSTEM_OVERVIEW.md"
       - full path: "docs/architecture/SYSTEM_OVERVIEW.md"
 
-    Requires OPENAI_API_KEY. Read-only. Class A.
+    Uses local Qwen by default; OpenAI requires explicit provider selection and a key. Read-only. Class A.
 
     Args:
         doc_name: Name or path of the architecture document to review.
@@ -3604,7 +3613,7 @@ def review_architecture_doc(doc_name: str) -> str:
     )
 
     api_key = os.getenv("OPENAI_API_KEY", "")
-    if not api_key:
+    if _review_requires_key() and not api_key:
         return (
             f"review_architecture_doc: OPENAI_API_KEY not set.\n\n"
             f"Document: {doc_path.name}\n\n"
@@ -3641,8 +3650,8 @@ def review_architecture_doc(doc_name: str) -> str:
             f"```\n{doc_text}\n```"
         )
 
-        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        client = _openai.OpenAI(api_key=api_key)
+        model = _review_model()
+        client = _review_client(_openai)
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -3777,7 +3786,7 @@ def extract_coding_conventions(relative_path: str) -> str:
     giving the model codebase-specific guidance without repeating it in every prompt.
 
     Requires: the file must have at least one saved review (use review_file first).
-    Requires: OPENAI_API_KEY must be set.
+    Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
 
     Args:
         relative_path: Repo-relative path to the file whose last review to process.
@@ -3799,12 +3808,12 @@ def extract_coding_conventions(relative_path: str) -> str:
         findings_text = last.findings_text
 
         api_key = os.getenv("OPENAI_API_KEY", "")
-        if not api_key:
+        if _review_requires_key() and not api_key:
             return "extract_coding_conventions requires OPENAI_API_KEY to be set."
 
         import openai as _openai
-        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        client = _openai.OpenAI(api_key=api_key)
+        model = _review_model()
+        client = _review_client(_openai)
 
         # Collect existing convention titles to avoid duplicates
         from review_engine.architecture_memory import ArchitectureMemory as _AM
@@ -3862,7 +3871,7 @@ def review_diff(mode: str = "comment", deep: bool = False, receipt: bool = False
 
     Gets changed file paths from git diff, then runs review_file on each one.
     Only files with a supported extension (.py, .sh, .md, .json) are reviewed.
-    Capped at 10 files per call. Requires OPENAI_API_KEY.
+    Capped at 10 files per call. Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
 
     Args:
         mode: Review mode passed to each review_file call. Defaults to 'comment'.
@@ -3984,7 +3993,7 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
         return f"risk_review_file failed: no contract for mode {mode!r}. Add reviews/contracts/{mode}-review.md."
 
     api_key = os.getenv("OPENAI_API_KEY", "")
-    if not api_key:
+    if _review_requires_key() and not api_key:
         return "risk_review_file failed: OPENAI_API_KEY not set."
 
     if str(REPO_ROOT) not in _sys.path:
@@ -4014,7 +4023,7 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
     except Exception:
         pass
 
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+    model = _review_model()
 
     skill_section = f"\n\n## Skill: {skill_name}\n\n{skill_content}" if skill_content else ""
     role_context = f"\nArchitecture role: {arch_role}" if arch_role else ""
@@ -4034,7 +4043,7 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
     )
 
     try:
-        client = _openai.OpenAI(api_key=api_key)
+        client = _review_client(_openai)
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -4088,7 +4097,7 @@ def risk_review_repo(mode: str = "security", receipt: bool = False, repo_path: s
     valid_modes = {"security", "risk", "architecture"}
     if mode not in valid_modes:
         return f"risk_review_repo failed: mode must be one of {sorted(valid_modes)}, got {mode!r}"
-    if not os.getenv("OPENAI_API_KEY", ""):
+    if _review_requires_key() and not os.getenv("OPENAI_API_KEY", ""):
         return "risk_review_repo failed: OPENAI_API_KEY is required"
     try:
         root = _receipt_review_root(repo_path)
@@ -4399,7 +4408,7 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
 
     Uses review history to prioritize files that have never been reviewed or
     were reviewed longest ago. Falls back to all .py files if no history exists.
-    Requires OPENAI_API_KEY.
+    Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
 
     By default reviews the mq-mcp repo itself. Pass repo_path to review an
     external repo instead. An explicit repo_path is validated and confined to
@@ -4421,7 +4430,7 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
     # "requires OPENAI_API_KEY" while this tool still reported the files as
     # reviewed, and an ISSUED receipt could claim a review that never ran.
     # Checked before the receipt branch and the file loop.
-    if not os.getenv("OPENAI_API_KEY", ""):
+    if _review_requires_key() and not os.getenv("OPENAI_API_KEY", ""):
         return "review_repo failed: OPENAI_API_KEY is required"
     if receipt:
         try:
