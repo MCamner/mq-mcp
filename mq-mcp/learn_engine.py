@@ -192,6 +192,66 @@ def validate_learn_record(record: Any, *, approve: bool = False) -> dict[str, An
     return redact_secrets(cleaned)
 
 
+def _ground_provider_evidence(
+    record: Any,
+    review_findings: str,
+    repo_context: str = "",
+) -> Any:
+    """Keep only evidence grounded verbatim in supplied source material.
+
+    Case-only differences are restored from the original source.
+    Unsupported evidence is dropped. No evidence forces low confidence.
+    """
+    if not isinstance(record, dict):
+        return record
+
+    evidence = record.get("evidence")
+    if not isinstance(evidence, list):
+        return record
+    if not all(isinstance(item, str) for item in evidence):
+        return record
+
+    import re
+
+    sources = [s for s in (repo_context, review_findings) if s]
+    grounded = []
+
+    for item in evidence:
+        item = item.strip()
+        if not item:
+            continue
+
+        match_text = None
+
+        # Prefer a literal match before attempting case restoration.
+        for source in sources:
+            if item in source:
+                match_text = item
+                break
+
+        if match_text is None:
+            for source in sources:
+                match = re.search(
+                    re.escape(item),
+                    source,
+                    flags=re.IGNORECASE,
+                )
+                if match:
+                    match_text = match.group(0)
+                    break
+
+        if match_text is not None and match_text not in grounded:
+            grounded.append(match_text)
+
+    cleaned = {**record, "evidence": grounded}
+
+    if not grounded:
+        cleaned["confidence"] = "low"
+        cleaned["pattern_type"] = "unknown"
+
+    return cleaned
+
+
 def _normalize_provider_record(record: Any) -> Any:
     """Downgrade an ungrounded provider record before strict validation.
 
@@ -387,6 +447,20 @@ def _missing_repo_context_record() -> dict[str, Any]:
     }
 
 
+def _learn_system_prompt() -> str:
+    """Keep the original mq-learn safety contract with any Learning model.
+
+    Read at request time so a missing or malformed contract fails closed before
+    contacting the provider, rather than silently running an unguarded model.
+    """
+    source = Path(__file__).resolve().parents[1] / "models/ollama/Modelfile.mq-learn"
+    text = source.read_text(encoding="utf-8")
+    system = text.split('SYSTEM """', 1)[1].split('"""', 1)[0].strip()
+    if not system:
+        raise ValueError("Learning system prompt is empty")
+    return system
+
+
 def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
     lines = [
         "Extract one learn pattern from these mq-mcp review findings.",
@@ -427,7 +501,7 @@ def _ollama_prompt(review_findings: str, repo_context: str = "") -> str:
 def ollama_learn_status(
     *,
     endpoint: str = "http://localhost:11434/api/tags",
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     http_get: Callable[..., Any] | None = None,
     timeout: int = 5,
 ) -> dict[str, Any]:
@@ -459,9 +533,9 @@ def ollama_learn_status(
         }
 
     models = body.get("models", []) if isinstance(body, dict) else []
-    names = {item.get("name", "").split(":")[0] for item in models if isinstance(item, dict)}
+    names = {item.get("name", "").removesuffix(":latest") for item in models if isinstance(item, dict)}
 
-    if model not in names:
+    if model.removesuffix(":latest") not in names:
         return {
             "status": "unavailable",
             "reason": f"model {model!r} not found",
@@ -483,7 +557,7 @@ def learn_extract_from_last_review(
     relative_path: str,
     *,
     review_loader: Callable[[str], str | None],
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     repo_context: str = "",
@@ -518,7 +592,7 @@ def learn_extract_from_last_review(
 def ollama_learn_extract(
     review_findings: str,
     *,
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     repo_context: str = "",
@@ -552,9 +626,11 @@ def ollama_learn_extract(
     payload = {
         "model": model,
         "prompt": _ollama_prompt(review_findings.strip(), repo_context),
+        "system": _learn_system_prompt(),
+        "think": False,
         "format": LEARN_EXTRACTION_SCHEMA,
         "stream": False,
-        "options": {"temperature": 0.1, "num_ctx": 4096, "num_predict": 700, "seed": 42},
+        "options": {"temperature": 0.1, "top_p": 0.8, "repeat_penalty": 1.1, "num_ctx": 4096, "num_predict": 700, "seed": 42},
     }
 
     try:
@@ -572,6 +648,7 @@ def ollama_learn_extract(
         except json.JSONDecodeError:
             return {"status": "unavailable", "reason": "Ollama learn provider returned non-JSON output"}
 
+    generated = _ground_provider_evidence(generated, review_findings, repo_context)
     generated = _normalize_provider_record(generated)
 
     # Coerce should_store=True — this function is always dry-run.
@@ -589,7 +666,7 @@ def ollama_learn_extract(
 def learn_extract_pattern(
     review_findings: str,
     *,
-    model: str = "mq-learn",
+    model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
     timeout: int = 30,
     approve: bool = False,
@@ -612,10 +689,14 @@ def learn_extract_pattern(
     payload = {
         "model": model,
         "prompt": _ollama_prompt(review_findings.strip(), repo_context),
+        "system": _learn_system_prompt(),
+        "think": False,
         "format": LEARN_EXTRACTION_SCHEMA,
         "stream": False,
         "options": {
             "temperature": 0.1,
+            "top_p": 0.8,
+            "repeat_penalty": 1.1,
             "num_ctx": 4096,
             "num_predict": 700,
             "seed": 42,
@@ -644,6 +725,7 @@ def learn_extract_pattern(
         except json.JSONDecodeError as exc:
             raise ValueError("Ollama learn provider returned non-JSON output") from exc
 
+    generated = _ground_provider_evidence(generated, review_findings, repo_context)
     generated = _normalize_provider_record(generated)
 
     if isinstance(generated, dict) and generated.get("should_store"):

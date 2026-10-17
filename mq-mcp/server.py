@@ -4965,7 +4965,7 @@ def learn_inbox(limit: int = 20) -> str:
     """List pending learn candidates auto-extracted by the post-commit hook.
 
     The post-commit hook (scripts/post_commit_learn.py) feeds each commit's
-    diff to the local mq-learn model and queues grounded, medium/high-confidence
+    diff to the local qwen3.5:9b model and queues grounded, medium/high-confidence
     candidates in learn_engine/memory/inbox.jsonl — never the curated store.
     This tool surfaces that queue so a human or agent can review and promote
     worthwhile candidates via record_learning / learn_from_diff.
@@ -5150,7 +5150,7 @@ def learn_inbox_draft(commit: str = "", pattern_name: str = "", candidate_id: st
 def ollama_learn_status() -> str:
     """Report optional Ollama learn provider availability.
 
-    Checks whether the local Ollama server is running and the mq-learn model
+    Checks whether the local Ollama server is running and the qwen3.5:9b model
     is installed. Does not generate, store, or mutate anything.
 
     Safety: Class B — local HTTP read to Ollama only, no storage, no execution.
@@ -5161,7 +5161,7 @@ def ollama_learn_status() -> str:
     lines = [
         f"Ollama learn provider: {result['status'].upper()}",
         "",
-        f"model: {result.get('model', 'mq-learn')}",
+        f"model: {result.get('model', 'qwen3.5:9b')}",
     ]
 
     if result["status"] != "ready":
@@ -5170,7 +5170,7 @@ def ollama_learn_status() -> str:
             "",
             "fix:",
             "  ollama serve",
-            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+            "  ollama pull qwen3.5:9b",
         ]
     else:
         lines += [
@@ -5186,7 +5186,7 @@ def ollama_learn_status() -> str:
 def ollama_learn_extract(review_findings: str) -> str:
     """Dry-run extraction of a learn pattern from review findings via Ollama.
 
-    Calls the local mq-learn model to extract a structured learn candidate from
+    Calls the local qwen3.5:9b model to extract a structured learn candidate from
     review findings text. Always dry-run — no storage, no mutations. Returns a
     formatted preview of the candidate record for inspection.
 
@@ -5208,7 +5208,7 @@ def ollama_learn_extract(review_findings: str) -> str:
             "",
             "fix:",
             "  ollama serve",
-            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+            "  ollama pull qwen3.5:9b",
         ])
 
     record = result.get("record", {})
@@ -5285,7 +5285,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
     """Dry-run extraction of a learn pattern from the last review for a file.
 
     Loads stored review findings for the given repo-relative path, passes them
-    to the local Ollama mq-learn model, and returns a preview candidate.
+    to the local Ollama qwen3.5:9b model, and returns a preview candidate.
     Always dry-run — no storage, no mutations.
 
     Args:
@@ -5319,7 +5319,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
             "",
             "fix:",
             "  ollama serve",
-            "  ollama create mq-learn -f models/ollama/Modelfile.mq-learn",
+            "  ollama pull qwen3.5:9b",
         ])
 
     record = result.get("record", {})
@@ -5327,7 +5327,7 @@ def learn_extract_from_last_review(relative_path: str, repo_path: str | None = N
         "Learn extract from last review: DRY-RUN PREVIEW",
         "",
         f"file:     {relative_path}",
-        "provider: ollama / mq-learn",
+        "provider: ollama / qwen3.5:9b",
         "stored:   false",
         "",
         f"pattern_name: {record.get('pattern_name', '-')}",
