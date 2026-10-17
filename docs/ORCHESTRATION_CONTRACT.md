@@ -114,6 +114,9 @@ current state of the repo without running `build_repo_context` first.
 | `export_symbol_index` | Writes symbol map | `generated/symbols/symbol_index.json` |
 | `risk_review_file` | Saves findings | `review_engine/memory/review_history.json` |
 | `risk_review_diff` | Saves findings per file | `review_engine/memory/review_history.json` |
+| `risk_review_repo` | Saves findings per reviewed file | `review_engine/memory/review_history.json` |
+| `learn_queue_from_last_review` | Appends a pending learn candidate (never the curated store) | `learn_engine/memory/inbox.jsonl` |
+| `mq_feedback_run` | mq-agent records one zero-effect experiment as feedback evidence | mq-agent feedback store (`~/.mq/feedback/`) |
 | `shell_exec` | Runs an arbitrary shell command (env-gated; bridge approval) | local machine |
 | `brain_record_decision` | Writes an ADR | `mqobsidian/decisions/` |
 | `brain_record_review` | Writes a review summary | `mqobsidian/reviews/` |
@@ -194,6 +197,10 @@ mq-agent must not:
 | Image analysis | `image_observe_architecture`, `image_analyze_ui`, `image_analyze` | B | Proxy to mq-image CLI; path-safe; local or cloud vision backend |
 | Model routing | `mq_route_inspect`, `mq_context_pack`, `mq_route_verify`, `mq_route_report` | B | Validated read-only bridge; mq-agent owns routing policy |
 | Model routing (shadow) | `mq_route_shadow` | C | Same bridge, but mq-agent appends the outcome to its evidence store |
+| Feedback (read) | `mq_feedback_status`, `mq_feedback_report`, `mq_feedback_compare`, `mq_feedback_inspect`, `mq_feedback_candidates` | A | Read-only bridge to mq-agent's Feedback Engine; candidates are proposals and never activate policy |
+| Feedback (run) | `mq_feedback_run` | C | Bounded zero-effect experiment; mq-agent writes the evidence record |
+| Learn system (queue) | `learn_queue_from_last_review` | C | Appends a pending candidate to the learn inbox; promotion still goes through `record_learning` |
+| Review | `risk_review_repo` (A), `review_perception` (B) | A/B | Bounded repo risk review that saves to review memory; perception review of validated `perception.v1` evidence via OpenAI |
 
 All group B tools make network calls (OpenAI or Ollama) but produce no persistent side effects.
 Authoritative safety metadata: `docs/TOOL_SAFETY.md`.
