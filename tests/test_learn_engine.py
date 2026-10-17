@@ -436,6 +436,11 @@ def test_learn_extract_pattern_calls_ollama_with_schema_and_validates_response()
     assert record["pattern_name"] == "Keep README counts current"
     assert calls[0]["url"] == "http://localhost:11434/api/generate"
     assert calls[0]["json"]["stream"] is False
+    assert calls[0]["json"]["model"] == "qwen3.5:9b"
+    assert calls[0]["json"]["think"] is False
+    source = Path(__file__).resolve().parents[1] / "models/ollama/Modelfile.mq-learn"
+    system = source.read_text().split('SYSTEM """', 1)[1].rsplit('"""', 1)[0].strip()
+    assert calls[0]["json"]["system"] == system
     assert calls[0]["json"]["format"]["additionalProperties"] is False
     assert "untrusted data" in calls[0]["json"]["prompt"]
     assert "BEGIN_UNTRUSTED_REVIEW_FINDINGS" in calls[0]["json"]["prompt"]
@@ -496,3 +501,9 @@ def test_learn_extract_pattern_normalizes_empty_evidence_to_unknown_low():
     assert record["evidence"] == []
     assert record["confidence"] == "low"
     assert record["pattern_type"] == "unknown"
+
+
+def test_provider_schema_requires_nonempty_candidate_text():
+    engine = _load_engine()
+    for field in ["pattern_name", "summary", "recommended_action"]:
+        assert engine.LEARN_EXTRACTION_SCHEMA["properties"][field]["minLength"] == 1

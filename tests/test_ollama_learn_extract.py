@@ -194,3 +194,23 @@ def test_ollama_learn_extract_rejects_prompt_injection_as_action():
 
     assert result["status"] == "unavailable"
     assert "prompt-injection" in result["reason"]
+
+
+def test_dry_run_sends_original_learning_system_contract():
+    engine = _load_engine()
+    calls = []
+
+    def post(*args, **kwargs):
+        calls.append(kwargs["json"])
+        return _OkResponse()
+
+    result = engine.ollama_learn_extract("review findings", http_post=post)
+    assert result["status"] == "dry_run"
+    payload = calls[0]
+    source = Path(__file__).resolve().parents[1] / "models/ollama/Modelfile.mq-learn"
+    system = source.read_text().split('SYSTEM """', 1)[1].split('"""', 1)[0].strip()
+    assert payload["system"] == system
+    assert payload["model"] == "qwen3.5:9b"
+    assert payload["think"] is False
+    assert payload["options"]["top_p"] == 0.8
+    assert payload["options"]["repeat_penalty"] == 1.1

@@ -19,7 +19,7 @@ class _OkResponse:
         return None
 
     def json(self):
-        return {"models": [{"name": "mq-learn:latest"}]}
+        return {"models": [{"name": "qwen3.5:9b"}]}
 
 
 class _MissingModelResponse:
@@ -42,7 +42,7 @@ def test_ollama_learn_status_ready():
     engine = _load_engine()
     result = engine.ollama_learn_status(http_get=lambda *a, **k: _OkResponse())
     assert result["status"] == "ready"
-    assert result["model"] == "mq-learn"
+    assert result["model"] == "qwen3.5:9b"
     assert result["mode"] == "optional"
     assert result["schema"] == "schemas/learn_extraction.schema.json"
     assert "dry-run" in result["storage"]
@@ -53,7 +53,7 @@ def test_ollama_learn_status_missing_model():
     result = engine.ollama_learn_status(http_get=lambda *a, **k: _MissingModelResponse())
     assert result["status"] == "unavailable"
     assert "not found" in result["reason"]
-    assert "mq-learn" in result["reason"]
+    assert "qwen3.5:9b" in result["reason"]
     assert "llama3.2" in result.get("available_models", [])
 
 
@@ -100,3 +100,9 @@ def test_ollama_learn_status_does_not_write(tmp_path):
     engine.ollama_learn_status(http_get=lambda *a, **k: _OkResponse())
     after = list(tmp_path.rglob("*"))
     assert before == after
+
+
+def test_status_requires_exact_qwen_size():
+    engine = _load_engine()
+    result = engine.ollama_learn_status(http_get=lambda *a, **k: {"models": [{"name": "qwen3.5:4b"}]})
+    assert result["status"] == "unavailable"
