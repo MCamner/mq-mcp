@@ -1,0 +1,27 @@
+{
+  "schema": "mq.verification-config.v1",
+  "python_project": "mq-mcp",
+  "checks": [
+    {
+      "id": "learn-contracts",
+      "runner": "pytest",
+      "targets": [
+        "tests/test_learn_engine.py",
+        "tests/test_ollama_learn_extract.py",
+        "tests/test_ollama_learn_status.py",
+        "tests/test_review_context_consumers.py"
+      ],
+      "paths": [
+        "mq-mcp/learn_engine.py",
+        "mq-mcp/server.py",
+        "mq-mcp/tool_registry.py",
+        "schemas/learn_extraction.schema.json",
+        "tests/test_learn*.py",
+        "tests/test_ollama_learn*.py",
+        "tests/test_review_context_consumers.py",
+        ".mq/verification.json"
+      ],
+      "timeout_seconds": 180
+    }
+  ]
+}

@@ -524,3 +524,18 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for solutions to common i
 ## License
 
 See [LICENSE](LICENSE).
+
+## Verify Learn changes
+
+With mq-agent installed, preview or run the Learn checks declared in
+`.mq/verification.json` from this checkout:
+
+```bash
+mqlaunch verify-changes --plan
+mqlaunch verify-changes
+mqlaunch verify-changes --check-receipt
+```
+
+The Python checks use the existing `mq-mcp` environment through `uv run --no-sync`.
+Changes outside the configured Learn scope are reported as `INCOMPLETE`.
+Verification does not change the review provider or approve a release.
