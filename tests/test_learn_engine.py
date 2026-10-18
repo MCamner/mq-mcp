@@ -507,3 +507,29 @@ def test_provider_schema_requires_nonempty_candidate_text():
     engine = _load_engine()
     for field in ["pattern_name", "summary", "recommended_action"]:
         assert engine.LEARN_EXTRACTION_SCHEMA["properties"][field]["minLength"] == 1
+
+
+def test_learn_extraction_waits_long_enough_for_a_cold_model_load():
+    # Measured 2026-10-18 on qwen3.5:9b with a 330-file repo context: a cold
+    # call took 38.9 s, warm calls 5.7-6.4 s. The old 30 s default failed the
+    # first extraction after every idle unload with "provider unavailable".
+    import inspect
+
+    engine = _load_engine()
+    assert engine.OLLAMA_LEARN_TIMEOUT_SECONDS >= 120
+    for fn in (engine.ollama_learn_extract, engine.learn_extract_from_last_review,
+               engine.learn_extract_pattern):
+        default = inspect.signature(fn).parameters["timeout"].default
+        assert default == engine.OLLAMA_LEARN_TIMEOUT_SECONDS, fn.__name__
+
+
+def test_learn_extraction_passes_the_timeout_to_the_request():
+    engine = _load_engine()
+    seen = {}
+
+    def fake_post(url, json=None, timeout=None):
+        seen["timeout"] = timeout
+        raise OSError("down")
+
+    engine.ollama_learn_extract("[RISK] a.py:1\nfinding", http_post=fake_post)
+    assert seen["timeout"] == engine.OLLAMA_LEARN_TIMEOUT_SECONDS

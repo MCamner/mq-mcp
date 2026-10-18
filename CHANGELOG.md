@@ -4,6 +4,12 @@
 
 ### Changed
 
+* Learn extraction waits up to 180 s for Ollama instead of 30 s
+  (`OLLAMA_LEARN_TIMEOUT_SECONDS`). The first call after Ollama unloads the
+  model includes the load: measured on qwen3.5:9b with a 330-file repo context,
+  38.9 s cold versus 5.7-6.4 s warm. The old limit made every cold call report
+  "provider unavailable". `num_predict` still bounds generation.
+
 * `.repo-signal/exports/` is no longer tracked and is gitignored. Learn accepts
   `symbol_index.json` only when it is under 24 hours old and names the checkout
   directory, so the committed copy (from 2026-05-28) could never be used: a

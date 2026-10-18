@@ -278,6 +278,13 @@ def _looks_like_prompt_injection(value: str) -> bool:
 
 _REPO_CONTEXT_MAX_FILES = 400
 _REPO_CONTEXT_MAX_AGE_SECONDS = 24 * 60 * 60
+
+#: Read timeout for one learn extraction request. It covers a cold model load,
+#: not only generation: measured 2026-10-18 on qwen3.5:9b with a 330-file repo
+#: context, a call after Ollama had unloaded the model took 38.9 s and warm
+#: calls 5.7-6.4 s. The previous 30 s failed every first call after an idle
+#: unload as "provider unavailable". num_predict still bounds generation.
+OLLAMA_LEARN_TIMEOUT_SECONDS = 180
 _REPO_CONTEXT_MAX_FUTURE_SKEW_SECONDS = 5 * 60
 
 
@@ -559,7 +566,7 @@ def learn_extract_from_last_review(
     review_loader: Callable[[str], str | None],
     model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
-    timeout: int = 30,
+    timeout: int = OLLAMA_LEARN_TIMEOUT_SECONDS,
     repo_context: str = "",
     require_repo_context: bool = False,
     http_post: Callable[..., Any] | None = None,
@@ -594,7 +601,7 @@ def ollama_learn_extract(
     *,
     model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
-    timeout: int = 30,
+    timeout: int = OLLAMA_LEARN_TIMEOUT_SECONDS,
     repo_context: str = "",
     require_repo_context: bool = False,
     http_post: Callable[..., Any] | None = None,
@@ -668,7 +675,7 @@ def learn_extract_pattern(
     *,
     model: str = "qwen3.5:9b",
     endpoint: str = "http://localhost:11434/api/generate",
-    timeout: int = 30,
+    timeout: int = OLLAMA_LEARN_TIMEOUT_SECONDS,
     approve: bool = False,
     repo_context: str = "",
     require_repo_context: bool = False,
