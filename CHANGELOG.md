@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Changed
+
+* `.repo-signal/exports/` is no longer tracked and is gitignored. Learn accepts
+  `symbol_index.json` only when it is under 24 hours old and names the checkout
+  directory, so the committed copy (from 2026-05-28) could never be used: a
+  fresh clone always got `source: none`, and every refresh showed up as a
+  modified tracked file. Regenerate per checkout with
+  `repo-signal export . --symbol-index`. The release gate already treats a
+  missing export as a warning; `release-check.sh` stays READY.
+
 ### Added
 
 * `build_repo_context(repo_path=...)` writes review context for another
