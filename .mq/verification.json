@@ -22,6 +22,73 @@
         ".mq/verification.json"
       ],
       "timeout_seconds": 180
+    },
+    {
+      "id": "readme-runtime-truth",
+      "runner": "bash",
+      "targets": [
+        "scripts/check-runtime-truth.sh"
+      ],
+      "paths": [
+        "README.md",
+        "VERSION",
+        "CHANGELOG.md",
+        "mq-mcp/server.py",
+        "docs/TOOL_SAFETY.md",
+        "docs/stability.json",
+        "docs/tool_contracts.json",
+        "scripts/check-runtime-truth.sh",
+        "scripts/check-mcp-tool-docs.sh",
+        ".mq/verification.json"
+      ],
+      "timeout_seconds": 120
+    },
+    {
+      "id": "readme-tool-docs",
+      "runner": "bash",
+      "targets": [
+        "scripts/check-mcp-tool-docs.sh"
+      ],
+      "paths": [
+        "README.md",
+        "VERSION",
+        "CHANGELOG.md",
+        "mq-mcp/server.py",
+        "docs/TOOL_SAFETY.md",
+        "docs/stability.json",
+        "docs/tool_contracts.json",
+        "scripts/check-runtime-truth.sh",
+        "scripts/check-mcp-tool-docs.sh",
+        ".mq/verification.json"
+      ],
+      "timeout_seconds": 120
+    },
+    {
+      "id": "verification-config",
+      "runner": "pytest",
+      "targets": [
+        "tests/test_verification_config.py"
+      ],
+      "paths": [
+        "README.md",
+        "VERSION",
+        "CHANGELOG.md",
+        "mq-mcp/server.py",
+        "docs/TOOL_SAFETY.md",
+        "docs/stability.json",
+        "docs/tool_contracts.json",
+        "scripts/check-runtime-truth.sh",
+        "scripts/check-mcp-tool-docs.sh",
+        ".mq/verification.json",
+        "tests/test_verification_config.py"
+      ],
+      "timeout_seconds": 60
+    }
+  ],
+  "runtime_data": [
+    {
+      "path": "review_engine/memory/review_history.json",
+      "reason": "Generated review history; inspect separately from source verification."
     }
   ]
 }
