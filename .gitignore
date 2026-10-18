@@ -34,3 +34,7 @@ backups/
 # Auto-extracted learn candidates (machine-local, pending review)
 learn_engine/memory/inbox.jsonl
 learn_engine/memory/post-commit.log
+
+# repo-signal packs: regenerated per checkout (`repo-signal export .`), never committed.
+# Learn rejects an index older than 24h or named for another checkout.
+.repo-signal/

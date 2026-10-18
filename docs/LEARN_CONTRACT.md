@@ -39,6 +39,11 @@ Repository-specific extraction requires a verified repo context. mq-mcp reads
   clock skew without trusting materially future-dated evidence
 - every included path resolves to an existing file inside that repository
 
+The export is per checkout and is not committed (`.repo-signal/` is
+gitignored): `repo_name` is the checkout directory's name and the index expires
+after 24 hours, so a committed copy would always be stale or wrong. Regenerate it
+in the checkout the server runs from with `repo-signal export . --symbol-index`.
+
 The context sent to Ollama includes those provenance fields. If the artifact is
 missing, malformed, stale, materially future-dated, belongs to another
 repository, or contains no verifiable files, mq-mcp returns an `unknown` / `low`
