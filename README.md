@@ -537,5 +537,10 @@ mqlaunch verify-changes --check-receipt
 ```
 
 The Python checks use the existing `mq-mcp` environment through `uv run --no-sync`.
-Changes outside the configured Learn scope are reported as `INCOMPLETE`.
+README changes select the existing version/tool-count and tool-documentation
+checks. Changes outside the configured source scope remain `INCOMPLETE`.
+Review history is listed separately as runtime data (`NOT_VERIFIED`), never as
+tested code. All source checks may pass while the overall result remains
+`INCOMPLETE` until that data is handled separately. The `runtime_data` config
+field requires mq-agent with runtime-data classification support.
 Verification does not change the review provider or approve a release.
