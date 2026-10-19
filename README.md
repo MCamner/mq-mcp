@@ -14,7 +14,10 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v2.0.0 — Release Gate v2 + deterministic readiness: lint/type, contract-drift, unsafe-command, and read-only perception-review checks complete the deterministic release gate, on top of the brain/Obsidian tools, local Ollama learn provider, and mq-agent learn compatibility aliases.
+v2.1.0 — Bridget runtime, evidence and provenance integrity, and deterministic
+isolation: credential handling, bounded session context, runtime identity,
+verified learn-extraction evidence, and tests isolated from ambient repository
+state. Release Gate v2 remains the deterministic readiness baseline.
 
 This repository is useful as:
 
