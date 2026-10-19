@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Removed
+
+* `mq-mcp/providers/ollama_provider.py` and `docs/OLLAMA_PROVIDER.md`.
+  Nothing imported the module; the learn tools call Ollama through
+  `learn_engine.py`, and the doc's claim that `server.py` used the provider
+  was not true. It was also the last Ollama caller that did not send
+  `think: false`. `schemas/review_summary.schema.json` stays: its `$id` is
+  published.
+
 ### Changed
 
 * Learn extraction waits up to 180 s for Ollama instead of 30 s
