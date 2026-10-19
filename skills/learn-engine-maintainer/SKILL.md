@@ -40,7 +40,6 @@ Use this skill for mq-mcp's deterministic learning layer: lesson capture, valida
 ## Core Files
 
 * `mq-mcp/learn_engine.py`
-* `mq-mcp/providers/ollama_provider.py`
 * `mq-mcp/server.py` learn-related MCP tools
 * `schemas/learning.schema.json`
 * `schemas/learn_extraction.schema.json`
@@ -49,7 +48,6 @@ Use this skill for mq-mcp's deterministic learning layer: lesson capture, valida
 * `docs/LEARNING_MODEL.md`
 * `docs/LEARN_CONTRACT.md`
 * `docs/LEARN_OLLAMA.md`
-* `docs/OLLAMA_PROVIDER.md`
 * `mq-mcp/release_gate/checks.py` learning contract checks
 * `tests/test_learn_engine.py`
 * `tests/test_learn_alias_tools.py`
@@ -79,7 +77,7 @@ The learning layer is local-only and non-executing. Per `docs/LEARNING_CONTRACT.
 ## Verification
 
 ```bash
-python -m compileall mq-mcp/learn_engine.py mq-mcp/providers/ollama_provider.py -q
+python -m compileall mq-mcp/learn_engine.py -q
 uv --directory mq-mcp run pytest \
   ../tests/test_learn_engine.py \
   ../tests/test_learn_alias_tools.py \
