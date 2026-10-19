@@ -10,6 +10,9 @@
   was not true. It was also the last Ollama caller that did not send
   `think: false`. `schemas/review_summary.schema.json` stays: its `$id` is
   published.
+* Four mypy cache files under `.mypy_cache/` and `mq-mcp/.mypy_cache/`, added
+  in May although `.gitignore` already ignored the directory. Nothing read
+  them, and they carried absolute paths from one machine.
 
 ### Changed
 
