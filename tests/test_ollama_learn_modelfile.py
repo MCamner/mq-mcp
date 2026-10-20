@@ -39,3 +39,8 @@ def test_mq_learn_modelfile_defines_grounding_confidence_and_pattern_types():
         "unknown",
     ):
         assert f'Use "{pattern_type}"' in model_text
+
+
+def test_mq_learn_recipe_uses_the_consolidated_local_model():
+    text = MODELFILE.read_text(encoding="utf-8")
+    assert text.splitlines()[0] == "FROM qwen3.5:9b"

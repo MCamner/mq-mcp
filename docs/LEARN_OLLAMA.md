@@ -65,12 +65,16 @@ Ollama must not:
 
 ## Local model profile
 
-The recommended local profile is `mq-learn`, defined in:
+The default learn model is `qwen3.5:9b`. The optional compatibility alias
+`mq-learn` can be created from the same Qwen base with the bounded learn prompt
+defined in:
 
 ```text
 models/ollama/Modelfile.mq-learn
 ```
 
+Creating this alias is optional and does not select it for the running server.
+No model is created automatically by installation or documentation changes.
 Create it locally with:
 
 ```bash

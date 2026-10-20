@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+* The optional mq-learn Modelfile now derives from `qwen3.5:9b` instead of
+  `llama3.2`. Its grounding, JSON and runtime-owned storage constraints remain
+  intact. Documentation distinguishes the default model from the optional alias;
+  this change does not rebuild a model or restart a service.
+
 ### Removed
 
 * `mq-mcp/providers/ollama_provider.py` and `docs/OLLAMA_PROVIDER.md`.
