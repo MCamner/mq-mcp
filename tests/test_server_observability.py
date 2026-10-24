@@ -5,7 +5,6 @@ from types import SimpleNamespace
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_PATH = ROOT / "mq-mcp" / "server.py"
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
@@ -272,3 +271,43 @@ async def test_the_loopback_guard_runs_before_the_vault_is_touched(
 
     assert response.status_code != 200
     assert not (tmp_path / "reviews").exists()
+
+
+@pytest.mark.anyio
+async def test_slow_http_tool_does_not_block_health(server, monkeypatch):
+    """A synchronous review must not stall unrelated HTTP diagnostics."""
+    import threading
+
+    import anyio
+
+    release = threading.Event()
+    started = threading.Event()
+    finished = threading.Event()
+    responses = []
+
+    from mcp.server.fastmcp import FastMCP
+
+    isolated_mcp = FastMCP("http responsiveness test")
+
+    @isolated_mcp.tool(name="brain_record_review")
+    def slow_call() -> str:
+        started.set()
+        release.wait(timeout=0.5)
+        finished.set()
+        return "review complete"
+
+    monkeypatch.setattr(server, "mcp", isolated_mcp)
+
+    async def invoke():
+        responses.append(await server.call_http_tool(_tool_req({})))
+
+    async with anyio.create_task_group() as group:
+        group.start_soon(invoke)
+        assert await anyio.to_thread.run_sync(started.wait, 1)
+        try:
+            response = await server.health_check(_req())
+            assert response.status_code == 200
+            assert not finished.is_set(), "review blocked the HTTP event loop"
+        finally:
+            release.set()
+    assert "review complete" in json.dumps(json.loads(responses[0].body))
