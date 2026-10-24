@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+* HTTP tool execution runs off the request event loop, keeping health checks responsive during blocking model calls while preserving serialized tool writes.
+
 ## [2.2.0] - 2026-10-24
 
 ### Fixed

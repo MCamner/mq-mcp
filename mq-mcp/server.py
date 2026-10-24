@@ -5,6 +5,7 @@ accept loopback Host headers only; individual tools retain their own safety,
 approval, path-validation, and feature-gate contracts.
 """
 
+import asyncio
 import contextvars
 import json
 import logging
@@ -13,6 +14,7 @@ import os
 import sys
 import shlex
 import time
+import threading
 from pathlib import Path
 from typing import Any
 import psutil
@@ -23,6 +25,7 @@ import guitarpro
 from dotenv import load_dotenv
 from PIL import Image
 from mcp.server.fastmcp import FastMCP
+from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -392,13 +395,26 @@ async def describe_http_tool(request: Request) -> JSONResponse:
     return JSONResponse({"error": f"Unknown tool: {name}"}, status_code=404)
 
 
+# Keep tool writes ordered as before while freeing the HTTP event loop.
+_HTTP_TOOL_LOCK = threading.Lock()
+
+
+def _call_http_tool_worker(name: str, arguments: dict) -> Any:
+    with _HTTP_TOOL_LOCK:
+        return asyncio.run(mcp.call_tool(name, arguments))
+
+
 @mcp.custom_route("/tools/{name}", methods=["POST"])
 async def call_http_tool(request: Request) -> JSONResponse:
     if (blocked := _guard_loopback(request)) is not None:
         return blocked
     name = request.path_params["name"]
     arguments = await request.json()
-    result = await mcp.call_tool(name, arguments)
+    # The MCP SDK calls synchronous tools on its event loop. Reviews perform
+    # blocking model I/O, so isolate the whole invocation on a worker loop;
+    # /health and other HTTP requests must remain responsive while it runs.
+    # run_in_threadpool preserves request ContextVars and does not retry a tool.
+    result = await run_in_threadpool(_call_http_tool_worker, name, arguments)
     return JSONResponse(jsonable(result))
 
 def resolve_repo_file(relative_path: str) -> Path:
