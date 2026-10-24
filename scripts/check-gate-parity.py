@@ -54,6 +54,7 @@ CI_COMMANDS = {
     ],
 }
 LOCAL_COMMANDS = {
+    "releases": 'run "check-github-releases.sh" bash scripts/check-github-releases.sh',
     "skills": 'run "skills" bash scripts/check-skills.sh',
     "profiles": 'run "profiles" "$PYTHON_BIN" scripts/check-profiles.py',
     "stability": 'run "stability" "$PYTHON_BIN" scripts/check-stability.py',

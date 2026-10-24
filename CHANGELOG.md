@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-24
+
 ### Fixed
 
 * The optional mq-learn Modelfile now derives from `qwen3.5:9b` instead of
