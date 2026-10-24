@@ -1,6 +1,6 @@
 {
   "schema_version": "mq-mcp.stability.v1",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "requirements": [
     {
       "name": "stable_server_startup",
