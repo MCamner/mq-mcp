@@ -313,3 +313,50 @@ def test_ctrl_c_cancels_name_entry_as_a_key():
         assert term.settings_restored()
     finally:
         term.close(thread)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
+def test_frame_is_drawn_only_after_echo_is_off():
+    """Keys typed the moment the frame appears must not be echoed.
+
+    The terminal used to switch to cbreak only after the frame was drawn. A
+    name typed in that gap was echoed by the line discipline, and its Enter
+    moved the cursor a row down, so erasing the frame left its top border
+    behind. The output stream records the terminal mode at each write, so
+    the check does not depend on winning a race.
+    """
+    term = _Pty()
+    termios = term.termios
+    modes_at_frame = []
+
+    class RecordingOut:
+        def write(self, data):
+            if "╭" in data:
+                modes_at_frame.append(termios.tcgetattr(term.slave)[3])
+            return term.writer.write(data)
+
+        def flush(self):
+            term.writer.flush()
+
+        def isatty(self):
+            return True
+
+    result = []
+    thread = threading.Thread(
+        target=lambda: result.append(naming.prompt_chat_name(
+            term.reader, RecordingOut(), interactive=True, read_line=read_line
+        )),
+        daemon=True,
+    )
+    thread.start()
+    try:
+        assert term.wait_until_reading_keys()
+        term.type(b"Ada\r")
+        thread.join(5)
+        assert result == ["Ada"]
+        assert modes_at_frame, "the frame was never drawn"
+        for lflag in modes_at_frame:
+            assert not lflag & (termios.ECHO | termios.ICANON | termios.ISIG)
+        assert term.settings_restored()
+    finally:
+        term.close(thread)
