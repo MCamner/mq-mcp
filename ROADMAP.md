@@ -35,9 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-Released:  v2.1.0  Bridget Runtime and Evidence Integrity
-On main:   brain ingress provenance, repo-context evidence as verified
-           evidence (ADR-008), and the recovered vector-store skill —
+Released:  v2.2.0  Evidence, contracts and learn hardening (2026-10-24)
+On main:   HTTP diagnostics stay responsive during blocking tools (#125) —
            unreleased
 Next:      undecided — no scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
@@ -46,10 +45,11 @@ Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 Active backlog summary:
 
 ```text
-Size:      medium-large, but concentrated
+Size:      small; most planned work has shipped
 Now:       nothing committed
-Next:      Bridget context awareness, learn-loop preview, and delegation hints
-Done:      repo-context evidence hardening (ADR-008)
+Next:      candidate — Bridget Phase 7: decide from usage metrics whether
+           sessions, lessons, CodeGraph lookups and delegation are used
+Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6
 Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,
            CodeGraph-as-producer, promotion scoring/merge logic
@@ -70,7 +70,7 @@ has actually been released.
 
 Completed foundation:
 
-* local MCP server with 130 tools across safety classes A–D and review engine tools
+* local MCP server with 139 tools across safety classes A–D and review engine tools
 * OpenAI/MCP bridge
 * repo-scoped file tools with path boundary enforcement
 * system resource tools
@@ -270,8 +270,8 @@ This is not a problem to solve. It is a tension to design.
 | v1.11.0 | Ollama-backed learn extraction hardening    | Done          |
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
 | v2.1.0  | Bridget Runtime and Evidence Integrity      | Done                                 |
-| v2.2.0  | mq-learn integration                        | Partial; re-scope                    |
-| v1.12.0 | Repo-context evidence hardening             | Done; landed unversioned under ADR-008 |
+| v2.2.0  | Evidence, contracts and learn hardening     | Done                                 |
+| v1.12.0 | Repo-context evidence hardening             | Done; shipped in v2.2.0 (ADR-008)    |
 
 ---
 
@@ -462,7 +462,7 @@ Non-goals:
 
 ---
 
-## In progress: mq-learn integration (legacy target: v2.2.0)
+## Partial: mq-learn integration (core shipped through v2.2.0)
 
 Current implementation note:
 
@@ -480,7 +480,7 @@ Current implementation note:
 Göra `mq-learn` mer värdefull genom att flytta implementationen till rätt plats i
 stacken och koppla den korrekt till review-pipeline, repo-kontext och Obsidian.
 
-`mq-learn:latest` är Llama 3.2 + custom Modelfile/systemprompt.
+`mq-learn:latest` bygger sedan v2.2.0 på `qwen3.5:9b` + custom Modelfile/systemprompt.
 Den är byggd för att omvandla review findings till strukturerade learning records
 i JSON. Den ska inte svara på fria frågor — bara göra detta:
 
@@ -1714,30 +1714,20 @@ Every powerful tool must have:
 
 ## Current recommended next step
 
-Work on:
+No scope is committed. Repo-context evidence hardening (ADR-008), the Bridget
+interactive session foundation, CG-2.1/CG-2.2, the learn extractor and Bridget
+v2 Phases 0-6 have shipped. Do not rebuild them under their old version labels.
 
-```text
-repo-context evidence hardening
-```
-
-The Bridget interactive session foundation, CG-2.1 co-change, CG-2.2 graph
-snapshots, and the core Ollama-backed learn extractor are implemented. Do not
-rebuild those milestones under their old version labels.
-
-The learn contract consolidation is complete: live refusal behavior is checked,
-the MCP tools are documented as the public surface, and the separate CLI plan
-is removed. The next bounded work is to:
-
-1. define a freshness policy for repo-signal evidence (`generated_at`)
-2. expose context provenance in the human-readable MCP preview
-3. evaluate a read-only git fallback when repo-signal exports are unavailable
+The open candidate is Bridget Phase 7: use the Phase 6 usage metrics
+(`bridget --dashboard`) to decide whether sessions, lessons, CodeGraph lookups
+and delegation are used before adding more memory or surface.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
 
 ---
 
-## Runtime Truth + Safety Governance
+## Runtime Truth + Safety Governance (done — historical)
 
 Goal: evolve `mq-mcp` from a local MCP lab into a stable, verifiable, and safe local control plane for the MQ ecosystem.
 
@@ -2109,14 +2099,14 @@ Graph data ≠ observation evidence.
 
 Status legend: `(done)` shipped · `(partial)` fragment exists · `(planned)` not started.
 
-### Phase 0 — Boundaries and principles (partial)
+### Phase 0 — Boundaries and principles (done)
 
 Make the architectural boundaries explicit as an ADR: Bridget stores context; mqobsidian stores knowledge; mq-agent plans; CodeGraph provides context. Conversation history is context, not evidence; session logs never promote themselves; Bridget may *suggest* learning but never writes learning autonomously; graph data is not observation evidence.
 
 * [x] ADR documenting the four boundaries
 * [x] Principles recorded in this roadmap and the orchestration-boundary docs
 
-### Phase 1 — Close the learn loop (planned)
+### Phase 1 — Close the learn loop (done)
 
 Make learning a natural part of conversations. The `learn_*` tools already exist server-side (`learn_from_review`, `learn_from_diff`, `learn_extract_from_last_review`); this wires them into the Bridget CLI with an approval gate.
 
@@ -2125,7 +2115,7 @@ Make learning a natural part of conversations. The `learn_*` tools already exist
 * [x] Learning provenance (`learning_origin: user | bridget | review | diff`)
 * [x] Context-aware lesson injection (filter by repo / risk / file / task; bound prompt growth)
 
-### Phase 2 — Working memory (mostly done)
+### Phase 2 — Working memory (done)
 
 Remember recent conversations without becoming a knowledge system. `bridget_context.py` already keeps a rolling session window (currently `~/.mq/bridget-context.md`).
 
@@ -2136,12 +2126,12 @@ Remember recent conversations without becoming a knowledge system. `bridget_cont
 * [x] Bounded injection (≤3 sessions, ≤500 chars each, ≤7 days)
 * [x] Never persist API keys / secrets / credentials
 
-### Phase 2.5 — Memory boundary (planned)
+### Phase 2.5 — Memory boundary (done)
 
 * [x] Document that sessions are temporary, never auto-promote, never count as evidence, may only *suggest* learning
 * [x] No hidden persistence
 
-### Phase 3 — Context awareness (partial)
+### Phase 3 — Context awareness (done)
 
 Bridget starts informed.
 
@@ -2150,7 +2140,7 @@ Bridget starts informed.
 * [x] `bridget --project <repo>` persistent session context
 * [x] `bridget --continue` (last project / branch / changed files / recent review)
 
-### Phase 3.5 — CodeGraph awareness (partial)
+### Phase 3.5 — CodeGraph awareness (done)
 
 Use CodeGraph as context only — never a producer (no CodeGraph → memory-observation.v1). `--search` / `--search-global` already provide semantic repo search.
 
@@ -2160,7 +2150,7 @@ Use CodeGraph as context only — never a producer (no CodeGraph → memory-obse
 * [x] Hotspots / call-graph search
 * [x] Graph snapshot and diff queries (`--snapshot`, `--graph-diff`)
 
-### Phase 4 — Delegation to mq-agent (mostly done)
+### Phase 4 — Delegation to mq-agent (done)
 
 Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint delegating to `mq-agent workflow`; holds no state, selects no tools).
 
@@ -2168,21 +2158,21 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 * [x] Auto-suggest delegation for multi-step / cross-repo / complex tasks
 * [x] `docs/bridget-agent-boundary.md` (Bridget = 1–5 steps, local execution; mq-agent = planning, cross-repo, long-running)
 
-### Phase 5 — Terminal presence (partial)
+### Phase 5 — Terminal presence (done)
 
 * [x] Voice mode (`--voice-on`, `bridget_voice.py`); spinner during thinking
 * [x] Status indicators (thinking / responding / approval)
 * [x] `bridget --quiet` (no visual effects)
 
-### Phase 6 — Real usage metrics (planned)
+### Phase 6 — Real usage metrics (done)
 
 * [x] Capture commands / sessions / delegations / learning-suggestions per day
 * [x] Accepted-learning, history-hit, context-hit counts
 * [x] Simple dashboard (helped / delegated / suggested / accepted)
 
-### Phase 7 — Long-term validation (planned)
+### Phase 7 — Long-term validation (partial)
 
-* [x] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [ ] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 
 ### Recommended build order
@@ -2208,7 +2198,7 @@ items do not count as current work.
 
 ---
 
-**Priorities**
+**Priorities (historical — from the Runtime Truth phase, all done)**
 
 Do first: fix CI failure → sync VERSION/README/CHANGELOG/GitHub release → add `scripts/check-runtime-truth.sh` → wire it into `scripts/validate.sh` → verify tool count and `docs/TOOL_SAFETY.md` against runtime.
 
