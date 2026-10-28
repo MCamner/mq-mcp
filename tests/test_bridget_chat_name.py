@@ -5,8 +5,10 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import select
 import threading
+import time
 
 import pytest
 
@@ -23,6 +25,8 @@ SPEC.loader.exec_module(naming)
 def fixed_terminal_width(monkeypatch):
     """Box width follows the terminal; pin it so assertions are stable."""
     monkeypatch.setenv("COLUMNS", "80")
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("TERM", "xterm-256color")
 
 
 def read_line(stream, out):
@@ -37,12 +41,14 @@ def test_welcome_box_and_custom_name():
     )
     assert name == "Calzone"
     rendered = out.getvalue()
-    assert "Välkommen" in rendered
-    assert "Vad heter du?" in rendered
-    assert rendered.startswith("╭")
-    assert "\r│ » Calzone" in rendered
-    assert rendered.endswith("╰" + "─" * 72 + "╯\n")
-    assert all(len(row) == 74 for row in rendered.splitlines()[:5])
+    rows = rendered.replace("\r", "\n").splitlines()
+    assert rendered.startswith("╭─ ◉‿◉ Bridget ─")
+    assert "Hej. Vem pratar jag med?" in rendered
+    assert any(row.startswith("│  › Calzone ") and row.endswith(" 7/32 │") for row in rows)
+    assert rows[-1].startswith("╰─ ↵ fortsätt · ctrl-c avbryt ─")
+    assert rows[-1].endswith("─╯")
+    assert all(len(row) == 74 for row in rows if row.startswith(("╭", "│", "╰")) and not row.endswith("› "))
+    assert "\x1b" not in rendered  # test streams are not terminals: no colour
 
 
 def test_welcome_box_matches_session_card_width(monkeypatch):
@@ -50,7 +56,7 @@ def test_welcome_box_matches_session_card_width(monkeypatch):
     monkeypatch.setenv("COLUMNS", "60")
     out = io.StringIO()
     naming.prompt_chat_name(io.StringIO("Anna\n"), out, interactive=True, read_line=read_line)
-    assert all(len(row) == 58 for row in out.getvalue().splitlines()[:5])
+    assert all(len(row) == 58 for row in out.getvalue().splitlines()[:4])
 
 
 def test_empty_name_reprompts_without_eating_turn():
@@ -59,7 +65,7 @@ def test_empty_name_reprompts_without_eating_turn():
     assert naming.prompt_chat_name(stream, out, interactive=True, read_line=read_line) == "Anna"
     assert stream.readline() == "hello Bridget\n"
     assert "Skriv ett namn" in out.getvalue()
-    assert out.getvalue().count("│ » ") == 4
+    assert out.getvalue().count("│  › ") == 4
 
 
 def test_noninteractive_does_not_consume_piped_chat():
@@ -145,66 +151,165 @@ def test_wide_characters_fit_inside_frame():
         io.StringIO("界" * 40 + "\n"), io.StringIO(), interactive=True, read_line=read_line
     )
     assert result is not None
-    assert naming._terminal_width(result) <= 68
+    assert naming._terminal_width(result) <= 72 - 13
     assert naming._terminal_width(naming._entry_row(result)) == 74
+    assert naming._terminal_width(naming._entry_row(result, cursor=True)) == 74
 
 
-@pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
-def test_real_tty_typing_stays_within_box_and_restores_terminal():
-    import pty
-    import termios
+class _Pty:
+    """A pseudo-terminal whose output is drained continuously.
 
-    master, slave = pty.openpty()
-    reader = os.fdopen(os.dup(slave), "r", encoding="utf-8", buffering=1)
-    writer = os.fdopen(os.dup(slave), "w", encoding="utf-8", buffering=1)
-    original = termios.tcgetattr(slave)
-    result = []
-    errors = []
+    Linux keeps only a few KB of unread pty output. A writer that fills it
+    blocks, and closing its file from the test thread then hangs the session,
+    which is how CI stalled. Draining in the background and running the
+    prompt on a daemon thread turns any failure into an assertion, not a hang.
+    """
 
-    def run():
-        try:
-            result.append(naming.prompt_chat_name(
-                reader, writer, interactive=True, read_line=read_line
-            ))
-        except Exception as exc:
-            errors.append(exc)
+    def __init__(self):
+        import pty
+        import termios
 
-    thread = threading.Thread(target=run)
-    try:
-        thread.start()
-        found = b""
-        # Wait for the cursor-positioning sequence, which is emitted after
-        # the welcome box is fully drawn and the name input row is selected.
-        for _ in range(30):
-            ready, _, _ = select.select([master], [], [], 0.1)
-            if ready:
-                found += os.read(master, 4096)
-            if b"\x1b[2A" in found:
-                break
-        assert b"\x1b[2A" in found
-        os.write(master, "Calzoen\x7f\x7fne\n".encode("utf-8"))
-        thread.join(3)
-        assert not thread.is_alive()
-        assert not errors
-        assert result == ["Calzone"]
-        while select.select([master], [], [], 0.05)[0]:
-            found += os.read(master, 4096)
-        assert "│ » Calzone".encode() in found
-        assert "╰".encode() in found
-        restored = termios.tcgetattr(slave)
+        self.termios = termios
+        self.master, self.slave = pty.openpty()
+        self.reader = os.fdopen(os.dup(self.slave), "r", encoding="utf-8", buffering=1)
+        self.writer = os.fdopen(os.dup(self.slave), "w", encoding="utf-8", buffering=1)
+        self.original = termios.tcgetattr(self.slave)
+        self._data = bytearray()
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._drainer = threading.Thread(target=self._drain, daemon=True)
+        self._drainer.start()
+
+    def _drain(self):
+        while not self._stop.is_set():
+            if select.select([self.master], [], [], 0.05)[0]:
+                try:
+                    chunk = os.read(self.master, 4096)
+                except OSError:
+                    return
+                with self._lock:
+                    self._data += chunk
+
+    def output(self) -> bytes:
+        with self._lock:
+            return bytes(self._data)
+
+    def wait_for(self, predicate, timeout=5.0) -> bool:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if predicate():
+                return True
+            time.sleep(0.02)
+        return predicate()
+
+    def wait_until_reading_keys(self) -> bool:
+        """True once the prompt has switched to cbreak with ISIG off."""
+        flags = self.termios.ICANON | self.termios.ISIG
+        return self.wait_for(lambda: not (self.termios.tcgetattr(self.slave)[3] & flags))
+
+    def type(self, data: bytes):
+        os.write(self.master, data)
+
+    def settings_restored(self) -> bool:
+        restored = self.termios.tcgetattr(self.slave)
+        original = list(self.original)
         # BSD/macOS may set PENDIN while returning from cbreak to canonical
         # input when bytes were queued on the pseudo-terminal. PENDIN is
         # kernel-maintained pending-input state, not a mode chosen by Bridget;
         # compare every stable terminal setting while ignoring only that bit.
-        transient = getattr(termios, "PENDIN", 0)
+        transient = getattr(self.termios, "PENDIN", 0)
         restored[3] &= ~transient
         original[3] &= ~transient
-        assert restored == original
-    finally:
+        return restored == original
+
+    def run_prompt(self):
+        result, errors = [], []
+
+        def run():
+            try:
+                result.append(naming.prompt_chat_name(
+                    self.reader, self.writer, interactive=True, read_line=read_line
+                ))
+            except Exception as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        return thread, result, errors
+
+    def close(self, thread):
         if thread.is_alive():
-            os.write(master, b"\x04")
+            os.write(self.master, b"\x04")
             thread.join(1)
-        reader.close()
-        writer.close()
-        os.close(master)
-        os.close(slave)
+        if not thread.is_alive():
+            # Closing a file another thread is blocked on would hang.
+            self.reader.close()
+            self.writer.close()
+        self._stop.set()
+        self._drainer.join(1)
+        os.close(self.master)
+        os.close(self.slave)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
+def test_real_tty_typing_stays_within_box_and_restores_terminal():
+    term = _Pty()
+    thread, result, errors = term.run_prompt()
+    try:
+        assert term.wait_until_reading_keys()
+        found = term.output()
+        assert found.startswith(b"\x1b[?25l")  # real cursor hidden while typing
+        assert b"\x1b[3A" in found
+        assert "skriv ditt namn".encode() in found
+        term.type("Calzoen\x7f\x7fne\n".encode("utf-8"))
+        thread.join(5)
+        assert not thread.is_alive()
+        assert not errors
+        assert result == ["Calzone"]
+        # The frame is erased so the session card can take its place,
+        # and the terminal cursor is shown again.
+        assert term.wait_for(lambda: term.output().endswith(b"\r\x1b[4A\x1b[J\x1b[?25h"))
+        plain = re.sub(rb"\x1b\[[0-9;]*m", b"", term.output())
+        assert "› Calzone█".encode() in plain
+        assert "╰─ ".encode() in plain
+        assert term.settings_restored()
+    finally:
+        term.close(thread)
+
+
+def test_entry_row_shows_placeholder_only_while_empty():
+    empty = naming._entry_row("", cursor=True)
+    assert "› █ skriv ditt namn" in empty
+    assert empty.endswith(" 0/32 │")
+    typed = naming._entry_row("Ada", cursor=True)
+    assert "› Ada█" in typed and "skriv ditt namn" not in typed
+
+
+def test_colour_rows_keep_the_frame_width():
+    row = naming._entry_row("Ada", color=True, cursor=True)
+    assert "\x1b[" in row
+    assert naming._terminal_width(naming._ANSI_ESCAPE.sub("", row)) == 74
+    assert len(naming._ANSI_ESCAPE.sub("", naming._title_border(True))) == 74
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
+def test_ctrl_c_cancels_name_entry_as_a_key():
+    """Ctrl-C must reach the reader as a byte, not as SIGINT.
+
+    Under asyncio, SIGINT only schedules a task cancellation while the blocking
+    read restarts, so the operator was stuck at the prompt. With ISIG off, the
+    reader sees 0x03 and cancels; the cursor is shown again.
+    """
+    term = _Pty()
+    thread, result, errors = term.run_prompt()
+    try:
+        assert term.wait_until_reading_keys()
+        term.type(b"Ada\x03")
+        thread.join(5)
+        assert not thread.is_alive()
+        assert not errors
+        assert result == [None]
+        assert term.wait_for(lambda: term.output().endswith(b"\x1b[3B\r\x1b[?25h"))
+        assert term.settings_restored()
+    finally:
+        term.close(thread)
