@@ -19,6 +19,12 @@ naming = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(naming)
 
 
+@pytest.fixture(autouse=True)
+def fixed_terminal_width(monkeypatch):
+    """Box width follows the terminal; pin it so assertions are stable."""
+    monkeypatch.setenv("COLUMNS", "80")
+
+
 def read_line(stream, out):
     line = stream.readline()
     return None if line == "" else line.strip()
@@ -35,8 +41,16 @@ def test_welcome_box_and_custom_name():
     assert "Vad heter du?" in rendered
     assert rendered.startswith("╭")
     assert "\r│ » Calzone" in rendered
-    assert rendered.endswith("╰" + "─" * 62 + "╯\n")
-    assert all(len(row) == 64 for row in rendered.splitlines()[:5])
+    assert rendered.endswith("╰" + "─" * 72 + "╯\n")
+    assert all(len(row) == 74 for row in rendered.splitlines()[:5])
+
+
+def test_welcome_box_matches_session_card_width(monkeypatch):
+    """The welcome frame and the Bridget card share one outer width."""
+    monkeypatch.setenv("COLUMNS", "60")
+    out = io.StringIO()
+    naming.prompt_chat_name(io.StringIO("Anna\n"), out, interactive=True, read_line=read_line)
+    assert all(len(row) == 58 for row in out.getvalue().splitlines()[:5])
 
 
 def test_empty_name_reprompts_without_eating_turn():
@@ -131,8 +145,8 @@ def test_wide_characters_fit_inside_frame():
         io.StringIO("界" * 40 + "\n"), io.StringIO(), interactive=True, read_line=read_line
     )
     assert result is not None
-    assert naming._terminal_width(result) <= 58
-    assert naming._terminal_width(naming._entry_row(result)) == 64
+    assert naming._terminal_width(result) <= 68
+    assert naming._terminal_width(naming._entry_row(result)) == 74
 
 
 @pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
