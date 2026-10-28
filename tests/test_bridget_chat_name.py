@@ -257,6 +257,8 @@ def test_real_tty_typing_stays_within_box_and_restores_terminal():
     thread, result, errors = term.run_prompt()
     try:
         assert term.wait_until_reading_keys()
+        # The frame is drawn just after the mode switch; wait for it too.
+        assert term.wait_for(lambda: b"\x1b[3A" in term.output())
         found = term.output()
         assert found.startswith(b"\x1b[?25l")  # real cursor hidden while typing
         assert b"\x1b[3A" in found
