@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 139,
+  "tool_count": 140,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1506,6 +1506,29 @@
         }
       ],
       "signature_sha256": "12f25a76e2e1764c7b7bee32482075ae6bc33404065f24a2a7e91c3d1e497274"
+    },
+    {
+      "name": "quit_app",
+      "safety_class": "D",
+      "write": false,
+      "subprocess": true,
+      "parameters": [
+        {
+          "name": "app_name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        },
+        {
+          "name": "force",
+          "type": [
+            "boolean"
+          ],
+          "required": false
+        }
+      ],
+      "signature_sha256": "1bfb0da87511d449d3800596597cfbdfee75503aab09ba9b4610a10553f43209"
     },
     {
       "name": "read_repo_file",

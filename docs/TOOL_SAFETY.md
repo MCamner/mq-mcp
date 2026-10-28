@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 138 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 140 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,7 +30,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
 Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 43 of 138 tools are
+operator to dismiss the prompt unread. As classified today, 44 of 140 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -206,6 +206,7 @@ These tools invoke external processes or open applications. Review carefully bef
 | `set_volume` | Set macOS output volume (0–100) via osascript | Access files |
 | `toggle_dark_mode` | Toggle macOS dark/light mode via osascript | Access files |
 | `lock_screen` | Lock the macOS screen via osascript keystroke | Access files |
+| `quit_app` | Quit one running app by process name via System Events + `tell application id … to quit`; `force=True` sends SIGKILL to that single pid if it does not exit within 5s. Name passed as osascript argv, never script text | Quit Finder, Dock, loginwindow, SystemUIServer or WindowServer; signal any pid other than the one System Events reported; quit by path |
 | `create_note` | Create a new note in Notes.app via osascript | Arbitrary note content; cannot read back |
 | `set_reminder` | Create a reminder in Reminders.app via osascript | Arbitrary reminder content |
 | `set_wallpaper` | Set macOS desktop wallpaper via osascript | Accepts any absolute image path |
@@ -220,7 +221,7 @@ These tools invoke external processes or open applications. Review carefully bef
 | `run_mqlaunch_bundle` | Run `mqlaunch bundle` — debug bundle (TUI; bundle NOT created headless) | Arbitrary file writes |
 | `run_mqlaunch_ask` | Ask mqlaunch a question (requires OPENAI_API_KEY; clipboard fallback otherwise) | Write files; falls back silently without API key |
 
-Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal, run_tests), fixed allowlist (hal_repo_report), validated URL prefix (open_url, open_chrome), validated app name (open_app), no resolver (open_messages, show_notification, speak_text, set_volume, toggle_dark_mode, lock_screen, create_note, set_reminder, set_wallpaper), open path (open_terminal, open_vscode, open_finder, take_screenshot, find_large_files, find_recent_files, get_public_ip)
+Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validate_project, run_mqlaunch), MQ_MCP_LOCAL_REPOS (open_repo_terminal, run_tests), fixed allowlist (hal_repo_report), validated URL prefix (open_url, open_chrome), validated app name (open_app), no resolver (open_messages, show_notification, speak_text, set_volume, toggle_dark_mode, lock_screen, quit_app, create_note, set_reminder, set_wallpaper), open path (open_terminal, open_vscode, open_finder, take_screenshot, find_large_files, find_recent_files, get_public_ip)
 
 ---
 
@@ -291,6 +292,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `set_volume` | D | none | No | Yes |
 | `toggle_dark_mode` | D | none | No | Yes |
 | `lock_screen` | D | none | No | Yes |
+| `quit_app` | D | name validation + protected-process denylist | No | Yes |
 | `create_note` | D | none | No | Yes |
 | `set_reminder` | D | none | No | Yes |
 | `set_wallpaper` | D | open path | No | Yes |

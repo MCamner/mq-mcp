@@ -13,6 +13,7 @@ import re
 import os
 import sys
 import shlex
+import signal
 import time
 import threading
 from pathlib import Path
@@ -1704,6 +1705,110 @@ def list_running_apps() -> str:
         return "Running apps:\n" + "\n".join(f"- {a}" for a in sorted(apps))
     except Exception as exc:
         return f"Could not list running apps: {exc}"
+
+
+# Quitting these logs the user out, blanks the screen or respawns them at once.
+_QUIT_PROTECTED = frozenset({"Dock", "Finder", "loginwindow", "SystemUIServer", "WindowServer"})
+_QUIT_WAIT_SECONDS = 5.0
+
+# The app name is passed as argv, never interpolated into script text.
+_FIND_APP_PROCESS = (
+    "on run argv",
+    'tell application "System Events"',
+    "set found to (processes whose name is (item 1 of argv))",
+    'if found is {} then return ""',
+    'return ((unix id of item 1 of found) as text) & tab & (bundle identifier of item 1 of found)',
+    "end tell",
+    "end run",
+)
+_QUIT_BY_BUNDLE = ("on run argv", "tell application id (item 1 of argv) to quit", "end run")
+
+
+def _osascript(lines: tuple[str, ...], *args: str) -> subprocess.CompletedProcess:
+    cmd = ["osascript"]
+    for line in lines:
+        cmd += ["-e", line]
+    return subprocess.run(
+        cmd + ["--", *args], capture_output=True, text=True, check=False, timeout=15,
+    )
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _wait_for_exit(pid: int) -> bool:
+    deadline = time.monotonic() + _QUIT_WAIT_SECONDS
+    while _pid_alive(pid):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.1)
+    return True
+
+
+@mcp.tool()
+def quit_app(app_name: str, force: bool = False) -> str:
+    """Quit one running macOS application by its exact process name.
+
+    Class D — ends a process; unsaved work in that app can be lost. Bridget
+    asks for approval before every call. Asks the app to quit normally; with
+    force=True, an app that does not exit within a few seconds is killed
+    (SIGKILL to the single pid System Events reported, like Force Quit).
+    Finder, Dock, loginwindow, SystemUIServer and WindowServer are refused.
+
+    Args:
+        app_name: Process name as shown by list_running_apps, e.g. 'Spotify'.
+        force: Kill the app if it does not quit normally. Default False.
+
+    Returns:
+        JSON: {"status": "quit|not_running|failed", "app_name", "force", "message"}.
+    """
+    def reply(status: str, message: str) -> str:
+        return json.dumps(
+            {"status": status, "app_name": app_name, "force": force, "message": message},
+            ensure_ascii=False,
+        )
+
+    name = (app_name or "").strip()
+    if not name or "/" in name or len(name) > 100 or not name.isprintable():
+        return reply("failed", "Invalid app name.")
+    if name in _QUIT_PROTECTED:
+        return reply("failed", f"{name} is a protected system process and is not quit.")
+
+    try:
+        found = _osascript(_FIND_APP_PROCESS, name)
+        if found.returncode != 0:
+            return reply("failed", f"Could not look up {name}: {found.stderr.strip()}")
+        if not found.stdout.strip():
+            return reply("not_running", f"{name} is not running.")
+        pid_text, _, bundle_id = found.stdout.strip().partition("\t")
+        pid = int(pid_text)
+
+        if bundle_id and bundle_id != "missing value":
+            quit_result = _osascript(_QUIT_BY_BUNDLE, bundle_id)
+            if quit_result.returncode == 0 and _wait_for_exit(pid):
+                return reply("quit", f"{name} quit.")
+            detail = quit_result.stderr.strip() or "it did not exit in time"
+        else:
+            detail = "it has no bundle identifier to address"
+
+        if not force:
+            return reply("failed", f"{name} did not quit: {detail}. Retry with force=True to kill it.")
+        _LOG.warning("quit_app force-killing app=%r pid=%s", name, pid)
+        os.kill(pid, signal.SIGKILL)
+        if _wait_for_exit(pid):
+            return reply("quit", f"{name} force-quit.")
+        return reply("failed", f"{name} is still running after SIGKILL.")
+    except subprocess.TimeoutExpired:
+        return reply("failed", f"Timed out talking to {name}.")
+    except (ValueError, OSError) as exc:
+        return reply("failed", f"Could not quit {name}: {exc}")
 
 
 @mcp.tool()
