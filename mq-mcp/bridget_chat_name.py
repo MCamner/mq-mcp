@@ -134,9 +134,14 @@ def _draw_tty_entry(out: Any, value: str, color: bool) -> None:
     out.flush()
 
 
-def _read_tty_name(stream: Any, out: Any, color: bool = False) -> str | None:
+def _read_tty_name(
+    stream: Any, out: Any, color: bool = False, draw: Callable[[], None] = lambda: None
+) -> str | None:
     """Read keys without terminal echo so the input cannot overwrite the frame.
 
+    `draw` runs only once echo is off: a name typed the moment the frame
+    appears would otherwise be echoed, and its Enter would move the cursor a
+    row down so the frame could no longer be erased cleanly.
     All terminal settings are restored, including on Ctrl-C or an exception.
     Editing is deliberately limited to printable characters and Backspace.
     """
@@ -153,6 +158,7 @@ def _read_tty_name(stream: Any, out: Any, color: bool = False) -> str | None:
         mode = termios.tcgetattr(fd)
         mode[3] &= ~termios.ISIG
         termios.tcsetattr(fd, termios.TCSANOW, mode)
+        draw()
         while True:
             try:
                 char = stream.read(1)
@@ -204,11 +210,13 @@ def prompt_chat_name(
     )
     color = tty_mode and "NO_COLOR" not in os.environ and os.getenv("TERM") != "dumb"
     while True:
-        _draw_welcome(out, complete=tty_mode, color=color)
         if tty_mode:
             raw = None
             try:
-                raw = _read_tty_name(stream, out, color)
+                raw = _read_tty_name(
+                    stream, out, color,
+                    draw=lambda: _draw_welcome(out, complete=True, color=color),
+                )
             finally:
                 if raw is None:
                     # Cancelled: leave the frame and move below its border.
@@ -219,6 +227,7 @@ def prompt_chat_name(
                 out.write(_SHOW_CURSOR)
                 out.flush()
         else:
+            _draw_welcome(out, complete=False)
             raw = read_line(stream, out)
             name = _normalize_name(raw) if raw is not None else ""
             out.write("\r" + _entry_row(name) + "\n")
