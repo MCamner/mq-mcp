@@ -64,6 +64,11 @@ Hej då.
 
 Notes:
 
+* Interactive terminals use a compact Bridget header, cyan operator prompt,
+  open amber-labelled responses, and a model/context strip before each prompt.
+  The strip scrolls with the conversation; it is not a fixed fullscreen footer.
+* Tool activity shows the running tool and then `klart` or `misslyckades`.
+  `NO_COLOR` disables colors. Piped input retains its existing text format.
 * One MCP session and one system message stay alive for the whole session;
   tools are discovered once at start.
 * Context is bounded automatically for long sessions (oldest turns are trimmed;

@@ -9,15 +9,15 @@ ANSI control bytes.
 from __future__ import annotations
 
 import re
-import textwrap
+import shutil
 import unicodedata
 from collections.abc import Iterable
 
 BOX_WIDTH = 62
 _ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-_AMBER = "\x1b[33m"
-_CYAN = "\x1b[36m"
-_GREEN = "\x1b[32m"
+_AMBER = "\x1b[38;2;255;190;98m"
+_CYAN = "\x1b[38;2;132;191;196m"
+_RED = "\x1b[38;2;240;128;128m"
 _DIM = "\x1b[2m"
 _RESET = "\x1b[0m"
 
@@ -62,12 +62,20 @@ def _row(value: str = "", *, width: int = BOX_WIDTH) -> str:
 
 
 def _title_border(title: str, *, width: int = BOX_WIDTH) -> str:
-    label = f"─ {title} "
+    label = _truncate(f"─ {title} ", width)
     return "╭" + label + "─" * max(0, width - terminal_width(label)) + "╮"
 
 
 def _bottom_border(*, width: int = BOX_WIDTH) -> str:
     return "╰" + "─" * width + "╯"
+
+
+def _console_width() -> int:
+    return max(12, min(74, shutil.get_terminal_size((80, 24)).columns - 2))
+
+
+def _tint(value: str, shade: str, color: bool) -> str:
+    return f"{shade}{value}{_RESET}" if color else value
 
 
 def render_session_card(
@@ -79,36 +87,21 @@ def render_session_card(
     branch: str | None = None,
     color: bool = False,
 ) -> str:
-    """Render the reveal card shown after MCP session initialization."""
-    face = "◉‿◉"
-    online = "ONLINE"
-    ready = "READY"
-
-    location = _safe(project or "ingen vald")
+    """Compact session header; terminal background belongs to the operator."""
+    width = _console_width()
+    location = project or "ingen vald"
     if branch:
-        location += "/" + _safe(branch)
+        location += "/" + branch
     lines = [
-        _title_border("BRIDGET"),
-        _row(f"{face}  Hej {_safe(name)}."),
-        _row(),
-        _row(f"MCP ........ {online}"),
-        _row(f"Memory ..... {ready}"),
-        _row(f"Tools ...... {tool_count}"),
-        _row(f"Model ...... {_safe(model)}"),
-        _row(f"Repo ....... {location}"),
-        _row(),
-        _row("Session initialized  •  /help visar kommandon"),
-        _bottom_border(),
+        _title_border("◉‿◉ Bridget", width=width - 2),
+        _row(f"{location}   ● MCP ansluten", width=width - 2),
+        _bottom_border(width=width - 2),
+        _truncate(f"Hej {name}.  {model}  ·  {tool_count} verktyg  ·  /help", width),
     ]
-    card = "\n".join(lines) + "\n"
     if color:
-        # Colour only after all width-sensitive framing is complete. Dynamic
-        # values are already sanitized, and escape bytes must not be counted as
-        # terminal columns or stripped by the row helpers.
-        card = card.replace("◉‿◉", f"{_AMBER}◉‿◉{_RESET}", 1)
-        card = card.replace("ONLINE", f"{_GREEN}ONLINE{_RESET}", 1)
-        card = card.replace("READY", f"{_GREEN}READY{_RESET}", 1)
-    return card
+        lines[0] = lines[0].replace("◉‿◉ Bridget", _tint("◉‿◉ Bridget", _AMBER, True))
+        lines[1] = lines[1].replace("●", _tint("●", _CYAN, True), 1)
+    return "\n".join(lines) + "\n"
 
 
 def render_hud(
@@ -118,21 +111,32 @@ def render_hud(
     tool_count: int,
     context_percent: int,
     color: bool = False,
+    model: str = "",
 ) -> str:
-    """Render the compact one-line state bar shown before each prompt."""
-    repo = _safe(project or "no-project")
-    if branch:
-        repo += "/" + _safe(branch)
-    dot = "●"
-    text = (
-        f"─ {_truncate(repo, 22)} ── {dot} MCP ── tools:{tool_count} "
-        f"── ctx:{max(0, min(100, context_percent))}% ─"
-    )
-    text = _truncate(text, BOX_WIDTH)
-    hud = "╭" + _pad(text, BOX_WIDTH) + "╮\n"
+    """Status strip printed before input, preserving native scrollback."""
+    width = _console_width()
+    percent = max(0, min(100, context_percent))
+    filled = round(percent * 8 / 100)
+    bar = "▰" * filled + "▱" * (8 - filled)
+    state = f"Kontext {bar} {percent}%"
+    left = _truncate(model or project or "Bridget", max(4, width - len(state) - 12))
+    text = _truncate(f"{left}   {state}   /help", width)
     if color:
-        hud = hud.replace("●", f"{_GREEN}●{_RESET}", 1)
-    return hud
+        text = text.replace(bar, _tint(bar, _AMBER, True))
+    return "\n" + _tint("─" * width, _DIM, color) + "\n" + text + "\n"
+
+
+def render_tool_activity(name: str, *, failed: bool = False, color: bool = False) -> str:
+    """One completed tool result, never treating errors as successes."""
+    status = "✕ misslyckades" if failed else "✓ klart"
+    status = _tint(status, _RED if failed else _CYAN, color)
+    label = _truncate(name, max(4, _console_width() - 24))
+    return f"    └─ {label}  {status}\n"
+
+
+def render_tool_running(name: str, *, color: bool = False) -> str:
+    label = _truncate(name, max(4, _console_width() - 14))
+    return "\r" + _tint("◉_◉", _AMBER, color) + f" Kör {label}…"
 
 
 def render_tool_summary(tool_names: Iterable[str], *, color: bool = False) -> str:
@@ -142,32 +146,34 @@ def render_tool_summary(tool_names: Iterable[str], *, color: bool = False) -> st
         return ""
     shown = names[:3]
     suffix = f" +{len(names) - 3}" if len(names) > 3 else ""
-    check = f"{_GREEN}✓{_RESET}" if color else "✓"
-    return f"{check} tools  " + " → ".join(shown) + suffix + "\n"
+    return "    Anrop: " + ", ".join(shown) + suffix + "\n"
 
 
 def render_response_card(answer: str, *, color: bool = False) -> str:
-    """Render Bridget's answer as a wrapped terminal message card."""
-    sprite = "▚█▞"
-    if color:
-        sprite = f"{_AMBER}{sprite}{_RESET}"
-    lines = [_title_border(f"{sprite} Bridget")]
-    safe_answer = _safe(answer).strip() or "…"
-    for paragraph in safe_answer.splitlines() or [""]:
-        if not paragraph:
-            lines.append(_row())
-            continue
-        wrapped = textwrap.wrap(
-            paragraph,
-            width=BOX_WIDTH - 2,
-            replace_whitespace=False,
-            drop_whitespace=True,
-            break_long_words=True,
-            break_on_hyphens=False,
-        ) or [""]
-        lines.extend(_row(part) for part in wrapped)
-    lines.append(_bottom_border())
-    return "\n".join(lines) + "\n"
+    """Open, column-aware response; preserve indentation and every wide glyph."""
+    width = _console_width() - 4
+    lines = ["", _tint("◉‿◉ Bridget", _AMBER, color)]
+    for paragraph in (_safe(answer).strip("\n") or "…").expandtabs(4).splitlines():
+        while terminal_width(paragraph) > width:
+            end = 0
+            columns = 0
+            for char in paragraph:
+                size = terminal_width(char)
+                if columns + size > width:
+                    break
+                columns += size
+                end += 1
+            # Prefer a word boundary, but never drop an unbroken wide string.
+            space = paragraph.rfind(" ", 0, end + 1)
+            if space > len(paragraph) - len(paragraph.lstrip()):
+                end = space
+                lines.append("    " + paragraph[:end])
+                paragraph = paragraph[end + 1:]
+            else:
+                lines.append("    " + paragraph[:end])
+                paragraph = paragraph[end:]
+        lines.append("    " + paragraph if paragraph else "")
+    return "\n".join(lines) + "\n\n"
 
 
 def render_help_card(*, color: bool = False) -> str:

@@ -649,3 +649,20 @@ def test_overflow_dispatch_and_unknown_target(bridge):
         '{"name":"invented","arguments":{}}'))
     assert result == "Unknown MCP tool."
     assert len(session.tool_calls) == 1
+
+
+@pytest.mark.parametrize("failed", [False, True])
+def test_live_activity_uses_mcp_result_status(bridge, monkeypatch, failed):
+    events = []
+    activity = types.SimpleNamespace(
+        tool_started=lambda name: events.append((name, "running")),
+        tool_finished=lambda name, failed: events.append((name, failed)),
+    )
+    monkeypatch.setattr(bridge, "_SPINNER", activity)
+
+    class Session:
+        async def call_tool(self, name, args):
+            return types.SimpleNamespace(content=[types.SimpleNamespace(text="result")], isError=failed)
+
+    assert asyncio.run(bridge.call_mcp_tool(Session(), "git_status", "{}")) == "result"
+    assert events == [("git_status", "running"), ("git_status", failed)]

@@ -2,18 +2,23 @@
 
 import json
 import re
+import shutil
 import unicodedata
 from typing import Any, Callable
 
 
 _ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 _MAX_NAME_LENGTH = 32
-_BOX_WIDTH = 62
-# Quadrant-block sprites for the operator, and the green that marks them.
-_SPRITE_OPERATOR = "▗█▖"
+# Cyan chevron for interactive input; legacy piped labels stay unchanged.
+_SPRITE_OPERATOR = "›"
 _SPRITE_PIPED = "▙█▟"
 _GREEN = "\x1b[32m"
 _RESET = "\x1b[0m"
+
+
+def _box_width() -> int:
+    """Inner width; the outer frame matches bridget_chat_ui's session card."""
+    return max(12, min(74, shutil.get_terminal_size((80, 24)).columns - 2)) - 2
 
 
 def _normalize_name(raw: str) -> str:
@@ -25,7 +30,7 @@ def _normalize_name(raw: str) -> str:
         if char.isprintable() and not unicodedata.category(char).startswith("C")
     )
     result = " ".join(printable.split())[:_MAX_NAME_LENGTH].strip()
-    while result and _terminal_width(result) > _BOX_WIDTH - 4:
+    while result and _terminal_width(result) > _box_width() - 4:
         result = result[:-1]
     return result
 
@@ -42,21 +47,21 @@ def _terminal_width(value: str) -> int:
 
 def _box_row(value: str) -> str:
     """One padded, framed row; the width is measured in terminal columns."""
-    return "│ " + value + " " * (_BOX_WIDTH - 2 - _terminal_width(value)) + " │"
+    return "│ " + value + " " * (_box_width() - 2 - _terminal_width(value)) + " │"
 
 
 def _entry_row(value: str) -> str:
-    return "│ » " + value + " " * (_BOX_WIDTH - 4 - _terminal_width(value)) + " │"
+    return "│ » " + value + " " * (_box_width() - 4 - _terminal_width(value)) + " │"
 
 
 def _draw_welcome(out: Any, *, complete: bool) -> None:
     """Reserve a line *within* the frame for input, never below the frame."""
-    out.write("╭" + "─" * _BOX_WIDTH + "╮\n")
+    out.write("╭" + "─" * _box_width() + "╮\n")
     for label in ("Välkommen", "", "Vad heter du?", ""):
         out.write(_box_row(label) + "\n")
     if complete:
         out.write(_entry_row("") + "\n")
-        out.write("╰" + "─" * _BOX_WIDTH + "╯\n")
+        out.write("╰" + "─" * _box_width() + "╯\n")
         # From the line below the bottom border, return to the input row.
         out.write("\x1b[2A\r\x1b[4C")
     else:
@@ -103,7 +108,7 @@ def _read_tty_name(stream: Any, out: Any) -> str | None:
             if not char.isprintable() or unicodedata.category(char).startswith("C"):
                 continue
             candidate = typed + char
-            if len(candidate) > _MAX_NAME_LENGTH or _terminal_width(candidate) > _BOX_WIDTH - 4:
+            if len(candidate) > _MAX_NAME_LENGTH or _terminal_width(candidate) > _box_width() - 4:
                 continue
             typed = candidate
             _draw_tty_entry(out, typed)
@@ -143,7 +148,7 @@ def prompt_chat_name(
             raw = read_line(stream, out)
             name = _normalize_name(raw) if raw is not None else ""
             out.write("\r" + _entry_row(name) + "\n")
-            out.write("╰" + "─" * _BOX_WIDTH + "╯\n")
+            out.write("╰" + "─" * _box_width() + "╯\n")
             out.flush()
 
         if raw is None:
@@ -164,14 +169,16 @@ def chat_prompt_label(
 ) -> str:
     """Render the chosen name in a TTY, without changing piped output.
 
-    ``color`` tints the sprite green, and only the sprite: the name keeps the
-    terminal's default colour so it can never be mistaken for Bridget's own
-    amber voice. Callers pass it only once they have confirmed the *output*
-    stream is a terminal, so captured output stays free of escape bytes.
+    Interactive labels use cyan for the chevron and operator name. Piped
+    labels retain their existing format. Callers enable color only when the
+    output stream is a terminal.
     """
     if not interactive:
         return "\nmaster: " if quiet else f"\n{_tint(_SPRITE_PIPED, color)} master: "
-    return f"\n{name}: " if quiet else f"\n{_tint(_SPRITE_OPERATOR, color)} {name}: "
+    return f"\n{name}: " if quiet else (
+        f"\n\x1b[38;2;132;191;196m{_SPRITE_OPERATOR} {name}\x1b[0m: "
+        if color else f"\n{_SPRITE_OPERATOR} {name}: "
+    )
 
 
 def chat_identity_context(name: str) -> str:

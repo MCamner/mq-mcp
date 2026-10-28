@@ -19,6 +19,12 @@ naming = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(naming)
 
 
+@pytest.fixture(autouse=True)
+def fixed_terminal_width(monkeypatch):
+    """Box width follows the terminal; pin it so assertions are stable."""
+    monkeypatch.setenv("COLUMNS", "80")
+
+
 def read_line(stream, out):
     line = stream.readline()
     return None if line == "" else line.strip()
@@ -35,8 +41,16 @@ def test_welcome_box_and_custom_name():
     assert "Vad heter du?" in rendered
     assert rendered.startswith("╭")
     assert "\r│ » Calzone" in rendered
-    assert rendered.endswith("╰" + "─" * 62 + "╯\n")
-    assert all(len(row) == 64 for row in rendered.splitlines()[:5])
+    assert rendered.endswith("╰" + "─" * 72 + "╯\n")
+    assert all(len(row) == 74 for row in rendered.splitlines()[:5])
+
+
+def test_welcome_box_matches_session_card_width(monkeypatch):
+    """The welcome frame and the Bridget card share one outer width."""
+    monkeypatch.setenv("COLUMNS", "60")
+    out = io.StringIO()
+    naming.prompt_chat_name(io.StringIO("Anna\n"), out, interactive=True, read_line=read_line)
+    assert all(len(row) == 58 for row in out.getvalue().splitlines()[:5])
 
 
 def test_empty_name_reprompts_without_eating_turn():
@@ -67,7 +81,7 @@ def test_eof_ends_onboarding_without_starting_chat():
 
 
 def test_chat_label_uses_name_and_preserves_piped_mode():
-    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n▗█▖ Calzone: "
+    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n› Calzone: "
     assert naming.chat_prompt_label("Anna", interactive=True, quiet=True) == "\nAnna: "
     assert naming.chat_prompt_label("master", interactive=False, quiet=False) == "\n▙█▟ master: "
     assert naming.chat_prompt_label("master", interactive=False, quiet=True) == "\nmaster: "
@@ -85,7 +99,7 @@ def test_chat_label_colors_only_the_sprite_and_only_on_a_terminal():
 
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=False, color=True
-    ) == f"\n{green}▗█▖{reset} Calzone: "
+    ) == "\n\x1b[38;2;132;191;196m› Calzone\x1b[0m: "
     assert naming.chat_prompt_label(
         "master", interactive=False, quiet=False, color=True
     ) == f"\n{green}▙█▟{reset} master: "
@@ -93,7 +107,7 @@ def test_chat_label_colors_only_the_sprite_and_only_on_a_terminal():
     # Not a terminal: byte-identical to the uncoloured label.
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=False, color=False
-    ) == "\n▗█▖ Calzone: "
+    ) == "\n› Calzone: "
     # --quiet still wins over colour.
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=True, color=True
@@ -131,8 +145,8 @@ def test_wide_characters_fit_inside_frame():
         io.StringIO("界" * 40 + "\n"), io.StringIO(), interactive=True, read_line=read_line
     )
     assert result is not None
-    assert naming._terminal_width(result) <= 58
-    assert naming._terminal_width(naming._entry_row(result)) == 64
+    assert naming._terminal_width(result) <= 68
+    assert naming._terminal_width(naming._entry_row(result)) == 74
 
 
 @pytest.mark.skipif(os.name != "posix", reason="requires a POSIX terminal")
