@@ -1,6 +1,7 @@
 """Session-only terminal display names for the interactive Bridget chat."""
 
 import json
+import os
 import re
 import shutil
 import unicodedata
@@ -14,11 +15,26 @@ _SPRITE_OPERATOR = "›"
 _SPRITE_PIPED = "▙█▟"
 _GREEN = "\x1b[32m"
 _RESET = "\x1b[0m"
+# Same shades as bridget_chat_ui, so the welcome frame reads as the session card.
+_AMBER = "\x1b[38;2;255;190;98m"
+_CYAN = "\x1b[38;2;132;191;196m"
+_DIM = "\x1b[2m"
+_HIDE_CURSOR = "\x1b[?25l"
+_SHOW_CURSOR = "\x1b[?25h"
+_TITLE = "◉‿◉ Bridget"
+_QUESTION = "Hej. Vem pratar jag med?"
+_HINT = "↵ fortsätt · ctrl-c avbryt"
+_PLACEHOLDER = "skriv ditt namn"
 
 
 def _box_width() -> int:
     """Inner width; the outer frame matches bridget_chat_ui's session card."""
     return max(12, min(74, shutil.get_terminal_size((80, 24)).columns - 2)) - 2
+
+
+def _name_limit() -> int:
+    """Columns a name may use: the row minus margins, chevron, cursor and counter."""
+    return max(4, _box_width() - 13)
 
 
 def _normalize_name(raw: str) -> str:
@@ -30,7 +46,7 @@ def _normalize_name(raw: str) -> str:
         if char.isprintable() and not unicodedata.category(char).startswith("C")
     )
     result = " ".join(printable.split())[:_MAX_NAME_LENGTH].strip()
-    while result and _terminal_width(result) > _box_width() - 4:
+    while result and _terminal_width(result) > _name_limit():
         result = result[:-1]
     return result
 
@@ -45,36 +61,80 @@ def _terminal_width(value: str) -> int:
     )
 
 
-def _box_row(value: str) -> str:
-    """One padded, framed row; the width is measured in terminal columns."""
-    return "│ " + value + " " * (_box_width() - 2 - _terminal_width(value)) + " │"
+def _visible(value: str) -> int:
+    return _terminal_width(_ANSI_ESCAPE.sub("", value))
 
 
-def _entry_row(value: str) -> str:
-    return "│ » " + value + " " * (_box_width() - 4 - _terminal_width(value)) + " │"
+def _shade(value: str, shade: str, color: bool) -> str:
+    return f"{shade}{value}{_RESET}" if color and value else value
 
 
-def _draw_welcome(out: Any, *, complete: bool) -> None:
+def _box_row(value: str = "") -> str:
+    """One padded, framed row; colour codes take no columns."""
+    return "│ " + value + " " * max(0, _box_width() - 2 - _visible(value)) + " │"
+
+
+def _labelled_border(left: str, right: str, label: str, shade: str, color: bool) -> str:
+    """A border with a label set into it, like the session card's title."""
+    if len(label) + 3 > _box_width():
+        label = ""
+    head = "─ " + _shade(label, shade, color) + " " if label else ""
+    return left + head + "─" * (_box_width() - _visible(head)) + right
+
+
+def _title_border(color: bool = False) -> str:
+    return _labelled_border("╭", "╮", _TITLE, _AMBER, color)
+
+
+def _bottom_border(color: bool = False) -> str:
+    return _labelled_border("╰", "╯", _HINT, _DIM, color)
+
+
+def _entry_row(value: str, *, color: bool = False, cursor: bool = False) -> str:
+    """The input row: chevron, name, a block cursor while typing, and a counter."""
+    left = " " + _shade(_SPRITE_OPERATOR, _CYAN, color) + " " + _shade(value, _CYAN, color)
+    if cursor:
+        left += "█"
+        if not value:
+            left += " " + _shade(_PLACEHOLDER, _DIM, color)
+    counter = _shade(f"{len(value)}/{_MAX_NAME_LENGTH}", _DIM, color)
+    gap = _box_width() - 2 - _visible(left) - _visible(counter)
+    return _box_row(left + " " * gap + counter if gap >= 1 else left)
+
+
+def _header_rows(color: bool) -> list[str]:
+    return [
+        _title_border(color),
+        _box_row(),
+        _box_row(" " + _shade(_QUESTION, _AMBER, color)),
+        _box_row(),
+    ]
+
+
+def _draw_welcome(out: Any, *, complete: bool, color: bool = False) -> None:
     """Reserve a line *within* the frame for input, never below the frame."""
-    out.write("╭" + "─" * _box_width() + "╮\n")
-    for label in ("Välkommen", "", "Vad heter du?", ""):
-        out.write(_box_row(label) + "\n")
     if complete:
-        out.write(_entry_row("") + "\n")
-        out.write("╰" + "─" * _box_width() + "╯\n")
+        out.write(_HIDE_CURSOR)
+    for row in _header_rows(color):
+        out.write(row + "\n")
+    if complete:
+        out.write(_entry_row("", color=color, cursor=True) + "\n")
+        out.write(_box_row() + "\n")
+        out.write(_bottom_border(color) + "\n")
         # From the line below the bottom border, return to the input row.
-        out.write("\x1b[2A\r\x1b[4C")
+        out.write("\x1b[3A\r")
     else:
-        out.write("│ » ")
+        out.write("│  › ")
     out.flush()
 
 
-def _draw_tty_entry(out: Any, value: str) -> None:
-    out.write("\r" + _entry_row(value) + "\r\x1b[" + str(4 + _terminal_width(value)) + "C")
+def _draw_tty_entry(out: Any, value: str, color: bool) -> None:
+    # The terminal cursor is hidden; the block in the row stands in for it.
+    out.write("\r" + _entry_row(value, color=color, cursor=True))
     out.flush()
 
 
-def _read_tty_name(stream: Any, out: Any) -> str | None:
+def _read_tty_name(stream: Any, out: Any, color: bool = False) -> str | None:
     """Read keys without terminal echo so the input cannot overwrite the frame.
 
     All terminal settings are restored, including on Ctrl-C or an exception.
@@ -88,6 +148,11 @@ def _read_tty_name(stream: Any, out: Any) -> str | None:
     typed = ""
     try:
         tty.setcbreak(fd, termios.TCSANOW)
+        # Deliver Ctrl-C as a byte: under asyncio, SIGINT only schedules a
+        # cancellation while this blocking read restarts, so it never ends.
+        mode = termios.tcgetattr(fd)
+        mode[3] &= ~termios.ISIG
+        termios.tcsetattr(fd, termios.TCSANOW, mode)
         while True:
             try:
                 char = stream.read(1)
@@ -101,17 +166,17 @@ def _read_tty_name(stream: Any, out: Any) -> str | None:
                 continue
             if char in ("\x7f", "\b"):
                 typed = typed[:-1]
-                _draw_tty_entry(out, typed)
+                _draw_tty_entry(out, typed, color)
                 continue
             if char == "\x1b":  # Ignore the start of terminal escape sequences.
                 continue
             if not char.isprintable() or unicodedata.category(char).startswith("C"):
                 continue
             candidate = typed + char
-            if len(candidate) > _MAX_NAME_LENGTH or _terminal_width(candidate) > _box_width() - 4:
+            if len(candidate) > _MAX_NAME_LENGTH or _terminal_width(candidate) > _name_limit():
                 continue
             typed = candidate
-            _draw_tty_entry(out, typed)
+            _draw_tty_entry(out, typed, color)
     finally:
         termios.tcsetattr(fd, termios.TCSANOW, old_settings)
 
@@ -126,7 +191,9 @@ def prompt_chat_name(
     """Ask once per chat; piped sessions retain their original behavior.
 
     On a real TTY the box is fully drawn before typing, and the input is
-    edited in place *inside* it. The non-TTY fallback supports test streams.
+    edited in place *inside* it. Once a name is accepted the frame is erased,
+    so the session card is drawn where it stood. The non-TTY fallback
+    supports test streams and keeps its frame.
     """
     if not interactive:
         return "master"
@@ -135,20 +202,28 @@ def prompt_chat_name(
         getattr(stream, "isatty", lambda: False)()
         and getattr(out, "isatty", lambda: False)()
     )
+    color = tty_mode and "NO_COLOR" not in os.environ and os.getenv("TERM") != "dumb"
     while True:
-        _draw_welcome(out, complete=tty_mode)
+        _draw_welcome(out, complete=tty_mode, color=color)
         if tty_mode:
+            raw = None
             try:
-                raw = _read_tty_name(stream, out)
+                raw = _read_tty_name(stream, out, color)
             finally:
-                # Cursor was on the input row; move below the existing border.
-                out.write("\x1b[2B\r")
+                if raw is None:
+                    # Cancelled: leave the frame and move below its border.
+                    out.write("\x1b[3B\r")
+                else:
+                    # Up from the input row to the top border, clear to the end.
+                    out.write("\r\x1b[4A\x1b[J")
+                out.write(_SHOW_CURSOR)
                 out.flush()
         else:
             raw = read_line(stream, out)
             name = _normalize_name(raw) if raw is not None else ""
             out.write("\r" + _entry_row(name) + "\n")
-            out.write("╰" + "─" * _box_width() + "╯\n")
+            out.write(_box_row() + "\n")
+            out.write(_bottom_border() + "\n")
             out.flush()
 
         if raw is None:
