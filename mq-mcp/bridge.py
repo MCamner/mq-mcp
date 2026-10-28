@@ -529,6 +529,31 @@ def to_openai_tools(mcp_tools: Any) -> list[ChatCompletionToolParam]:
             )
         )
 
+    if len(openai_tools) > 128:
+        overflow = openai_tools[127:]
+        openai_tools = openai_tools[:127]
+        openai_tools.append(cast(ChatCompletionToolParam, {
+            "type": "function",
+            "function": {
+                "name": "bridget_call_overflow_tool",
+                "description": (
+                    "Call one of these additional MCP tools. Supply its name and "
+                    "arguments matching its parameters: "
+                    + json.dumps([tool["function"] for tool in overflow], ensure_ascii=False)
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "enum": [
+                            tool["function"]["name"] for tool in overflow
+                        ]},
+                        "arguments": {"type": "object"},
+                    },
+                    "required": ["name", "arguments"],
+                    "additionalProperties": False,
+                },
+            },
+        }))
     return openai_tools
 
 
@@ -556,6 +581,19 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
         args = json.loads(raw_args or "{}")
     except json.JSONDecodeError:
         return f"Tool argument JSON could not be parsed: {raw_args}"
+
+    if name == "bridget_call_overflow_tool":
+        if not isinstance(args, dict) or not isinstance(args.get("arguments"), dict):
+            return "Overflow tool requires a name and an arguments object."
+        target = args.get("name")
+        try:
+            discovered = await session.list_tools()
+        except Exception as exc:
+            return f"MCP tool discovery failed: {exc}"
+        allowed = {tool.name for tool in discovered.tools} - _OPENAI_TOOL_EXCLUSIONS
+        if not isinstance(target, str) or target not in allowed:
+            return "Unknown MCP tool."
+        name, args = target, args["arguments"]
 
     if not approval_gate(name, args):
         return "Kommando nekades av användaren."

@@ -600,3 +600,52 @@ def test_execute_tool_calls_truncates_large_output(bridge, monkeypatch):
     assert len(tool_msgs) == 1
     assert tool_msgs[0]["content"].startswith("Z" * 20)
     assert "trunkerat 80 tecken" in tool_msgs[0]["content"]
+
+
+def test_large_catalog_stays_within_api_limit_and_preserves_overflow(bridge):
+    tools = [types.SimpleNamespace(name=f"tool_{i}", description=f"Tool {i}",
+             inputSchema={"type": "object", "properties": {}}) for i in range(136)]
+    specs = bridge.to_openai_tools(types.SimpleNamespace(tools=tools))
+    assert len(specs) == 128
+    overflow = specs[-1]["function"]
+    assert overflow["name"] == "bridget_call_overflow_tool"
+    assert "tool_135" in overflow["description"]
+    assert "tool_135" in overflow["parameters"]["properties"]["name"]["enum"]
+
+
+def test_overflow_dispatch_checks_real_tool_approval(bridge, monkeypatch):
+    tool = types.SimpleNamespace(name="tool_135")
+    session = _FakeSession(tools=[tool])
+    approvals = []
+    monkeypatch.setattr(bridge, "approval_gate", lambda name, args: approvals.append((name, args)) or False)
+    result = asyncio.run(bridge.call_mcp_tool(session, "bridget_call_overflow_tool",
+        '{"name":"tool_135","arguments":{"value":42}}'))
+    assert approvals == [("tool_135", {"value": 42})]
+    assert not session.tool_calls
+    assert "nekades" in result
+
+
+@pytest.mark.parametrize("count", [128, 129, 200])
+def test_tool_limit_boundary(bridge, count):
+    tools = [types.SimpleNamespace(name=f"tool_{i}", description="",
+             inputSchema={"type": "object", "properties": {}}) for i in range(count)]
+    specs = bridge.to_openai_tools(types.SimpleNamespace(tools=tools))
+    assert len(specs) == 128
+    if count == 128:
+        assert specs[-1]["function"]["name"] == "tool_127"
+    else:
+        names = [s["function"]["name"] for s in specs[:-1]]
+        names += specs[-1]["function"]["parameters"]["properties"]["name"]["enum"]
+        assert set(names) == {t.name for t in tools}
+
+
+def test_overflow_dispatch_and_unknown_target(bridge):
+    session = _FakeSession(tools=[types.SimpleNamespace(name="tool_135")])
+    result = asyncio.run(bridge.call_mcp_tool(session, "bridget_call_overflow_tool",
+        '{"name":"tool_135","arguments":{"value":42}}'))
+    assert result == "ok"
+    assert session.tool_calls == [("tool_135", {"value": 42})]
+    result = asyncio.run(bridge.call_mcp_tool(session, "bridget_call_overflow_tool",
+        '{"name":"invented","arguments":{}}'))
+    assert result == "Unknown MCP tool."
+    assert len(session.tool_calls) == 1
