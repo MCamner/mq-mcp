@@ -32,3 +32,14 @@ def test_profiles_have_required_contract():
         assert isinstance(data["env"], dict)
         assert data["recommended_tools"]
         assert data["safety_notes"]
+
+
+def test_read_only_client_profiles_recommend_only_class_a_b_tools():
+    contracts = {
+        tool["name"]: tool
+        for tool in json.loads((ROOT / "docs" / "tool_contracts.json").read_text(encoding="utf-8"))["tools"]
+    }
+    for name in ("codex", "claude-desktop"):
+        data = json.loads((PROFILES / f"{name}.json").read_text(encoding="utf-8"))
+        for tool in data["recommended_tools"]:
+            assert contracts[tool]["class"] in ("A", "B"), (name, tool)

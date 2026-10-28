@@ -14,10 +14,11 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 
 ## Status
 
-v2.1.0 — Bridget runtime, evidence and provenance integrity, and deterministic
-isolation: credential handling, bounded session context, runtime identity,
-verified learn-extraction evidence, and tests isolated from ambient repository
-state. Release Gate v2 remains the deterministic readiness baseline.
+v2.2.0 — evidence, contracts and learn hardening: a published tool-surface
+contract (`mq-mcp.tool-surface.v1`), optional review receipts bound to the
+reviewed commit, schema-validated Release Gate v2 results, review context for
+other allowlisted repos, stable learn-inbox candidate IDs, and learn extraction
+on `qwen3.5:9b`. Release Gate v2 remains the deterministic readiness baseline.
 
 This repository is useful as:
 
