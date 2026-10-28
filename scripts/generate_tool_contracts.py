@@ -73,6 +73,7 @@ TOOL_META: dict[str, dict] = {
     "create_note":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "hal_repo_report":        {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
     "lock_screen":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["system"]},
+    "quit_app":               {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-quit"]},
     "open_app":               {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "open_chrome":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "open_finder":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},

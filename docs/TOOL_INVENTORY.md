@@ -95,6 +95,7 @@ Launch external processes or open macOS applications. No file write access.
 | `set_volume` | Set macOS system output volume |
 | `toggle_dark_mode` | Toggle between dark mode and light mode |
 | `lock_screen` | Lock the macOS screen immediately |
+| `quit_app` | Quit one running macOS app by name, optionally force-quit |
 | `create_note` | Create a note in Notes.app |
 | `set_reminder` | Create a reminder in Reminders.app |
 | `set_wallpaper` | Set the macOS desktop wallpaper |

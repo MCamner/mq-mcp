@@ -21,7 +21,7 @@ state. Release Gate v2 remains the deterministic readiness baseline.
 
 This repository is useful as:
 
-* a local MCP server with 139 documented, safety-classified tools
+* a local MCP server with 140 documented, safety-classified tools
 * `risk_review_repo(mode='security', repo_path=...)` performs a bounded, allowlisted repository risk review with file-level pre-scans and optional review receipt.
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
@@ -40,7 +40,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 139 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 140 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -171,7 +171,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 139 MCP tools with descriptions.
+Expected response lists all 140 MCP tools with descriptions.
 
 ## Integration map
 
@@ -264,7 +264,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 139 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 140 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -343,6 +343,7 @@ The local MCP server exposes 139 tools across the documented safety classes. See
 * `set_volume` — sets the macOS system output volume
 * `toggle_dark_mode` — toggles macOS between dark mode and light mode
 * `lock_screen` — locks the macOS screen immediately
+* `quit_app` — quits one running macOS app by name; `force` kills it if it does not quit (approval-gated in Bridget)
 * `create_note` — creates a new note in Notes.app
 * `set_reminder` — creates a reminder in Reminders.app
 * `set_wallpaper` — sets the macOS desktop wallpaper

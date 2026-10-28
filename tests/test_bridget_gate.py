@@ -179,3 +179,30 @@ def test_card_states_what_the_tool_does(bridge, monkeypatch):
     assert "update_repo_file" in card
     assert "Klass:      C" in card
     assert "Skriver:    ja" in card
+
+
+def test_card_shows_every_arg_without_asking_for_visa(bridge, monkeypatch):
+    # Approving quit_app without seeing which app, or that force is on, is not consent.
+    monkeypatch.setattr(bridge, "_SMAP", {"quit_app": {"class": "D", "write": False, "subprocess": True}})
+    card = bridge.render_gate_card("quit_app", {"app_name": "Calculator", "force": True}, "D")
+    assert "   app_name:   Calculator" in card
+    assert "   force:      true" in card
+    assert "args:" not in card  # the full JSON dump stays behind `visa`
+
+
+def test_card_args_are_one_line_bounded_and_control_free(bridge, monkeypatch):
+    monkeypatch.setattr(bridge, "_SMAP", _WRITER)
+    card = bridge.render_gate_card(
+        "update_repo_file", {"path": "x", "new_text": "a\n\x1b[31m" + "b" * 200}, "C"
+    )
+    row = next(r for r in card.splitlines() if r.startswith("   new_text:"))
+    assert "\x1b" not in card
+    assert row.endswith("…")
+    assert len(row) <= 80
+
+
+def test_card_does_not_repeat_the_shell_command(bridge, monkeypatch):
+    monkeypatch.setattr(bridge, "_SMAP", _SHELL)
+    card = bridge.render_gate_card("shell_exec", {"command": "ls", "working_dir": "/tmp"}, "D")
+    assert card.count("ls") == 1
+    assert card.count("/tmp") == 1

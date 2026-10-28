@@ -101,6 +101,7 @@ _CATEGORIES: dict[str, str] = {
     "open_in_app": "macos",
     "open_repo_terminal": "macos",
     "lock_screen": "macos",
+    "quit_app": "macos",
     "set_volume": "macos",
     "set_wallpaper": "macos",
     "toggle_dark_mode": "macos",
