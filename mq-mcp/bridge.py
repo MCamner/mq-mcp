@@ -212,6 +212,16 @@ def render_gate_card(
         parts.append(f"   $ {command}")
     if working_dir:
         parts.append(f"   katalog:    {working_dir}")
+    # Every other arg, one bounded line each: consent needs to see *what*
+    # (quit_app's app_name and force) without first answering `visa`.
+    for key, value in tool_args.items():
+        if key in ("command", "working_dir"):
+            continue
+        text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+        text = "".join(ch if ch.isprintable() else "·" for ch in text)
+        if len(text) > 60:
+            text = text[:59] + "…"
+        parts.append(f"   {key + ':':<12}{text}")
     if verbose:
         # Full arg dump only on request, to keep the default card compact.
         args_json = json.dumps(tool_args, ensure_ascii=False, indent=2)
