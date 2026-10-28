@@ -70,7 +70,7 @@ has actually been released.
 
 Completed foundation:
 
-* local MCP server with 140 tools across safety classes A–D and review engine tools
+* local MCP server with 142 tools across safety classes A–D and review engine tools
 * OpenAI/MCP bridge
 * repo-scoped file tools with path boundary enforcement
 * system resource tools

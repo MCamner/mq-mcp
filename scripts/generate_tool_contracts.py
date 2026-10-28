@@ -74,6 +74,8 @@ TOOL_META: dict[str, dict] = {
     "hal_repo_report":        {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["subprocess"]},
     "lock_screen":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["system"]},
     "quit_app":               {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-quit"]},
+    "list_skills":            {"class": "B", "resolver": "fixed allowlist (bridget_skills/, MQ_MCP_SKILL_DIRS)", "write": False, "subprocess": False, "side_effects": []},
+    "load_skill":             {"class": "B", "resolver": "fixed allowlist (bridget_skills/, MQ_MCP_SKILL_DIRS)", "write": False, "subprocess": False, "side_effects": []},
     "open_app":               {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "open_chrome":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},
     "open_finder":            {"class": "D", "resolver": "none", "write": False, "subprocess": True,  "side_effects": ["app-launch"]},

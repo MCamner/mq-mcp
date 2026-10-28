@@ -131,6 +131,8 @@ _CATEGORIES: dict[str, str] = {
     "run_mqlaunch_version": "shell",
     # meta
     "tool_safety_report": "meta",
+    "list_skills": "meta",
+    "load_skill": "meta",
 }
 
 # Tools that require OPENAI_API_KEY

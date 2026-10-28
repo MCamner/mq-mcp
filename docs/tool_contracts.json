@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.2.0",
-  "tool_count": 140,
+  "tool_count": 142,
   "tools": [
     {
       "name": "analyze_csv",
@@ -613,6 +613,26 @@
       "class": "A",
       "description": "List all items in semantic memory with key, tags, and content preview.",
       "resolver": "none",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "list_skills",
+      "class": "B",
+      "description": "List Bridget skills: step-by-step recipes over existing tools.",
+      "resolver": "fixed allowlist (bridget_skills/, MQ_MCP_SKILL_DIRS)",
+      "write": false,
+      "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "load_skill",
+      "class": "B",
+      "description": "Return the steps of one Bridget skill listed by list_skills.",
+      "resolver": "fixed allowlist (bridget_skills/, MQ_MCP_SKILL_DIRS)",
       "write": false,
       "subprocess": false,
       "side_effects": [],

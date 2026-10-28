@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 140 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 142 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -30,7 +30,7 @@ document's machine-readable twin, `docs/tool_contracts.json`:
 Read-only tools pass without a prompt even when they shell out: 32 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 44 of 140 tools are
+operator to dismiss the prompt unread. As classified today, 44 of 142 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -105,6 +105,8 @@ read files outside the repo only when `MQ_MCP_ALLOWED_PATHS` permits it.
 | --- | --- | --- |
 | `get_system_resources` | Read CPU, memory, disk stats via psutil | Write, access files |
 | `analyze_guitar_pro` | Parse GP3/GP4/GP5 files in repo or allowed roots | Write, access outside allowed roots |
+| `list_skills` | List Bridget skills (name, description, source) from `bridget_skills/` and absolute dirs in `MQ_MCP_SKILL_DIRS` | Write; follow a symlink out of its skill root; read files over 20 KB |
+| `load_skill` | Return one listed skill's steps; the name is looked up among discovered skills, never joined into a path | Read any file that is not a discovered `SKILL.md`; grant permissions (gated tools still ask) |
 | `review_file` | Run AI review on a file in the mq-mcp repo or an allowed external repo; `receipt=true` binds the result to exact file bytes + commit | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `review_repo` | Review least-recently-reviewed Python files in the mq-mcp repo or an allowed external repo; `receipt=true` binds the result to the Python source-tree snapshot | Write, modify code; access outside allowed roots; calls OpenAI API |
 | `review_perception` | Validate and review content-addressed `perception.v1` evidence; optional `repo_path` adds exact Git commit to a compact receipt | Reopen images, write files, execute OCR text, access repos outside allowed roots; calls OpenAI API |
@@ -236,6 +238,8 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `git_diff` | A | run_repo_command | No | No |
 | `analyze_csv` | A | resolve_repo_file | No | No |
 | `tool_safety_report` | A | REPO_ROOT (fixed path) | No | No |
+| `list_skills` | B | fixed roots: bridget_skills/ + absolute MQ_MCP_SKILL_DIRS | No | No |
+| `load_skill` | B | name lookup in the skill index (no path input) | No | No |
 | `list_local_repos` | A | MQ_MCP_LOCAL_REPOS (read env) | No | No |
 | `list_openable_apps` | A | none (static output) | No | No |
 | `get_system_resources` | B | psutil (no file path) | No | No |

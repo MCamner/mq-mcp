@@ -20,6 +20,8 @@ Cannot write files, cannot run processes, cannot access outside repo root.
 | `git_diff` | `run_repo_command` | Diff for repo or a specific path |
 | `analyze_csv` | `resolve_repo_file` | Summarize a CSV inside the repo |
 | `tool_safety_report` | (none — reads docs/TOOL_SAFETY.md) | Return tool safety classification |
+| `list_skills` | (none — reads bridget_skills/, MQ_MCP_SKILL_DIRS) | List Bridget skills: name, description, source |
+| `load_skill` | (none — reads bridget_skills/, MQ_MCP_SKILL_DIRS) | Return one Bridget skill's steps by name |
 | `list_local_repos` | (none — reads env var) | List repos from MQ_MCP_LOCAL_REPOS |
 | `list_openable_apps` | (none — static output) | List apps Bridget can open |
 

@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 140,
+  "tool_count": 142,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1047,6 +1047,30 @@
       "subprocess": false,
       "parameters": [],
       "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "list_skills",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "load_skill",
+      "safety_class": "B",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "name",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "a58e349df5d7298b9041abf529ab658206917132ea4f89e0c529bd09373fc2af"
     },
     {
       "name": "lock_screen",
