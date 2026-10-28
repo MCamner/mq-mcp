@@ -26,6 +26,8 @@ from bridget_chat_ui import (
     render_response_card,
     render_session_card,
     render_tool_summary,
+    render_tool_activity,
+    render_tool_running,
     thinking_frame,
 )
 from bridget_safety import load_safety_map, needs_approval, tool_class
@@ -57,16 +59,19 @@ class BridgetSpinner:
     FRAMES = "⠁⠃⠇⠏⠟⠿⠟⠏⠇⠃"
     INTERVAL = 0.08
 
-    def __init__(self, stream: Any = None, *, rich: bool = False) -> None:
+    def __init__(self, stream: Any = None, *, rich: bool = False, color: bool = True, animate: bool = True) -> None:
         self._stream = stream or sys.stdout
         isatty = getattr(self._stream, "isatty", None)
         self._enabled = bool(isatty and isatty())
         self._rich = rich
+        self._color = color
+        self._animate = animate
+        self.reported_tools = False
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
-        if not self._enabled:
+        if not self._enabled or not self._animate or self._thread is not None:
             return
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._spin, daemon=True)
@@ -87,11 +92,26 @@ class BridgetSpinner:
         idx = 0
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
-            display = thinking_frame(frame, color=True) if self._rich else f"\r{frame}"
+            display = thinking_frame(frame, color=self._color) if self._rich else f"\r{frame}"
             self._stream.write(display)
             self._stream.flush()
             idx += 1
             self._stop_event.wait(self.INTERVAL)
+
+    def tool_started(self, name: str) -> None:
+        if not self._enabled or not self._rich:
+            return
+        self.stop()
+        self._stream.write(render_tool_running(name, color=self._color))
+        self._stream.flush()
+
+    def tool_finished(self, name: str, *, failed: bool) -> None:
+        if not self._enabled or not self._rich:
+            return
+        self._stream.write("\r\x1b[2K" + render_tool_activity(name, failed=failed, color=self._color))
+        self._stream.flush()
+        self.reported_tools = True
+        self.start()
 
 
 DO_MODE = False  # Set True by parse_prompt() when --do is passed.
@@ -598,11 +618,19 @@ async def call_mcp_tool(session: ClientSession, name: str, raw_args: Optional[st
     if not approval_gate(name, args):
         return "Kommando nekades av användaren."
 
+    activity = _SPINNER
+    if activity:
+        activity.tool_started(name)
+    failed = True
     try:
         result = await session.call_tool(name, args)
+        failed = bool(getattr(result, "isError", False))
         return content_to_text(result.content)
     except Exception as exc:
         return f"MCP tool call failed: {exc}"
+    finally:
+        if activity:
+            activity.tool_finished(name, failed=failed)
 
 
 def tool_call_name_and_args(tool_call: Any) -> tuple[str, Optional[str]]:
@@ -1183,7 +1211,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                 ]
                 client = OpenAI()
                 out_isatty = getattr(out, "isatty", None)
-                chat_color = bool(out_isatty and out_isatty())
+                chat_color = bool(out_isatty and out_isatty()) and "NO_COLOR" not in os.environ and os.getenv("TERM") != "dumb"
                 pinned = bridget_runtime.get_project()
                 project_name = (
                     str(pinned.get("name") or "") if pinned else Path.cwd().name
@@ -1247,6 +1275,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                                         branch=project_branch,
                                         tool_count=len(openai_tools),
                                         context_percent=context_percent,
+                                        model=model,
                                         color=chat_color,
                                     )
                                 )
@@ -1255,7 +1284,7 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                                     chat_name,
                                     interactive=interactive,
                                     quiet=QUIET_MODE,
-                                    color=bool(out_isatty and out_isatty()),
+                                    color=chat_color,
                                 )
                             )
                             out.flush()
@@ -1332,30 +1361,33 @@ async def run_chat(model: str, do_mode: bool, initial_prompt: str = "") -> None:
                             out.write("status: thinking\n")
                             out.flush()
 
-                        spinner = BridgetSpinner(stream=tty, rich=interactive)
+                        spinner = BridgetSpinner(
+                            stream=out, rich=interactive, color=chat_color,
+                            animate=not do_mode and os.getenv("TERM") != "dumb",
+                        )
                         if not do_mode:
                             # As in one-shot, --do lets the approval gate own the
                             # terminal; a concurrent spinner corrupts the y/n
                             # prompt.
                             spinner.start()
-                            _SPINNER = spinner
+                        _SPINNER = spinner
 
-                        answer, called_tools, did_tool_round = await run_turn(
-                            client=client,
-                            model=model,
-                            messages=messages,
-                            openai_tools=openai_tools,
-                            do_mode=do_mode,
-                            session=session,
-                        )
-
-                        spinner.stop()
-                        _SPINNER = None
+                        try:
+                            answer, called_tools, did_tool_round = await run_turn(
+                                client=client,
+                                model=model,
+                                messages=messages,
+                                openai_tools=openai_tools,
+                                do_mode=do_mode,
+                                session=session,
+                            )
+                        finally:
+                            spinner.stop()
+                            _SPINNER = None
 
                         if interactive:
-                            out.write(
-                                render_tool_summary(called_tools, color=chat_color)
-                            )
+                            if not spinner.reported_tools:
+                                out.write(render_tool_summary(called_tools, color=chat_color))
                             out.write(render_response_card(answer, color=chat_color))
                             out.flush()
                             speak_if_enabled(answer)

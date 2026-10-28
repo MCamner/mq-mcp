@@ -67,7 +67,7 @@ def test_eof_ends_onboarding_without_starting_chat():
 
 
 def test_chat_label_uses_name_and_preserves_piped_mode():
-    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n▗█▖ Calzone: "
+    assert naming.chat_prompt_label("Calzone", interactive=True, quiet=False) == "\n› Calzone: "
     assert naming.chat_prompt_label("Anna", interactive=True, quiet=True) == "\nAnna: "
     assert naming.chat_prompt_label("master", interactive=False, quiet=False) == "\n▙█▟ master: "
     assert naming.chat_prompt_label("master", interactive=False, quiet=True) == "\nmaster: "
@@ -85,7 +85,7 @@ def test_chat_label_colors_only_the_sprite_and_only_on_a_terminal():
 
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=False, color=True
-    ) == f"\n{green}▗█▖{reset} Calzone: "
+    ) == "\n\x1b[38;2;132;191;196m› Calzone\x1b[0m: "
     assert naming.chat_prompt_label(
         "master", interactive=False, quiet=False, color=True
     ) == f"\n{green}▙█▟{reset} master: "
@@ -93,7 +93,7 @@ def test_chat_label_colors_only_the_sprite_and_only_on_a_terminal():
     # Not a terminal: byte-identical to the uncoloured label.
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=False, color=False
-    ) == "\n▗█▖ Calzone: "
+    ) == "\n› Calzone: "
     # --quiet still wins over colour.
     assert naming.chat_prompt_label(
         "Calzone", interactive=True, quiet=True, color=True

@@ -9,8 +9,8 @@ from typing import Any, Callable
 _ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 _MAX_NAME_LENGTH = 32
 _BOX_WIDTH = 62
-# Quadrant-block sprites for the operator, and the green that marks them.
-_SPRITE_OPERATOR = "▗█▖"
+# Cyan chevron for interactive input; legacy piped labels stay unchanged.
+_SPRITE_OPERATOR = "›"
 _SPRITE_PIPED = "▙█▟"
 _GREEN = "\x1b[32m"
 _RESET = "\x1b[0m"
@@ -164,14 +164,16 @@ def chat_prompt_label(
 ) -> str:
     """Render the chosen name in a TTY, without changing piped output.
 
-    ``color`` tints the sprite green, and only the sprite: the name keeps the
-    terminal's default colour so it can never be mistaken for Bridget's own
-    amber voice. Callers pass it only once they have confirmed the *output*
-    stream is a terminal, so captured output stays free of escape bytes.
+    Interactive labels use cyan for the chevron and operator name. Piped
+    labels retain their existing format. Callers enable color only when the
+    output stream is a terminal.
     """
     if not interactive:
         return "\nmaster: " if quiet else f"\n{_tint(_SPRITE_PIPED, color)} master: "
-    return f"\n{name}: " if quiet else f"\n{_tint(_SPRITE_OPERATOR, color)} {name}: "
+    return f"\n{name}: " if quiet else (
+        f"\n\x1b[38;2;132;191;196m{_SPRITE_OPERATOR} {name}\x1b[0m: "
+        if color else f"\n{_SPRITE_OPERATOR} {name}: "
+    )
 
 
 def chat_identity_context(name: str) -> str:
