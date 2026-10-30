@@ -38,7 +38,8 @@ Current project phase:
 Released:  v2.2.0  Evidence, contracts and learn hardening (2026-10-24)
 On main:   HTTP diagnostics stay responsive during blocking tools (#125) —
            unreleased
-Next:      undecided — no scope is committed
+Now:       mq_stack_cockpit — stack-wide status through mq-agent's cockpit
+Next:      undecided — no further scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
 
@@ -46,7 +47,7 @@ Active backlog summary:
 
 ```text
 Size:      small; most planned work has shipped
-Now:       nothing committed
+Now:       mq_stack_cockpit (see "Stack cockpit tool" below)
 Next:      candidate — Bridget Phase 7: decide from usage metrics whether
            sessions, lessons, CodeGraph lookups and delegation are used
 Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6
@@ -70,7 +71,7 @@ has actually been released.
 
 Completed foundation:
 
-* local MCP server with 142 tools across safety classes A–D and review engine tools
+* local MCP server with 143 tools across safety classes A–D and review engine tools
 * OpenAI/MCP bridge
 * repo-scoped file tools with path boundary enforcement
 * system resource tools
@@ -1724,6 +1725,25 @@ and delegation are used before adding more memory or surface.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
+
+### Stack cockpit tool
+
+Status: built on `feat/mq-stack-cockpit`, unreleased.
+
+Gap: mq-agent owns `mq-agent stack cockpit --json`
+(`mq_stack_cockpit.schema.json`) and mq-hal already reads it for
+`mq-hal stack`, but mq-mcp had no stack-wide view. Agents had to fan out
+per-repo calls and only reached the repos in `MQ_MCP_LOCAL_REPOS`, which
+misses macos-scripts and mqobsidian.
+
+Scope:
+
+* [x] `mq_stack_cockpit` — Class A, no parameters, one fixed subprocess
+  through `stack_bridge.py`; JSON returned unchanged, failures redacted
+* [x] safety class, tool contracts, tool surface, profiles, docs, tests
+
+Later candidates, only if the cockpit proves useful: `mq-agent stack
+provenance` and `stack compatibility`, which also have owned schemas.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 142,
+  "tool_count": 143,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1323,6 +1323,14 @@
         }
       ],
       "signature_sha256": "3c538d854016d9ff72bfc9fcb15914c9ca6d11e68a47d8cd56577e92a6e52cae"
+    },
+    {
+      "name": "mq_stack_cockpit",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": true,
+      "parameters": [],
+      "signature_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     {
       "name": "ollama_learn_extract",

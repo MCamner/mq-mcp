@@ -1,6 +1,6 @@
 # MCP Tool Safety Classification
 
-This document classifies all 142 tools exposed by `mq-mcp/server.py` by what they are
+This document classifies all 143 tools exposed by `mq-mcp/server.py` by what they are
 allowed to do, what they cannot do, and which path resolver they use.
 
 ## Resolvers
@@ -12,6 +12,7 @@ Two path resolvers enforce access boundaries:
 | `resolve_repo_file(path)` | Repo-relative paths inside `REPO_ROOT` | Absolute paths, `../` traversal, anything outside repo |
 | `resolve_allowed_local_file(path)` | Repo-relative paths + absolute paths within `MQ_MCP_ALLOWED_PATHS` | Anything outside repo and all allowed roots |
 | fixed mq-agent feedback bridge | Fixed read-only `mq-agent feedback ... --json` subprocesses | Arbitrary commands, feedback writes, activation/review mutations |
+| fixed mq-agent stack bridge | The single fixed `mq-agent stack cockpit --json` subprocess | Arbitrary commands, any other `mq-agent stack` subcommand, parameters |
 
 `REPO_ROOT` is always included in `resolve_allowed_local_file` — no configuration needed for repo files.
 
@@ -27,10 +28,10 @@ document's machine-readable twin, `docs/tool_contracts.json`:
   `open_*` app launchers)
 * a tool absent from the contract — gated, so nothing unclassified runs silently
 
-Read-only tools pass without a prompt even when they shell out: 32 Class A/B
+Read-only tools pass without a prompt even when they shell out: 34 Class A/B
 tools (`git_status`, `git_diff`, `check_port`, `get_battery_status` …) run
 subprocesses while changing nothing, and prompting for those would train the
-operator to dismiss the prompt unread. As classified today, 44 of 142 tools are
+operator to dismiss the prompt unread. As classified today, 44 of 143 tools are
 gated.
 
 A denial returns an error string to the model; it does not end the turn.
@@ -90,6 +91,7 @@ Resolver: `resolve_repo_file` (git_status and git_diff use `run_repo_command` wi
 
 ---
 
+| `mq_stack_cockpit` | Read mq-agent's stack cockpit: per-repo version, branch, dirty state, contract, release gate, next action; JSON returned unchanged | Write, fetch, run release or sweep, take parameters |
 | \`mq_feedback_status\` | Read mq-agent Feedback Engine storage/coverage status | Write feedback evidence, change production behavior |
 | \`mq_feedback_inspect\` | Read one experiment/comparison/candidate chain | Recompute verdicts, write state |
 | \`mq_feedback_compare\` | Read the latest stored comparison | Derive new evidence, change verdicts |

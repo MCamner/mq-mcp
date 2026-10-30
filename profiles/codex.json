@@ -31,6 +31,7 @@
     "mq_route_report",
     "repo_signal_inspect",
     "repo_signal_doctor_json",
+    "mq_stack_cockpit",
     "mq_feedback_status",
     "mq_feedback_inspect",
     "mq_feedback_compare",
