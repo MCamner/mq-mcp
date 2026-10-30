@@ -252,6 +252,15 @@ All three are Class B (subprocess; no persistent writes). Binary resolved via
 `image_observe_architecture` output should be passed as context to `review_repo`
 or `review_file` for enriched architecture review.
 
+mq-image-analyze's own MCP server has more tools than these three. mq-mcp
+proxies only the ones that feed its review role. `image_perception` stays
+unproxied on purpose: its `perception.v1` record reaches mq-mcp as evidence
+through `review_perception`, which never reopens the image (see
+`docs/architecture/REVIEW_PIPELINE.md`). `extract_palette`, `reverse_prompt`,
+`compare_images` and `image_ocr` are not review inputs; callers that need them
+use mq-image-analyze directly, as mq-agent does through its HTTP bridge.
+Proxying another tool needs a review use case, not parity.
+
 ### mq-mcp → callers (output contract)
 
 mq-mcp guarantees to callers:
