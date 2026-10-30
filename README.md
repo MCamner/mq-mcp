@@ -21,7 +21,7 @@ state. Release Gate v2 remains the deterministic readiness baseline.
 
 This repository is useful as:
 
-* a local MCP server with 142 documented, safety-classified tools
+* a local MCP server with 143 documented, safety-classified tools
 * `risk_review_repo(mode='security', repo_path=...)` performs a bounded, allowlisted repository risk review with file-level pre-scans and optional review receipt.
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
@@ -40,7 +40,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 142 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 143 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -171,7 +171,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 142 MCP tools with descriptions.
+Expected response lists all 143 MCP tools with descriptions.
 
 ## Integration map
 
@@ -209,6 +209,14 @@ GitHub Pages version: [integration.html](https://mcamner.github.io/mq-mcp/integr
 **Which tools require explicit human approval:** Class C (writes files) and Class D (opens apps or runs subprocesses). Examples: `update_repo_file`, `run_tests`, `open_terminal`, `set_reminder`.
 
 See [`docs/orchestration-boundary.md`](docs/orchestration-boundary.md) for the full boundary definition and profile-to-class mapping.
+
+## Stack cockpit
+
+`mq_stack_cockpit` returns `mq-agent stack cockpit --json` unchanged: one
+call gives version, branch, dirty state, contract, release gate, unreleased
+work, warnings, blockers and next action for every mq-stack repo, plus the
+overall gate. It is a Class A read-only delegate with no parameters;
+mq-agent owns the contract (`mq_stack_cockpit.schema.json`).
 
 ## Feedback Engine bridge
 
@@ -264,7 +272,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 142 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 143 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 

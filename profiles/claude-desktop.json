@@ -45,6 +45,7 @@
     "mq_route_verify",
     "mq_route_report",
     "repo_signal_analyze",
+    "mq_stack_cockpit",
     "mq_feedback_status",
     "mq_feedback_inspect",
     "mq_feedback_compare",

@@ -1,6 +1,6 @@
 # MCP Tool Inventory
 
-55 core tools documented from `mq-mcp/server.py`.
+56 core tools documented from `mq-mcp/server.py`.
 
 For full safety classification, resolvers, and per-tool access boundaries
 see [`TOOL_SAFETY.md`](TOOL_SAFETY.md).
@@ -84,6 +84,7 @@ Launch external processes or open macOS applications. No file write access.
 | `run_mqlaunch` | Open mqlaunch TUI in a new Terminal window |
 | `open_repo_terminal` | Open a registered repo in a new Terminal window |
 | `hal_repo_report` | Read-only mq-hal repo report |
+| `mq_stack_cockpit` | Read-only mq-agent stack cockpit for every mq-stack repo |
 | `open_messages` | Open Messages.app, optionally to a contact |
 | `open_finder` | Open Finder at a given path |
 | `open_url` | Open a URL in the default browser |

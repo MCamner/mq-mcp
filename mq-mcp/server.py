@@ -974,6 +974,19 @@ def _run_repo_signal(args: list[str], cwd: Path, timeout: int = 60) -> subproces
 
 
 @mcp.tool()
+def mq_stack_cockpit() -> dict[str, Any]:
+    """Return mq-agent's stack cockpit for every mq-stack repo. Read-only.
+
+    One call: version, branch, dirty state, contract, release gate,
+    unreleased work, warnings, blockers and next action per repo, plus the
+    overall gate. mq-agent owns the contract; the JSON is returned unchanged.
+    """
+    import stack_bridge
+
+    return stack_bridge.cockpit()
+
+
+@mcp.tool()
 def mq_feedback_status() -> dict[str, Any]:
     """Return mq-agent Feedback Engine storage and coverage status. Read-only."""
     import feedback_bridge

@@ -1,7 +1,7 @@
 {
   "schema_version": "tool-contracts.v1",
   "mq_mcp_version": "2.2.0",
-  "tool_count": 142,
+  "tool_count": 143,
   "tools": [
     {
       "name": "analyze_csv",
@@ -762,6 +762,16 @@
       "resolver": "none",
       "write": false,
       "subprocess": false,
+      "side_effects": [],
+      "examples": []
+    },
+    {
+      "name": "mq_stack_cockpit",
+      "class": "A",
+      "description": "Return mq-agent's stack cockpit for every mq-stack repo. Read-only.",
+      "resolver": "mq_agent_stack_bridge",
+      "write": false,
+      "subprocess": true,
       "side_effects": [],
       "examples": []
     },

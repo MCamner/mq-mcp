@@ -113,6 +113,7 @@ for t in d["tools"]:
         allowed_readonly_subprocess = {
             "run_repo_command",
             "mq_agent_feedback_bridge",
+            "mq_agent_stack_bridge",
         }
         if sub and res not in allowed_readonly_subprocess:
             fail(f"Class A violation — unapproved read-only subprocess boundary: {name}")

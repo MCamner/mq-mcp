@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+* `mq_stack_cockpit` returns `mq-agent stack cockpit --json` unchanged: version,
+  branch, dirty state, contract, release gate, unreleased work and next action
+  for every mq-stack repo in one read-only call. Class A through a new fixed
+  `mq_agent_stack_bridge`; failures return a redacted `mq.stack-tool-error.v1`.
+
 ### Fixed
 
 * HTTP tool execution runs off the request event loop, keeping health checks responsive during blocking model calls while preserving serialized tool writes.

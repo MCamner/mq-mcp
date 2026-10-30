@@ -40,7 +40,7 @@ def test_class_a_no_arbitrary_subprocess(tools):
     """Class A subprocesses must use a fixed, explicitly allowlisted read boundary."""
     violations = [
         t["name"] for t in _by_class(tools, "A")
-        if t.get("subprocess", False) and t.get("resolver") not in {"run_repo_command", "mq_agent_feedback_bridge"}
+        if t.get("subprocess", False) and t.get("resolver") not in {"run_repo_command", "mq_agent_feedback_bridge", "mq_agent_stack_bridge"}
     ]
     assert not violations, (
         f"Class A tools with subprocess outside git boundary: {violations}"
@@ -49,7 +49,7 @@ def test_class_a_no_arbitrary_subprocess(tools):
 
 def test_class_a_tools_have_repo_or_safe_resolver(tools):
     """Class A resolvers must be one of the known safe options."""
-    safe_resolvers = {"resolve_repo_file", "run_repo_command", "mq_agent_feedback_bridge", "none"}
+    safe_resolvers = {"resolve_repo_file", "run_repo_command", "mq_agent_feedback_bridge", "mq_agent_stack_bridge", "none"}
     violations = [
         t["name"] for t in _by_class(tools, "A")
         if t.get("resolver") not in safe_resolvers

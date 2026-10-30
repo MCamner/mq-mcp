@@ -73,6 +73,7 @@ _CATEGORIES: dict[str, str] = {
     "repo_signal_doctor_json": "integration",
     "repo_signal_inspect": "integration",
     "repo_signal_status": "integration",
+    "mq_stack_cockpit": "integration",
     "mq_feedback_status": "integration",
     "mq_feedback_inspect": "integration",
     "mq_feedback_compare": "integration",
