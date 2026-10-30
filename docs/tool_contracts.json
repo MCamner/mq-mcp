@@ -355,7 +355,7 @@
     {
       "name": "hal_repo_report",
       "class": "D",
-      "description": "Run a read-only mq-hal repository report.",
+      "description": "Run a read-only mq-hal report (audit, brief, release-brief, repo-status, repo-status-json, ci).",
       "resolver": "none",
       "write": false,
       "subprocess": true,

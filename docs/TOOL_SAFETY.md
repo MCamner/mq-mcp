@@ -196,7 +196,7 @@ These tools invoke external processes or open applications. Review carefully bef
 | `validate_project` | Run `scripts/validate.sh` with a 60s timeout | Run arbitrary commands |
 | `run_mqlaunch` | Open `mqlaunch.sh` in a new Terminal window via osascript | — |
 | `open_repo_terminal` | Open a registered repo in a new Terminal window | Write files |
-| `hal_repo_report` | Run a read-only mq-hal report (audit, brief, release-brief, repo-status, ci) | Write files, run arbitrary commands |
+| `hal_repo_report` | Run a read-only mq-hal report (audit, brief, release-brief, repo-status, repo-status-json, ci) | Write files, run arbitrary commands |
 | `open_messages` | Open Messages.app, optionally to a contact | Send messages, write files |
 | `open_finder` | Open Finder at a path | Write files |
 | `open_url` | Open a URL in the default browser | Arbitrary HTTP; URL must start with http:// or https:// |

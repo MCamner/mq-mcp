@@ -339,7 +339,7 @@ The local MCP server exposes 143 tools across the documented safety classes. See
 * `validate_project` — runs `scripts/validate.sh` when available
 * `run_mqlaunch` — runs `mqlaunch.sh`
 * `open_repo_terminal` — opens a registered local repository in a new Terminal window
-* `hal_repo_report` — runs a read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
+* `hal_repo_report` — runs a read-only mq-hal repo report (audit, brief, release-brief, repo-status, repo-status-json, ci)
 * `open_messages` — opens Messages.app, optionally to a contact
 * `open_finder` — opens Finder at a given path
 * `open_url` — opens a URL in the default browser

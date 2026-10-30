@@ -20,7 +20,7 @@ Prompt: List the available MCP tools.
 👩 Bridget: Here are the available MCP tools:
 
 1.  tool_safety_report — returns the MCP tool safety classification
-2.  hal_repo_report — read-only mq-hal repo report (audit, brief, release-brief, repo-status, ci)
+2.  hal_repo_report — read-only mq-hal repo report (audit, brief, release-brief, repo-status, repo-status-json, ci)
 3.  list_local_repos — lists registered local repositories from MQ_MCP_LOCAL_REPOS
 4.  open_repo_terminal — opens a registered local repository in a new Terminal window
 5.  repo_signal_analyze — runs repo-signal analyze on a local repository (read-only)
@@ -230,8 +230,12 @@ uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode releas
 ```bash
 uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode brief for repo mq-mcp."
 uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode repo-status for repo mq-mcp."
+uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode repo-status-json for repo mq-mcp."
 uv --directory mq-mcp run python bridge.py "Use hal_repo_report with mode ci for repo mq-mcp."
 ```
+
+`repo-status-json` returns JSON with `repo`, `path`, `inspect`, and `doctor` from repo-signal.
+`ci` and the CI section of `brief` show local HEAD, with the latest run per workflow/event; no matching runs means unknown status.
 
 `hal_repo_report` is read-only. It runs mq-hal as a local subprocess but cannot write files or run arbitrary commands.
 

@@ -1282,7 +1282,7 @@ def repo_signal_positioning(repo_path: str = ".") -> dict:
 
 @mcp.tool()
 def hal_repo_report(mode: str = "audit", repo: str = "mq-mcp") -> str:
-    """Run a read-only mq-hal repository report.
+    """Run a read-only mq-hal report (audit, brief, release-brief, repo-status, repo-status-json, ci).
 
     Connects the mq-mcp MCP surface to mq-hal's local repo helpers.
 
