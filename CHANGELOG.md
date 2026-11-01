@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-11-01
+
 ### Added
 
 * `MQ_BRIDGET_CONTEXT_DIR` redirects Bridget's session stores (default
-  `~/.mq`). The README smoke prompt in `scripts/validate.sh` uses a temporary
-  directory, so it no longer writes to or reads from the operator's history.
+  `~/.mq`). The model-backed smoke checks use a temporary directory, so they no
+  longer write to or read from the operator's history.
 
 ### Fixed
 
@@ -21,7 +23,14 @@
   `brain_record_learning` calls instead of matching answer text. `history hits`
   (a duplicate of sessions) is removed; `context hits` and `accepted learning`
   are renamed to `sessions in prompt context` and `lessons in store (all
-  sources)`.
+  sources)`. The keys in `~/.mq/bridget_memory/metrics.json` change with them;
+  no MQ repo reads that file.
+
+### Changed
+
+* ROADMAP closes Bridget Phase 7: over 75 real sessions, usage does not justify
+  more memory or surface. Each unused Bridget flag is mapped to its dependencies
+  and overlaps; none is deprecated.
 
 ## [2.3.0] - 2026-11-01
 
