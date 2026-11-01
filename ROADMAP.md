@@ -35,12 +35,9 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-Released:  v2.2.0  Evidence, contracts and learn hardening (2026-10-24)
-On main:   unreleased since v2.2.0 — mq_stack_cockpit (#135), quit_app
-           (#130), Bridget on-demand skills (#132), Bridget console and
-           session card (#129, #131, #133), OpenAI tool-request limit
-           (#127), responsive HTTP diagnostics (#125)
-Now:       nothing committed — cut a release from main
+Released:  v2.3.0  Stack cockpit and Bridget operator surface (2026-11-01)
+On main:   nothing unreleased
+Now:       nothing committed
 Next:      undecided — no further scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
@@ -49,10 +46,11 @@ Active backlog summary:
 
 ```text
 Size:      small; most planned work has shipped
-Now:       nothing committed; mq_stack_cockpit is on main, unreleased
+Now:       nothing committed
 Next:      candidate — Bridget Phase 7: decide from usage metrics whether
            sessions, lessons, CodeGraph lookups and delegation are used
-Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6
+Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6,
+           mq_stack_cockpit (v2.3.0)
 Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,
            CodeGraph-as-producer, promotion scoring/merge logic
@@ -274,6 +272,7 @@ This is not a problem to solve. It is a tension to design.
 | v2.0.0  | Release Gate v2 + deterministic readiness   | Done          |
 | v2.1.0  | Bridget Runtime and Evidence Integrity      | Done                                 |
 | v2.2.0  | Evidence, contracts and learn hardening     | Done                                 |
+| v2.3.0  | Stack cockpit and Bridget operator surface  | Done                                 |
 | v1.12.0 | Repo-context evidence hardening             | Done; shipped in v2.2.0 (ADR-008)    |
 
 ---
@@ -1730,7 +1729,7 @@ tool surface when safety metadata, tests, profiles, and docs move with it.
 
 ### Stack cockpit tool
 
-Status: merged to main (#135), unreleased.
+Status: done, shipped in v2.3.0 (#135).
 
 Gap: mq-agent owns `mq-agent stack cockpit --json`
 (`mq_stack_cockpit.schema.json`) and mq-hal already reads it for

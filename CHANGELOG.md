@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-01
+
 ### Added
 
 * `mq_stack_cockpit` returns `mq-agent stack cockpit --json` unchanged: version,
@@ -9,9 +11,39 @@
   for every mq-stack repo in one read-only call. Class A through a new fixed
   `mq_agent_stack_bridge`; failures return a redacted `mq.stack-tool-error.v1`.
 
+* `quit_app` asks one running macOS app to quit by bundle id; `force=True`
+  sends SIGKILL to the single pid System Events reported if the app has not
+  exited within 5 s. The name is passed as osascript argv, never as script text;
+  Finder, Dock, loginwindow, SystemUIServer and WindowServer are refused.
+  Class D, so Bridget's approval gate asks before every call.
+* `list_skills` / `load_skill` (Class B, read-only) expose Bridget skills from
+  `bridget_skills/` and absolute `MQ_MCP_SKILL_DIRS` entries. Names are looked
+  up in the skill index, never joined into a path; symlinks out of a root and
+  files over 20 KB are skipped. Bridget lists skill names in its system prompt
+  and loads steps only when a request matches. First skill: `avsluta-dagen`.
+
+### Changed
+
+* Bridget chat console refreshed: live tool activity while a request runs, and
+  the name prompt restyled as the session card with the same width formula.
+  Colour only when both streams are terminals and `NO_COLOR` is unset; piped
+  mode is unchanged.
+* `docs/ORCHESTRATION_CONTRACT.md` explains why mq-mcp proxies three of mq-image-analyze's eight
+  MCP tools.
+
 ### Fixed
 
 * HTTP tool execution runs off the request event loop, keeping health checks responsive during blocking model calls while preserving serialized tool writes.
+* Bridget's approval card shows every argument of a gated tool, one line each
+  with control characters replaced and values cut at 60 columns. Previously
+  only `shell_exec` showed its arguments without answering `visa`.
+* Bridget stays within OpenAI's 128-tool limit: tools beyond 127 are reached
+  through one `bridget_call_overflow_tool`, which checks the target against
+  discovered tools and still passes the approval gate.
+* Ctrl-C at Bridget's name prompt cancels entry; under asyncio SIGINT only
+  scheduled a cancellation while the blocking read restarted.
+* Bridget draws the name frame only after terminal echo is off, so a name typed
+  immediately no longer leaves the top border above the session card.
 
 ## [2.2.0] - 2026-10-24
 
