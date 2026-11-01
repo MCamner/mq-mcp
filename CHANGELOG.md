@@ -10,6 +10,11 @@
 
 ### Fixed
 
+* Model-backed Bridget smoke checks moved to `scripts/check-bridget-smoke.sh`.
+  A missing key exits 2 and `validate.sh` reports it as SKIPPED in its final
+  line; previously the README smoke printed OK even when the run failed, and
+  the face-trigger check printed OK after a FAIL. A key in Keychain is now found
+  without reading it (no `-w`); `scripts/bridget` reads it into its own process.
 * `bridget --dashboard` counts what it names. Delegations are `--workflow` runs,
   which are now logged when handed to mq-agent; previously any summary that
   mentioned "mq-agent" counted. `learning recorded` counts `record_learning` /

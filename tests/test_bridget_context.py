@@ -221,6 +221,5 @@ def test_context_dir_can_be_redirected(tmp_path):
 
 
 def test_validate_smoke_does_not_write_the_operator_history():
-    script = (ROOT / "scripts" / "validate.sh").read_text(encoding="utf-8")
-    smoke = next(ln for ln in script.splitlines() if "summarize it briefly" in ln)
-    assert "MQ_BRIDGET_CONTEXT_DIR=" in smoke
+    script = (ROOT / "scripts" / "check-bridget-smoke.sh").read_text(encoding="utf-8")
+    assert 'export MQ_BRIDGET_CONTEXT_DIR="$ctx_dir"' in script
