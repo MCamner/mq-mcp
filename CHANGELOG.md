@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+* `run_mqlaunch_selftest` no longer fails delegated workflows by timing out.
+  `mqlaunch selftest` takes about two minutes, the tool allowed 15 s, and the
+  timeout came back as `[exit 1 (failures)]`. Selftest now gets 300 s, and a
+  timeout in any `run_mqlaunch_*` tool returns exit 124, labelled
+  `[exit 124 (timed out)]` (MCamner/mq-agent#438).
+
 ## [2.3.1] - 2026-11-01
 
 ### Added
