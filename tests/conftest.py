@@ -36,6 +36,22 @@ def isolated_review_memory(tmp_path, monkeypatch):
     )
 
 
+@pytest.fixture(autouse=True)
+def no_real_keychain(monkeypatch):
+    """Never read the operator's Keychain from a test (#143).
+
+    The OpenAI credential falls back to Keychain when the environment has no
+    key; a test that removes the key to simulate "missing" would otherwise get
+    the real one. Tests that need a Keychain set their own fake MQ_SECURITY_BIN.
+    """
+    from review_engine import openai_credential
+
+    monkeypatch.setenv("MQ_SECURITY_BIN", "/nonexistent/mq-test-security")
+    openai_credential._reset_for_tests()
+    yield
+    openai_credential._reset_for_tests()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def tracked_review_history_is_never_written():
     """Fail the session if anything wrote the tracked store.

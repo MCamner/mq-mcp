@@ -62,6 +62,7 @@ import brain_ingress as _brain_ingress  # noqa: E402
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+from review_engine import openai_credential as _openai_credential  # noqa: E402
 from review_engine.model_runtime import (  # noqa: E402
     review_client as _review_client,
     review_model as _review_model,
@@ -146,6 +147,9 @@ def _redacted_env() -> dict[str, object]:
     redacted: dict[str, object] = {}
     for key in keys:
         value = os.getenv(key)
+        if key == _openai_credential.ENV_VAR:
+            # Scrubbed from os.environ at startup; the server still holds it.
+            value = _openai_credential.openai_api_key() or None
         if value is None:
             redacted[key] = {"set": False}
         elif any(marker in key for marker in secret_markers):
@@ -2719,7 +2723,7 @@ def review_file(relative_path: str, mode: str = "comment", deep: bool = False, r
     except Exception:
         pass
 
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = _openai_credential.openai_api_key()
     if _review_requires_key() and not api_key:
         return "review_file requires OPENAI_API_KEY to be set."
 
@@ -3316,7 +3320,7 @@ def review_runtime_contract() -> str:
     )
 
     # — AI architecture pass —
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = _openai_credential.openai_api_key()
     if _review_requires_key() and not api_key:
         return (
             f"{structural_section}\n\n"
@@ -3843,7 +3847,7 @@ def review_architecture_doc(doc_name: str) -> str:
         + (f" … (+{actual_count - 30} more)" if actual_count > 30 else "")
     )
 
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = _openai_credential.openai_api_key()
     if _review_requires_key() and not api_key:
         return (
             f"review_architecture_doc: OPENAI_API_KEY not set.\n\n"
@@ -4038,7 +4042,7 @@ def extract_coding_conventions(relative_path: str) -> str:
             )
         findings_text = last.findings_text
 
-        api_key = os.getenv("OPENAI_API_KEY", "")
+        api_key = _openai_credential.openai_api_key()
         if _review_requires_key() and not api_key:
             return "extract_coding_conventions requires OPENAI_API_KEY to be set."
 
@@ -4223,7 +4227,7 @@ def risk_review_file(relative_path: str, mode: str = "security", receipt: bool =
     if not contract:
         return f"risk_review_file failed: no contract for mode {mode!r}. Add reviews/contracts/{mode}-review.md."
 
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = _openai_credential.openai_api_key()
     if _review_requires_key() and not api_key:
         return "risk_review_file failed: OPENAI_API_KEY not set."
 
@@ -4328,7 +4332,7 @@ def risk_review_repo(mode: str = "security", receipt: bool = False, repo_path: s
     valid_modes = {"security", "risk", "architecture"}
     if mode not in valid_modes:
         return f"risk_review_repo failed: mode must be one of {sorted(valid_modes)}, got {mode!r}"
-    if _review_requires_key() and not os.getenv("OPENAI_API_KEY", ""):
+    if _review_requires_key() and not _openai_credential.openai_api_key():
         return "risk_review_repo failed: OPENAI_API_KEY is required"
     try:
         root = _receipt_review_root(repo_path)
@@ -4661,7 +4665,7 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
     # "requires OPENAI_API_KEY" while this tool still reported the files as
     # reviewed, and an ISSUED receipt could claim a review that never ran.
     # Checked before the receipt branch and the file loop.
-    if _review_requires_key() and not os.getenv("OPENAI_API_KEY", ""):
+    if _review_requires_key() and not _openai_credential.openai_api_key():
         return "review_repo failed: OPENAI_API_KEY is required"
     if receipt:
         try:
@@ -5822,7 +5826,7 @@ _TUI_SPLASH = re.compile(r"PHOSPHOR GRID|███|╔═|╚═|═══")
 MQLAUNCH_SELFTEST_TIMEOUT = 300
 
 
-def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
+def _run_mqlaunch(*args: str, timeout: int = 15, openai_key: bool = False) -> tuple[str, int]:
     """Run a mqlaunch command headless. Returns (clean_output, returncode)."""
     # Defense in depth: a run_mqlaunch_* MCP tool must never start a workflow via
     # `mqlaunch flow`. That would let an mq-mcp tool recursively kick off the
@@ -5830,7 +5834,7 @@ def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
     # callers pass fixed, non-flow args, so this only blocks the abuse vector.
     if args and args[0] == "flow":
         return ("ERROR: run_mqlaunch tools may not start 'mqlaunch flow'.", 1)
-    env = {**os.environ, "TERM": "xterm", "COLUMNS": "120", "LINES": "40"}
+    env = {**_openai_credential.child_env(openai_key=openai_key), "TERM": "xterm", "COLUMNS": "120", "LINES": "40"}
     try:
         result = subprocess.run(
             ["mqlaunch", *args],
@@ -6053,7 +6057,7 @@ def run_mqlaunch_ask(question: str) -> str:
 
     Safety: Class C — reads local files, calls OpenAI API if key is set.
     """
-    if not os.environ.get("OPENAI_API_KEY"):
+    if not _openai_credential.openai_api_key():
         return (
             "ERROR: OPENAI_API_KEY is not set.\n"
             "`mqlaunch ask` requires the OpenAI API key to answer questions.\n"
@@ -6061,7 +6065,7 @@ def run_mqlaunch_ask(question: str) -> str:
             "Fix 1: set OPENAI_API_KEY in the environment.\n"
             "Fix 2: use `search_repo` or `read_repo_file` for local repo queries."
         )
-    output, rc = _run_mqlaunch("ask", question, timeout=30)
+    output, rc = _run_mqlaunch("ask", question, timeout=30, openai_key=True)
     if "Copied" in output and "clipboard" in output:
         return (
             "ERROR: mqlaunch routed to clipboard-copy fallback.\n"
@@ -6204,7 +6208,7 @@ def _resolve_mq_image_bin() -> str:
     return "mq-image"
 
 
-def _run_mq_image(args: list[str], timeout: int = 120) -> tuple[str, int]:
+def _run_mq_image(args: list[str], timeout: int = 120, openai_key: bool = False) -> tuple[str, int]:
     """Run mq-image CLI and return (output, returncode). Never raises."""
     bin_path = _resolve_mq_image_bin()
     try:
@@ -6213,6 +6217,7 @@ def _run_mq_image(args: list[str], timeout: int = 120) -> tuple[str, int]:
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=_openai_credential.child_env(openai_key=openai_key),
         )
         output = (result.stdout or "").strip() or (result.stderr or "").strip()
         return output, result.returncode
@@ -6299,7 +6304,10 @@ def image_analyze(image_path: str, mode: str = "local-fast") -> dict:
     except ValueError as exc:
         return {"error": f"image_analyze failed: {exc}"}
 
-    output, rc = _run_mq_image(["analyze", str(safe), "--json", "--mode", mode])
+    # Only the cloud backend calls OpenAI; local modes never see the key (#143).
+    output, rc = _run_mq_image(
+        ["analyze", str(safe), "--json", "--mode", mode], openai_key=mode == "cloud-verify"
+    )
     if rc not in (0, 1):
         return {"error": f"mq-image analyze exited {rc}", "output": output}
     try:
@@ -6605,5 +6613,8 @@ def brain_promote_learning(slug: str) -> dict:
 
 
 if __name__ == "__main__":
+    # Hold the OpenAI key in-process and drop it from os.environ, so no
+    # subprocess inherits it unless a tool opts in (#143).
+    _openai_credential.scrub_process_env()
     transport = os.getenv("MQ_MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)  # type: ignore[arg-type]
