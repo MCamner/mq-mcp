@@ -5816,6 +5816,10 @@ def bootstrap_learning_memory() -> str:
 
 _ANSI_ESC = re.compile(r"\x1b\[[0-9;]*[mABCDEFGHJKSThlrs]|\x1b\[[0-9;]*[a-zA-Z]|\x1b[=>]|\r")
 _TUI_SPLASH = re.compile(r"PHOSPHOR GRID|███|╔═|╚═|═══")
+# `mqlaunch selftest` lints every shell file and took ~126 s on 2026-11-01.
+# mq-agent's HTTP and step deadlines for this tool sit above this one, so the
+# timeout reported is always this one.
+MQLAUNCH_SELFTEST_TIMEOUT = 300
 
 
 def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
@@ -5841,7 +5845,16 @@ def _run_mqlaunch(*args: str, timeout: int = 15) -> tuple[str, int]:
     except FileNotFoundError:
         return "ERROR: mqlaunch not found on PATH.", 127
     except subprocess.TimeoutExpired:
-        return f"ERROR: mqlaunch {' '.join(args)} timed out after {timeout}s.", 1
+        return f"ERROR: mqlaunch {' '.join(args)} timed out after {timeout}s.", 124
+
+
+def _mqlaunch_status(rc: int, ok: str, failed: str) -> str:
+    """The "[exit N (...)]" label; a timeout (124) is never called a failure."""
+    if rc == 0:
+        return f"exit 0 ({ok})"
+    if rc == 124:
+        return "exit 124 (timed out)"
+    return f"exit {rc} ({failed})"
 
 
 def _is_tui_output(text: str) -> bool:
@@ -5861,7 +5874,7 @@ def run_mqlaunch_doctor() -> str:
     Safety: Class A — read-only diagnostic, no side effects.
     """
     output, rc = _run_mqlaunch("doctor")
-    status = "exit 0 (healthy)" if rc == 0 else f"exit {rc} (issues found)"
+    status = _mqlaunch_status(rc, "healthy", "issues found")
     return f"mqlaunch doctor [{status}]\n\n{output}"
 
 
@@ -5877,8 +5890,8 @@ def run_mqlaunch_selftest() -> str:
 
     Safety: Class A — read-only smoke checks.
     """
-    output, rc = _run_mqlaunch("selftest")
-    status = "exit 0 (all pass)" if rc == 0 else f"exit {rc} (failures)"
+    output, rc = _run_mqlaunch("selftest", timeout=MQLAUNCH_SELFTEST_TIMEOUT)
+    status = _mqlaunch_status(rc, "all pass", "failures")
     return f"mqlaunch selftest [{status}]\n\n{output}"
 
 
@@ -5894,7 +5907,7 @@ def run_mqlaunch_release_check() -> str:
     Safety: Class A — read-only checks, no commits or pushes.
     """
     output, rc = _run_mqlaunch("release-check")
-    status = "exit 0 (ready)" if rc == 0 else f"exit {rc} (not ready)"
+    status = _mqlaunch_status(rc, "ready", "not ready")
     return f"mqlaunch release-check [{status}]\n\n{output}"
 
 
