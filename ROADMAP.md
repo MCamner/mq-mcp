@@ -36,7 +36,8 @@ Current project phase:
 
 ```text
 Released:  v2.3.0  Stack cockpit and Bridget operator surface (2026-11-01)
-On main:   nothing unreleased
+On main:   unreleased since v2.3.0 — Bridget dashboard counts what it names
+           (#138), model-backed smoke reports a missing key as SKIP (#139)
 Now:       nothing committed
 Next:      undecided — no further scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
@@ -47,9 +48,8 @@ Active backlog summary:
 ```text
 Size:      small; most planned work has shipped
 Now:       nothing committed
-Next:      candidate — Bridget Phase 7: decide from usage metrics whether
-           sessions, lessons, CodeGraph lookups and delegation are used
-Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6,
+Next:      undecided — Phase 7 found no evidence for more memory or surface
+Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-7,
            mq_stack_cockpit (v2.3.0)
 Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,
@@ -1720,9 +1720,9 @@ No scope is committed. Repo-context evidence hardening (ADR-008), the Bridget
 interactive session foundation, CG-2.1/CG-2.2, the learn extractor and Bridget
 v2 Phases 0-6 have shipped. Do not rebuild them under their old version labels.
 
-The open candidate is Bridget Phase 7: use the Phase 6 usage metrics
-(`bridget --dashboard`) to decide whether sessions, lessons, CodeGraph lookups
-and delegation are used before adding more memory or surface.
+Bridget Phase 7 is done: usage does not justify more memory or surface (see
+"Phase 7 — Long-term validation" below). Retiring any Bridget flag needs its own
+decision; none is deprecated.
 
 Keep validating releases with `./scripts/release-check.sh` and only add new
 tool surface when safety metadata, tests, profiles, and docs move with it.
@@ -2191,9 +2191,54 @@ Bridget executes; mq-agent plans. Shipped as `--workflow` (thin entrypoint deleg
 * [x] Accepted-learning, history-hit, context-hit counts
 * [x] Simple dashboard (helped / delegated / suggested / accepted)
 
-### Phase 7 — Long-term validation (partial)
+### Phase 7 — Long-term validation (done)
 
-* [ ] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [x] Gather evidence: are sessions / lessons / CodeGraph / delegation useful? is more memory needed?
+* [x] Make the evidence trustworthy first (#138, #139)
+
+Evidence first had to be repaired. Before #138, 51 of 126 logged sessions were
+the `validate.sh` README smoke writing into `~/.mq/bridget-history.jsonl`, the
+same history that is injected into Bridget's prompt. Delegations counted
+summaries mentioning "mq-agent" (43, real 0), and history/context hits did not
+measure use. Now:
+
+* `MQ_BRIDGET_CONTEXT_DIR` isolates every smoke run; the 51 smoke entries were
+  removed from the operator history (backup kept locally), leaving 75 real
+  sessions.
+* The dashboard counts delegations from `--workflow` runs and learning from
+  `record_learning` / `brain_record_learning` calls. A real isolated
+  `--workflow` run recorded exactly one delegation.
+* `scripts/check-bridget-smoke.sh` reports a missing key as SKIP (exit 2), and
+  `validate.sh` names skipped groups in its final line.
+
+Findings (operator history 2026-06-28..2026-11-01, shell history from
+2026-08-19; in-chat use is limited to `/help`, `/status`, `/clear`):
+
+```text
+Used:      --chat (67 sessions, ~4/week); repo reading/search, git status,
+           repo-signal; macOS app control and skills since October
+Not used:  delegation (0 --workflow runs), learning via Bridget (2 calls,
+           0 lessons with Bridget as source), the flags below
+Decision:  no more memory or surface; Bridget stays a repo reader and
+           operator console
+```
+
+Flag map. All are kept; deprecating any of them is a separate decision.
+
+| Flag | Operator use | Depends on it | Overlaps with |
+| --- | --- | --- | --- |
+| `--project` | 0 | pin read by `--continue`, CodeGraph lookups, co-change, snapshot, session recording; 5 test files | cwd git detection |
+| `--continue` | 0 | 1 test file, docs | automatic injection of the last 3 sessions (7 days) |
+| `--history` | 0 | 2 test files, docs | `--dashboard` (counts only) |
+| `--forget` | 0 | 1 test file, docs | none: the only way to delete a day of history — keep |
+| `--symbol`, `--dependencies`, `--hotspots` | 0 | `tests/test_codegraph_lookup.py`, docs | `codegraph explore` CLI and MCP |
+| `--co-change` | 0 | mq-agent `cochange_observation.run_cochange` (`--json`), 2 test files | none — CG-2 evidence source; keep |
+| `--snapshot`, `--graph-diff` | 0 | 1 test file each, CG-2.2 snapshots | none (CG-2.2 artifact) |
+
+Open observation, outside this repo: the verification `--workflow` run failed
+at the `mqlaunch selftest` step inside mq-agent, while `mqlaunch selftest`
+passed when run directly.
+
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 
 ### Recommended build order
