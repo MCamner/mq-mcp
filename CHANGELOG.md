@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Security
+
+* The MCP server no longer passes `OPENAI_API_KEY` to every subprocess it
+  starts (#143). At startup it resolves the key once (environment, else the
+  `mq-openai-api-key` Keychain item) through `review_engine/openai_credential.py`
+  and removes it from `os.environ`. Only `run_mqlaunch_ask` and `image_analyze`
+  in `cloud-verify` mode hand it to their child process. `mqlaunch doctor`,
+  `selftest`, git, `shell_exec`, mq-hal, repo-signal and the mq-agent bridges
+  no longer inherit it; mq-agent and mqlaunch resolve it from Keychain
+  themselves where they need it. The launchd job still exports the key; that
+  is the remaining step of #143.
+
 ### Fixed
 
 * `run_mqlaunch_selftest` no longer fails delegated workflows by timing out.

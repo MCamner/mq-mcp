@@ -8,6 +8,8 @@ from types import SimpleNamespace
 from typing import Any
 from urllib.parse import urlparse
 
+from review_engine import openai_credential
+
 
 class OllamaClient:
     """Small chat-completions interface for the planner/reviewer contracts.
@@ -76,7 +78,7 @@ def review_model() -> str:
 def review_client(openai_module: Any = None) -> Any:
     if not review_requires_key():
         return OllamaClient()
-    key = os.environ.get("OPENAI_API_KEY", "")
+    key = openai_credential.openai_api_key()
     if not key:
         raise ValueError("OPENAI_API_KEY is required for explicitly selected OpenAI review")
     if openai_module is None:
