@@ -35,9 +35,8 @@ Authoritative identity contract: `docs/RUNTIME_CONTRACT.md`
 Current project phase:
 
 ```text
-Released:  v2.3.0  Stack cockpit and Bridget operator surface (2026-11-01)
-On main:   unreleased since v2.3.0 — Bridget dashboard counts what it names
-           (#138), model-backed smoke reports a missing key as SKIP (#139)
+Released:  v2.3.1  Bridget usage evidence you can trust (2026-11-01)
+On main:   nothing unreleased
 Now:       nothing committed
 Next:      undecided — no further scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
@@ -273,6 +272,7 @@ This is not a problem to solve. It is a tension to design.
 | v2.1.0  | Bridget Runtime and Evidence Integrity      | Done                                 |
 | v2.2.0  | Evidence, contracts and learn hardening     | Done                                 |
 | v2.3.0  | Stack cockpit and Bridget operator surface  | Done                                 |
+| v2.3.1  | Bridget usage evidence you can trust        | Done                                 |
 | v1.12.0 | Repo-context evidence hardening             | Done; shipped in v2.2.0 (ADR-008)    |
 
 ---

@@ -1,7 +1,7 @@
 # mq-mcp
 
 [![Validate](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml/badge.svg)](https://github.com/MCamner/mq-mcp/actions/workflows/validate.yml)
-[![Version](https://img.shields.io/badge/version-2.3.0-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.3.0)
+[![Version](https://img.shields.io/badge/version-2.3.1-blue)](https://github.com/MCamner/mq-mcp/releases/tag/v2.3.1)
 
 Local MCP server experiments and tooling for macOS.
 
@@ -17,7 +17,9 @@ and approval UX belong in `mq-agent`; repo health scoring belongs in
 v2.3.0 — stack cockpit and Bridget operator surface: one read-only call for
 the status of every MQ-stack repo, a gated `quit_app`, on-demand Bridget skills,
 an approval card that shows every tool argument, and HTTP diagnostics that stay
-responsive during blocking tools. Release Gate v2 remains the deterministic
+responsive during blocking tools. v2.3.1 makes Bridget's usage evidence
+trustworthy: isolated smoke runs, a dashboard that counts what it names, and a
+missing OpenAI key reported as SKIP. Release Gate v2 remains the deterministic
 readiness baseline.
 
 This repository is useful as:

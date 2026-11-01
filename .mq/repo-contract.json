@@ -1,7 +1,7 @@
 {
   "repo": "mq-mcp",
   "role": "runtime",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "status": "active",
   "contracts": [
     "review_contract.v1",
