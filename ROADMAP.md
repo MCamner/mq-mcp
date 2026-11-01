@@ -36,10 +36,12 @@ Current project phase:
 
 ```text
 Released:  v2.3.1  Bridget usage evidence you can trust (2026-11-01)
-On main:   nothing unreleased
+On main:   merged, not yet released: #142 (mqlaunch selftest timeout),
+           #144 (OPENAI_API_KEY kept out of subprocesses, #143)
 Now:       nothing committed
 Next:      undecided — no further scope is committed
-Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
+Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline, Keychain locked at
+           service start
 ```
 
 Active backlog summary:
@@ -54,6 +56,13 @@ Deferred:  old tool examples/error model, Review TUI, CG-2.2+ timeline,
            autonomous loops, cloud memory, generic memory engine,
            CodeGraph-as-producer, promotion scoring/merge logic
 ```
+
+Later — Keychain locked or unavailable at service start: the server reads the
+OpenAI key once at startup (`review_engine/openai_credential.py`). If Keychain
+is locked or unavailable at that moment, it holds an empty key until it is
+restarted. A failed first lookup must not leave the server without a key for
+good: retry the lookup when a tool needs the key, instead of holding the
+failure.
 
 Roadmap reading rule:
 
@@ -2235,9 +2244,17 @@ Flag map. All are kept; deprecating any of them is a separate decision.
 | `--co-change` | 0 | mq-agent `cochange_observation.run_cochange` (`--json`), 2 test files | none — CG-2 evidence source; keep |
 | `--snapshot`, `--graph-diff` | 0 | 1 test file each, CG-2.2 snapshots | none (CG-2.2 artifact) |
 
-Open observation, outside this repo: the verification `--workflow` run failed
-at the `mqlaunch selftest` step inside mq-agent, while `mqlaunch selftest`
-passed when run directly.
+Resolved observation, outside this repo: the verification `--workflow` run
+failed at the `mqlaunch selftest` step inside mq-agent, while `mqlaunch
+selftest` passed when run directly. There were two causes:
+
+* The tool gave selftest 15 s and reported the timeout as a failure
+  (MCamner/mq-agent#438, fixed in #142 and MCamner/mq-agent#439).
+* Under the launchd service, the exported `OPENAI_API_KEY` broke the rotation
+  smoke test, and the run record cut off the failing line
+  (MCamner/mq-agent#440).
+
+Both issues are closed.
 
 * Explicitly deferred: autonomous loops, cloud memory, generic memory engine, CodeGraph producer, promotion logic, score merge, observation integration.
 

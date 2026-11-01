@@ -11,8 +11,10 @@
   in `cloud-verify` mode hand it to their child process. `mqlaunch doctor`,
   `selftest`, git, `shell_exec`, mq-hal, repo-signal and the mq-agent bridges
   no longer inherit it; mq-agent and mqlaunch resolve it from Keychain
-  themselves where they need it. The launchd job still exports the key; that
-  is the remaining step of #143.
+  themselves where they need it. This server change ships in the next
+  release. The launchd configuration no longer exports the key; that was
+  changed in the local deployment and is not part of this repository's
+  code. #143 is closed.
 
 ### Fixed
 
