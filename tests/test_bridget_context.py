@@ -169,6 +169,58 @@ def test_metrics_are_derived_from_history(tmp_path):
     assert metrics["totals"]["sessions"] == 1
     assert metrics["totals"]["chat_sessions"] == 1
     assert metrics["totals"]["tool_calls"] == 1
-    assert metrics["totals"]["learning_suggestions"] == 1
-    assert metrics["totals"]["accepted_learning"] >= 0
+    assert metrics["totals"]["learning_recorded"] == 0
+    assert metrics["totals"]["lessons_in_store"] >= 0
     assert (tmp_path / "metrics.json").exists()
+
+
+def _ctx(tmp_path):
+    return BridgetContext(
+        path=tmp_path / "ctx.md",
+        history_path=tmp_path / "history.jsonl",
+        metrics_path=tmp_path / "metrics.json",
+    )
+
+
+def test_delegation_counts_only_the_workflow_tool(tmp_path):
+    ctx = _ctx(tmp_path)
+    ctx.record("summarize", ["read_repo_file"], "mq-agent is the orchestrator")
+    ctx.record("run preflight", ["workflow"], "delegated")
+
+    assert ctx.metrics()["totals"]["delegations"] == 1
+
+
+def test_learning_counts_recorded_learning_calls_not_text(tmp_path):
+    ctx = _ctx(tmp_path)
+    ctx.record("p", ["git_status"], "learning suggestion: run --learn-last")
+    ctx.record("p", ["record_learning", "brain_record_learning"], "saved")
+
+    totals = ctx.metrics()["totals"]
+    assert totals["learning_recorded"] == 2
+    assert "learning_suggestions" not in totals
+
+
+def test_totals_use_names_that_say_what_they_count(tmp_path):
+    totals = _ctx(tmp_path).metrics()["totals"]
+    assert "history_hits" not in totals
+    assert "context_hits" not in totals
+    assert "accepted_learning" not in totals
+    assert {"sessions_in_context", "lessons_in_store"} <= set(totals)
+
+
+def test_context_dir_can_be_redirected(tmp_path):
+    import os
+    import subprocess
+
+    env = {**os.environ, "MQ_BRIDGET_CONTEXT_DIR": str(tmp_path)}
+    out = subprocess.run(
+        [sys.executable, "-c", "import bridget_context as b; print(b.CONTEXT_DIR); print(b.HISTORY_FILE)"],
+        cwd=ROOT / "mq-mcp", env=env, capture_output=True, text=True, check=True,
+    ).stdout.split()
+    assert out == [str(tmp_path), str(tmp_path / "bridget-history.jsonl")]
+
+
+def test_validate_smoke_does_not_write_the_operator_history():
+    script = (ROOT / "scripts" / "validate.sh").read_text(encoding="utf-8")
+    smoke = next(ln for ln in script.splitlines() if "summarize it briefly" in ln)
+    assert "MQ_BRIDGET_CONTEXT_DIR=" in smoke

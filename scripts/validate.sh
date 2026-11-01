@@ -163,7 +163,7 @@ ok "Bridget face trigger works"
 
 section "README bridge smoke test"
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
-  uv run python bridge.py "Read README.md and summarize it briefly."
+  MQ_BRIDGET_CONTEXT_DIR="$(mktemp -d)" uv run python bridge.py "Read README.md and summarize it briefly."
   ok "Bridge can read root README.md"
 else
   echo "SKIP: OPENAI_API_KEY is not set, skipping OpenAI bridge prompt"

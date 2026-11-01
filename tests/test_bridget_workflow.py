@@ -153,3 +153,27 @@ def test_run_mqlaunch_refuses_flow():
     out, rc = server._run_mqlaunch("flow", "run", "repo-preflight")
     assert rc == 1
     assert "may not start" in out
+
+
+# --- delegation is reported so it can be measured ----------------------------
+
+def test_on_delegated_called_after_run(monkeypatch):
+    record: list = []
+    seen: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker(record))
+    rc = bw.run_workflow_entry(
+        "run preflight", assume_yes=True,
+        on_delegated=lambda goal, template, rc: seen.append((goal, template, rc)),
+    )
+    assert rc == 0
+    assert seen == [("run preflight", "repo-preflight", 0)]
+
+
+def test_on_delegated_not_called_when_declined(monkeypatch):
+    seen: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker([]))
+    monkeypatch.setattr(bw, "_read_line", lambda prompt: "n")
+    bw.run_workflow_entry("run preflight", on_delegated=lambda *a: seen.append(a))
+    assert seen == []

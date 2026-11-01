@@ -429,6 +429,14 @@ Examples:
     )
 
 
+def _record_delegation(goal: str, template: str, rc: int) -> None:
+    """Log a delegated workflow run so the dashboard can count it."""
+    try:
+        BridgetContext().record(goal, ["workflow"], f"delegated {template} to mq-agent (rc={rc})")
+    except OSError:
+        pass
+
+
 def parse_workflow_args(argv: list[str]) -> tuple[str, bool]:
     """Extract the workflow goal and an assume-yes flag from argv.
 
@@ -1629,7 +1637,9 @@ if __name__ == "__main__":
     # async bridge starts.
     if "--workflow" in sys.argv[1:]:
         _goal, _assume_yes = parse_workflow_args(sys.argv[1:])
-        sys.exit(bridget_workflow.run_workflow_entry(_goal, assume_yes=_assume_yes))
+        sys.exit(bridget_workflow.run_workflow_entry(
+            _goal, assume_yes=_assume_yes, on_delegated=_record_delegation,
+        ))
 
     # Runtime commands (--project / --continue / --history) are read-only and
     # synchronous; intercept them here so they never spin up OpenAI or MCP.
