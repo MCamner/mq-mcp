@@ -8,6 +8,7 @@ export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/mq-mcp-uv-cache}"
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/mq-mcp-pycache}"
 
 FAILED=0
+SKIPPED=0
 
 # Handles section.
 section() {
@@ -157,32 +158,19 @@ else
   echo "SKIP: Bridget image assets not found — local-only, skipping image check"
 fi
 
-uv run python bridge.py "hur ser du ut?" >/dev/null 2>&1 \
-  || { fail "Bridget face trigger crashed"; }
-ok "Bridget face trigger works"
-
-section "README bridge smoke test"
-if [[ -n "${OPENAI_API_KEY:-}" ]]; then
-  MQ_BRIDGET_CONTEXT_DIR="$(mktemp -d)" uv run python bridge.py "Read README.md and summarize it briefly."
-  ok "Bridge can read root README.md"
+if uv run python bridge.py "hur ser du ut?" >/dev/null 2>&1; then
+  ok "Bridget face trigger works"
 else
-  echo "SKIP: OPENAI_API_KEY is not set, skipping OpenAI bridge prompt"
+  fail "Bridget face trigger crashed"
 fi
 
-section "Bridget REPL smoke test"
-if [[ -n "${OPENAI_API_KEY:-}" ]]; then
-  # Feed an immediate 'exit' via a here-string (no pipe -> no SIGPIPE under
-  # pipefail). Exercises REPL setup, the /dev/tty-or-stdout split, the clean
-  # exit path, and the Phase-4 record-at-exit hook (zero turns records nothing)
-  # without spending an OpenAI completion. Must greet and exit 0.
-  repl_out="$(uv run python bridge.py --chat <<< 'exit' 2>&1)" \
-    || fail "Bridget --chat REPL crashed"
-  grep -q "Hej då" <<< "$repl_out" \
-    || fail "Bridget --chat did not exit cleanly"
-  ok "Bridget --chat REPL starts and exits cleanly"
-else
-  echo "SKIP: OPENAI_API_KEY is not set, skipping REPL smoke"
-fi
+section "Bridget smoke (model-backed)"
+"$ROOT/scripts/check-bridget-smoke.sh"
+case $? in
+  0) ;;
+  2) SKIPPED=$((SKIPPED + 1)) ;;
+  *) fail "Bridget smoke failed" ;;
+esac
 
 section "Tests"
 if uv --directory "$ROOT/mq-mcp" run pytest "$ROOT/tests/" -q --tb=short 2>&1; then
@@ -192,7 +180,9 @@ else
 fi
 
 section "Done"
-if [[ "$FAILED" -eq 0 ]]; then
+if [[ "$FAILED" -eq 0 && "$SKIPPED" -gt 0 ]]; then
+  ok "mq-mcp validation completed — $SKIPPED check group(s) SKIPPED, see SKIP lines above"
+elif [[ "$FAILED" -eq 0 ]]; then
   ok "mq-mcp validation completed"
 else
   printf 'FAIL: %d check(s) failed — fix issues above before releasing\n' \
