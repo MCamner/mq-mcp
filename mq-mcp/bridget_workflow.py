@@ -23,6 +23,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 #: The fixed, known workflow templates (must match mq-agent's template set).
@@ -169,10 +170,17 @@ def _format_plan(plan_json: str) -> str:
     return "\n".join(lines)
 
 
-def run_workflow_entry(goal: str, *, assume_yes: bool = False) -> int:
+def run_workflow_entry(
+    goal: str,
+    *,
+    assume_yes: bool = False,
+    on_delegated: Callable[[str, str, int], None] | None = None,
+) -> int:
     """Propose a template, show its plan, confirm, then delegate the run.
 
     Returns a process exit code. Never persists run state or retries.
+    ``on_delegated(goal, template, rc)`` is called once the run was handed to
+    mq-agent, so the caller can record the delegation.
     """
     # Recursion guard: deny nested workflow start / Bridget calling itself.
     if os.environ.get("MQ_WORKFLOW_DEPTH"):
@@ -216,4 +224,6 @@ def run_workflow_entry(goal: str, *, assume_yes: bool = False) -> int:
         ["workflow", "run", template, "--repo", str(repo), "--yes"],
         capture=False,
     )
+    if on_delegated is not None:
+        on_delegated(goal, template, run_rc)
     return run_rc

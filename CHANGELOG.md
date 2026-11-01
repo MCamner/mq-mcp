@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+* `MQ_BRIDGET_CONTEXT_DIR` redirects Bridget's session stores (default
+  `~/.mq`). The README smoke prompt in `scripts/validate.sh` uses a temporary
+  directory, so it no longer writes to or reads from the operator's history.
+
+### Fixed
+
+* `bridget --dashboard` counts what it names. Delegations are `--workflow` runs,
+  which are now logged when handed to mq-agent; previously any summary that
+  mentioned "mq-agent" counted. `learning recorded` counts `record_learning` /
+  `brain_record_learning` calls instead of matching answer text. `history hits`
+  (a duplicate of sessions) is removed; `context hits` and `accepted learning`
+  are renamed to `sessions in prompt context` and `lessons in store (all
+  sources)`.
+
 ## [2.3.0] - 2026-11-01
 
 ### Added

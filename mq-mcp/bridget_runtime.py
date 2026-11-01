@@ -391,17 +391,16 @@ def handle_dashboard() -> None:
     print("Bridget dashboard:")
     print(f"  sessions: {totals['sessions']} ({totals['chat_sessions']} chat)")
     print(f"  tool calls: {totals['tool_calls']}")
-    print(f"  delegations: {totals['delegations']}")
-    print(f"  learning suggestions: {totals['learning_suggestions']}")
-    print(f"  accepted learning: {totals['accepted_learning']}")
-    print(f"  history hits: {totals['history_hits']}")
-    print(f"  context hits: {totals['context_hits']}")
+    print(f"  delegations (--workflow): {totals['delegations']}")
+    print(f"  learning recorded via Bridget: {totals['learning_recorded']}")
+    print(f"  lessons in store (all sources): {totals['lessons_in_store']}")
+    print(f"  sessions in prompt context: {totals['sessions_in_context']}")
     if metrics["by_day"]:
         print("  by day:")
         for day, row in sorted(metrics["by_day"].items())[-7:]:
             print(
                 f"    {day}: sessions {row['sessions']}, tools {row['tool_calls']}, "
-                f"delegations {row['delegations']}, learn suggestions {row['learning_suggestions']}"
+                f"delegations {row['delegations']}, learning recorded {row['learning_recorded']}"
             )
 
 

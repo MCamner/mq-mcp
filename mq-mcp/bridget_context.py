@@ -15,12 +15,15 @@ Usage (from bridge.py):
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
 MAX_SESSIONS = 5
-CONTEXT_DIR = Path.home() / ".mq"
+# MQ_BRIDGET_CONTEXT_DIR redirects every session store below, so a smoke run
+# neither reads nor writes the operator's history.
+CONTEXT_DIR = Path(os.environ.get("MQ_BRIDGET_CONTEXT_DIR") or Path.home() / ".mq")
 CONTEXT_FILE = CONTEXT_DIR / "bridget-context.md"
 # Append-only, full-depth session log for `bridget --history`. Separate from the
 # rolling markdown store above, which stays the bounded prompt-injection layer.
@@ -36,6 +39,9 @@ MAX_INJECTED_SESSION_AGE_DAYS = 7
 # Learn store lives at the repo root next to this package (mq-mcp/mq-mcp/).
 LESSONS_FILE = Path(__file__).resolve().parents[1] / "learn_engine" / "memory" / "lessons.jsonl"
 MAX_LESSONS = 6          # how many lessons to inject into the system prompt
+# Tool names that are evidence of a delegation or a recorded lesson.
+DELEGATION_TOOLS = frozenset({"workflow"})
+LEARNING_TOOLS = frozenset({"record_learning", "brain_record_learning"})
 
 
 class BridgetContext:
@@ -403,7 +409,7 @@ class BridgetContext:
                     "chat_sessions": 0,
                     "tool_calls": 0,
                     "delegations": 0,
-                    "learning_suggestions": 0,
+                    "learning_recorded": 0,
                 },
             )
             bucket["sessions"] += 1
@@ -411,23 +417,20 @@ class BridgetContext:
                 bucket["chat_sessions"] += 1
             tools = entry.get("tools") or []
             bucket["tool_calls"] += len(tools)
-            if "workflow" in tools or "mq-agent" in str(entry.get("summary", "")).lower():
-                bucket["delegations"] += 1
-            if "learn-last" in tools or "learning suggestion" in str(entry.get("summary", "")).lower():
-                bucket["learning_suggestions"] += 1
+            bucket["delegations"] += sum(1 for t in tools if t in DELEGATION_TOOLS)
+            bucket["learning_recorded"] += sum(1 for t in tools if t in LEARNING_TOOLS)
         totals = {
             "sessions": sum(day["sessions"] for day in by_day.values()),
             "chat_sessions": sum(day["chat_sessions"] for day in by_day.values()),
             "tool_calls": sum(day["tool_calls"] for day in by_day.values()),
             "delegations": sum(day["delegations"] for day in by_day.values()),
-            "learning_suggestions": sum(day["learning_suggestions"] for day in by_day.values()),
-            "accepted_learning": self._accepted_learning_count(),
-            "history_hits": len(entries),
-            "context_hits": len(self._bounded_history_entries()),
+            "learning_recorded": sum(day["learning_recorded"] for day in by_day.values()),
+            "lessons_in_store": self._lessons_in_store(),
+            "sessions_in_context": len(self._bounded_history_entries()),
         }
         return {"totals": totals, "by_day": by_day}
 
-    def _accepted_learning_count(self) -> int:
+    def _lessons_in_store(self) -> int:
         if not LESSONS_FILE.exists():
             return 0
         try:
