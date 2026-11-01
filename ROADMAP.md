@@ -36,9 +36,11 @@ Current project phase:
 
 ```text
 Released:  v2.2.0  Evidence, contracts and learn hardening (2026-10-24)
-On main:   HTTP diagnostics stay responsive during blocking tools (#125) —
-           unreleased
-Now:       mq_stack_cockpit — stack-wide status through mq-agent's cockpit
+On main:   unreleased since v2.2.0 — mq_stack_cockpit (#135), quit_app
+           (#130), Bridget on-demand skills (#132), Bridget console and
+           session card (#129, #131, #133), OpenAI tool-request limit
+           (#127), responsive HTTP diagnostics (#125)
+Now:       nothing committed — cut a release from main
 Next:      undecided — no further scope is committed
 Later:     ADR-007 preconditions 2-4, CG-2.2+ timeline
 ```
@@ -47,7 +49,7 @@ Active backlog summary:
 
 ```text
 Size:      small; most planned work has shipped
-Now:       mq_stack_cockpit (see "Stack cockpit tool" below)
+Now:       nothing committed; mq_stack_cockpit is on main, unreleased
 Next:      candidate — Bridget Phase 7: decide from usage metrics whether
            sessions, lessons, CodeGraph lookups and delegation are used
 Done:      repo-context evidence hardening (ADR-008), Bridget v2 Phases 0-6
@@ -1728,7 +1730,7 @@ tool surface when safety metadata, tests, profiles, and docs move with it.
 
 ### Stack cockpit tool
 
-Status: built on `feat/mq-stack-cockpit`, unreleased.
+Status: merged to main (#135), unreleased.
 
 Gap: mq-agent owns `mq-agent stack cockpit --json`
 (`mq_stack_cockpit.schema.json`) and mq-hal already reads it for
