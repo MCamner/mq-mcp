@@ -1,144 +1,332 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>mq-mcp — Local MCP Server for macOS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Local MCP server with OpenAI bridge, vector store Q&A, and 50 sandboxed tools for macOS.">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mq-mcp | MQ stack execution runtime</title>
+  <meta name="description" content="Local MCP runtime for macOS: 143 tools in four safety classes, with consent required before any tool that writes or acts outside the screen." />
+  <link rel="canonical" href="https://mcamner.github.io/mq-mcp/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --green: #3fb950;
-      --yellow: #d29922;
+      --bezel: #15110c;
+      --glass: #0b0805;
+      --amber: #ffb000;
+      --amber-dim: #9a6a1c;
+      --amber-faint: #3a2a12;
+      --paper: #efe3cc;
+      --muted: #b8a88c;
+      --hal: #e0362c;
+      --mono: "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+      --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    * { box-sizing: border-box; }
+
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
-      font-size: 14px;
-      line-height: 1.7;
-      padding: 48px 20px 80px;
+      margin: 0;
+      background: var(--bezel);
+      color: var(--paper);
+      font: 400 17px/1.6 var(--sans);
     }
-    .wrap { max-width: 760px; margin: 0 auto; }
-    h1 { font-size: 1.6rem; color: var(--accent); margin-bottom: 6px; }
-    h2 { font-size: 1rem; color: var(--muted); font-weight: 400; margin: 36px 0 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-    p { color: var(--muted); margin-bottom: 10px; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .badge { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); margin-right: 6px; }
-    pre {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px 20px;
-      overflow-x: auto;
-      margin: 12px 0 20px;
-      color: var(--text);
-      font-size: 13px;
+
+    a { color: var(--amber); }
+    a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+    code { font-family: var(--mono); font-size: .9em; }
+
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px 22px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--amber-faint);
+      font: 400 14px var(--mono);
     }
-    code { font-family: inherit; }
-    .cmd { color: var(--green); }
-    .comment { color: var(--muted); }
-    .tools-grid {
+
+    header .brand { color: var(--amber); font-weight: 700; }
+    header nav { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+    header nav a { color: var(--muted); text-decoration: none; }
+
+    .intro { padding: 64px 0 40px; }
+
+    h1 {
+      max-width: 18ch;
+      margin: 0 0 18px;
+      font: 600 clamp(36px, 5.4vw, 62px)/1.04 var(--sans);
+      letter-spacing: -.015em;
+    }
+
+    h1 .n { font-family: var(--mono); font-weight: 700; color: var(--amber); letter-spacing: -.03em; }
+
+    .lead { max-width: 60ch; margin: 0; color: var(--muted); }
+    .lead code { color: var(--paper); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+
+    .btn {
+      padding: 12px 18px;
+      border: 1px solid var(--amber);
+      background: var(--amber);
+      color: var(--bezel);
+      font: 600 15px var(--mono);
+      text-decoration: none;
+    }
+
+    .btn.ghost { background: transparent; color: var(--amber); }
+
+    .contract { border: 1px solid var(--amber-faint); background: var(--glass); }
+
+    .class-row {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 8px;
-      margin: 12px 0 20px;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 24px;
+      padding: 22px 26px;
+      border-bottom: 1px solid var(--amber-faint);
     }
-    .tool {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 12px;
+
+    .class-row:last-child { border-bottom: 0; }
+    .class-name { font: 700 22px var(--mono); color: var(--amber); }
+    .class-row h3 { margin: 2px 0 4px; font: 600 16px var(--sans); }
+    .class-row p { margin: 0; color: var(--muted); font-size: 14px; }
+    .counts { margin-top: 8px; font: 400 13px var(--mono); color: var(--paper); }
+
+    .cells { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
+
+    .cell {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--amber-dim);
+      background: rgba(255, 176, 0, .14);
     }
-    .tool-name { color: var(--accent); font-weight: 600; }
-    .tool-desc { color: var(--muted); font-size: 11px; margin-top: 2px; }
-    .tag { font-size: 10px; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
-    .tag-write { border-color: var(--yellow); color: var(--yellow); }
-    footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+
+    .cell[data-gated="yes"] { border: 2px solid var(--hal); background: rgba(224, 54, 44, .18); }
+    .cell:hover { background: var(--amber); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px 24px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legend .key { display: inline-flex; align-items: center; gap: 8px; margin-right: 18px; }
+    .legend .cell { display: inline-block; width: 14px; height: 14px; }
+    #tool-name { font: 400 13px var(--mono); color: var(--paper); min-height: 1.6em; }
+
+    section { padding: 64px 0 0; }
+    section > p { max-width: 62ch; margin: 0 0 22px; color: var(--muted); }
+    h2 { margin: 0 0 8px; font: 600 28px/1.2 var(--sans); letter-spacing: -.01em; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .term { padding: 20px 22px; border-top: 2px solid var(--amber); background: var(--glass); }
+    .term h3 { margin: 0 0 12px; color: var(--paper); font: 600 14px var(--mono); }
+
+    .term pre {
+      margin: 0;
+      overflow-x: auto;
+      color: var(--amber);
+      font: 400 13px/1.6 var(--mono);
+      white-space: pre;
+    }
+
+    .term pre .d { color: var(--amber-dim); }
+
+    .roles { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--amber-faint); }
+
+    .roles li {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 20px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--amber-faint);
+    }
+
+    .roles li strong { font: 600 15px var(--mono); color: var(--paper); }
+    .roles li.self strong { color: var(--amber); }
+    .roles li span { color: var(--muted); }
+
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px 24px;
+      margin-top: 72px;
+      padding: 26px 0 40px;
+      border-top: 1px solid var(--amber-faint);
+      color: var(--muted);
+      font: 400 13px var(--mono);
+    }
+
+    footer nav { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+
+    @media (max-width: 880px) {
+      .class-row, .split, .roles li { grid-template-columns: 1fr; gap: 10px; }
+      .class-row { padding: 18px 16px; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .cell { transition: background-color .12s; }
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
+  <header>
+    <span class="brand">mq-mcp</span>
+    <nav aria-label="Site">
+      <a href="https://github.com/MCamner/mq-mcp">GitHub</a>
+      <a href="./integration.html">Integration map</a>
+      <a href="https://github.com/MCamner">MQ stack</a>
+    </nav>
+  </header>
 
-  <h1>mq-mcp</h1>
-  <p style="color:var(--text); font-size:1rem; margin-bottom:16px;">Local MCP server with OpenAI bridge and vector store Q&amp;A for macOS.</p>
-  <div style="margin-bottom:32px;">
-    <span class="badge">macOS</span>
-    <span class="badge">Python 3.11+</span>
-    <span class="badge">FastMCP</span>
-    <span class="badge">OpenAI</span>
-    <a href="https://github.com/MCamner/mq-mcp" style="font-size:12px; color:var(--muted);">github.com/MCamner/mq-mcp →</a>
-  </div>
+  <main>
+    <div class="intro">
+      <h1><span class="n" data-stat="total">143</span> tools. <span class="n" data-stat="gated">44</span> ask before they run.</h1>
+      <p class="lead">mq-mcp is the execution runtime of the MQ stack: a local MCP server for macOS that exposes bounded tools with safety metadata, review, memory and an OpenAI bridge. Every tool has a class in <code>tool_contracts.json</code>, and the bridge asks for consent before any tool that writes or acts beyond the screen. Version <span data-stat="version">2.3.1</span>.</p>
+      <div class="actions">
+        <a class="btn" href="https://github.com/MCamner/mq-mcp/blob/main/docs/install.md">Install mq-mcp</a>
+        <a class="btn ghost" href="https://github.com/MCamner/mq-mcp/blob/main/docs/TOOL_SAFETY.md">Read the safety model</a>
+      </div>
+    </div>
 
-  <h2>What it does</h2>
-  <p>Three tools that work together:</p>
-  <pre><code><span class="comment"># Ask live questions using local MCP tools + OpenAI</span>
-<span class="cmd">bridget</span> "List all Python files in the repo"
-<span class="cmd">bridget</span> "Show git diff and suggest a commit message"
+    <div class="contract" aria-label="Every tool in the contract, grouped by safety class">
+<!-- tool-grid:start (scripts/render-pages-tool-grid.py) -->
+      <div class="class-row">
+        <div>
+          <div class="class-name">Class A</div>
+          <h3>Read-only, repo-scoped</h3>
+          <p>Cannot write files. Subprocesses only through a fixed, contract-declared read-only boundary.</p>
+          <div class="counts"><span data-stat="class-a">48</span> tools, <span data-stat="class-a-gated">0</span> ask first</div>
+        </div>
+        <div class="cells"><span class="cell" data-tool="analyze_csv" data-class="A" data-gated="no" title="analyze_csv"></span><span class="cell" data-tool="brain_status" data-class="A" data-gated="no" title="brain_status"></span><span class="cell" data-tool="detect_architecture_drift" data-class="A" data-gated="no" title="detect_architecture_drift"></span><span class="cell" data-tool="explain_learned_pattern" data-class="A" data-gated="no" title="explain_learned_pattern"></span><span class="cell" data-tool="get_architecture_decision" data-class="A" data-gated="no" title="get_architecture_decision"></span><span class="cell" data-tool="get_last_review" data-class="A" data-gated="no" title="get_last_review"></span><span class="cell" data-tool="get_learning" data-class="A" data-gated="no" title="get_learning"></span><span class="cell" data-tool="get_semantic_memory" data-class="A" data-gated="no" title="get_semantic_memory"></span><span class="cell" data-tool="git_diff" data-class="A" data-gated="no" title="git_diff"></span><span class="cell" data-tool="git_status" data-class="A" data-gated="no" title="git_status"></span><span class="cell" data-tool="learn_hygiene" data-class="A" data-gated="no" title="learn_hygiene"></span><span class="cell" data-tool="learn_inbox" data-class="A" data-gated="no" title="learn_inbox"></span><span class="cell" data-tool="learn_inbox_draft" data-class="A" data-gated="no" title="learn_inbox_draft"></span><span class="cell" data-tool="learn_status" data-class="A" data-gated="no" title="learn_status"></span><span class="cell" data-tool="learning_status" data-class="A" data-gated="no" title="learning_status"></span><span class="cell" data-tool="list_architecture_decisions" data-class="A" data-gated="no" title="list_architecture_decisions"></span><span class="cell" data-tool="list_architecture_docs" data-class="A" data-gated="no" title="list_architecture_docs"></span><span class="cell" data-tool="list_learnings" data-class="A" data-gated="no" title="list_learnings"></span><span class="cell" data-tool="list_local_repos" data-class="A" data-gated="no" title="list_local_repos"></span><span class="cell" data-tool="list_openable_apps" data-class="A" data-gated="no" title="list_openable_apps"></span><span class="cell" data-tool="list_repo_files" data-class="A" data-gated="no" title="list_repo_files"></span><span class="cell" data-tool="list_review_contracts" data-class="A" data-gated="no" title="list_review_contracts"></span><span class="cell" data-tool="list_review_history" data-class="A" data-gated="no" title="list_review_history"></span><span class="cell" data-tool="list_review_skills" data-class="A" data-gated="no" title="list_review_skills"></span><span class="cell" data-tool="list_semantic_memory" data-class="A" data-gated="no" title="list_semantic_memory"></span><span class="cell" data-tool="mq_feedback_candidates" data-class="A" data-gated="no" title="mq_feedback_candidates"></span><span class="cell" data-tool="mq_feedback_compare" data-class="A" data-gated="no" title="mq_feedback_compare"></span><span class="cell" data-tool="mq_feedback_inspect" data-class="A" data-gated="no" title="mq_feedback_inspect"></span><span class="cell" data-tool="mq_feedback_report" data-class="A" data-gated="no" title="mq_feedback_report"></span><span class="cell" data-tool="mq_feedback_status" data-class="A" data-gated="no" title="mq_feedback_status"></span><span class="cell" data-tool="mq_stack_cockpit" data-class="A" data-gated="no" title="mq_stack_cockpit"></span><span class="cell" data-tool="promote_learning" data-class="A" data-gated="no" title="promote_learning"></span><span class="cell" data-tool="read_repo_file" data-class="A" data-gated="no" title="read_repo_file"></span><span class="cell" data-tool="release_gate_run" data-class="A" data-gated="no" title="release_gate_run"></span><span class="cell" data-tool="repo_signal_status" data-class="A" data-gated="no" title="repo_signal_status"></span><span class="cell" data-tool="review_architecture_doc" data-class="A" data-gated="no" title="review_architecture_doc"></span><span class="cell" data-tool="review_diff" data-class="A" data-gated="no" title="review_diff"></span><span class="cell" data-tool="review_runtime_contract" data-class="A" data-gated="no" title="review_runtime_contract"></span><span class="cell" data-tool="risk_review_diff" data-class="A" data-gated="no" title="risk_review_diff"></span><span class="cell" data-tool="risk_review_file" data-class="A" data-gated="no" title="risk_review_file"></span><span class="cell" data-tool="risk_review_repo" data-class="A" data-gated="no" title="risk_review_repo"></span><span class="cell" data-tool="search_learned_patterns" data-class="A" data-gated="no" title="search_learned_patterns"></span><span class="cell" data-tool="search_learnings" data-class="A" data-gated="no" title="search_learnings"></span><span class="cell" data-tool="search_repo" data-class="A" data-gated="no" title="search_repo"></span><span class="cell" data-tool="search_semantic_memory" data-class="A" data-gated="no" title="search_semantic_memory"></span><span class="cell" data-tool="summarize_learnings" data-class="A" data-gated="no" title="summarize_learnings"></span><span class="cell" data-tool="tool_safety_report" data-class="A" data-gated="no" title="tool_safety_report"></span><span class="cell" data-tool="validate_orchestration_contract" data-class="A" data-gated="no" title="validate_orchestration_contract"></span></div>
+      </div>
+      <div class="class-row">
+        <div>
+          <div class="class-name">Class B</div>
+          <h3>Read-only, allowed paths</h3>
+          <p>Cannot write files. Reads outside the repo only where MQ_MCP_ALLOWED_PATHS permits.</p>
+          <div class="counts"><span data-stat="class-b">39</span> tools, <span data-stat="class-b-gated">0</span> ask first</div>
+        </div>
+        <div class="cells"><span class="cell" data-tool="analyze_guitar_pro" data-class="B" data-gated="no" title="analyze_guitar_pro"></span><span class="cell" data-tool="check_port" data-class="B" data-gated="no" title="check_port"></span><span class="cell" data-tool="find_large_files" data-class="B" data-gated="no" title="find_large_files"></span><span class="cell" data-tool="find_recent_files" data-class="B" data-gated="no" title="find_recent_files"></span><span class="cell" data-tool="get_battery_status" data-class="B" data-gated="no" title="get_battery_status"></span><span class="cell" data-tool="get_clipboard" data-class="B" data-gated="no" title="get_clipboard"></span><span class="cell" data-tool="get_public_ip" data-class="B" data-gated="no" title="get_public_ip"></span><span class="cell" data-tool="get_system_resources" data-class="B" data-gated="no" title="get_system_resources"></span><span class="cell" data-tool="get_todays_events" data-class="B" data-gated="no" title="get_todays_events"></span><span class="cell" data-tool="get_wifi_info" data-class="B" data-gated="no" title="get_wifi_info"></span><span class="cell" data-tool="image_analyze" data-class="B" data-gated="no" title="image_analyze"></span><span class="cell" data-tool="image_analyze_ui" data-class="B" data-gated="no" title="image_analyze_ui"></span><span class="cell" data-tool="image_observe_architecture" data-class="B" data-gated="no" title="image_observe_architecture"></span><span class="cell" data-tool="learn_extract_from_last_review" data-class="B" data-gated="no" title="learn_extract_from_last_review"></span><span class="cell" data-tool="list_running_apps" data-class="B" data-gated="no" title="list_running_apps"></span><span class="cell" data-tool="list_skills" data-class="B" data-gated="no" title="list_skills"></span><span class="cell" data-tool="load_skill" data-class="B" data-gated="no" title="load_skill"></span><span class="cell" data-tool="mq_context_pack" data-class="B" data-gated="no" title="mq_context_pack"></span><span class="cell" data-tool="mq_route_inspect" data-class="B" data-gated="no" title="mq_route_inspect"></span><span class="cell" data-tool="mq_route_report" data-class="B" data-gated="no" title="mq_route_report"></span><span class="cell" data-tool="mq_route_verify" data-class="B" data-gated="no" title="mq_route_verify"></span><span class="cell" data-tool="ollama_learn_extract" data-class="B" data-gated="no" title="ollama_learn_extract"></span><span class="cell" data-tool="ollama_learn_status" data-class="B" data-gated="no" title="ollama_learn_status"></span><span class="cell" data-tool="repo_signal_analyze" data-class="B" data-gated="no" title="repo_signal_analyze"></span><span class="cell" data-tool="repo_signal_checklist" data-class="B" data-gated="no" title="repo_signal_checklist"></span><span class="cell" data-tool="repo_signal_doctor_json" data-class="B" data-gated="no" title="repo_signal_doctor_json"></span><span class="cell" data-tool="repo_signal_inspect" data-class="B" data-gated="no" title="repo_signal_inspect"></span><span class="cell" data-tool="repo_signal_positioning" data-class="B" data-gated="no" title="repo_signal_positioning"></span><span class="cell" data-tool="repo_signal_report" data-class="B" data-gated="no" title="repo_signal_report"></span><span class="cell" data-tool="repo_signal_suggest" data-class="B" data-gated="no" title="repo_signal_suggest"></span><span class="cell" data-tool="review_file" data-class="B" data-gated="no" title="review_file"></span><span class="cell" data-tool="review_perception" data-class="B" data-gated="no" title="review_perception"></span><span class="cell" data-tool="review_repo" data-class="B" data-gated="no" title="review_repo"></span><span class="cell" data-tool="ums_audit_log" data-class="B" data-gated="no" title="ums_audit_log"></span><span class="cell" data-tool="ums_command_catalog" data-class="B" data-gated="no" title="ums_command_catalog"></span><span class="cell" data-tool="zephyr_analyze" data-class="B" data-gated="no" title="zephyr_analyze"></span><span class="cell" data-tool="zephyr_diff" data-class="B" data-gated="no" title="zephyr_diff"></span><span class="cell" data-tool="zephyr_review" data-class="B" data-gated="no" title="zephyr_review"></span><span class="cell" data-tool="zephyr_validate" data-class="B" data-gated="no" title="zephyr_validate"></span></div>
+      </div>
+      <div class="class-row">
+        <div>
+          <div class="class-name">Class C</div>
+          <h3>Write-capable, scoped</h3>
+          <p>Can modify files in the repo or in explicitly allowed paths. Always asks first.</p>
+          <div class="counts"><span data-stat="class-c">23</span> tools, <span data-stat="class-c-gated">23</span> ask first</div>
+        </div>
+        <div class="cells"><span class="cell" data-tool="bootstrap_learning_memory" data-class="C" data-gated="yes" title="bootstrap_learning_memory"></span><span class="cell" data-tool="bootstrap_semantic_memory" data-class="C" data-gated="yes" title="bootstrap_semantic_memory"></span><span class="cell" data-tool="brain_promote_learning" data-class="C" data-gated="yes" title="brain_promote_learning"></span><span class="cell" data-tool="brain_record_decision" data-class="C" data-gated="yes" title="brain_record_decision"></span><span class="cell" data-tool="brain_record_learning" data-class="C" data-gated="yes" title="brain_record_learning"></span><span class="cell" data-tool="brain_record_review" data-class="C" data-gated="yes" title="brain_record_review"></span><span class="cell" data-tool="brain_record_session" data-class="C" data-gated="yes" title="brain_record_session"></span><span class="cell" data-tool="build_repo_context" data-class="C" data-gated="yes" title="build_repo_context"></span><span class="cell" data-tool="edit_image" data-class="C" data-gated="yes" title="edit_image"></span><span class="cell" data-tool="export_symbol_index" data-class="C" data-gated="yes" title="export_symbol_index"></span><span class="cell" data-tool="extract_coding_conventions" data-class="C" data-gated="yes" title="extract_coding_conventions"></span><span class="cell" data-tool="learn_from_diff" data-class="C" data-gated="yes" title="learn_from_diff"></span><span class="cell" data-tool="learn_from_review" data-class="C" data-gated="yes" title="learn_from_review"></span><span class="cell" data-tool="learn_inbox_drop" data-class="C" data-gated="yes" title="learn_inbox_drop"></span><span class="cell" data-tool="learn_queue_from_last_review" data-class="C" data-gated="yes" title="learn_queue_from_last_review"></span><span class="cell" data-tool="mq_feedback_run" data-class="C" data-gated="yes" title="mq_feedback_run"></span><span class="cell" data-tool="mq_route_shadow" data-class="C" data-gated="yes" title="mq_route_shadow"></span><span class="cell" data-tool="record_architecture_decision" data-class="C" data-gated="yes" title="record_architecture_decision"></span><span class="cell" data-tool="record_learning" data-class="C" data-gated="yes" title="record_learning"></span><span class="cell" data-tool="set_clipboard" data-class="C" data-gated="yes" title="set_clipboard"></span><span class="cell" data-tool="store_semantic_memory" data-class="C" data-gated="yes" title="store_semantic_memory"></span><span class="cell" data-tool="take_screenshot" data-class="C" data-gated="yes" title="take_screenshot"></span><span class="cell" data-tool="update_repo_file" data-class="C" data-gated="yes" title="update_repo_file"></span></div>
+      </div>
+      <div class="class-row">
+        <div>
+          <div class="class-name">Class D</div>
+          <h3>Subprocess and apps</h3>
+          <p>Run external processes or open applications. Asks first, except tools that only affect the screen.</p>
+          <div class="counts"><span data-stat="class-d">33</span> tools, <span data-stat="class-d-gated">21</span> ask first</div>
+        </div>
+        <div class="cells"><span class="cell" data-tool="create_note" data-class="D" data-gated="yes" title="create_note"></span><span class="cell" data-tool="hal_repo_report" data-class="D" data-gated="yes" title="hal_repo_report"></span><span class="cell" data-tool="lock_screen" data-class="D" data-gated="no" title="lock_screen"></span><span class="cell" data-tool="open_app" data-class="D" data-gated="no" title="open_app"></span><span class="cell" data-tool="open_chrome" data-class="D" data-gated="no" title="open_chrome"></span><span class="cell" data-tool="open_finder" data-class="D" data-gated="no" title="open_finder"></span><span class="cell" data-tool="open_in_app" data-class="D" data-gated="yes" title="open_in_app"></span><span class="cell" data-tool="open_messages" data-class="D" data-gated="no" title="open_messages"></span><span class="cell" data-tool="open_repo_terminal" data-class="D" data-gated="yes" title="open_repo_terminal"></span><span class="cell" data-tool="open_spotify" data-class="D" data-gated="no" title="open_spotify"></span><span class="cell" data-tool="open_terminal" data-class="D" data-gated="yes" title="open_terminal"></span><span class="cell" data-tool="open_url" data-class="D" data-gated="no" title="open_url"></span><span class="cell" data-tool="open_vscode" data-class="D" data-gated="no" title="open_vscode"></span><span class="cell" data-tool="quit_app" data-class="D" data-gated="yes" title="quit_app"></span><span class="cell" data-tool="run_mqlaunch" data-class="D" data-gated="yes" title="run_mqlaunch"></span><span class="cell" data-tool="run_mqlaunch_ask" data-class="D" data-gated="yes" title="run_mqlaunch_ask"></span><span class="cell" data-tool="run_mqlaunch_bundle" data-class="D" data-gated="yes" title="run_mqlaunch_bundle"></span><span class="cell" data-tool="run_mqlaunch_demo" data-class="D" data-gated="yes" title="run_mqlaunch_demo"></span><span class="cell" data-tool="run_mqlaunch_doctor" data-class="D" data-gated="yes" title="run_mqlaunch_doctor"></span><span class="cell" data-tool="run_mqlaunch_perf" data-class="D" data-gated="yes" title="run_mqlaunch_perf"></span><span class="cell" data-tool="run_mqlaunch_release_check" data-class="D" data-gated="yes" title="run_mqlaunch_release_check"></span><span class="cell" data-tool="run_mqlaunch_selftest" data-class="D" data-gated="yes" title="run_mqlaunch_selftest"></span><span class="cell" data-tool="run_mqlaunch_system_check" data-class="D" data-gated="yes" title="run_mqlaunch_system_check"></span><span class="cell" data-tool="run_mqlaunch_version" data-class="D" data-gated="yes" title="run_mqlaunch_version"></span><span class="cell" data-tool="run_tests" data-class="D" data-gated="yes" title="run_tests"></span><span class="cell" data-tool="set_reminder" data-class="D" data-gated="yes" title="set_reminder"></span><span class="cell" data-tool="set_volume" data-class="D" data-gated="no" title="set_volume"></span><span class="cell" data-tool="set_wallpaper" data-class="D" data-gated="yes" title="set_wallpaper"></span><span class="cell" data-tool="shell_exec" data-class="D" data-gated="yes" title="shell_exec"></span><span class="cell" data-tool="show_notification" data-class="D" data-gated="no" title="show_notification"></span><span class="cell" data-tool="speak_text" data-class="D" data-gated="no" title="speak_text"></span><span class="cell" data-tool="toggle_dark_mode" data-class="D" data-gated="no" title="toggle_dark_mode"></span><span class="cell" data-tool="validate_project" data-class="D" data-gated="yes" title="validate_project"></span></div>
+      </div>
+<!-- tool-grid:end -->
+    </div>
+    <div class="legend">
+      <span><span class="key"><span class="cell" aria-hidden="true"></span>runs without a prompt</span><span class="key"><span class="cell" data-gated="yes" aria-hidden="true"></span>asks for consent first</span></span>
+      <span id="tool-name" aria-live="polite">Point at a square to see the tool.</span>
+    </div>
 
-<span class="comment"># Search the vector store knowledge base</span>
-<span class="cmd">ask</span> "How does bridge.py work?"
-<span class="cmd">ask</span> "Which tools are read-only?"
+    <section>
+      <h2>Where it sits in the stack</h2>
+      <p>mq-mcp runs tools. Planning, routing and dry-runs belong in mq-agent.</p>
+      <ul class="roles">
+        <li><strong>mq-agent</strong><span>Plans, routes, dry-runs and holds the approval UX.</span></li>
+        <li class="self"><strong>mq-mcp</strong><span>Executes bounded tools, records reviews and memory, bridges to OpenAI.</span></li>
+        <li><strong>repo-signal</strong><span>Scores repo health.</span></li>
+        <li><strong>mq-hal</strong><span>Turns the results into operator reports.</span></li>
+      </ul>
+    </section>
 
-<span class="comment"># Keyboard shortcut: Ctrl+O inserts "bridget " at the prompt</span></code></pre>
-
-  <h2>Architecture</h2>
-  <pre><code>bridget "prompt"
-  └── bridge.py → OpenAI Chat API → MCP tool calls → server.py
+    <section>
+      <h2>How it runs</h2>
+      <p>The server speaks stdio by default; <code>mq-mcp serve --host --port</code> switches to HTTP or SSE. Bridget is the terminal client.</p>
+      <div class="split">
+        <div class="term">
+          <h3>Request path</h3>
+<pre>bridget "prompt"
+  <span class="d">└──</span> mq-mcp/bridge.py
+      <span class="d">→</span> OpenAI Chat Completions
+      <span class="d">→</span> consent check (bridget_safety.py)
+      <span class="d">→</span> MCP tool call <span class="d">→</span> server.py
 
 ask "prompt"
-  └── ask.py → OpenAI Responses API → vector store search</code></pre>
+  <span class="d">└──</span> mq-mcp/ask.py
+      <span class="d">→</span> OpenAI Responses API
+      <span class="d">→</span> vector store search</pre>
+        </div>
+        <div class="term">
+          <h3>$ mq-mcp doctor</h3>
+<pre>mq-mcp 2.3.1
+OK   version_file
+OK   pyproject
+OK   server
+OK   bridge
+OK   env_example
+OK   validate_script
+OK   tool_contracts
+OK   uv_available
+OK   git_available
+OK   env_file
+SKIP openai_api_key: set in environment or .env for bridge prompts</pre>
+        </div>
+      </div>
+    </section>
 
-  <h2>MCP Tools</h2>
-  <div class="tools-grid">
-    <div class="tool"><div class="tool-name">read_repo_file</div><div class="tool-desc">Read any file inside the repo root</div></div>
-    <div class="tool"><div class="tool-name">list_repo_files</div><div class="tool-desc">List files up to a chosen depth</div></div>
-    <div class="tool"><div class="tool-name">search_repo</div><div class="tool-desc">Full-text search with git grep</div></div>
-    <div class="tool"><div class="tool-name">git_status</div><div class="tool-desc">Branch, status, recent commits</div></div>
-    <div class="tool"><div class="tool-name">git_diff</div><div class="tool-desc">Current diff, repo or per file</div></div>
-    <div class="tool"><div class="tool-name">get_system_resources</div><div class="tool-desc">CPU, memory, disk usage</div></div>
-    <div class="tool"><div class="tool-name">validate_project</div><div class="tool-desc">Run scripts/validate.sh</div></div>
-    <div class="tool"><div class="tool-name">run_mqlaunch</div><div class="tool-desc">Open mqlaunch TUI in Terminal</div></div>
-    <div class="tool"><div class="tool-name">update_repo_file <span class="tag tag-write">write</span></div><div class="tool-desc">Exact-match replace, no auto-commit</div></div>
-    <div class="tool"><div class="tool-name">analyze_csv</div><div class="tool-desc">Summarize a CSV file</div></div>
-    <div class="tool"><div class="tool-name">analyze_guitar_pro</div><div class="tool-desc">Parse GP3/GP4/GP5 files</div></div>
-    <div class="tool"><div class="tool-name">open_in_app</div><div class="tool-desc">Open a file in its default app</div></div>
-    <div class="tool"><div class="tool-name">edit_image <span class="tag tag-write">write</span></div><div class="tool-desc">rotate, grayscale images</div></div>
-  </div>
-  <p>All tools are sandboxed to the repository root. Write-capable tools are clearly marked.</p>
-
-  <h2>Install</h2>
-  <pre><code><span class="comment"># Clone and set up</span>
-git clone https://github.com/MCamner/mq-mcp
+    <section>
+      <h2>Install</h2>
+      <p>Needs <a href="https://docs.astral.sh/uv/">uv</a>. The script installs the <code>mq-mcp</code> command and the Bridget launcher, keeps any existing <code>.env</code>, and runs <code>doctor</code>.</p>
+      <div class="term">
+<pre>git clone https://github.com/MCamner/mq-mcp
 cd mq-mcp
 ./scripts/install.sh
 
-<span class="comment"># Check and run</span>
 mq-mcp doctor
 mq-mcp tools
-mq-mcp serve</code></pre>
-
-  <h2>Docs</h2>
-  <p>
-    <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/install.md">Install guide</a> ·
-    <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/security.md">Security model</a> ·
-    <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/demo.md">Demo examples</a> ·
-    <a href="./integration.html">Integration map</a> ·
-    <a href="https://github.com/MCamner/mq-mcp/blob/main/ROADMAP.md">Roadmap</a>
-  </p>
+mq-mcp serve</pre>
+      </div>
+    </section>
+  </main>
 
   <footer>
-    <p>MIT License · <a href="https://github.com/MCamner/mq-mcp">GitHub</a> · Built by <a href="https://github.com/MCamner">MCamner</a></p>
+    <span>mq-mcp <span data-stat="version">2.3.1</span>, MIT License</span>
+    <nav aria-label="Documentation">
+      <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/TOOL_INVENTORY.md">Tool inventory</a>
+      <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/security.md">Security</a>
+      <a href="https://github.com/MCamner/mq-mcp/blob/main/docs/demo.md">Demo</a>
+      <a href="https://github.com/MCamner/mq-mcp/blob/main/ROADMAP.md">Roadmap</a>
+    </nav>
   </footer>
-
 </div>
+<script>
+  (function () {
+    var out = document.getElementById("tool-name");
+    var show = function (e) {
+      var t = e.target.closest("[data-tool]");
+      if (!t) return;
+      out.textContent = t.dataset.tool + (t.dataset.gated === "yes" ? " (asks for consent)" : "");
+    };
+    document.addEventListener("mouseover", show);
+  })();
+</script>
 </body>
 </html>
