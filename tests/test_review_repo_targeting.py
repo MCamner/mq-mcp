@@ -220,3 +220,23 @@ def test_missing_api_key_issues_no_receipt(monkeypatch, tmp_path):
 
     assert out == "review_repo failed: OPENAI_API_KEY is required"
     assert receipts == []
+
+
+# Test files are reviewed only after source files: in comment mode they yield
+# mostly "missing return annotation" noise on test functions.
+def test_source_files_are_reviewed_before_tests(echo_review_file, monkeypatch, tmp_path):
+    target = _make_repo(
+        tmp_path, "mixed",
+        ["tests/test_a.py", "tests/conftest.py", "pkg/test_b.py", "pkg/core.py", "pkg/util.py"],
+    )
+    monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+    review_repo(repo_path=str(target), max_files=2)
+    picked = {p.relative_to(target.resolve()).as_posix() for p in echo_review_file}
+    assert picked == {"pkg/core.py", "pkg/util.py"}
+
+
+def test_tests_are_still_reviewed_when_nothing_else_is_left(echo_review_file, monkeypatch, tmp_path):
+    target = _make_repo(tmp_path, "only-tests", ["tests/test_a.py"])
+    monkeypatch.setenv("MQ_MCP_ALLOWED_PATHS", str(tmp_path))
+    review_repo(repo_path=str(target), max_files=5)
+    assert [p.name for p in echo_review_file] == ["test_a.py"]

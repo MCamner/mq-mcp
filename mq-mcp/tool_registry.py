@@ -203,7 +203,7 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
             name not in {"review_file", "review_diff", "review_repo", "review_perception",
                          "risk_review_file", "risk_review_diff", "review_architecture_doc",
                          "review_runtime_contract", "extract_coding_conventions"}
-            or os.environ.get("MQ_MCP_REVIEW_PROVIDER", "ollama").lower() == "openai"
+            or os.environ.get("MQ_MCP_REVIEW_PROVIDER", "openai").strip().lower() == "openai"
         ),
         "resolver": raw.get("resolver", "none"),
         "description": raw.get("description", ""),

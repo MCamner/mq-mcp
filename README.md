@@ -90,6 +90,14 @@ mq-mcp profiles list
 mq-mcp stability validate
 ```
 
+`mq-mcp doctor` also checks the optional CodeGraph integration: CLI and index
+versions, pending index changes, and a live daemon socket handshake. Use
+`mq-mcp doctor --json` for structured results under `codegraph`. Warnings include
+repair commands but do not change the install-readiness exit code. The check
+does not start a daemon or rebuild the index. A stopped idle daemon is possible;
+access denied is reported as unknown, not stopped. `daemon.sock` is an IPC socket,
+not a file to open in an editor; read `.codegraph/daemon.log` for daemon logs.
+
 Run the local MCP server experiment:
 
 ```bash
