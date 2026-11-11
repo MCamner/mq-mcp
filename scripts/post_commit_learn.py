@@ -91,6 +91,12 @@ LEARN_MEMORY_PREFIX = "learn_engine/memory/"
 #: about another repo, caught only by the duplicate check).
 MEMORY_ONLY = "\x00learn-memory-only"
 
+#: Returned by commit_findings when a commit changes no files at all: an
+#: `--allow-empty` commit, or a merge commit, whose `git show` lists nothing.
+#: There is no diff to learn from, and with the low-signal retry such a commit
+#: cost three model calls for a certain "nothing" (measured 2026-11-11).
+NO_CHANGES = "\x00no-changed-files"
+
 _SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
 
 
@@ -121,7 +127,10 @@ def commit_findings(sha: str = "HEAD") -> tuple[str, str]:
     subject = _git("log", "-1", "--pretty=%s", sha).strip()
     body = _git("log", "-1", "--pretty=%b", sha).strip()
     name_status = _git("show", "--name-status", "--pretty=format:", sha).strip()
-    if _only_learn_memory(_paths_from_name_status(name_status)):
+    paths = _paths_from_name_status(name_status)
+    if not paths:
+        return full_sha, NO_CHANGES
+    if _only_learn_memory(paths):
         return full_sha, MEMORY_ONLY
     diff = _git("show", "--pretty=format:", "--unified=2", sha)
     if len(diff) > MAX_DIFF_CHARS:
@@ -240,6 +249,8 @@ def run(sha: str = "HEAD") -> str:
         return f"skip: ollama {status.get('status')} ({status.get('reason', '-')})"
 
     full_sha, findings = commit_findings(sha)
+    if findings == NO_CHANGES:
+        return "skip: commit changes no files (empty or merge commit)"
     if findings == MEMORY_ONLY:
         return (
             f"skip: commit only touches {LEARN_MEMORY_PREFIX} "

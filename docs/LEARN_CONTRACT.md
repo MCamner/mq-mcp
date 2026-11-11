@@ -139,6 +139,8 @@ Behavior that follows from the model server being local and optional:
   variation is not established.
 - A commit that only changes `learn_engine/memory/` is skipped without calling
   the model: its diff is stored lessons, not new evidence.
+- A commit that changes no files (an `--allow-empty` commit, or a merge commit)
+  is skipped without calling the model: there is no diff to learn from.
 
 Every run appends one line to `learn_engine/memory/post-commit.log`. A skip
 names the stage that refused, and a low-signal line also records what the model

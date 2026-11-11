@@ -33,6 +33,8 @@
   cause is not established. The log records what the model itself answered.
 * Commits that only change `learn_engine/memory/` are skipped without calling
   the model.
+* Commits that change no files (empty or merge commits) are skipped without
+  calling the model; with the low-signal retry each one cost three model calls.
 * `docs/LEARN_CONTRACT.md` describes evidence grounding as implemented and
   documents the post-commit hook.
 * `run_mqlaunch_selftest` no longer fails delegated workflows by timing out.
