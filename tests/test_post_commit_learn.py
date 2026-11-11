@@ -166,3 +166,67 @@ def test_run_names_missing_repo_context_instead_of_low_signal(monkeypatch, tmp_p
     assert "low-signal" not in result
     assert called == []
     assert not inbox.exists()
+
+
+def test_hook_pins_the_commit_before_going_to_the_background():
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    pin = hook.index("SHA=$(git rev-parse HEAD")
+    background = hook.index('scripts/post_commit_learn.py "$SHA"')
+    assert pin < background
+
+
+def test_main_analyses_the_sha_it_is_given(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    seen = []
+    monkeypatch.setattr(pcl, "run", lambda sha="HEAD": seen.append(sha) or "ok")
+
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", "0123abc"])
+    assert pcl.main() == 0
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py"])
+    assert pcl.main() == 0
+    # Anything that is not a plain SHA must never reach git as an argument.
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", "--output=/tmp/x"])
+    assert pcl.main() == 0
+
+    assert seen == ["0123abc", "HEAD", "HEAD"]
+
+
+def test_only_learn_memory_paths():
+    paths = pcl._paths_from_name_status(
+        "M\tlearn_engine/memory/lessons.jsonl\nR100\tlearn_engine/memory/a\tlearn_engine/memory/b"
+    )
+    assert paths == [
+        "learn_engine/memory/lessons.jsonl",
+        "learn_engine/memory/a",
+        "learn_engine/memory/b",
+    ]
+    assert pcl._only_learn_memory(paths) is True
+    assert pcl._only_learn_memory(paths + ["scripts/post-commit"]) is False
+    assert pcl._only_learn_memory([]) is False
+
+
+def test_run_skips_a_commit_that_only_touches_learn_memory(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    called = []
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            called.append("context")
+            return "file.py"
+
+        @staticmethod
+        def learn_extract_pattern(*_args, **_kwargs):
+            called.append("model")
+            return {}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", pcl.MEMORY_ONLY))
+    result = pcl.run()
+    assert result.startswith("skip: commit only touches learn_engine/memory/")
+    assert called == []
+    assert not inbox.exists()

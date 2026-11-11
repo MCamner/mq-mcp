@@ -63,6 +63,34 @@ def _git(*args: str) -> str:
         return ""
 
 
+LEARN_MEMORY_PREFIX = "learn_engine/memory/"
+
+#: Returned by commit_findings in place of findings text when a commit changes
+#: nothing outside the learn store. Its diff is stored lessons plus their
+#: neighbours as context lines, so the model "discovers" a lesson that is
+#: already curated (seen 2026-11-11: a lessons-only commit yielded a pattern
+#: about another repo, caught only by the duplicate check).
+MEMORY_ONLY = "\x00learn-memory-only"
+
+_SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
+
+
+def _paths_from_name_status(name_status: str) -> list[str]:
+    """Changed paths from `git show --name-status` output (renames: both sides)."""
+    paths: list[str] = []
+    for line in name_status.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        paths.extend(part.strip() for part in parts[1:] if part.strip())
+    return paths
+
+
+def _only_learn_memory(paths: list[str]) -> bool:
+    """True when a commit changes at least one file and all are learn memory."""
+    return bool(paths) and all(path.startswith(LEARN_MEMORY_PREFIX) for path in paths)
+
+
 def commit_findings(sha: str = "HEAD") -> tuple[str, str]:
     """Return (commit_sha, findings_text) for the given commit.
 
@@ -74,6 +102,8 @@ def commit_findings(sha: str = "HEAD") -> tuple[str, str]:
     subject = _git("log", "-1", "--pretty=%s", sha).strip()
     body = _git("log", "-1", "--pretty=%b", sha).strip()
     name_status = _git("show", "--name-status", "--pretty=format:", sha).strip()
+    if _only_learn_memory(_paths_from_name_status(name_status)):
+        return full_sha, MEMORY_ONLY
     diff = _git("show", "--pretty=format:", "--unified=2", sha)
     if len(diff) > MAX_DIFF_CHARS:
         diff = diff[:MAX_DIFF_CHARS] + "\n... (diff truncated)"
@@ -158,6 +188,11 @@ def run(sha: str = "HEAD") -> str:
         return f"skip: ollama {status.get('status')} ({status.get('reason', '-')})"
 
     full_sha, findings = commit_findings(sha)
+    if findings == MEMORY_ONLY:
+        return (
+            f"skip: commit only touches {LEARN_MEMORY_PREFIX} "
+            "(stored lessons are not new evidence)"
+        )
     if not findings.strip():
         return "skip: empty commit findings"
 
@@ -194,7 +229,13 @@ def run(sha: str = "HEAD") -> str:
 
 
 def main() -> int:
-    result = run()
+    # The hook passes the SHA it captured at commit time. Reading HEAD here
+    # instead analyses whatever is checked out when this background job gets
+    # to it: two quick commits were both analysed as the second one.
+    sha = "HEAD"
+    if len(sys.argv) > 1 and _SHA_RE.fullmatch(sys.argv[1]):
+        sha = sys.argv[1]
+    result = run(sha)
     _log(result)
     return 0
 
