@@ -3758,7 +3758,7 @@ def review_architecture_doc(doc_name: str) -> str:
       - with extension: "SYSTEM_OVERVIEW.md"
       - full path: "docs/architecture/SYSTEM_OVERVIEW.md"
 
-    Uses local Qwen by default; OpenAI requires explicit provider selection and a key. Read-only. Class A.
+    Uses OpenAI by default (needs a key); set MQ_MCP_REVIEW_PROVIDER=ollama for local Qwen. Read-only. Class A.
 
     Args:
         doc_name: Name or path of the architecture document to review.
@@ -4021,7 +4021,7 @@ def extract_coding_conventions(relative_path: str) -> str:
     giving the model codebase-specific guidance without repeating it in every prompt.
 
     Requires: the file must have at least one saved review (use review_file first).
-    Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
+    Uses OpenAI by default (needs a key); set MQ_MCP_REVIEW_PROVIDER=ollama for local Qwen.
 
     Args:
         relative_path: Repo-relative path to the file whose last review to process.
@@ -4106,7 +4106,7 @@ def review_diff(mode: str = "comment", deep: bool = False, receipt: bool = False
 
     Gets changed file paths from git diff, then runs review_file on each one.
     Only files with a supported extension (.py, .sh, .md, .json) are reviewed.
-    Capped at 10 files per call. Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
+    Capped at 10 files per call. Uses OpenAI by default (needs a key); set MQ_MCP_REVIEW_PROVIDER=ollama for local Qwen.
 
     Args:
         mode: Review mode passed to each review_file call. Defaults to 'comment'.
@@ -4643,7 +4643,7 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
 
     Uses review history to prioritize files that have never been reviewed or
     were reviewed longest ago. Falls back to all .py files if no history exists.
-    Uses local Qwen by default; OpenAI requires explicit provider selection and a key.
+    Uses OpenAI by default (needs a key); set MQ_MCP_REVIEW_PROVIDER=ollama for local Qwen.
 
     By default reviews the mq-mcp repo itself. Pass repo_path to review an
     external repo instead. An explicit repo_path is validated and confined to
@@ -4723,7 +4723,16 @@ def review_repo(mode: str = "comment", max_files: int = 5, repo_path: str | None
         except Exception:
             return 0.0
 
-    to_review = sorted(py_files, key=last_ts)[:cap]
+    def is_test(path: str) -> bool:
+        parts = Path(path).parts
+        name = parts[-1]
+        return ("tests" in parts or "test" in parts or name.startswith("test_")
+                or name.endswith("_test.py") or name == "conftest.py")
+
+    # Source before tests: comment-mode reviews of test files are mostly
+    # "missing return annotation" noise. Tests still come up once nothing
+    # else is left.
+    to_review = sorted(py_files, key=lambda p: (is_test(p), last_ts(p)))[:cap]
 
     # review_file manages the per-call review-root override and repo-tagged
     # memory; forward repo_path so each file resolves and records under the
