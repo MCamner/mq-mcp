@@ -8,8 +8,13 @@ learn store. Nothing lands in lessons.jsonl without explicit human/agent
 promotion, so an auto hook cannot poison the store with hallucinated lessons.
 
 Design choices (deliberate):
-  * No-op silently when Ollama / mq-learn is unavailable — commits must never
-    fail or stall because of this.
+  * Never fail or stall a commit. When Ollama / mq-learn or the repo context is
+    unavailable the commit is not analysed now, but its SHA is remembered in
+    pending-commits.txt and analysed by a later run, so an outage delays
+    extraction instead of silently losing it.
+  * One extraction is a sample, not a verdict: the local model does not return
+    the same answer for an identical prompt, so a low-signal result is retried
+    a bounded number of times before the commit is given up on.
   * Extraction is always dry-run (learn_extract_pattern, approve=False).
   * Only grounded candidates (non-empty evidence, confidence medium|high) are
     kept; low-confidence / empty-evidence output is dropped.
@@ -35,8 +40,22 @@ INBOX_FILE = REPO_ROOT / "learn_engine" / "memory" / "inbox.jsonl"
 LOG_FILE = REPO_ROOT / "learn_engine" / "memory" / "post-commit.log"
 LESSONS_FILE = REPO_ROOT / "learn_engine" / "memory" / "lessons.jsonl"
 
+PENDING_FILE = REPO_ROOT / "learn_engine" / "memory" / "pending-commits.txt"
+
 MAX_DIFF_CHARS = 6000   # cap the diff fed to the model
 DEDUP_THRESHOLD = 0.6   # Jaccard word-overlap above which a candidate is a dup
+MAX_ATTEMPTS = 3        # extractions per commit before a low-signal result stands
+MAX_PENDING = 50        # remembered commits; older ones fall off the front
+MAX_DRAIN = 5           # remembered commits analysed per run
+
+# Results that say "this commit was not analysed because of the environment",
+# as opposed to "it was analysed and yielded nothing". Only these are retried.
+_RETRY_LATER_PREFIXES = (
+    "skip: ollama ",
+    "skip: learn_engine import failed",
+    "skip: no verified repo context",
+    "skip: extraction failed: Ollama learn provider unavailable",
+)
 
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
@@ -239,37 +258,122 @@ def run(sha: str = "HEAD") -> str:
             "missing, older than 24h, or for another checkout; "
             "run `repo-signal export . --symbol-index`)"
         )
-    trace: dict = {}
-    try:
-        record = eng.learn_extract_pattern(
-            findings,
-            approve=False,
-            repo_context=repo_context,
-            require_repo_context=True,
-            http_post=_tracing_post(trace),
-        )
-    except Exception as exc:
-        return f"skip: extraction failed: {exc}"
+    # The same commit and the same prompt gave both a high-confidence candidate
+    # and a low-signal answer (2026-11-11, fixed seed, 2 of 5 runs low), so a
+    # single low answer does not show the commit holds nothing. Ask again, a
+    # bounded number of times, and report the last answer if none is usable.
+    low_signal = ""
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        trace: dict = {}
+        try:
+            record = eng.learn_extract_pattern(
+                findings,
+                approve=False,
+                repo_context=repo_context,
+                require_repo_context=True,
+                http_post=_tracing_post(trace),
+            )
+        except Exception as exc:
+            return f"skip: extraction failed: {exc}"
 
-    confidence = str(record.get("confidence", "")).lower()
-    evidence = record.get("evidence") or []
-    if confidence not in {"medium", "high"} or not evidence:
+        confidence = str(record.get("confidence", "")).lower()
+        evidence = record.get("evidence") or []
+        if confidence in {"medium", "high"} and evidence:
+            break
         said = ""
         if trace:
             said = (
                 f"; model said confidence={trace['confidence']}, "
                 f"evidence={trace['evidence']}"
             )
-        return (
-            f"skip: low-signal (confidence={confidence or '-'}, "
-            f"evidence={len(evidence)}{said})"
+        low_signal = (
+            f"skip: low-signal after {attempt} attempt(s) "
+            f"(confidence={confidence or '-'}, evidence={len(evidence)}{said})"
         )
+    else:
+        return low_signal
 
     if is_duplicate(record, _existing_word_sets()):
         return f"skip: duplicate of an existing lesson/candidate ({record.get('pattern_name', '-')})"
 
     append_inbox(record, full_sha)
-    return f"queued: {record.get('pattern_name', '-')} (confidence={confidence})"
+    tries = f", attempt {attempt}/{MAX_ATTEMPTS}" if attempt > 1 else ""
+    return f"queued: {record.get('pattern_name', '-')} (confidence={confidence}{tries})"
+
+
+def _retry_later(result: str) -> bool:
+    """True when a run did not analyse the commit because of the environment."""
+    return result.startswith(_RETRY_LATER_PREFIXES)
+
+
+def _resolve(sha: str) -> str:
+    """Full SHA of a commit, or "" when it does not name one in this repo."""
+    if sha != "HEAD" and not _SHA_RE.fullmatch(sha):
+        return ""
+    full = _git("rev-parse", "--verify", "--quiet", sha + "^{commit}").strip()
+    return full if _SHA_RE.fullmatch(full) else ""
+
+
+def _read_pending() -> list[str]:
+    """Remembered commit SHAs, oldest first; malformed lines are ignored."""
+    try:
+        lines = PENDING_FILE.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    pending: list[str] = []
+    for line in lines:
+        sha = line.strip()
+        if _SHA_RE.fullmatch(sha) and sha not in pending:
+            pending.append(sha)
+    return pending
+
+
+def _write_pending(shas: list[str]) -> None:
+    """Replace the pending list (best-effort; never raises into the hook)."""
+    try:
+        if not shas:
+            PENDING_FILE.unlink(missing_ok=True)
+            return
+        PENDING_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = PENDING_FILE.with_suffix(PENDING_FILE.suffix + ".tmp")
+        tmp.write_text("\n".join(shas[-MAX_PENDING:]) + "\n", encoding="utf-8")
+        tmp.replace(PENDING_FILE)
+    except OSError:
+        pass
+
+
+def remember_pending(sha: str) -> None:
+    """Keep a commit for a later run. Local, gitignored, bounded."""
+    if not _SHA_RE.fullmatch(sha):
+        return
+    pending = _read_pending()
+    if sha not in pending:
+        _write_pending([*pending, sha])
+
+
+def forget_pending(sha: str) -> None:
+    pending = _read_pending()
+    if sha in pending:
+        _write_pending([item for item in pending if item != sha])
+
+
+def drain_pending(skip: str = "") -> None:
+    """Analyse a few remembered commits now that the environment works.
+
+    Stops at the first one that still cannot be analysed, so an outage that
+    returns mid-drain keeps the rest. A commit that no longer exists (rebased
+    away, garbage-collected) is dropped without asking the model about it.
+    """
+    for sha in [item for item in _read_pending() if item != skip][:MAX_DRAIN]:
+        if not _resolve(sha):
+            _log(f"backlog {sha[:12]}: dropped, commit no longer exists")
+            forget_pending(sha)
+            continue
+        result = run(sha)
+        _log(f"backlog {sha[:12]}: {result}")
+        if _retry_later(result):
+            return
+        forget_pending(sha)
 
 
 def main() -> int:
@@ -281,6 +385,16 @@ def main() -> int:
         sha = sys.argv[1]
     result = run(sha)
     _log(result)
+
+    full = _resolve(sha)
+    if _retry_later(result):
+        if full:
+            remember_pending(full)
+            _log(f"pending {full[:12]}: kept for a later run")
+    else:
+        if full:
+            forget_pending(full)
+        drain_pending(skip=full)
     return 0
 
 

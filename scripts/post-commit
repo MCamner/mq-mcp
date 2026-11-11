@@ -36,6 +36,15 @@ else
   runner=(python3)
 fi
 
+# Say so at commit time when the model server is down, instead of only in a log
+# nobody reads. The job below still runs: it records this commit as pending and
+# a later run analyses it. Connection refused returns at once; the 1 s cap only
+# bounds a server that accepts and then hangs.
+if command -v curl >/dev/null 2>&1 &&
+  ! curl -s -o /dev/null -m 1 http://localhost:11434/api/tags; then
+  echo "mq-mcp learn: Ollama is not running; this commit is kept and analysed by a later commit once it is." >&2
+fi
+
 # learn_engine refuses extraction (without calling the model) unless
 # .repo-signal/exports/symbol_index.json is under 24 hours old — see
 # docs/LEARN_CONTRACT.md and ADR-007. Nothing else refreshes that export, so

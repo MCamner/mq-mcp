@@ -19,6 +19,7 @@ def _redirect_files(monkeypatch, tmp_path):
     monkeypatch.setattr(pcl, "INBOX_FILE", inbox)
     monkeypatch.setattr(pcl, "LESSONS_FILE", lessons)
     monkeypatch.setattr(pcl, "LOG_FILE", tmp_path / "post-commit.log")
+    monkeypatch.setattr(pcl, "PENDING_FILE", tmp_path / "pending-commits.txt")
     return inbox, lessons
 
 
@@ -221,9 +222,151 @@ def test_low_signal_reports_what_the_model_itself_said(monkeypatch, tmp_path):
     monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", "some diff"))
     result = pcl.run()
     assert result == (
-        "skip: low-signal (confidence=low, evidence=0; "
+        "skip: low-signal after 3 attempt(s) (confidence=low, evidence=0; "
         "model said confidence=high, evidence=2)"
     )
+
+
+def _engine(answers, calls):
+    """Fake learn_engine whose model answers come from ``answers`` in order."""
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            return "file.py"
+
+        @staticmethod
+        def learn_extract_pattern(_findings, **_kwargs):
+            calls.append(True)
+            return answers[min(len(calls), len(answers)) - 1]
+
+    return _Eng()
+
+
+_LOW = {"confidence": "low", "evidence": [], "pattern_name": "x"}
+_GOOD = {
+    "confidence": "high",
+    "evidence": ["file.py line 1"],
+    "pattern_name": "retry finds it",
+    "summary": "a second answer was usable where the first was not",
+}
+
+
+def test_a_low_answer_is_asked_again_and_the_usable_one_is_queued(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setitem(sys.modules, "learn_engine", _engine([_LOW, _GOOD], calls))
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("deadbeef", "diff"))
+
+    result = pcl.run()
+
+    assert result == "queued: retry finds it (confidence=high, attempt 2/3)"
+    assert len(calls) == 2
+    assert json.loads(inbox.read_text().strip())["pattern_name"] == "retry finds it"
+
+
+def test_retries_are_bounded(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setitem(sys.modules, "learn_engine", _engine([_LOW], calls))
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("deadbeef", "diff"))
+
+    result = pcl.run()
+
+    assert result.startswith("skip: low-signal after 3 attempt(s)")
+    assert len(calls) == pcl.MAX_ATTEMPTS == 3
+    assert not inbox.exists()
+
+
+def test_only_environment_failures_are_retried_later():
+    assert pcl._retry_later("skip: ollama unavailable (Ollama endpoint unavailable: x)")
+    assert pcl._retry_later("skip: no verified repo context (...)")
+    assert pcl._retry_later(
+        "skip: extraction failed: Ollama learn provider unavailable: Read timed out."
+    )
+    assert not pcl._retry_later("skip: low-signal after 3 attempt(s) (confidence=low, evidence=0)")
+    assert not pcl._retry_later("skip: duplicate of an existing lesson/candidate (x)")
+    assert not pcl._retry_later("skip: commit only touches learn_engine/memory/ (...)")
+    assert not pcl._retry_later("queued: x (confidence=high)")
+
+
+_SHA_A = "a" * 40
+_SHA_B = "b" * 40
+_SHA_C = "c" * 40
+
+
+def test_pending_commits_are_remembered_once_and_bounded(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    monkeypatch.setattr(pcl, "MAX_PENDING", 2)
+
+    pcl.remember_pending(_SHA_A)
+    pcl.remember_pending(_SHA_A)
+    pcl.remember_pending("--not-a-sha")
+    assert pcl._read_pending() == [_SHA_A]
+
+    pcl.remember_pending(_SHA_B)
+    pcl.remember_pending(_SHA_C)
+    assert pcl._read_pending() == [_SHA_B, _SHA_C]
+
+    pcl.forget_pending(_SHA_B)
+    pcl.forget_pending(_SHA_C)
+    assert not pcl.PENDING_FILE.exists()
+
+
+def test_main_keeps_a_commit_the_environment_could_not_analyse(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    monkeypatch.setattr(pcl, "run", lambda sha="HEAD": "skip: ollama unavailable (down)")
+    monkeypatch.setattr(pcl, "_resolve", lambda sha: _SHA_A)
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", _SHA_A])
+
+    assert pcl.main() == 0
+
+    assert pcl._read_pending() == [_SHA_A]
+    assert "pending aaaaaaaaaaaa: kept for a later run" in pcl.LOG_FILE.read_text()
+
+
+def test_main_drains_the_backlog_once_the_environment_works(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    pcl.remember_pending(_SHA_A)
+    pcl.remember_pending(_SHA_B)
+    seen = []
+    monkeypatch.setattr(pcl, "run", lambda sha="HEAD": seen.append(sha) or "queued: x (confidence=high)")
+    monkeypatch.setattr(pcl, "_resolve", lambda sha: "" if sha == _SHA_B else sha)
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", _SHA_C])
+
+    assert pcl.main() == 0
+
+    # The current commit, then the backlog; a vanished commit never reaches run.
+    assert seen == [_SHA_C, _SHA_A]
+    assert pcl._read_pending() == []
+    log = pcl.LOG_FILE.read_text()
+    assert "backlog aaaaaaaaaaaa: queued: x" in log
+    assert "backlog bbbbbbbbbbbb: dropped, commit no longer exists" in log
+
+
+def test_drain_stops_when_the_environment_fails_again(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    pcl.remember_pending(_SHA_A)
+    pcl.remember_pending(_SHA_B)
+    monkeypatch.setattr(pcl, "run", lambda sha="HEAD": "skip: ollama unavailable (down)")
+    monkeypatch.setattr(pcl, "_resolve", lambda sha: sha)
+
+    pcl.drain_pending()
+
+    assert pcl._read_pending() == [_SHA_A, _SHA_B]
+
+
+def test_hook_says_so_at_commit_time_when_ollama_is_down():
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    notice = hook.index("Ollama is not running")
+    background = hook.index('scripts/post_commit_learn.py "$SHA"')
+    assert notice < background
+    assert ">&2" in hook[notice : notice + 200]
+    assert "curl -s -o /dev/null -m 1 http://localhost:11434/api/tags" in hook
 
 
 def test_provider_trace_ignores_unparseable_answers():

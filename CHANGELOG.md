@@ -18,6 +18,23 @@
 
 ### Fixed
 
+* The post-commit learn hook queues candidates again. Nothing had been queued
+  between 2026-07-04 and 2026-11-11: the hook ran uv outside the `mq-mcp/`
+  project, so `requests` was missing; nothing refreshed the 24-hour repo-signal
+  symbol index; and evidence grounding dropped true quotes that the model had
+  rejoined across a line break or wrapped in quotation marks. The hook now
+  targets the project, refreshes the export before extracting, and pins the
+  commit SHA before going to the background.
+* A commit made while Ollama or the repo context is unavailable is no longer
+  lost. The hook says so on stderr, the SHA is kept in
+  `learn_engine/memory/pending-commits.txt`, and a later run analyses it.
+* A low-signal extraction is retried, up to three per commit. The local model
+  returned different answers for an identical prompt despite a fixed seed; the
+  cause is not established. The log records what the model itself answered.
+* Commits that only change `learn_engine/memory/` are skipped without calling
+  the model.
+* `docs/LEARN_CONTRACT.md` describes evidence grounding as implemented and
+  documents the post-commit hook.
 * `run_mqlaunch_selftest` no longer fails delegated workflows by timing out.
   `mqlaunch selftest` takes about two minutes, the tool allowed 15 s, and the
   timeout came back as `[exit 1 (failures)]`. Selftest now gets 300 s, and a

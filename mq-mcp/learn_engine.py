@@ -197,10 +197,12 @@ def _ground_provider_evidence(
     review_findings: str,
     repo_context: str = "",
 ) -> Any:
-    """Keep only evidence grounded verbatim in supplied source material.
+    """Keep only evidence whose words appear, in order, in the supplied sources.
 
-    Case-only differences are restored from the original source.
+    Case, whitespace (a rejoined wrapped line) and quotation marks the model
+    put around a passage are tolerated; the kept text is the source's own.
     Unsupported evidence is dropped. No evidence forces low confidence.
+    See "Evidence grounding" in docs/LEARN_CONTRACT.md.
     """
     if not isinstance(record, dict):
         return record
