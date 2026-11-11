@@ -77,6 +77,43 @@ def test_mixed_evidence():
     assert result["evidence"] == [source]
 
 
+def test_rejoined_wrapped_line_is_grounded_as_the_source_wrote_it():
+    source = "docs/index.html still described mq-mcp as of v0.6.0:\n13 tools, 50 in the meta description."
+
+    result = _ground_provider_evidence(
+        candidate(["still described mq-mcp as of v0.6.0: 13 tools"]),
+        source,
+    )
+
+    assert result["evidence"] == ["still described mq-mcp as of v0.6.0:\n13 tools"]
+    assert result["confidence"] == "high"
+
+
+def test_model_added_quotation_marks_do_not_unground_a_real_quote():
+    source = '<meta content="Local MCP runtime for macOS: 143 tools in four safety classes, with consent" />'
+
+    result = _ground_provider_evidence(
+        candidate(['"Local MCP runtime for macOS: 143 tools in four safety classes"']),
+        source,
+    )
+
+    assert result["evidence"] == [
+        "Local MCP runtime for macOS: 143 tools in four safety classes"
+    ]
+
+
+def test_reworded_evidence_is_still_dropped():
+    source = "Local MCP runtime for macOS: 143 tools in four safety classes."
+
+    result = _ground_provider_evidence(
+        candidate(["Local MCP runtime for macOS has 143 tools in four classes"]),
+        source,
+    )
+
+    assert result["evidence"] == []
+    assert result["confidence"] == "low"
+
+
 def test_invalid_evidence_shape_remains_invalid():
     result = _ground_provider_evidence(
         candidate([123]),

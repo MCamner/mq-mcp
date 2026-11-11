@@ -73,7 +73,8 @@ def test_run_skips_low_signal(monkeypatch, tmp_path):
 
         @staticmethod
         def learn_extract_pattern(
-            _findings, approve=False, repo_context="", require_repo_context=False
+            _findings, approve=False, repo_context="", require_repo_context=False,
+            http_post=None,
         ):
             return {"confidence": "low", "evidence": [], "pattern_name": "x"}
 
@@ -98,7 +99,8 @@ def test_run_queues_grounded_candidate(monkeypatch, tmp_path):
 
         @staticmethod
         def learn_extract_pattern(
-            _findings, approve=False, repo_context="", require_repo_context=False
+            _findings, approve=False, repo_context="", require_repo_context=False,
+            http_post=None,
         ):
             return {
                 "confidence": "high",
@@ -114,3 +116,165 @@ def test_run_queues_grounded_candidate(monkeypatch, tmp_path):
     rec = json.loads(inbox.read_text().strip())
     assert rec["pattern_name"] == "version drift guard"
     assert rec["status"] == "pending"
+
+
+def test_hook_runs_inside_the_uv_project():
+    """The hook must resolve the interpreter from mq-mcp/, where pyproject lives.
+
+    Regression: a bare `uv run python` from the repo root found no project, so
+    learn_engine could not import `requests` and most commits were logged as
+    "skip: ollama unavailable (requests unavailable ...)"; nothing was queued
+    between 2026-07-04 and 2026-11-11.
+    """
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    assert (ROOT / "mq-mcp" / "pyproject.toml").exists()
+    assert not (ROOT / "pyproject.toml").exists()
+    assert 'APP="$ROOT/mq-mcp"' in hook
+    assert 'uv run --project "$APP" python' in hook
+    assert 'runner="uv run python"' not in hook
+
+
+def test_hook_refreshes_the_repo_signal_export_before_extracting():
+    """The 24h symbol index is refreshed by the hook, ahead of the extraction."""
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    refresh = hook.index("repo-signal export . --symbol-index\n")
+    extract = hook.index('"${runner[@]}" scripts/post_commit_learn.py')
+    assert refresh < extract
+    assert "command -v repo-signal" in hook
+
+
+def test_run_names_missing_repo_context_instead_of_low_signal(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    called = []
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            return ""
+
+        @staticmethod
+        def learn_extract_pattern(*_args, **_kwargs):
+            called.append(True)
+            return {"confidence": "low", "evidence": [], "pattern_name": "x"}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", "some diff"))
+    result = pcl.run()
+    assert result.startswith("skip: no verified repo context")
+    assert "low-signal" not in result
+    assert called == []
+    assert not inbox.exists()
+
+
+def test_hook_pins_the_commit_before_going_to_the_background():
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    pin = hook.index("SHA=$(git rev-parse HEAD")
+    background = hook.index('scripts/post_commit_learn.py "$SHA"')
+    assert pin < background
+
+
+def test_main_analyses_the_sha_it_is_given(monkeypatch, tmp_path):
+    _redirect_files(monkeypatch, tmp_path)
+    seen = []
+    monkeypatch.setattr(pcl, "run", lambda sha="HEAD": seen.append(sha) or "ok")
+
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", "0123abc"])
+    assert pcl.main() == 0
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py"])
+    assert pcl.main() == 0
+    # Anything that is not a plain SHA must never reach git as an argument.
+    monkeypatch.setattr(sys, "argv", ["post_commit_learn.py", "--output=/tmp/x"])
+    assert pcl.main() == 0
+
+    assert seen == ["0123abc", "HEAD", "HEAD"]
+
+
+def test_low_signal_reports_what_the_model_itself_said(monkeypatch, tmp_path):
+    """Evidence dropped by grounding must be distinguishable from none offered."""
+    _redirect_files(monkeypatch, tmp_path)
+
+    class _Response:
+        @staticmethod
+        def json():
+            return {"response": json.dumps({"confidence": "high", "evidence": ["a", "b"]})}
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            return "file.py"
+
+        @staticmethod
+        def learn_extract_pattern(_findings, http_post=None, **_kwargs):
+            # Stand in for the provider call, then for grounding dropping it all.
+            pcl._record_provider_trace(http_post.__closure__[0].cell_contents, _Response())
+            return {"confidence": "low", "evidence": [], "pattern_name": "x"}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", "some diff"))
+    result = pcl.run()
+    assert result == (
+        "skip: low-signal (confidence=low, evidence=0; "
+        "model said confidence=high, evidence=2)"
+    )
+
+
+def test_provider_trace_ignores_unparseable_answers():
+    trace: dict = {}
+
+    class _Bad:
+        @staticmethod
+        def json():
+            return {"response": "not json"}
+
+    pcl._record_provider_trace(trace, _Bad())
+    pcl._record_provider_trace(trace, object())
+    assert trace == {}
+
+
+def test_only_learn_memory_paths():
+    paths = pcl._paths_from_name_status(
+        "M\tlearn_engine/memory/lessons.jsonl\nR100\tlearn_engine/memory/a\tlearn_engine/memory/b"
+    )
+    assert paths == [
+        "learn_engine/memory/lessons.jsonl",
+        "learn_engine/memory/a",
+        "learn_engine/memory/b",
+    ]
+    assert pcl._only_learn_memory(paths) is True
+    assert pcl._only_learn_memory(paths + ["scripts/post-commit"]) is False
+    assert pcl._only_learn_memory([]) is False
+
+
+def test_run_skips_a_commit_that_only_touches_learn_memory(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    called = []
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            called.append("context")
+            return "file.py"
+
+        @staticmethod
+        def learn_extract_pattern(*_args, **_kwargs):
+            called.append("model")
+            return {}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", pcl.MEMORY_ONLY))
+    result = pcl.run()
+    assert result.startswith("skip: commit only touches learn_engine/memory/")
+    assert called == []
+    assert not inbox.exists()

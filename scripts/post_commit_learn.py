@@ -63,6 +63,34 @@ def _git(*args: str) -> str:
         return ""
 
 
+LEARN_MEMORY_PREFIX = "learn_engine/memory/"
+
+#: Returned by commit_findings in place of findings text when a commit changes
+#: nothing outside the learn store. Its diff is stored lessons plus their
+#: neighbours as context lines, so the model "discovers" a lesson that is
+#: already curated (seen 2026-11-11: a lessons-only commit yielded a pattern
+#: about another repo, caught only by the duplicate check).
+MEMORY_ONLY = "\x00learn-memory-only"
+
+_SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
+
+
+def _paths_from_name_status(name_status: str) -> list[str]:
+    """Changed paths from `git show --name-status` output (renames: both sides)."""
+    paths: list[str] = []
+    for line in name_status.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        paths.extend(part.strip() for part in parts[1:] if part.strip())
+    return paths
+
+
+def _only_learn_memory(paths: list[str]) -> bool:
+    """True when a commit changes at least one file and all are learn memory."""
+    return bool(paths) and all(path.startswith(LEARN_MEMORY_PREFIX) for path in paths)
+
+
 def commit_findings(sha: str = "HEAD") -> tuple[str, str]:
     """Return (commit_sha, findings_text) for the given commit.
 
@@ -74,6 +102,8 @@ def commit_findings(sha: str = "HEAD") -> tuple[str, str]:
     subject = _git("log", "-1", "--pretty=%s", sha).strip()
     body = _git("log", "-1", "--pretty=%b", sha).strip()
     name_status = _git("show", "--name-status", "--pretty=format:", sha).strip()
+    if _only_learn_memory(_paths_from_name_status(name_status)):
+        return full_sha, MEMORY_ONLY
     diff = _git("show", "--pretty=format:", "--unified=2", sha)
     if len(diff) > MAX_DIFF_CHARS:
         diff = diff[:MAX_DIFF_CHARS] + "\n... (diff truncated)"
@@ -146,6 +176,39 @@ def append_inbox(record: dict, sha: str) -> None:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
+def _record_provider_trace(trace: dict, response: object) -> None:
+    """Note what the model itself answered, before grounding and validation.
+
+    "low-signal" has two very different causes: the model found nothing, or the
+    model found evidence that grounding then dropped. The same commit gave both
+    outcomes on 2026-11-11, and the log could not tell them apart.
+    """
+    try:
+        body = response.json() if hasattr(response, "json") else response
+        generated = body.get("response") if isinstance(body, dict) else None
+        if isinstance(generated, str):
+            generated = json.loads(generated)
+        if isinstance(generated, dict):
+            evidence = generated.get("evidence")
+            trace["confidence"] = str(generated.get("confidence") or "-")
+            trace["evidence"] = len(evidence) if isinstance(evidence, list) else 0
+    except Exception:
+        pass
+
+
+def _tracing_post(trace: dict):
+    """requests.post that also records the raw provider answer in ``trace``."""
+
+    def post(*args, **kwargs):
+        import requests  # noqa: PLC0415
+
+        response = requests.post(*args, **kwargs)
+        _record_provider_trace(trace, response)
+        return response
+
+    return post
+
+
 def run(sha: str = "HEAD") -> str:
     """Extract and queue a candidate. Returns a short status string."""
     try:
@@ -158,16 +221,32 @@ def run(sha: str = "HEAD") -> str:
         return f"skip: ollama {status.get('status')} ({status.get('reason', '-')})"
 
     full_sha, findings = commit_findings(sha)
+    if findings == MEMORY_ONLY:
+        return (
+            f"skip: commit only touches {LEARN_MEMORY_PREFIX} "
+            "(stored lessons are not new evidence)"
+        )
     if not findings.strip():
         return "skip: empty commit findings"
 
     repo_context = eng.load_repo_context_snapshot(REPO_ROOT)
+    if not repo_context.strip():
+        # learn_extract_pattern would refuse without calling the model and the
+        # refusal would be logged as "low-signal", which reads like a model
+        # result. Name the real cause instead.
+        return (
+            "skip: no verified repo context (.repo-signal/exports/symbol_index.json "
+            "missing, older than 24h, or for another checkout; "
+            "run `repo-signal export . --symbol-index`)"
+        )
+    trace: dict = {}
     try:
         record = eng.learn_extract_pattern(
             findings,
             approve=False,
             repo_context=repo_context,
             require_repo_context=True,
+            http_post=_tracing_post(trace),
         )
     except Exception as exc:
         return f"skip: extraction failed: {exc}"
@@ -175,7 +254,16 @@ def run(sha: str = "HEAD") -> str:
     confidence = str(record.get("confidence", "")).lower()
     evidence = record.get("evidence") or []
     if confidence not in {"medium", "high"} or not evidence:
-        return f"skip: low-signal (confidence={confidence or '-'}, evidence={len(evidence)})"
+        said = ""
+        if trace:
+            said = (
+                f"; model said confidence={trace['confidence']}, "
+                f"evidence={trace['evidence']}"
+            )
+        return (
+            f"skip: low-signal (confidence={confidence or '-'}, "
+            f"evidence={len(evidence)}{said})"
+        )
 
     if is_duplicate(record, _existing_word_sets()):
         return f"skip: duplicate of an existing lesson/candidate ({record.get('pattern_name', '-')})"
@@ -185,7 +273,13 @@ def run(sha: str = "HEAD") -> str:
 
 
 def main() -> int:
-    result = run()
+    # The hook passes the SHA it captured at commit time. Reading HEAD here
+    # instead analyses whatever is checked out when this background job gets
+    # to it: two quick commits were both analysed as the second one.
+    sha = "HEAD"
+    if len(sys.argv) > 1 and _SHA_RE.fullmatch(sys.argv[1]):
+        sha = sys.argv[1]
+    result = run(sha)
     _log(result)
     return 0
 
