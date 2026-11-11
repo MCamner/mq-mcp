@@ -176,6 +176,39 @@ def append_inbox(record: dict, sha: str) -> None:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
+def _record_provider_trace(trace: dict, response: object) -> None:
+    """Note what the model itself answered, before grounding and validation.
+
+    "low-signal" has two very different causes: the model found nothing, or the
+    model found evidence that grounding then dropped. The same commit gave both
+    outcomes on 2026-11-11, and the log could not tell them apart.
+    """
+    try:
+        body = response.json() if hasattr(response, "json") else response
+        generated = body.get("response") if isinstance(body, dict) else None
+        if isinstance(generated, str):
+            generated = json.loads(generated)
+        if isinstance(generated, dict):
+            evidence = generated.get("evidence")
+            trace["confidence"] = str(generated.get("confidence") or "-")
+            trace["evidence"] = len(evidence) if isinstance(evidence, list) else 0
+    except Exception:
+        pass
+
+
+def _tracing_post(trace: dict):
+    """requests.post that also records the raw provider answer in ``trace``."""
+
+    def post(*args, **kwargs):
+        import requests  # noqa: PLC0415
+
+        response = requests.post(*args, **kwargs)
+        _record_provider_trace(trace, response)
+        return response
+
+    return post
+
+
 def run(sha: str = "HEAD") -> str:
     """Extract and queue a candidate. Returns a short status string."""
     try:
@@ -206,12 +239,14 @@ def run(sha: str = "HEAD") -> str:
             "missing, older than 24h, or for another checkout; "
             "run `repo-signal export . --symbol-index`)"
         )
+    trace: dict = {}
     try:
         record = eng.learn_extract_pattern(
             findings,
             approve=False,
             repo_context=repo_context,
             require_repo_context=True,
+            http_post=_tracing_post(trace),
         )
     except Exception as exc:
         return f"skip: extraction failed: {exc}"
@@ -219,7 +254,16 @@ def run(sha: str = "HEAD") -> str:
     confidence = str(record.get("confidence", "")).lower()
     evidence = record.get("evidence") or []
     if confidence not in {"medium", "high"} or not evidence:
-        return f"skip: low-signal (confidence={confidence or '-'}, evidence={len(evidence)})"
+        said = ""
+        if trace:
+            said = (
+                f"; model said confidence={trace['confidence']}, "
+                f"evidence={trace['evidence']}"
+            )
+        return (
+            f"skip: low-signal (confidence={confidence or '-'}, "
+            f"evidence={len(evidence)}{said})"
+        )
 
     if is_duplicate(record, _existing_word_sets()):
         return f"skip: duplicate of an existing lesson/candidate ({record.get('pattern_name', '-')})"

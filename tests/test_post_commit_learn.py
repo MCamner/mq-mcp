@@ -73,7 +73,8 @@ def test_run_skips_low_signal(monkeypatch, tmp_path):
 
         @staticmethod
         def learn_extract_pattern(
-            _findings, approve=False, repo_context="", require_repo_context=False
+            _findings, approve=False, repo_context="", require_repo_context=False,
+            http_post=None,
         ):
             return {"confidence": "low", "evidence": [], "pattern_name": "x"}
 
@@ -98,7 +99,8 @@ def test_run_queues_grounded_candidate(monkeypatch, tmp_path):
 
         @staticmethod
         def learn_extract_pattern(
-            _findings, approve=False, repo_context="", require_repo_context=False
+            _findings, approve=False, repo_context="", require_repo_context=False,
+            http_post=None,
         ):
             return {
                 "confidence": "high",
@@ -189,6 +191,52 @@ def test_main_analyses_the_sha_it_is_given(monkeypatch, tmp_path):
     assert pcl.main() == 0
 
     assert seen == ["0123abc", "HEAD", "HEAD"]
+
+
+def test_low_signal_reports_what_the_model_itself_said(monkeypatch, tmp_path):
+    """Evidence dropped by grounding must be distinguishable from none offered."""
+    _redirect_files(monkeypatch, tmp_path)
+
+    class _Response:
+        @staticmethod
+        def json():
+            return {"response": json.dumps({"confidence": "high", "evidence": ["a", "b"]})}
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            return "file.py"
+
+        @staticmethod
+        def learn_extract_pattern(_findings, http_post=None, **_kwargs):
+            # Stand in for the provider call, then for grounding dropping it all.
+            pcl._record_provider_trace(http_post.__closure__[0].cell_contents, _Response())
+            return {"confidence": "low", "evidence": [], "pattern_name": "x"}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", "some diff"))
+    result = pcl.run()
+    assert result == (
+        "skip: low-signal (confidence=low, evidence=0; "
+        "model said confidence=high, evidence=2)"
+    )
+
+
+def test_provider_trace_ignores_unparseable_answers():
+    trace: dict = {}
+
+    class _Bad:
+        @staticmethod
+        def json():
+            return {"response": "not json"}
+
+    pcl._record_provider_trace(trace, _Bad())
+    pcl._record_provider_trace(trace, object())
+    assert trace == {}
 
 
 def test_only_learn_memory_paths():
