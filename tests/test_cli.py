@@ -21,8 +21,9 @@ def test_read_version_matches_version_file():
     assert cli.read_version() == (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
 
-def test_doctor_json_reports_required_status(capsys):
+def test_doctor_json_reports_required_status(capsys, monkeypatch):
     cli = load_cli()
+    monkeypatch.setattr(cli, "check_codegraph", lambda root: {"status": "skip", "detail": "Not installed."})
     result = cli.doctor(json_output=True)
     payload = json.loads(capsys.readouterr().out)
 
@@ -141,3 +142,24 @@ def test_release_gate_run_cli_accepts_test_command(capsys, tmp_path):
     assert result == 0
     checks = {check["name"]: check for check in payload["checks"]}
     assert checks["tests_pass"]["status"] == "pass"
+
+
+def test_doctor_codegraph_warning_is_optional(monkeypatch, capsys):
+    cli = load_cli()
+    monkeypatch.setattr(cli, "check_codegraph", lambda root: {
+        "status": "warning", "version": "1.6.2", "index_version": "1.5.0",
+        "index_status": "rebuild", "detail": "Index needs a rebuild.",
+        "action": "Run codegraph index.",
+        "daemon": {"status": "unknown", "detail": "Cannot confirm daemon: socket access denied."},
+    })
+    assert cli.doctor(json_output=True) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "ok"
+    assert payload["codegraph"]["status"] == "warning"
+    assert all(item["name"] != "codegraph" for item in payload["checks"])
+    assert cli.doctor() == 0
+    output = capsys.readouterr().out
+    assert "WARN codegraph" in output
+    assert "1.6.2" in output and "1.5.0" in output
+    assert "Cannot confirm daemon" in output
+    assert "Run codegraph index" in output
