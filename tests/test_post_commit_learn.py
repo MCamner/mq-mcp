@@ -382,6 +382,46 @@ def test_provider_trace_ignores_unparseable_answers():
     assert trace == {}
 
 
+def _fake_git(name_status):
+    def git(*args):
+        if args[0] == "rev-parse":
+            return "f" * 40 + "\n"
+        if "--name-status" in args:
+            return name_status
+        if args[0] == "log":
+            return "subject line\n"
+        return "diff --git a/x b/x\n+changed\n"
+
+    return git
+
+
+def test_commit_findings_marks_a_commit_without_changed_files(monkeypatch):
+    monkeypatch.setattr(pcl, "_git", _fake_git(""))
+    assert pcl.commit_findings("HEAD") == ("f" * 40, pcl.NO_CHANGES)
+
+
+def test_commit_findings_still_returns_text_for_a_real_change(monkeypatch):
+    monkeypatch.setattr(pcl, "_git", _fake_git("M\tscripts/post-commit\n"))
+    sha, findings = pcl.commit_findings("HEAD")
+    assert sha == "f" * 40
+    assert findings not in {pcl.NO_CHANGES, pcl.MEMORY_ONLY}
+    assert "scripts/post-commit" in findings
+
+
+def test_run_skips_a_commit_without_changed_files_before_asking_the_model(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setitem(sys.modules, "learn_engine", _engine([_LOW], calls))
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("deadbeef", pcl.NO_CHANGES))
+
+    result = pcl.run()
+
+    assert result == "skip: commit changes no files (empty or merge commit)"
+    assert calls == []
+    assert not pcl._retry_later(result)
+    assert not inbox.exists()
+
+
 def test_only_learn_memory_paths():
     paths = pcl._paths_from_name_status(
         "M\tlearn_engine/memory/lessons.jsonl\nR100\tlearn_engine/memory/a\tlearn_engine/memory/b"
