@@ -80,6 +80,71 @@ label by default. Rendering is pure text over the snapshot the engine already
 built: it reads no file and runs no command. The machine-readable `PROVENANCE`
 line sent to the model is unchanged.
 
+## Evidence grounding
+
+The model is instructed to quote evidence verbatim. mq-mcp does not take its
+word for it: after the provider answers, every evidence entry is matched against
+the supplied findings and repo context, and entries that do not match are
+dropped. A record left with no evidence is normalized to `unknown` / `low`.
+
+The match is on the words and their order, not on the packaging. Three
+differences are tolerated, because a model that quotes a real passage
+routinely introduces them:
+
+- letter case
+- whitespace, including a line the source wrapped and the model rejoined
+- quotation marks or backticks the model put around the passage
+
+Anything else — a changed, added, missing, or reordered word — is not a match.
+What is kept is the source's own text for the matched span, never the model's
+rendering of it, so stored evidence can always be found in the input by a
+literal search.
+
+This is deliberately looser than a literal substring test. A literal test
+dropped true quotes for exactly these packaging differences and forced
+grounded candidates to `low`; the tolerance was added on 2026-11-11 after a
+commit whose two real quotes were both discarded.
+
+## Post-commit hook
+
+`scripts/post-commit` (installed by `scripts/install.sh`) runs
+`scripts/post_commit_learn.py` in the background after each commit and queues at
+most one candidate per commit in the pending inbox. It never writes the curated
+store and never fails a commit; the only work done before the commit returns is
+a reachability check on the model server, capped at one second.
+
+The hook is a caller of the learning layer, not part of it, and that is where
+its two subprocesses live:
+
+- It refreshes the primary evidence source before extracting, by running
+  `repo-signal export . --symbol-index` when `repo-signal` is on `PATH`. The
+  learning layer still only reads the export and still refuses when it is
+  missing or stale; nothing falls back to another source (ADR-007).
+- It reads the commit with `git`, pinned to the SHA captured when the commit was
+  made, because the background job outlives the moment `HEAD` named it.
+
+Behavior that follows from the model server being local and optional:
+
+- If Ollama is not running, the hook says so on stderr at commit time. The
+  commit's SHA is recorded in `learn_engine/memory/pending-commits.txt`
+  (gitignored, at most 50 entries) and analysed by a later run, up to five
+  remembered commits per run. The same applies when the repo context is
+  unavailable. Starting Ollama remains an explicit user action; the hook never
+  starts it.
+- One extraction is a sample, not a verdict. With a fixed seed and
+  `temperature` 0.1, the local runtime still returned different answers for an
+  identical prompt (2026-11-11: the same commit gave a high-confidence candidate
+  in three runs and a low-signal answer in two). A low-signal answer is
+  therefore retried, up to three extractions per commit. The cause of the
+  variation is not established.
+- A commit that only changes `learn_engine/memory/` is skipped without calling
+  the model: its diff is stored lessons, not new evidence.
+
+Every run appends one line to `learn_engine/memory/post-commit.log`. A skip
+names the stage that refused, and a low-signal line also records what the model
+itself answered before grounding, so "the model found nothing" can be told from
+"grounding dropped everything".
+
 ## Input
 
 The input is mq-mcp review findings, such as output from:
