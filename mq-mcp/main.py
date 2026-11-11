@@ -18,6 +18,8 @@ APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
+from codegraph_health import check_codegraph  # noqa: E402 — source-checkout path above
+
 VERSION_FILE = REPO_ROOT / "VERSION"
 PYPROJECT_FILE = APP_DIR / "pyproject.toml"
 ENV_FILE = APP_DIR / ".env"
@@ -227,6 +229,7 @@ def doctor(json_output: bool = False) -> int:
         "status": "ok" if required_ok else "failed",
         "checks": [{"name": name, "ok": ok, "detail": detail} for name, ok, detail in checks],
         "optional": [{"name": name, "ok": ok, "detail": detail} for name, ok, detail in optional],
+        "codegraph": check_codegraph(REPO_ROOT),
     }
 
     if json_output:
@@ -241,6 +244,17 @@ def doctor(json_output: bool = False) -> int:
         for item in payload["optional"]:
             status = "OK" if item["ok"] else "SKIP"
             print(f"{status:4} {item['name']}: {item['detail']}")
+
+        codegraph = payload["codegraph"]
+        label = {"ok": "OK", "skip": "SKIP", "warning": "WARN"}[codegraph["status"]]
+        print(f"{label:4} codegraph: {codegraph['detail']}")
+        if codegraph.get("version"):
+            print(f"     CLI: {codegraph['version']}; index: {codegraph.get('index_version') or 'unknown'} ({codegraph.get('index_status', 'unknown')})")
+        if codegraph.get("daemon"):
+            daemon = codegraph["daemon"]
+            print(f"     daemon: {daemon['status']} — {daemon['detail']}")
+        if codegraph.get("action"):
+            print(f"     action: {codegraph['action']}")
 
     return 0 if required_ok else 1
 
