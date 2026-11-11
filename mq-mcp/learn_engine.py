@@ -223,21 +223,32 @@ def _ground_provider_evidence(
 
         match_text = None
 
-        # Prefer a literal match before attempting case restoration.
+        # Prefer a literal match before attempting restoration.
         for source in sources:
             if item in source:
                 match_text = item
                 break
 
+        # A model that quotes a real passage routinely changes its packaging,
+        # not its words: it rejoins a line the source wrapped, and it wraps the
+        # passage in quotation marks of its own. Both dropped every candidate
+        # for a real commit (measured 2026-11-11 on d888bea: two true quotes,
+        # zero kept). Tolerate exactly those two differences plus case; the
+        # words and their order must still match, and what is stored is the
+        # source's own text, never the model's rendering of it.
         if match_text is None:
-            for source in sources:
-                match = re.search(
-                    re.escape(item),
-                    source,
-                    flags=re.IGNORECASE,
-                )
-                if match:
-                    match_text = match.group(0)
+            unquoted = item.strip("\"'`“”‘’ \t\r\n")
+            for variant in dict.fromkeys((item, unquoted)):
+                tokens = variant.split()
+                if not tokens:
+                    continue
+                pattern = r"\s+".join(re.escape(token) for token in tokens)
+                for source in sources:
+                    match = re.search(pattern, source, flags=re.IGNORECASE)
+                    if match:
+                        match_text = match.group(0)
+                        break
+                if match_text is not None:
                     break
 
         if match_text is not None and match_text not in grounded:

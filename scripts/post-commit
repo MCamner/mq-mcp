@@ -17,8 +17,35 @@ if [ -n "$git_dir" ] && { [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebas
   exit 0
 fi
 
-runner="uv run python"
-command -v uv >/dev/null 2>&1 || runner="python3"
+# The uv project (pyproject.toml, uv.lock, .venv) lives in $ROOT/mq-mcp, not in
+# $ROOT. A bare `uv run python` from $ROOT finds no project and falls back to an
+# interpreter without the project's dependencies, so learn_engine cannot import
+# `requests` and every commit is skipped as "ollama unavailable". Point uv at the
+# project explicitly; without uv on PATH (GUI clients, agents) use the project
+# venv directly before falling back to a bare python3.
+APP="$ROOT/mq-mcp"
+if command -v uv >/dev/null 2>&1; then
+  runner=(uv run --project "$APP" python)
+elif [ -x "$APP/.venv/bin/python" ]; then
+  runner=("$APP/.venv/bin/python")
+else
+  runner=(python3)
+fi
 
-( cd "$ROOT" && nohup $runner scripts/post_commit_learn.py >/dev/null 2>&1 & ) || true
+# learn_engine refuses extraction (without calling the model) unless
+# .repo-signal/exports/symbol_index.json is under 24 hours old — see
+# docs/LEARN_CONTRACT.md and ADR-007. Nothing else refreshes that export, so
+# refresh the primary source here, in the hook, before extracting. This is not
+# a fallback: without repo-signal on PATH the export stays as it is and the
+# extraction refuses as before.
+(
+  cd "$ROOT" || exit 0
+  trap '' HUP
+  {
+    if command -v repo-signal >/dev/null 2>&1; then
+      repo-signal export . --symbol-index
+    fi
+    "${runner[@]}" scripts/post_commit_learn.py
+  } >/dev/null 2>&1 &
+) || true
 exit 0

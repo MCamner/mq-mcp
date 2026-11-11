@@ -162,6 +162,15 @@ def run(sha: str = "HEAD") -> str:
         return "skip: empty commit findings"
 
     repo_context = eng.load_repo_context_snapshot(REPO_ROOT)
+    if not repo_context.strip():
+        # learn_extract_pattern would refuse without calling the model and the
+        # refusal would be logged as "low-signal", which reads like a model
+        # result. Name the real cause instead.
+        return (
+            "skip: no verified repo context (.repo-signal/exports/symbol_index.json "
+            "missing, older than 24h, or for another checkout; "
+            "run `repo-signal export . --symbol-index`)"
+        )
     try:
         record = eng.learn_extract_pattern(
             findings,

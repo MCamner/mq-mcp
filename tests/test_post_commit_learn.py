@@ -114,3 +114,55 @@ def test_run_queues_grounded_candidate(monkeypatch, tmp_path):
     rec = json.loads(inbox.read_text().strip())
     assert rec["pattern_name"] == "version drift guard"
     assert rec["status"] == "pending"
+
+
+def test_hook_runs_inside_the_uv_project():
+    """The hook must resolve the interpreter from mq-mcp/, where pyproject lives.
+
+    Regression: a bare `uv run python` from the repo root found no project, so
+    learn_engine could not import `requests` and most commits were logged as
+    "skip: ollama unavailable (requests unavailable ...)"; nothing was queued
+    between 2026-07-04 and 2026-11-11.
+    """
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    assert (ROOT / "mq-mcp" / "pyproject.toml").exists()
+    assert not (ROOT / "pyproject.toml").exists()
+    assert 'APP="$ROOT/mq-mcp"' in hook
+    assert 'uv run --project "$APP" python' in hook
+    assert 'runner="uv run python"' not in hook
+
+
+def test_hook_refreshes_the_repo_signal_export_before_extracting():
+    """The 24h symbol index is refreshed by the hook, ahead of the extraction."""
+    hook = (ROOT / "scripts" / "post-commit").read_text(encoding="utf-8")
+    refresh = hook.index("repo-signal export . --symbol-index\n")
+    extract = hook.index('"${runner[@]}" scripts/post_commit_learn.py')
+    assert refresh < extract
+    assert "command -v repo-signal" in hook
+
+
+def test_run_names_missing_repo_context_instead_of_low_signal(monkeypatch, tmp_path):
+    inbox, _ = _redirect_files(monkeypatch, tmp_path)
+    called = []
+
+    class _Eng:
+        @staticmethod
+        def ollama_learn_status():
+            return {"status": "ready"}
+
+        @staticmethod
+        def load_repo_context_snapshot(_root):
+            return ""
+
+        @staticmethod
+        def learn_extract_pattern(*_args, **_kwargs):
+            called.append(True)
+            return {"confidence": "low", "evidence": [], "pattern_name": "x"}
+
+    monkeypatch.setitem(sys.modules, "learn_engine", _Eng())
+    monkeypatch.setattr(pcl, "commit_findings", lambda sha="HEAD": ("sha1", "some diff"))
+    result = pcl.run()
+    assert result.startswith("skip: no verified repo context")
+    assert "low-signal" not in result
+    assert called == []
+    assert not inbox.exists()
