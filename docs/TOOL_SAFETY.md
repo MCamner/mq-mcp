@@ -73,6 +73,7 @@ These tools cannot write files. They may use a fixed, contract-declared read-onl
 | `risk_review_repo` | Bounded allowlisted repository risk pass with grep pre-scan and AI review; `receipt=true` binds the source tree | Write, commit, network |
 | `risk_review_file` | Targeted risk pass with grep pre-scan + AI review; `receipt=true` returns a read-only exact-code receipt | Write, commit, network |
 | `risk_review_diff` | Risk pass over changed files; `receipt=true` returns a read-only exact-code receipt | Write, commit, network |
+| `review_patch` | Review a unified diff passed as text under a review contract; reads no file, writes no review memory; a diff over 200 KB is refused, not cut | Read files, resolve paths, write review memory |
 | `list_review_skills` | List available review skills, path-prefix routes, and extension routes | Write, commit |
 | `list_learnings` | List stored engineering lessons with optional filters | Write, network |
 | `get_learning` | Return a single lesson by id prefix | Write, network |
@@ -328,6 +329,7 @@ Resolver: `resolve_allowed_local_file` (open_in_app), fixed script path (validat
 | `repo_signal_status` | A | REPO_ROOT/.repo-signal/exports/ (read-only) | No | No |
 | `risk_review_file` | A | REPO_ROOT (reads file) + review_engine/memory/ | No | No (OpenAI API) |
 | `risk_review_diff` | A | REPO_ROOT (reads diff) + review_engine/memory/ | No | No (OpenAI API) |
+| `review_patch` | A | none (diff passed as text) | No | No (OpenAI API) |
 | `release_gate_run` | A | REPO_ROOT (release gate checks) | No | No |
 | `list_review_skills` | A | REPO_ROOT/reviews/skills/ (read-only) | No | No |
 | `record_learning` | C | REPO_ROOT/learn_engine/memory/lessons.jsonl | Yes | No |
