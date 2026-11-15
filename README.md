@@ -24,7 +24,7 @@ readiness baseline.
 
 This repository is useful as:
 
-* a local MCP server with 143 documented, safety-classified tools
+* a local MCP server with 144 documented, safety-classified tools
 * `risk_review_repo(mode='security', repo_path=...)` performs a bounded, allowlisted repository risk review with file-level pre-scans and optional review receipt.
 * a packaged local CLI with `mq-mcp doctor`, `mq-mcp health`, `mq-mcp report`, `mq-mcp serve`, `mq-mcp validate`, and `mq-mcp tools`
 * validated MCP profile templates for Claude Desktop, Codex, mq-agent, OpenAI bridge, and local macOS workflows
@@ -43,7 +43,7 @@ It is **not yet** a production-ready MCP distribution or hidden daemon.
 * `scripts/validate.sh` runs on every push — checks required files, Python syntax, MCP tool listing, and integration wiring
 * Path access is scoped through `resolve_repo_file()` and `resolve_allowed_local_file()` — no arbitrary filesystem access
 * Write-capable tools (`update_repo_file`, `edit_image`) never commit automatically
-* Safety policy classifies all 143 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
+* Safety policy classifies all 144 tools by class, resolver, write capability, and subprocess use — see `docs/TOOL_SAFETY.md`
 * Tests for path safety and tool output shape run in CI via `pytest`
 * CI runs on `macos-latest` — not a Linux approximation
 
@@ -182,7 +182,7 @@ Quick example — list available tools through the bridge:
 uv --directory mq-mcp run python bridge.py "List the available MCP tools."
 ```
 
-Expected response lists all 143 MCP tools with descriptions.
+Expected response lists all 144 MCP tools with descriptions.
 
 ## Integration map
 
@@ -283,7 +283,7 @@ Automation rule of thumb:
 
 ## Available MCP tools
 
-The local MCP server exposes 143 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
+The local MCP server exposes 144 tools across the documented safety classes. See [`docs/TOOL_SAFETY.md`](docs/TOOL_SAFETY.md) for the full classification.
 
 **Repo tools (Class A — read-only, repo-scoped):**
 
@@ -417,6 +417,7 @@ The local MCP server exposes 143 tools across the documented safety classes. See
 * `review_file` — runs an AI review on a repo file using a review contract (requires OPENAI_API_KEY)
 * `risk_review_file` — targeted risk pass (security/risk/architecture) with grep pre-scan + AI review (requires OPENAI_API_KEY)
 * `risk_review_diff` — risk pass over changed files in the working tree or staging area (requires OPENAI_API_KEY)
+* `review_patch` — review a unified diff passed as text, from any repository; reads no file and writes no review memory (requires OPENAI_API_KEY unless `MQ_MCP_REVIEW_PROVIDER=ollama`)
 * `build_repo_context` — rebuilds architecture_map.json and file_summary_index.json for the review engine
 * `list_review_contracts` — lists available review contracts and their modes
 * `list_review_skills` — lists available review skills with path-prefix routes, extension routes, and availability status (Class A)

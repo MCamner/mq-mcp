@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+
+* `review_patch(patch, mode, label)` reviews a unified diff passed as text
+  under a review contract (`risk`, `security`, `architecture` or `comment`) and
+  returns structured findings. It reads no file, resolves no path and writes no
+  review memory, so a change from any repository can be reviewed; a diff over
+  200 KB is refused rather than cut. Class A. mq-agent's
+  `pr review --model-review` calls it.
+* `bridget --workflow` maps goals to three read-only mq-agent commands besides
+  the workflow templates: `fix-ci <repo>`, `stack status` and
+  `pr review <n> --repo <repo>`. Bridget builds the argv and never adds
+  `--approve` or `--post`; a keyword inside a longer matched phrase no longer
+  makes a goal ambiguous (#154).
+
 ### Security
 
 * The MCP server no longer passes `OPENAI_API_KEY` to every subprocess it

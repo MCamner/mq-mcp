@@ -38,6 +38,7 @@ _CATEGORIES: dict[str, str] = {
     "review_perception": "review",
     "risk_review_file": "review",
     "risk_review_diff": "review",
+    "review_patch": "review",
     "get_last_review": "review",
     "list_review_contracts": "review",
     "list_review_history": "review",
@@ -144,6 +145,7 @@ _REQUIRES_API_KEY: frozenset[str] = frozenset({
     "review_perception",
     "risk_review_file",
     "risk_review_diff",
+    "review_patch",
     "review_architecture_doc",
     "review_runtime_contract",
     "extract_coding_conventions",
@@ -201,7 +203,8 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
         "uses_network": name in _USES_NETWORK,
         "requires_api_key": name in _REQUIRES_API_KEY and (
             name not in {"review_file", "review_diff", "review_repo", "review_perception",
-                         "risk_review_file", "risk_review_diff", "review_architecture_doc",
+                         "risk_review_file", "risk_review_diff", "review_patch",
+                         "review_architecture_doc",
                          "review_runtime_contract", "extract_coding_conventions"}
             or os.environ.get("MQ_MCP_REVIEW_PROVIDER", "openai").strip().lower() == "openai"
         ),

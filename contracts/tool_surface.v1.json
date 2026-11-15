@@ -1,7 +1,7 @@
 {
   "schema": "mq-mcp.tool-surface.v1",
   "producer": "mq-mcp",
-  "tool_count": 143,
+  "tool_count": 144,
   "tools": [
     {
       "name": "analyze_csv",
@@ -1934,6 +1934,36 @@
         }
       ],
       "signature_sha256": "54ea107377367eb8bec5a04e9f3e4831b86d8d51a07401be61987cd16a27847d"
+    },
+    {
+      "name": "review_patch",
+      "safety_class": "A",
+      "write": false,
+      "subprocess": false,
+      "parameters": [
+        {
+          "name": "label",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "mode",
+          "type": [
+            "string"
+          ],
+          "required": false
+        },
+        {
+          "name": "patch",
+          "type": [
+            "string"
+          ],
+          "required": true
+        }
+      ],
+      "signature_sha256": "43324c3521e476c95fcbd7847a06fe150519a2071bab91a40995de1f38b376be"
     },
     {
       "name": "review_perception",

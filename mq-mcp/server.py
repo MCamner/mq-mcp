@@ -4386,6 +4386,99 @@ def risk_review_repo(mode: str = "security", receipt: bool = False, repo_path: s
     return run()
 
 
+#: Largest unified diff ``review_patch`` accepts, in UTF-8 bytes. A larger
+#: diff is refused, never cut: a review must not claim lines it did not see.
+REVIEW_PATCH_MAX_BYTES = 200_000
+REVIEW_PATCH_MODES = ("risk", "security", "architecture", "comment")
+
+
+@mcp.tool()
+def review_patch(patch: str, mode: str = "risk", label: str = "") -> dict:
+    """Review a unified diff passed as text, under a review contract.
+
+    The caller supplies the diff, so a change from any repository can be
+    reviewed: this tool reads no file, resolves no path and writes no review
+    memory. It is the model review behind mq-agent ``pr review --model-review``.
+    Uses OpenAI by default (needs a key); set MQ_MCP_REVIEW_PROVIDER=ollama for
+    local Qwen.
+
+    Args:
+        patch: Unified diff text, at most REVIEW_PATCH_MAX_BYTES bytes. A larger
+            diff is refused rather than truncated.
+        mode: One of 'risk', 'security', 'architecture', 'comment'.
+        label: Free text echoed back to identify the change (e.g. 'repo#123').
+
+    Returns {"ok": true, "mode", "label", "model", "reviewed_bytes",
+    "findings": [{"severity", "location", "body"}], "output"} or
+    {"ok": false, "error"}.
+
+    Safety: Class A — reads nothing, writes nothing; sends the diff to the
+    configured review model.
+    """
+    import openai as _openai
+
+    if mode not in REVIEW_PATCH_MODES:
+        return {"ok": False, "error": f"mode must be one of {', '.join(REVIEW_PATCH_MODES)}"}
+    if not (patch or "").strip():
+        return {"ok": False, "error": "patch is empty"}
+    size = len(patch.encode("utf-8"))
+    if size > REVIEW_PATCH_MAX_BYTES:
+        return {
+            "ok": False,
+            "error": f"patch too large: {size} bytes, limit {REVIEW_PATCH_MAX_BYTES}",
+        }
+    contract = _load_review_contract(mode)
+    if not contract:
+        return {"ok": False, "error": f"no review contract for mode '{mode}'"}
+    if _review_requires_key() and not _openai_credential.openai_api_key():
+        return {"ok": False, "error": "review_patch requires OPENAI_API_KEY to be set."}
+
+    model = _review_model()
+    system = (
+        "You are a code review engine operating under a strict review contract.\n"
+        "Follow the contract exactly. Do not deviate from the output format.\n"
+        "Do not modify code. Output only structured review findings.\n\n"
+        f"{contract}"
+    )
+    user = (
+        "Review the change in this unified diff under the contract above. "
+        "Review only added and changed lines (those starting with '+'); "
+        "unchanged context lines are there to read the change. Cite each "
+        "finding as path:line, using the new-file line numbers from the "
+        "'@@ -a,b +c,d @@' hunk headers.\n\n"
+        f"```diff\n{patch}\n```"
+    )
+    try:
+        client = _review_client(_openai)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=2048,
+        )
+        raw = response.choices[0].message.content or ""
+    except Exception as exc:
+        return {"ok": False, "error": f"review_patch failed: {exc}"}
+
+    from review_engine.severity_engine import parse_findings
+
+    findings = [
+        {"severity": f.severity.value, "location": f.location, "body": f.body.strip()}
+        for f in parse_findings(raw)
+    ]
+    return {
+        "ok": True,
+        "mode": mode,
+        "label": label,
+        "model": model,
+        "reviewed_bytes": size,
+        "findings": findings,
+        "output": raw,
+    }
+
+
 @mcp.tool()
 def risk_review_diff(mode: str = "security", receipt: bool = False) -> str | dict:
     """Risk pass over all files changed in the working tree or staging area.
