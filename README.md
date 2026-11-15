@@ -482,13 +482,22 @@ mq-agent orchestration layer:
 ```bash
 bridget --workflow "preflight ~/macos-scripts"
 bridget --workflow "review and test" -y
+bridget --workflow "ci is failing"          # mq-agent fix-ci (diagnosis only)
+bridget --workflow "stack status"           # mq-agent stack status
+bridget --workflow "review pr 455"          # mq-agent pr review 455 (not posted)
 ```
 
 Bridget maps the goal to one of three fixed templates (`repo-preflight`,
-`review-and-test`, `release-ready`) with a deterministic keyword map. On an
-ambiguous or unrecognized goal it lists the templates and asks you to choose —
-it never guesses. It shows the plan, asks for approval, then runs it through
-`mq-agent workflow` and prints the result.
+`review-and-test`, `release-ready`) or one of three read-only shortcuts
+(`ci-diagnose`, `stack-status`, `pr-review`) with a deterministic keyword map.
+A keyword that only appears inside a longer matched phrase does not count, so
+"stack health" is `stack-status` and "review pr 12" is `pr-review`. On an
+ambiguous or unrecognized goal it lists the choices and asks you to choose —
+it never guesses. For a template it shows the plan, asks for approval, then
+runs it through `mq-agent workflow`. For a shortcut it shows the exact
+`mq-agent` command and asks for approval before running it. Shortcuts never
+carry a write flag: `fix-ci` runs without `--approve` and `pr review` without
+`--post`. A PR review without a PR number asks for one.
 
 This is a thin entrypoint: Bridget proposes and delegates only. It holds no run
 state, implements no retry, selects no tools, and bypasses no tool policy — all

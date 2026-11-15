@@ -281,6 +281,10 @@ mq-mcp guarantees to callers:
   approval — ask mq-agent to `run` it and present the result.
 * Bridget must not hold run state, retry, write workflow state, select tools, or
   bypass tool policy. All orchestration and state remain in mq-agent.
+* Bridget may also run three read-only mq-agent commands directly after the same
+  explicit approval: `fix-ci <repo>`, `stack status` and `pr review <n> --repo
+  <repo>`. Bridget builds their argv and never adds a write flag (`--approve`,
+  `--post`).
 * Recursion is denied: Bridget refuses to start a workflow when
   `MQ_WORKFLOW_DEPTH` is set, and sets it in the mq-agent child env. A
   `run_mqlaunch_*` tool may not start `mqlaunch flow`.
