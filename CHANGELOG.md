@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-15
+
 ### Added
 
 * `review_patch(patch, mode, label)` reviews a unified diff passed as text
@@ -15,6 +17,17 @@
   `pr review <n> --repo <repo>`. Bridget builds the argv and never adds
   `--approve` or `--post`; a keyword inside a longer matched phrase no longer
   makes a goal ambiguous (#154).
+
+* `mq-mcp doctor` checks the optional CodeGraph integration: CLI version,
+  index version and freshness, and a live daemon socket handshake. A leftover
+  socket no longer reads as a healthy daemon, and a permission denial is
+  reported as unknown. Install-readiness exit codes are unchanged, and nothing
+  is started or repaired automatically (#152).
+* The Pages front page is rebuilt around the tool contract: every tool by class
+  with the consent-gated ones marked, numbers and version regenerated from
+  `docs/tool_contracts.json` by `scripts/render-pages-tool-grid.py`, and the
+  claim that all tools are sandboxed to the repository root removed, since it
+  was no longer true (#148).
 
 ### Security
 
@@ -32,6 +45,13 @@
 
 ### Fixed
 
+* Review tools report their provider default correctly. `model_runtime`
+  defaults to OpenAI, but four review tool docstrings said local Qwen and
+  `tool_registry` reported review tools as keyless. Set
+  `MQ_MCP_REVIEW_PROVIDER=ollama` to review locally (#151).
+* `review_repo` reviews source files before tests; tests are reviewed once no
+  source file is left. Two test entries were removed from the learn store
+  (#151).
 * The post-commit learn hook queues candidates again. Nothing had been queued
   between 2026-07-04 and 2026-11-11: the hook ran uv outside the `mq-mcp/`
   project, so `requests` was missing; nothing refreshed the 24-hour repo-signal
