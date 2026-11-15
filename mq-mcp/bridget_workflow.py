@@ -1,7 +1,8 @@
 """Bridget workflow entrypoint (Phase 8).
 
 Gives Bridget a thin ``bridget --workflow "..."`` surface that *delegates* to
-``mq-agent workflow``. Bridget may extract the goal, identify the repo, propose a
+``mq-agent workflow``, or to one of three read-only mq-agent commands
+(``SHORTCUTS``) run with an argv Bridget builds and never widens. Bridget may extract the goal, identify the repo, propose a
 known template, ask mq-agent to plan, present the plan, and — after explicit
 approval — ask mq-agent to run it and present the result.
 
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Callable
@@ -53,22 +55,80 @@ _TEMPLATE_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 
-def classify_goal(goal: str) -> str | None:
-    """Map a free-text goal to one known template, or None when uncertain.
+#: Read-only mq-agent commands Bridget can run directly, beside the workflow
+#: templates. Bridget builds their argv in ``shortcut_argv`` and never adds a
+#: write flag: ``fix-ci`` stays a diagnosis and ``pr review`` stays local.
+SHORTCUTS: tuple[str, ...] = ("ci-diagnose", "stack-status", "pr-review")
 
-    Returns the template name only when exactly one template's keywords match.
-    Zero matches or matches spanning more than one template return None so the
-    caller can ask the user to choose rather than guess.
+_SHORTCUT_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "ci-diagnose": (
+        "ci fail", "ci is failing", "failing ci", "ci is red", "red ci",
+        "fix ci", "fix-ci", "ci error", "broken ci", "ci broke", "build failed",
+        "build is failing", "ci fallerar", "ci är röd", "röd ci", "ci-fel",
+    ),
+    "stack-status": (
+        "stack status", "stack health", "status of the stack", "state of the stack",
+        "stackstatus", "stackens status", "status på stacken",
+    ),
+    "pr-review": (
+        "review pr", "pr review", "review pull request", "review the pr",
+        "granska pr", "granska pull request",
+    ),
+}
+
+#: Every intent Bridget can propose, in picker order.
+KNOWN_INTENTS: tuple[str, ...] = (*KNOWN_TEMPLATES, *SHORTCUTS)
+
+_INTENT_KEYWORDS: dict[str, tuple[str, ...]] = {**_TEMPLATE_KEYWORDS, **_SHORTCUT_KEYWORDS}
+
+
+def classify_goal(goal: str) -> str | None:
+    """Map a free-text goal to one known intent, or None when uncertain.
+
+    Returns the intent only when exactly one matches. A match whose every
+    keyword lies inside a longer keyword matched for another intent is dropped
+    first: "stack health" is stack-status, not repo-preflight's "health", and
+    "review pr 12" is pr-review, not review-and-test's "review". Zero matches
+    or independent matches for more than one intent return None so the caller
+    can ask the user to choose rather than guess.
     """
     text = (goal or "").lower()
     matched = {
-        template
-        for template, keywords in _TEMPLATE_KEYWORDS.items()
-        if any(kw in text for kw in keywords)
+        intent: [kw for kw in keywords if kw in text]
+        for intent, keywords in _INTENT_KEYWORDS.items()
     }
-    if len(matched) == 1:
-        return next(iter(matched))
+    matched = {intent: kws for intent, kws in matched.items() if kws}
+
+    def _covered(intent: str) -> bool:
+        longer = [kw for other, kws in matched.items() if other != intent for kw in kws]
+        return all(any(kw in big and kw != big for big in longer) for kw in matched[intent])
+
+    remaining = [intent for intent in matched if not _covered(intent)]
+    if len(remaining) == 1:
+        return remaining[0]
     return None
+
+
+_PR_NUMBER = re.compile(r"(?:#|\bpr\s*#?|pull request\s*#?)(\d+)", re.IGNORECASE)
+
+
+def pr_number(goal: str) -> int | None:
+    """The PR number named in the goal ("pr 12", "PR #12", "pull request 12")."""
+    match = _PR_NUMBER.search(goal or "")
+    return int(match.group(1)) if match else None
+
+
+def shortcut_argv(name: str, repo: Path, number: int | None) -> list[str]:
+    """The exact mq-agent argv for a shortcut. Never includes a write flag."""
+    if name == "ci-diagnose":
+        return ["fix-ci", str(repo)]
+    if name == "stack-status":
+        return ["stack", "status"]
+    if name == "pr-review":
+        if number is None:
+            raise ValueError("pr-review needs a PR number")
+        return ["pr", "review", str(number), "--repo", str(repo)]
+    raise ValueError(f"unknown shortcut: {name}")
 
 
 def identify_repo(goal: str, cwd: Path | None = None) -> Path:
@@ -143,16 +203,47 @@ def _read_line(prompt: str) -> str:
 
 
 def _choose_template() -> str | None:
-    """Ask the user to pick one of the known templates. None if not chosen."""
-    print("Could not map that goal to a known workflow. Choose one:")
-    for i, name in enumerate(KNOWN_TEMPLATES, 1):
+    """Ask the user to pick one known intent. None if not chosen."""
+    print("Could not map that goal to a known workflow or shortcut. Choose one:")
+    for i, name in enumerate(KNOWN_INTENTS, 1):
         print(f"  {i}. {name}")
-    answer = _read_line("Template number (or blank to cancel): ")
-    if answer.isdigit() and 1 <= int(answer) <= len(KNOWN_TEMPLATES):
-        return KNOWN_TEMPLATES[int(answer) - 1]
-    if answer in KNOWN_TEMPLATES:
+    answer = _read_line("Number (or blank to cancel): ")
+    if answer.isdigit() and 1 <= int(answer) <= len(KNOWN_INTENTS):
+        return KNOWN_INTENTS[int(answer) - 1]
+    if answer in KNOWN_INTENTS:
         return answer
     return None
+
+
+def _run_shortcut(
+    name: str,
+    goal: str,
+    repo: Path,
+    *,
+    assume_yes: bool,
+    on_delegated: Callable[[str, str, int], None] | None,
+) -> int:
+    """Show the exact read-only command, confirm, then delegate it to mq-agent."""
+    number = pr_number(goal) if name == "pr-review" else None
+    if name == "pr-review" and number is None:
+        answer = _read_line("PR number (or blank to cancel): ")
+        if not answer.lstrip("#").isdigit():
+            print("No PR number given. Nothing to do.")
+            return 0
+        number = int(answer.lstrip("#"))
+    args = shortcut_argv(name, repo, number)
+    print(f"Shortcut: {name}\n  mq-agent {' '.join(args)}")
+
+    if not assume_yes:
+        answer = _read_line(f"\nRun '{name}'? [y/N] ").lower()
+        if answer not in ("y", "yes"):
+            print("Cancelled.")
+            return 0
+
+    _, rc = _invoke_mq_agent(args, capture=False)
+    if on_delegated is not None:
+        on_delegated(goal, name, rc)
+    return rc
 
 
 def _format_plan(plan_json: str) -> str:
@@ -203,6 +294,11 @@ def run_workflow_entry(
             return 0
 
     repo = identify_repo(goal)
+
+    if template in SHORTCUTS:
+        return _run_shortcut(
+            template, goal, repo, assume_yes=assume_yes, on_delegated=on_delegated,
+        )
 
     plan_out, plan_rc = _invoke_mq_agent(
         ["workflow", "plan", template, "--repo", str(repo)]

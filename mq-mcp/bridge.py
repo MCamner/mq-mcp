@@ -413,6 +413,7 @@ Examples:
   uv run python bridge.py --search "What does server.py do?"
   uv run python bridge.py --search-global "How do all my repos relate?"
   uv run python bridge.py --workflow "preflight ~/macos-scripts"
+  uv run python bridge.py --workflow "review pr 455"   # read-only shortcut
   uv run python bridge.py --project mq-mcp     # pin working project
   uv run python bridge.py --continue           # resume: last session, branch, changes, review
   uv run python bridge.py --history 10         # recent sessions (REPL turns tagged)

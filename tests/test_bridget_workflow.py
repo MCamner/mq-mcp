@@ -177,3 +177,99 @@ def test_on_delegated_not_called_when_declined(monkeypatch):
     monkeypatch.setattr(bw, "_read_line", lambda prompt: "n")
     bw.run_workflow_entry("run preflight", on_delegated=lambda *a: seen.append(a))
     assert seen == []
+
+
+# --- shortcuts: read-only mq-agent commands ----------------------------------
+#
+# Shortcuts sit beside the workflow templates for common read-only questions.
+# Bridget builds the argv itself and never adds a write flag: fix-ci stays a
+# diagnosis (no --approve) and pr review stays local (no --post).
+
+def test_classify_goal_matches_each_shortcut():
+    assert bw.classify_goal("ci is failing on main") == "ci-diagnose"
+    assert bw.classify_goal("fix ci please") == "ci-diagnose"
+    assert bw.classify_goal("ci fallerar") == "ci-diagnose"
+    assert bw.classify_goal("show stack status") == "stack-status"
+    assert bw.classify_goal("hur ser stackstatus ut") == "stack-status"
+    assert bw.classify_goal("review pr 455") == "pr-review"
+    assert bw.classify_goal("granska pr #12") == "pr-review"
+
+
+def test_a_longer_phrase_wins_over_a_keyword_inside_it():
+    # "health" is a repo-preflight keyword, but here it is part of "stack health".
+    assert bw.classify_goal("check stack health") == "stack-status"
+    # "review" is a review-and-test keyword, but here it is part of "review pr".
+    assert bw.classify_goal("review PR #455") == "pr-review"
+    # A plain review of the working diff is still review-and-test.
+    assert bw.classify_goal("review my diff") == "review-and-test"
+
+
+def test_independent_matches_stay_ambiguous():
+    # Two intents named by separate keywords: ask, do not guess.
+    assert bw.classify_goal("fix ci and run preflight") is None
+
+
+def test_shortcut_argv_never_carries_a_write_flag(tmp_path):
+    argv = {
+        "ci-diagnose": bw.shortcut_argv("ci-diagnose", tmp_path, None),
+        "stack-status": bw.shortcut_argv("stack-status", tmp_path, None),
+        "pr-review": bw.shortcut_argv("pr-review", tmp_path, 455),
+    }
+    assert argv["ci-diagnose"] == ["fix-ci", str(tmp_path)]
+    assert argv["stack-status"] == ["stack", "status"]
+    assert argv["pr-review"] == ["pr", "review", "455", "--repo", str(tmp_path)]
+    for args in argv.values():
+        assert "--approve" not in args and "--post" not in args
+
+
+def test_pr_number_is_read_from_the_goal():
+    assert bw.pr_number("review pr 455") == 455
+    assert bw.pr_number("granska PR #12 i mq-mcp") == 12
+    assert bw.pr_number("review pull request 7") == 7
+    assert bw.pr_number("review the pr") is None
+
+
+def test_shortcut_runs_the_command_after_approval(monkeypatch, tmp_path):
+    record: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker(record))
+    seen: list = []
+    rc = bw.run_workflow_entry(
+        "review pr 455", assume_yes=True,
+        on_delegated=lambda goal, name, rc: seen.append((name, rc)),
+    )
+    assert rc == 0
+    assert record == [(("pr", "review", "455", "--repo", str(tmp_path.resolve())), False)]
+    assert seen == [("pr-review", 0)]
+
+
+def test_declined_shortcut_runs_nothing(monkeypatch):
+    record: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker(record))
+    monkeypatch.setattr(bw, "_read_line", lambda prompt: "n")
+    assert bw.run_workflow_entry("show stack status") == 0
+    assert record == []
+
+
+def test_pr_review_without_a_number_asks_and_cancels_on_blank(monkeypatch):
+    record: list = []
+    prompts: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker(record))
+    monkeypatch.setattr(bw, "_read_line", lambda prompt: prompts.append(prompt) or "")
+    assert bw.run_workflow_entry("review pr", assume_yes=True) == 0
+    assert record == []
+    assert any("PR number" in p for p in prompts)
+
+
+def test_picker_offers_shortcuts_too(monkeypatch, capsys):
+    record: list = []
+    monkeypatch.delenv("MQ_WORKFLOW_DEPTH", raising=False)
+    monkeypatch.setattr(bw, "_invoke_mq_agent", _capture_invoker(record))
+    choice = str(bw.KNOWN_INTENTS.index("stack-status") + 1)
+    monkeypatch.setattr(bw, "_read_line", lambda prompt: choice)
+    assert bw.run_workflow_entry("do the thing", assume_yes=True) == 0
+    assert "stack-status" in capsys.readouterr().out
+    assert record == [(("stack", "status"), False)]
